@@ -1,0 +1,22 @@
+﻿<Project Sdk="Eto.Forms/2.7.5">
+
+  <!--
+    Set the BuildPlatform property to the Eto platform you wish to build for.
+    The default is the platform you are building on.
+    Valid values: Wpf, Windows, Mac64, XamMac2, Gtk, Direct2D
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tomlyn" Version="0.17.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Eto.Forms" Version="2.8.3" />
+  </ItemGroup>
+
+</Project>
