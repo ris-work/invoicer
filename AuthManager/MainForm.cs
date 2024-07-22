@@ -18,9 +18,12 @@ namespace AuthManager
                 Items =
                 {
                     "Hello World!",
-					// add more controls here
-				}
+                    new Button((e, a) => MessageBox.Show("Hello")){  },
+
+                }
+
             };
+            KeyUp += ((e, a) => MessageBox.Show(a.Key.ToString()));
 
             
         }

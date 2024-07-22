@@ -5,15 +5,23 @@ using Tomlyn;
 
 namespace AuthManager
 {
+    public static class Config
+    {
+        public static Tomlyn.Model.TomlTable model;
+        public static void Initialize()
+        {
+            String TomlUnparsed = System.IO.File.ReadAllText("connstring.toml");
+            model = Toml.ToModel(TomlUnparsed);
+        }
+    }
 
     internal class Program
     {
         [STAThread]
         static void Main(string[] args)
         {
-            String TomlUnparsed = System.IO.File.ReadAllText("connstring.toml");
-            var model = Toml.ToModel(TomlUnparsed);
-            
+
+            Config.Initialize();
             new Application(Eto.Platform.Detect).Run(new MainForm());
         }
     }
