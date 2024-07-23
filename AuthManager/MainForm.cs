@@ -13,10 +13,12 @@ namespace AuthManager
         public MainForm()
         {
             var UserList = new GridView();
-            UserList.Columns.Add(new GridColumn { HeaderText = "UserID", DataCell = new TextBoxCell(0) });
+            UserList.Columns.Add(new GridColumn () { HeaderText = "UserID", DataCell = new TextBoxCell(0) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) });
+            UserList.MouseDoubleClick += (e, a) => { MessageBox.Show(((GridItem)UserList.SelectedItem).GetValue(0).ToString()); };
+            
             string x="";
             using (var ctx = new NewinvContext())
             {
@@ -25,7 +27,9 @@ namespace AuthManager
                 
                 foreach (var item in users)
                 {
-                    list.Add(new GridItem(item.Userid, item.Username, item.Modified, item.Created.ToString()));
+                    var GR = new GridItem(item.Userid, item.Username, item.Modified, item.Created.ToString());
+                    
+                    list.Add(GR);
                 }
                 UserList.DataStore = list;
 
@@ -40,7 +44,7 @@ namespace AuthManager
                 {
                     "Hello World!",
                     x,
-                    new Button((e, a) => MessageBox.Show("Hello")){  },
+                    new Button((e, a) => (new NewUserForm()).ShowModal()),
                     UserList
 
                 }
