@@ -43,7 +43,7 @@ namespace AuthManager
             Title = "My Eto Form";
             Size = new Size(-1, -1);
             Resizable = false;
-            
+
 
             Content = new StackLayout
             {
@@ -51,7 +51,25 @@ namespace AuthManager
                 Items =
                 {
                     "Hello World!",
-                    new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }),
+                    new StackLayout {
+                       Items = {
+                            null,
+                            new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "New User", BackgroundColor = Color.FromArgb(0xaa, 0xff, 0xaa, 0xff)  },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) new TestPasswordDialog((long)Selected.GetValue(0)).ShowModal();
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Test Password" },
+                            new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) }
+                        },
+                       Orientation = Orientation.Horizontal,
+                       Spacing = 4,
+                       Padding = 10,
+                       BackgroundColor = Color.FromArgb(200,200,200,255),
+
+                    },
+                    null,
                     UserList
 
                 }

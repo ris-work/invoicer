@@ -34,20 +34,16 @@ namespace AuthManager
 
 				var LabelUsername = new Label() { Text = "Username" };
 				var LabelPassword = new Label() { Text = "Password" };
-				var TextUsername = new TextBox() { PlaceholderText = "Username", Text = ExistingUsername };
+                var LabelPasswordConfirm = new Label() { Text = "Password (Confirm)" };
+                var TextUsername = new TextBox() { PlaceholderText = "Username", Text = ExistingUsername };
 				var TextPassword = new PasswordBox() { };
-				var Save = new Button((e, a) =>
+                var TextPasswordConfirm = new PasswordBox() { };
+                var Save = new Button((e, a) =>
 				{
-					byte[] salt = Encoding.UTF8.GetBytes(((String)Config.model["Salt"])); // divide by 8 to convert bits to bytes
-					Console.WriteLine($"Salt: {Convert.ToBase64String(salt)}");
+					if (TextPassword.Text != TextPasswordConfirm.Text) { MessageBox.Show("Password confirmation does not match with the entered password!", MessageBoxType.Error); return; }
 
 					// derive a 256-bit subkey (use HMACSHA256 with 100,000 iterations)
-					string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-						password: TextPassword.Text,
-						salt: salt,
-						prf: KeyDerivationPrf.HMACSHA256,
-						iterationCount: 100000,
-						numBytesRequested: 256 / 8));
+					string hashed = Utils.DoPBKDF2(TextPassword.Text);
 
 					Console.WriteLine($"Hashed: {hashed}");
 
@@ -89,7 +85,11 @@ namespace AuthManager
 
 							[null, LabelPassword, TextPassword, null]
 						),
-						new Eto.Forms.TableRow(
+                        new Eto.Forms.TableRow(
+
+                            [null, LabelPasswordConfirm, TextPasswordConfirm, null]
+                        ),
+                        new Eto.Forms.TableRow(
 
 							[null, Save, Cancel, null]
 						),
