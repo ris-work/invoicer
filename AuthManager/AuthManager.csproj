@@ -8,6 +8,13 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <PublishTrimmed>False</PublishTrimmed>
+    <PublishAot>False</PublishAot>
+	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <PublishSingleFile>true</PublishSingleFile>
+	  <PublishReadyToRun>true</PublishReadyToRun>
 
   </PropertyGroup>
 

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AuthManager;
 
 public partial class Credential
 {
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Userid { get; set; }
 
     public string Username { get; set; }
