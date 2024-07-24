@@ -9,8 +9,6 @@ public partial class Credential
 
     public string Username { get; set; }
 
-    public DateTimeOffset Created { get; set; }
-
     public DateTime ValidUntil { get; set; }
 
     public DateTime Modified { get; set; }
@@ -18,4 +16,6 @@ public partial class Credential
     public string Pubkey { get; set; }
 
     public string PasswordPbkdf2 { get; set; }
+
+    public DateTime CreatedTime { get; set; }
 }

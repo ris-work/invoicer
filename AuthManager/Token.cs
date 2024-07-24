@@ -12,4 +12,6 @@ public partial class Token
     public string Tokenvalue { get; set; }
 
     public string Tokensecret { get; set; }
+
+    public DateTime NotValidAfter { get; set; }
 }

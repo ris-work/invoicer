@@ -27,7 +27,7 @@ namespace AuthManager
                 
                 foreach (var item in users)
                 {
-                    var GR = new GridItem(item.Userid, item.Username, item.Modified, item.Created.ToString());
+                    var GR = new GridItem(item.Userid, item.Username, item.Modified.ToString(), item.CreatedTime.ToString());
                     
                     list.Add(GR);
                 }
@@ -35,7 +35,9 @@ namespace AuthManager
 
             }
             Title = "My Eto Form";
-            MinimumSize = new Size(200, 200);
+            Size = new Size(-1, -1);
+            Resizable = false;
+            
 
             Content = new StackLayout
             {
