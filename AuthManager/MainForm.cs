@@ -21,6 +21,8 @@ namespace AuthManager
             UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Active", DataCell = new CheckBoxCell(4) });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) });
             UserList.MouseDoubleClick += (e, a) => { 
                 MessageBox.Show(((GridItem)UserList.SelectedItem).GetValue(0).ToString()); 
                 (new NewUserForm((long)((GridItem)UserList.SelectedItem).GetValue(0))).ShowModal();
@@ -53,7 +55,6 @@ namespace AuthManager
                     "Hello World!",
                     new StackLayout {
                        Items = {
-                            null,
                             new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "New User", BackgroundColor = Color.FromArgb(0xaa, 0xff, 0xaa, 0xff)  },
                             new Button((e, a) => {
                                 var Selected = (GridItem)UserList.SelectedItem;
@@ -61,12 +62,13 @@ namespace AuthManager
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
                                 UserList.DataStore = this.GetAllUsersGrid();
                             }){ Text = "Test Password" },
-                            new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) }
+                            new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) },
+
                         },
                        Orientation = Orientation.Horizontal,
                        Spacing = 4,
-                       Padding = 10,
-                       BackgroundColor = Color.FromArgb(200,200,200,255),
+                       Padding = new Padding(0, 5),
+                       BackgroundColor = Color.FromArgb(220,220,220,255),
 
                     },
                     null,
