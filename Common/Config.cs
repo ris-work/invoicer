@@ -14,8 +14,13 @@ namespace RV.InvNew.Common
         public static Tomlyn.Model.TomlTable model;
         public static void Initialize()
         {
+            Console.WriteLine("[common] Current Directory: {0}", System.IO.Directory.GetCurrentDirectory());
             String TomlUnparsed = System.IO.File.ReadAllText("connstring.toml");
             model = Toml.ToModel(TomlUnparsed);
+        }
+        public static string GetCWD()
+        {
+            return Directory.GetCurrentDirectory();
         }
     }
     public static class Utils

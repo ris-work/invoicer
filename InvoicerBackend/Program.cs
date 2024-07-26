@@ -1,8 +1,28 @@
 using RV.InvNew.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-using System.Convert;
+using System;
 using System.Security.Principal;
+using System.Security.AccessControl;
+
+static bool IsTokenValid(LoginToken T, string AccessLevel)
+{
+    using (var ctx = new NewinvContext())
+    {
+        if (T.TokenID != null && T.Token != null)
+            if (ctx.Tokens.Where(t => t.Tokenid == T.TokenID).First().Tokenvalue == T.Token)
+            {
+                return true;
+            }
+            else return false;
+        else return false;
+    }
+
+}
+
+Console.WriteLine("CWD: {0}", Directory.GetCurrentDirectory());
+Console.WriteLine("[common] CWD: {0}", Config.GetCWD() );
+Config.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,28 +66,33 @@ app.MapPost("/Login", (LoginCredentials L) =>
     {
         if (L.User != null)
         {
-            var Password = ctx.Credentials.Where(e => e.Active && e.Username == L.User).First().PasswordPbkdf2;
-            if (Password != null && Utils.DoPBKDF2(L.Password) == Password)
+            var UserE = ctx.Credentials.Where(e => e.Active && e.Username == L.User).SingleOrDefault();
+            if (UserE != null)
             {
-                Random rnd = new Random();
-                Byte[] bTid = new byte[8];
-                Byte[] bT = new byte[8];
-                Byte[] bTs = new byte[8];
-                rnd.NextBytes(bTid);
-                rnd.NextBytes(bT);
-                rnd.NextBytes(bTs);
-                var Tid = Convert.ToBase64String(bTid);
-                var T = Convert.ToBase64String(bT);
-                var Ts = Convert.ToBase64String(bTs);
-                ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T });
-                ctx.SaveChanges();
-                return new LoginToken(Tid, T, Ts, "");
+                var Password = UserE.PasswordPbkdf2;
+                if (Password != null && Utils.DoPBKDF2(L.Password) == Password)
+                {
+                    Random rnd = new Random();
+                    Byte[] bTid = new byte[8];
+                    Byte[] bT = new byte[8];
+                    Byte[] bTs = new byte[8];
+                    rnd.NextBytes(bTid);
+                    rnd.NextBytes(bT);
+                    rnd.NextBytes(bTs);
+                    var Tid = Convert.ToBase64String(bTid);
+                    var T = Convert.ToBase64String(bT);
+                    var Ts = Convert.ToBase64String(bTs);
+                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T });
+                    ctx.SaveChanges();
+                    return new LoginToken(Tid, T, Ts, "");
 
+                }
+                else
+                {
+                    return new LoginToken("", "", "", "Error: Wrong username, password or inactive user");
+                }
             }
-            else
-            {
-                return new LoginToken("", "", "", "Error: Wrong username, password or inactive user");
-            }
+            else return new LoginToken("", "", "", "Error: Wrong username, password or inactive user");
         }
         else { Console.WriteLine(L); return new LoginToken("", "", "", "User null"); }
     }
@@ -106,17 +131,3 @@ string Password,
 string Terminal
 );
 
-public bool IsTokenValid(LoginToken T, string AccessLevel)
-{
-    using (var ctx = new NewinvContext())
-    {
-        if (T.TokenID != null && T.Token != null)
-            if (ctx.Tokens.Where(t => t.Tokenid == T.TokenID).First().Tokenvalue == T.Token)
-            {
-                return true;
-            }
-            else return false;
-        else return false;
-    }
-
-}
