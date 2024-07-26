@@ -11,9 +11,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using System.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using System.Collections.Generic;
+using RV.InvNew.Common;
 
 
-namespace AuthManager
+namespace RV.InvNew.AuthManager
 {
 
 	public class NewUserForm: Dialog

@@ -42,4 +42,8 @@
     <PackageReference Update="Eto.Forms" Version="2.8.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common\common.csproj" />
+  </ItemGroup>
+
 </Project>

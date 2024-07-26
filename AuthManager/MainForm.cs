@@ -7,7 +7,7 @@ using Tomlyn;
 using System.Collections.Generic;
 using AuthManager;
 
-namespace AuthManager
+namespace RV.InvNew.AuthManager
 {
     public partial class MainForm : Form
     {
