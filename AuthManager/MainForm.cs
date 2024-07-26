@@ -5,7 +5,8 @@ using System.Configuration;
 using System.Linq;
 using Tomlyn;
 using System.Collections.Generic;
-using AuthManager;
+using RV.InvNew.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace RV.InvNew.AuthManager
 {
@@ -37,7 +38,7 @@ namespace RV.InvNew.AuthManager
             UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) {TextAlignment=TextAlignment.Right} });
             UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) { TextAlignment = TextAlignment.Right } });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active", DataCell = new CheckBoxCell(4) });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) { TextAlignment = TextAlignment.Right } });
             UserList.MouseDoubleClick += (e, a) => { 
                 MessageBox.Show(((GridItem)UserList.SelectedItem).GetValue(0).ToString()); 
                 (new NewUserForm((long)((GridItem)UserList.SelectedItem).GetValue(0))).ShowModal();
@@ -77,7 +78,33 @@ namespace RV.InvNew.AuthManager
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
                                 UserList.DataStore = this.GetAllUsersGrid();
                             }){ Text = "Test Password" },
-                            new Button((e, a) => {new NewUserForm(null).ShowModal(); UserList.DataStore = this.GetAllUsersGrid(); }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) using (var ctx = new NewinvContext()){
+                                        ctx.Credentials.Where(e => e.Userid==(long)Selected.GetValue(0)).First().Active=false;
+                                        ctx.SaveChanges();
+                                }
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid(); 
+                            }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) using (var ctx = new NewinvContext()){
+                                        ctx.Tokens.Where(e => e.Userid==(long)Selected.GetValue(0)).ExecuteUpdate((s) => s.SetProperty(e=>e.Active, e => false));
+                                        ctx.SaveChanges();
+                                }
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Deactivate all tokens", BackgroundColor = Color.FromArgb(0xff, 0x66, 0xaa, 0xff) },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) using (var ctx = new NewinvContext()){
+                                        ctx.Credentials.Where(e => e.Userid==(long)Selected.GetValue(0)).First().Active=true;
+                                        ctx.SaveChanges();
+                                }
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Activate User", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff) },
 
                         },
                        Orientation = Orientation.Horizontal,
@@ -105,7 +132,7 @@ namespace RV.InvNew.AuthManager
 
                 foreach (var item in users)
                 {
-                    var GR = new GridItem(item.Userid, item.Username, item.Modified.ToString("s"), item.CreatedTime.ToString("s"));
+                    var GR = new GridItem(item.Userid, item.Username, item.Modified.ToString("s"), item.CreatedTime.ToString("s"), item.Active, ctx.Tokens.Count(e => e.Userid == item.Userid && e.Active == true));
 
                     list.Add(GR);
                 }
