@@ -22,15 +22,20 @@ namespace AuthManager
             GridColumn A;
             Random x2 = new Random();
             UserList.CellFormatting += (e, a) => { 
-                a.BackgroundColor = Color.FromArgb(205 + x2.Next()%50, 205 + x2.Next()%50, 205 + x2.Next()%50, 255);
-                a.ForegroundColor = Color.FromArgb(50 + x2.Next() % 50, 50 + x2.Next() % 50, 50 + x2.Next() % 50, 255);
+                a.BackgroundColor = Color.FromArgb(205 + Math.Abs(x2.Next()%50), 205 + Math.Abs(x2.Next()%50), 205 + Math.Abs(x2.Next()%50), 255);
+                a.ForegroundColor = Color.FromArgb(50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 255);
+                if (UserList.Columns.IndexOf(a.Column) == 3 || UserList.Columns.IndexOf(a.Column) == 2)
+                {
+                    a.Font = Fonts.Monospace(10, FontStyle.None, FontDecoration.None);
+                    
+                }
             };
             
             UserList.Columns.Add( A = new GridColumn() { HeaderText = "UserID", DataCell = new TextBoxCell(0) { TextAlignment = TextAlignment.Right },   });
             ((Control)UserList).BackgroundColor = Color.FromArgb(255, 255, 0, 255);
             UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1)  });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) {} });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) {TextAlignment=TextAlignment.Right} });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) { TextAlignment = TextAlignment.Right } });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active", DataCell = new CheckBoxCell(4) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) });
             UserList.MouseDoubleClick += (e, a) => { 
@@ -100,7 +105,7 @@ namespace AuthManager
 
                 foreach (var item in users)
                 {
-                    var GR = new GridItem(item.Userid, item.Username, item.Modified.ToString(), item.CreatedTime.ToString());
+                    var GR = new GridItem(item.Userid, item.Username, item.Modified.ToString("s"), item.CreatedTime.ToString("s"));
 
                     list.Add(GR);
                 }
