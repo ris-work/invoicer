@@ -13,13 +13,23 @@ namespace AuthManager
     {
         public MainForm()
         {
+            Eto.Style.Add<TextBoxCell>("AlternatingColumn",tbc =>
+                { }//tbc.BackgroundColor = Color.FromArgb(240, 240, 255, 255); }
+            );
             var UserList = new GridView();
             UserList.Enabled = true;
             UserList.Size = new Size(-1, 300);
+            GridColumn A;
+            Random x2 = new Random();
+            UserList.CellFormatting += (e, a) => { 
+                a.BackgroundColor = Color.FromArgb(205 + x2.Next()%50, 205 + x2.Next()%50, 205 + x2.Next()%50, 255);
+                a.ForegroundColor = Color.FromArgb(50 + x2.Next() % 50, 50 + x2.Next() % 50, 50 + x2.Next() % 50, 255);
+            };
             
-            UserList.Columns.Add(new GridColumn () { HeaderText = "UserID", DataCell = new TextBoxCell(0) });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1) });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) });
+            UserList.Columns.Add( A = new GridColumn() { HeaderText = "UserID", DataCell = new TextBoxCell(0) { TextAlignment = TextAlignment.Right },   });
+            ((Control)UserList).BackgroundColor = Color.FromArgb(255, 255, 0, 255);
+            UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1)  });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) {} });
             UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active", DataCell = new CheckBoxCell(4) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) });
