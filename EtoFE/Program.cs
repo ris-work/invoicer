@@ -10,20 +10,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 using SharpDX;
-
-public record LoginToken
-(
-    string? TokenID,
-    string? Token,
-    string? SecretToken,
-    string? Error
-);
-public record LoginCredentials
-(
-    string User,
-    string Password,
-    string Terminal
-);
+using RV.InvNew.Common;
 
 public static class LoginTokens
 {
@@ -61,6 +48,7 @@ public class MyForm : Form
         logint_w.Wait();
         logint = logint_w.Result;
         MessageBox.Show(logint.TokenID);
+        MessageBox.Show(logint.Token);
         MessageBox.Show(logint.Error);
         if (logint.Error != "") { return false; }
         else { LoginTokens.token = logint; return true; }

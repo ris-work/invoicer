@@ -118,16 +118,4 @@ internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
 
-internal record LoginToken(
-string TokenID,
-string Token,
-string SecretToken,
-string? Error
-);
-
-public record LoginCredentials(
-string User,
-string Password,
-string Terminal
-);
 
