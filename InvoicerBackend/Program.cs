@@ -30,14 +30,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpLogging(o => {
+    o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+});
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHttpLogging();
 }
 
 var summaries = new[]
@@ -109,6 +114,13 @@ app.MapPost("/GetItemsUnrestricted", (LoginToken L) =>
         return "Hello";
     }
 }).WithName("GetItemsUnrestricted")
+.WithOpenApi();
+
+app.MapPost("/AuthenticatedEcho", (AuthenticatedRequest<string> AS) =>
+{
+    return AS.Get();
+})
+    .WithName("AuthenticatedEcho")
 .WithOpenApi();
 
 app.Run();

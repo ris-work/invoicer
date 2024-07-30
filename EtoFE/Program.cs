@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Net.Http.Json;
 using SharpDX;
 using RV.InvNew.Common;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 public static class LoginTokens
 {
@@ -39,7 +41,7 @@ public class MyForm : Form
     public bool Login(String Username, String Password, String Terminal)
     {
         LoginToken logint = null;
-        LoginCredentials l = new(Username, Password, Terminal);
+        LoginCredentials l = new(Username, Password, Terminal, null);
         var response = Program.client.PostAsJsonAsync("/Login", l);
         response.Wait();
         var result = response.Result;
@@ -52,6 +54,22 @@ public class MyForm : Form
         MessageBox.Show(logint.Error);
         if (logint.Error != "") { return false; }
         else { LoginTokens.token = logint; return true; }
+    }
+    public string TryEcho(string Message)
+    {
+        AuthenticatedRequest<string> request = new AuthenticatedRequest<string>("Hello", LoginTokens.token);
+        var response = Program.client.PostAsJsonAsync("/AuthenticatedEcho", request);
+        //MessageBox.Show(JsonSerializer.Serialize(request));
+        response.Wait();
+        var result = response.Result;
+
+        result.EnsureSuccessStatusCode();
+        var t_res = result.Content.ReadAsStringAsync();
+        t_res.Wait();
+        string echoed = t_res.Result;
+        return echoed;
+
+
     }
     public MyForm()
     {
@@ -88,7 +106,16 @@ public class MyForm : Form
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Terminal : ", Style="mono" }, TerminalBox = new TextBox() { PlaceholderText = "1", Enabled = false, Text = "1", Style="mono", TextAlignment=TextAlignment.Right }, null));
         layout.Rows.Add(new TableRow(null,
             new Button(
-                (sender, e) => { if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true) { MessageBox.Show("Cannot login: Network Error or Wrong Creds"); }; }
+                (sender, e) => {
+                    if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
+                    {
+                        MessageBox.Show("Cannot login: Network Error or Wrong Creds");
+                    }
+                    else
+                    {
+                        MessageBox.Show(TryEcho("Hey!"), MessageBoxType.Information);
+                    }; 
+                }
             ) { Text = "Login", Size=new Size(200, 50), Style="large" }, 
             new TableRow(new Button((sender, e) => { Application.Instance.Quit(); }) { Text = "Exit", Style = "large", Size=new Size(300, 50) }),
             null));
