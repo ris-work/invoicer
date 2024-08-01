@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace EtoFE
 {
@@ -12,6 +13,8 @@ namespace EtoFE
     {
         public PosTerminal()
         {
+            var R = new AuthenticatedRequest<string>("Hey");
+            var PosData = Program.client.PostAsJsonAsync("/PosRefresh", R);
             TableLayout TL = new TableLayout();
             Label LabelPendingInvoices = new Label() { Text = "Pending invoices:" };
             ListBox PendingInvoices = new ListBox();
@@ -35,6 +38,7 @@ namespace EtoFE
             TL.Rows.Add(new TableRow(LabelPrice, Price));
             TL.Rows.Add(new TableRow(LabelQuantity, Quantity));
             TL.Rows.Add(new TableRow(LabelVatCategory, VatCategory, CurrentVatRate, CurrentVatCategory));
+            Barcode.KeyDown = new SearchBox();
             Content = TL;
         }
     }

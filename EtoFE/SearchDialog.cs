@@ -32,9 +32,12 @@ namespace EtoFE
                         foreach (var item in Filtered)
                         {
                             GI.Add(new GridItem(item.itemcode, item.itemdesc) { });
+
                         }
                         searching = false;
+                        Results.DataStore = Filtered;
                     })).Start();
+                    
                 }
             };
 
