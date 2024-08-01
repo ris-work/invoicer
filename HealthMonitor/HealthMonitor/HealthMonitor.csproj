@@ -21,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="HealthMonitor.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="logs.sqlite3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

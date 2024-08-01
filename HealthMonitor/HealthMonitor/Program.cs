@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq.Expressions;
 using System.Net.NetworkInformation;
 using System.Text;
+using Tomlyn;
+using Tomlyn.Model;
 
 Console.WriteLine("Hello, World!");
 
@@ -54,7 +56,7 @@ Console.WriteLine("Hello, World!");
                 Console.WriteLine(ex.ToString());
             }
         }
-        Thread.Sleep(1000);
+        Thread.Sleep(5000);
     }
 }
 )).Start();
@@ -74,7 +76,7 @@ void StartPing(string dest)
                 Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
                 ctx.Pings.Add(new HealthMonitor.Ping { Corrupt = reply.Buffer.SequenceEqual(buffer) ? 0 : 1, Dest = dest, Latency = (int)reply.RoundtripTime, TimeNow=DateTime.UtcNow.ToString("o") });
                 ctx.SaveChanges();
-                Thread.Sleep(1000);
+                Thread.Sleep(5000);
             }
         }
         catch (System.Exception E)
@@ -84,12 +86,14 @@ void StartPing(string dest)
     }
 }
 
-foreach (var item in new string[] {
-    "192.168.1.1",
-    "8.8.8.8",
-    "1.1.1.1"
-})
+string ConfigFile = System.IO.File.ReadAllText("HealthMonitor.toml");
+List<string> destinations = new List<string>();
+var TA = ((TomlArray)Toml.ToModel(ConfigFile)["destinations"]);
+destinations = TA.Select(x => (string)x).ToList();
+//destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
+foreach (var item in destinations)
 {
     var t = new Thread(() => { StartPing(item); });
     t.Start();
+    Console.WriteLine("Ping thread started for: {0}", item);
 };
