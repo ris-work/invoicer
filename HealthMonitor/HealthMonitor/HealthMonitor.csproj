@@ -9,6 +9,7 @@
 	  <!--<PublishTrimmed>true</PublishTrimmed>-->
 	  <PublishSingleFile>true</PublishSingleFile>
     <InvariantGlobalization>true</InvariantGlobalization>
+  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>

@@ -78,7 +78,7 @@ void StartPing(string dest)
                 var pingSender = new System.Net.NetworkInformation.Ping();
                 string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb";
                 byte[] buffer = Encoding.ASCII.GetBytes(data);
-                PingReply reply = pingSender.Send(dest, 120, buffer);
+                PingReply reply = pingSender.Send(dest, 4000, buffer);
                 Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
                 ctx.Pings.Add(new HealthMonitor.Ping { 
                     WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0, 
@@ -87,7 +87,7 @@ void StartPing(string dest)
                     TimeNow = DateTime.UtcNow.ToString("o") 
                 });
                 ctx.SaveChanges();
-                Thread.Sleep(5000);
+                
             }
         }
         catch (Win32Exception E) { }
@@ -95,6 +95,7 @@ void StartPing(string dest)
         {
             E.ToString();
         }
+        Thread.Sleep(5000);
     }
 }
 
