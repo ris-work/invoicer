@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using HealthMonitor;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq.Expressions;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -18,6 +19,17 @@ Console.WriteLine("Hello, World!");
                 //Console.WriteLine("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}", item.ProcessName, item.Threads.Count, item.Id, item.VirtualMemorySize64, item.PagedMemorySize64, item.PrivateMemorySize64, item.WorkingSet64, item.MainWindowTitle);
                 using (var ctx = new LogsContext())
                 {
+                    int syst = 0, ut = 0, tt = 0; 
+                    string sttt = "0";
+                    try
+                    {
+                        syst = (int)item.PrivilegedProcessorTime.TotalMilliseconds;
+                        ut = (int)item.UserProcessorTime.TotalMilliseconds;
+                        tt = (int)item.TotalProcessorTime.TotalMilliseconds;
+                        sttt = item.StartTime.ToString("o");
+                    }
+                    catch (System.Exception ex) 
+                    { Console.WriteLine(ex.ToString()); }
                     ctx.ProcessHistories.Add(new ProcessHistory
                     {
                         MainWindowTitle = item.MainWindowTitle,
@@ -25,10 +37,10 @@ Console.WriteLine("Hello, World!");
                         Pid = item.Id,
                         PrivateMemoryUse = item.PrivateMemorySize64.ToString(),
                         ProcessName = item.ProcessName,
-                        Started = item.StartTime.ToString("o"),
-                        SystemTime = (int)item.PrivilegedProcessorTime.TotalMilliseconds,
-                        UserTime = (int)item.UserProcessorTime.TotalMilliseconds,
-                        TotalTime = (int)item.TotalProcessorTime.TotalMilliseconds,
+                        Started = sttt,
+                        SystemTime = syst,
+                        UserTime = ut,
+                        TotalTime = tt,
                         ThreadCount = item.Threads.Count,
                         TimeNow = DateTime.Now.ToString("o"),
                         VirtualMemoryUse = item.VirtualMemorySize64.ToString(),

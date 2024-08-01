@@ -5,7 +5,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
+	  <PublishTrimmed>true</PublishTrimmed>
+	  <PublishSingleFile>true</PublishSingleFile>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
@@ -16,6 +18,12 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.7" />
     <PackageReference Include="Tomlyn" Version="0.17.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logs.sqlite3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
