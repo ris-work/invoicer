@@ -63,19 +63,11 @@ public partial class LogsContext : DbContext
             entity.Property(e => e.Pid)
                 .HasColumnType("INT")
                 .HasColumnName("pid");
-            entity.Property(e => e.MainWindowTitle)
-                .HasColumnType("INT")
-                .HasColumnName("main_window_title");
-            entity.Property(e => e.PagedMemoryUse)
-                .HasColumnType("INT")
-                .HasColumnName("paged_memory_use");
-            entity.Property(e => e.PrivateMemoryUse)
-                .HasColumnType("INT")
-                .HasColumnName("private_memory_use");
+            entity.Property(e => e.MainWindowTitle).HasColumnName("main_window_title");
+            entity.Property(e => e.PagedMemoryUse).HasColumnName("paged_memory_use");
+            entity.Property(e => e.PrivateMemoryUse).HasColumnName("private_memory_use");
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
-            entity.Property(e => e.Started)
-                .HasColumnType("INT")
-                .HasColumnName("started");
+            entity.Property(e => e.Started).HasColumnName("started");
             entity.Property(e => e.SystemTime)
                 .HasColumnType("INT")
                 .HasColumnName("system_time");
@@ -88,12 +80,8 @@ public partial class LogsContext : DbContext
             entity.Property(e => e.UserTime)
                 .HasColumnType("INT")
                 .HasColumnName("user_time");
-            entity.Property(e => e.VirtualMemoryUse)
-                .HasColumnType("INT")
-                .HasColumnName("virtual_memory_use");
-            entity.Property(e => e.WorkingSet)
-                .HasColumnType("INT")
-                .HasColumnName("working_set");
+            entity.Property(e => e.VirtualMemoryUse).HasColumnName("virtual_memory_use");
+            entity.Property(e => e.WorkingSet).HasColumnName("working_set");
         });
 
         OnModelCreatingPartial(modelBuilder);

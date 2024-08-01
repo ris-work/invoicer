@@ -13,17 +13,17 @@ public partial class ProcessHistory
 
     public int? ThreadCount { get; set; }
 
-    public int? VirtualMemoryUse { get; set; }
+    public string? VirtualMemoryUse { get; set; }
 
-    public int? PagedMemoryUse { get; set; }
+    public string? PagedMemoryUse { get; set; }
 
-    public int? PrivateMemoryUse { get; set; }
+    public string? PrivateMemoryUse { get; set; }
 
-    public int? WorkingSet { get; set; }
+    public string? WorkingSet { get; set; }
 
-    public int? MainWindowTitle { get; set; }
+    public string? MainWindowTitle { get; set; }
 
-    public int? Started { get; set; }
+    public string? Started { get; set; }
 
     public int? SystemTime { get; set; }
 
