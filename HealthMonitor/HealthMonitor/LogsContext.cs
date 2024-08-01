@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using HealthMonitor.CompiledModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMonitor;
@@ -24,7 +23,7 @@ public partial class LogsContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseModel(LogsContextModel.Instance).UseSqlite("Data Source=logs.sqlite3");
+        => optionsBuilder.UseSqlite("Data Source=logs.sqlite3");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,12 +45,15 @@ public partial class LogsContext : DbContext
 
             entity.Property(e => e.Dest).HasColumnName("dest");
             entity.Property(e => e.TimeNow).HasColumnName("time_now");
-            entity.Property(e => e.Corrupt)
+            entity.Property(e => e.DidItSucceed)
                 .HasColumnType("INT")
-                .HasColumnName("corrupt");
+                .HasColumnName("did_it_succeed");
             entity.Property(e => e.Latency)
                 .HasColumnType("INT")
                 .HasColumnName("latency");
+            entity.Property(e => e.WasItOkNotCorrupt)
+                .HasColumnType("INT")
+                .HasColumnName("was_it_ok_not_corrupt");
         });
 
         modelBuilder.Entity<ProcessHistory>(entity =>

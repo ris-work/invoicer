@@ -11,5 +11,7 @@ public partial class Ping
 
     public int? Latency { get; set; }
 
-    public int? Corrupt { get; set; }
+    public int? WasItOkNotCorrupt { get; set; }
+
+    public int? DidItSucceed { get; set; }
 }

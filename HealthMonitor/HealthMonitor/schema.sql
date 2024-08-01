@@ -1,4 +1,4 @@
-CREATE TABLE repository.pings (dest TEXT, time_now TEXT, latency INT, corrupt INT, PRIMARY KEY (dest, time_now)) STRICT, WITHOUT ROWID;
+CREATE TABLE repository.pings (dest TEXT, time_now TEXT, latency INT, was_it_ok_not_corrupt INT, did_it_succeed int, PRIMARY KEY (dest, time_now)) STRICT, WITHOUT ROWID;
 CREATE TABLE repository.exceptions(time_now TEXT, exception TEXT);
 CREATE TABLE repository.process_history (time_now TEXT, pid INT, process_name TEXT, thread_count INT, virtual_memory_use TEXT, paged_memory_use TEXT, private_memory_use TEXT, working_set TEXT, main_window_title TEXT, started TEXT, system_time INT,
 user_time INT,

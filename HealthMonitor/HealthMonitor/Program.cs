@@ -80,7 +80,12 @@ void StartPing(string dest)
                 byte[] buffer = Encoding.ASCII.GetBytes(data);
                 PingReply reply = pingSender.Send(dest, 120, buffer);
                 Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
-                ctx.Pings.Add(new HealthMonitor.Ping { Corrupt = reply.Buffer.SequenceEqual(buffer) ? 0 : 1, Dest = dest, Latency = (int)reply.RoundtripTime, TimeNow = DateTime.UtcNow.ToString("o") });
+                ctx.Pings.Add(new HealthMonitor.Ping { 
+                    WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0, 
+                    DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0 , 
+                    Dest = dest, Latency = (int)reply.RoundtripTime, 
+                    TimeNow = DateTime.UtcNow.ToString("o") 
+                });
                 ctx.SaveChanges();
                 Thread.Sleep(5000);
             }
