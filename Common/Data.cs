@@ -8,21 +8,21 @@ using System.Threading.Tasks;
 namespace RV.InvNew.Common
 {
 
-        public record LoginToken(
-            string? TokenID,
-            string? Token,
-            string? SecretToken,
-            string? Error
-        );
+    public record LoginToken(
+        string? TokenID,
+        string? Token,
+        string? SecretToken,
+        string? Error
+    );
 
-        public record LoginCredentials(
-            string User,
-            string Password,
-            string Terminal,
-            string? TOTP
-        );
+    public record LoginCredentials(
+        string User,
+        string Password,
+        string Terminal,
+        string? TOTP
+    );
 
-    [JsonSourceGenerationOptions(WriteIndented =true)]
+    [JsonSourceGenerationOptions(WriteIndented = true)]
     [JsonSerializable(typeof(AuthenticatedRequest<string>))]
     public partial class AuthenticatedRequest<T>
     {
@@ -59,5 +59,33 @@ namespace RV.InvNew.Common
         }
     }
 
+    [JsonSerializable(typeof(PosRefresh))]
+    [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
+    public class PosRefresh{
+        public List<PosCatalogue> Catalogue;
+        public List<PosBatch> Batches;
+        public List<VatCategory> VatCategories;
+    }
 
+    [JsonSerializable(typeof(PosCatalogue))]
+    [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
+    public class PosCatalogue
+    {
+        public long itemcode;
+        public string itemdesc;
+        public bool VatCategoryAdjustable;
+        public bool VatDependsOnUser;
+        public bool ManualPrice;
+        public bool EnforceAboveCost;
+    }
+
+    [JsonSerializable(typeof(PosBatch))]
+    [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
+    public class PosBatch
+    {
+        public long itemcode;
+        public long batchcode;
+        public double selling;
+        public double marked;
+    }
 }

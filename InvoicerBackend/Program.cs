@@ -116,6 +116,41 @@ app.MapPost("/GetItemsUnrestricted", (LoginToken L) =>
 }).WithName("GetItemsUnrestricted")
 .WithOpenApi();
 
+app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
+{
+    if (AS.Get() != null)
+    {
+        List<PosCatalogue> PC;
+        List<PosBatch> PB;
+        List<VatCategory> VC;
+        using (var ctx = new NewinvContext())
+        {
+            PC = ctx.Catalogues.Select(e => new PosCatalogue
+            {
+                itemcode = e.Itemcode,
+                EnforceAboveCost = e.EnforceAboveCost,
+                itemdesc = e.DescriptionPos,
+                ManualPrice = e.PriceManual,
+                VatCategoryAdjustable = e.VatCategoryAdjustable,
+                VatDependsOnUser = e.VatDependsOnUser
+            }).ToList();
+            PB = ctx.Inventories.Select((e) => new PosBatch
+            {
+                itemcode = e.Itemcode,
+                batchcode = e.Batchcode,
+                selling = e.SellingPrice,
+                marked = e.MarkedPrice
+            }).ToList();
+            VC = ctx.VatCategories.ToList();
+
+        }
+        return new PosRefresh() { VatCategories = VC, Batches = PB, Catalogue = PC };
+
+    }
+    else throw new UnauthorizedAccessException();
+}).WithName("PosRefresh")
+.WithOpenApi();
+
 app.MapPost("/AuthenticatedEcho", (AuthenticatedRequest<string> AS) =>
 {
     return AS.Get();

@@ -13,6 +13,7 @@ using SharpDX;
 using RV.InvNew.Common;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using EtoFE;
 
 public static class LoginTokens
 {
@@ -22,7 +23,7 @@ public static class LoginTokens
 public class Program
 {
     public static HttpClient client = new HttpClient();
-    [STAThread] static void Main()
+    [STAThread] public static void Main()
     {
         var ConfigFile = System.IO.File.ReadAllText("config.toml");
         var Config = Toml.ToModel(ConfigFile);
@@ -57,7 +58,7 @@ public class MyForm : Form
     }
     public string TryEcho(string Message)
     {
-        AuthenticatedRequest<string> request = new AuthenticatedRequest<string>("Hello", LoginTokens.token);
+        AuthenticatedRequest<string> request = new AuthenticatedRequest<string>($"Hello {Message}", LoginTokens.token);
         var response = Program.client.PostAsJsonAsync("/AuthenticatedEcho", request);
         //MessageBox.Show(JsonSerializer.Serialize(request));
         response.Wait();
@@ -113,7 +114,8 @@ public class MyForm : Form
                     }
                     else
                     {
-                        MessageBox.Show(TryEcho("Hey!"), MessageBoxType.Information);
+                        MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
+                        (new PosTerminal()).Show();
                     }; 
                 }
             ) { Text = "Login", Size=new Size(200, 50), Style="large" }, 
