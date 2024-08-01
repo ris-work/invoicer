@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using HealthMonitor;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -30,7 +31,8 @@ Console.WriteLine("Hello, World!");
                         tt = (int)item.TotalProcessorTime.TotalMilliseconds;
                         sttt = item.StartTime.ToString("o");
                     }
-                    catch (System.Exception ex) 
+                    catch (Win32Exception) { }
+                    catch (System.Exception ex)
                     { Console.WriteLine(ex.ToString()); }
                     ctx.ProcessHistories.Add(new ProcessHistory
                     {
@@ -51,6 +53,10 @@ Console.WriteLine("Hello, World!");
                     });
                     ctx.SaveChanges();
                 }
+            }
+            catch (Win32Exception E)
+            {
+
             }
             catch(System.Exception ex) {
                 Console.WriteLine(ex.ToString());
@@ -74,11 +80,12 @@ void StartPing(string dest)
                 byte[] buffer = Encoding.ASCII.GetBytes(data);
                 PingReply reply = pingSender.Send(dest, 120, buffer);
                 Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
-                ctx.Pings.Add(new HealthMonitor.Ping { Corrupt = reply.Buffer.SequenceEqual(buffer) ? 0 : 1, Dest = dest, Latency = (int)reply.RoundtripTime, TimeNow=DateTime.UtcNow.ToString("o") });
+                ctx.Pings.Add(new HealthMonitor.Ping { Corrupt = reply.Buffer.SequenceEqual(buffer) ? 0 : 1, Dest = dest, Latency = (int)reply.RoundtripTime, TimeNow = DateTime.UtcNow.ToString("o") });
                 ctx.SaveChanges();
                 Thread.Sleep(5000);
             }
         }
+        catch (Win32Exception E) { }
         catch (System.Exception E)
         {
             E.ToString();
