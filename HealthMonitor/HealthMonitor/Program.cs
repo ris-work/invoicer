@@ -15,53 +15,62 @@ Console.WriteLine("Hello, World!");
     while (true)
     {
         var list = System.Diagnostics.Process.GetProcesses();
-            foreach (var item in list)
+        try
+        {
+            using (var ctx = new LogsContext())
             {
-            try
-            {
-                //Console.WriteLine("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}", item.ProcessName, item.Threads.Count, item.Id, item.VirtualMemorySize64, item.PagedMemorySize64, item.PrivateMemorySize64, item.WorkingSet64, item.MainWindowTitle);
-                using (var ctx = new LogsContext())
+                foreach (var item in ctx.ProcessHistories.Where((x) => DateTime.Parse(x.TimeNow) < DateTime.Now.AddDays(-7)))
                 {
-                    int syst = 0, ut = 0, tt = 0; 
-                    string sttt = "0";
+                    ctx.Remove(item);
+                };
+                foreach (var item in list)
+                {
                     try
                     {
-                        syst = (int)item.PrivilegedProcessorTime.TotalMilliseconds;
-                        ut = (int)item.UserProcessorTime.TotalMilliseconds;
-                        tt = (int)item.TotalProcessorTime.TotalMilliseconds;
-                        sttt = item.StartTime.ToString("o");
+                        int syst = 0, ut = 0, tt = 0;
+                        string sttt = "0";
+                        try
+                        {
+                            syst = (int)item.PrivilegedProcessorTime.TotalMilliseconds;
+                            ut = (int)item.UserProcessorTime.TotalMilliseconds;
+                            tt = (int)item.TotalProcessorTime.TotalMilliseconds;
+                            sttt = item.StartTime.ToString("o");
+                        }
+                        catch (Win32Exception) { }
+                        catch (System.Exception ex)
+                        { Console.WriteLine(ex.ToString()); }
+                        ctx.ProcessHistories.Add(new ProcessHistory
+                        {
+                            MainWindowTitle = item.MainWindowTitle,
+                            PagedMemoryUse = item.PagedMemorySize64.ToString(),
+                            Pid = item.Id,
+                            PrivateMemoryUse = item.PrivateMemorySize64.ToString(),
+                            ProcessName = item.ProcessName,
+                            Started = sttt,
+                            SystemTime = syst,
+                            UserTime = ut,
+                            TotalTime = tt,
+                            ThreadCount = item.Threads.Count,
+                            TimeNow = DateTime.Now.ToString("o"),
+                            VirtualMemoryUse = item.VirtualMemorySize64.ToString(),
+                            WorkingSet = item.WorkingSet64.ToString()
+
+                        });
                     }
-                    catch (Win32Exception) { }
-                    catch (System.Exception ex)
-                    { Console.WriteLine(ex.ToString()); }
-                    ctx.ProcessHistories.Add(new ProcessHistory
+                    catch (Win32Exception E)
                     {
-                        MainWindowTitle = item.MainWindowTitle,
-                        PagedMemoryUse = item.PagedMemorySize64.ToString(),
-                        Pid = item.Id,
-                        PrivateMemoryUse = item.PrivateMemorySize64.ToString(),
-                        ProcessName = item.ProcessName,
-                        Started = sttt,
-                        SystemTime = syst,
-                        UserTime = ut,
-                        TotalTime = tt,
-                        ThreadCount = item.Threads.Count,
-                        TimeNow = DateTime.Now.ToString("o"),
-                        VirtualMemoryUse = item.VirtualMemorySize64.ToString(),
-                        WorkingSet = item.WorkingSet64.ToString()
 
-                    });
-                    ctx.SaveChanges();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                    }
                 }
-            }
-            catch (Win32Exception E)
-            {
-
-            }
-            catch(System.Exception ex) {
-                Console.WriteLine(ex.ToString());
+                ctx.SaveChanges();
             }
         }
+        catch (System.Exception E) { }
+        
         Thread.Sleep(5000);
     }
 }
