@@ -23,6 +23,10 @@ Console.WriteLine("Hello, World!");
                 {
                     ctx.Remove(item);
                 };
+                foreach (var item in ctx.Pings.Where((x) => DateTime.Parse(x.TimeNow) < DateTime.Now.AddDays(-7)))
+                {
+                    ctx.Remove(item);
+                };
                 foreach (var item in list)
                 {
                     try
