@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using HealthMonitor;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.ComponentModel;
 using System.Linq.Expressions;
@@ -19,14 +20,8 @@ Console.WriteLine("Hello, World!");
         {
             using (var ctx = new LogsContext())
             {
-                foreach (var item in ctx.ProcessHistories.Where((x) => DateTime.Parse(x.TimeNow) < DateTime.Now.AddDays(-7)))
-                {
-                    ctx.Remove(item);
-                };
-                foreach (var item in ctx.Pings.Where((x) => DateTime.Parse(x.TimeNow) < DateTime.Now.AddDays(-7)))
-                {
-                    ctx.Remove(item);
-                };
+                ctx.ProcessHistories.FromSql($"DELETE FROM pings WHERE time_now < datetime('now', '-7 days');").ToList();
+                ctx.ProcessHistories.FromSql($"DELETE FROM process_history WHERE time_now < datetime('now', '-7 days');").ToList();
                 foreach (var item in list)
                 {
                     try
