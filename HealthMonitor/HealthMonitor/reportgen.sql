@@ -17,8 +17,8 @@ SELECT * FROM candidates can JOIN limited_to_5_worst sd ON can.dest = sd.dest WH
 
 --Decaminute latency averages (worst 5 per dest, all destinations)
 WITH candidates AS (SELECT DISTINCT(dest) AS dest FROM pings), 
-stats_decaminutes AS (SELECT substr(time_now, 1, 15) AS decaminute, AVG(latency) AS latency_average, count(latency) AS ping_counts, 
+stats_decaminutes AS (SELECT substr(time_now, 1, 15) AS decaminute, CAST(AVG(latency) AS INT) AS latency_avg_ms, count(latency) AS ping_counts, 
     dest, 100*SUM(was_it_ok_not_corrupt)/COUNT(was_it_ok_not_corrupt) AS success_rate 
     FROM pings GROUP BY decaminute, dest),
-limited_to_5_worst AS (SELECT *, row_number() OVER (PARTITION BY dest ORDER BY latency_average DESC) AS group_rn FROM stats_decaminutes)
-SELECT * FROM candidates can JOIN limited_to_5_worst sd ON can.dest = sd.dest WHERE ping_counts > 10 AND group_rn < 5 ORDER BY latency_average DESC;
+limited_to_5_worst AS (SELECT *, row_number() OVER (PARTITION BY dest ORDER BY latency_avg_ms DESC) AS group_rn FROM stats_decaminutes)
+SELECT * FROM candidates can JOIN limited_to_5_worst sd ON can.dest = sd.dest WHERE ping_counts > 10 AND group_rn < 5 ORDER BY latency_avg_ms DESC;
