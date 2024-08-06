@@ -9,8 +9,6 @@ using System.Text;
 using Tomlyn;
 using Tomlyn.Model;
 
-Console.WriteLine("Hello, World!");
-
 (new Thread(() =>
 {
     while (true)
