@@ -10,13 +10,13 @@
     <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <StartupObject>HealthMonitor.Program</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>28042.ico</ApplicationIcon>
+    <ApplicationIcon>cd_sat.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
 
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="28042.ico" />
+    <Content Include="cd_sat.ico" />
   </ItemGroup>
 
   <ItemGroup>
