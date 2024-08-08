@@ -23,6 +23,12 @@ namespace HealthMonitor
     {
         public NetworkPingStatsForm() {
             ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(800, 600) };
+            etoPlot.Plot.XAxis.LabelStyle(fontSize: 24);
+            //etoPlot.Plot.XAxis.TickLabelStyle(fontSize: 24);
+            etoPlot.Plot.YAxis.LabelStyle(fontSize: 24);
+            //etoPlot.Plot.YAxis.TickLabelStyle(fontSize: 24);
+            etoPlot.Plot.Legend().FontSize = 24;
+
             var SaveButton = new Button() { Text = "Save As ..." };
             SaveButton.Click += (e, a) =>
             {
@@ -41,8 +47,9 @@ namespace HealthMonitor
                 }
             };
             var ReloadButton = new Button() { Text = "Reload" };
-            ReloadButton.Click += (e, a) => { etoPlot.Refresh(); };
+            ReloadButton.Click += (e, a) => {  };
             var ResetButton = new Button() { Text = "Reset" };
+            ResetButton.Click += (e, a) => { etoPlot.Plot.AxisAuto(); etoPlot.Refresh(); };
             var TopStackLayout = new StackLayout() { Items = { null, ResetButton, ReloadButton, SaveButton, null }, Orientation = Eto.Forms.Orientation.Horizontal, Spacing= 20 };
 
             //etoPlot.Plot.AddSignal(ScottPlot.Generate.Sin());
@@ -77,7 +84,10 @@ namespace HealthMonitor
             etoPlot.Plot.XAxis.DateTimeFormat(true);
             foreach (var item in series)
             {
-                etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
+                var p = etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
+                p.Label = item;
+                p.MarkerSize = 6;
+                p.MarkerLineWidth = 3;
                 
             }
             etoPlot.Plot.Legend();

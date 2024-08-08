@@ -9,6 +9,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows8.0</TargetFramework>
     <StartupObject>HealthMonitor.Program</StartupObject>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
 
   </PropertyGroup>
 
