@@ -7,7 +7,8 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <TargetFramework>net8.0-windows8.0</TargetFramework>
+    <StartupObject>HealthMonitor.Program</StartupObject>
 
   </PropertyGroup>
 

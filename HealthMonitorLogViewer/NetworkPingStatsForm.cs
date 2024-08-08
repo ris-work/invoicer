@@ -77,9 +77,10 @@ namespace HealthMonitor
             etoPlot.Plot.XAxis.DateTimeFormat(true);
             foreach (var item in series)
             {
-                etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray());
+                etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
                 
             }
+            etoPlot.Plot.Legend();
 
 
             etoPlot.Plot.Title("Ping stats");
