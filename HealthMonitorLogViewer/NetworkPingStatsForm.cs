@@ -11,6 +11,7 @@ using ScottPlot;
 using System.Security;
 using System.Drawing.Text;
 using Microsoft.EntityFrameworkCore;
+using ScottPlot.Renderable;
 
 namespace HealthMonitor
 {
@@ -30,12 +31,12 @@ namespace HealthMonitor
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
             ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            etoPlot.Plot.XAxis.LabelStyle(fontSize: 24);
-            etoPlot.Plot.YAxis.LabelStyle(fontSize: 24);
-            etoPlot.Plot.Legend().FontSize = 24;
-            etoPlotSuccessRates.Plot.XAxis.LabelStyle(fontSize: 24);
-            etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 24);
-            etoPlotSuccessRates.Plot.Legend().FontSize = 24;
+            etoPlot.Plot.XAxis.LabelStyle(fontSize: 18);
+            etoPlot.Plot.YAxis.LabelStyle(fontSize: 18);
+            etoPlot.Plot.Legend().FontSize = 10;
+            etoPlotSuccessRates.Plot.XAxis.LabelStyle(fontSize: 18);
+            etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 18);
+            etoPlotSuccessRates.Plot.Legend().FontSize = 10;
 
             var SaveButton = new Button() { Text = "Save As ..." };
             SaveButton.Click += (e, a) =>
@@ -43,11 +44,20 @@ namespace HealthMonitor
                 try
                 {
                     var SaveDialog = new SaveFileDialog();
+                    SaveDialog.Title = "Save stats as...";
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
-                    etoPlot.Plot.SaveFig(Path, 800, 600, false, 4);
+                    etoPlot.Plot.SaveFig(Path, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {Path}");
+
+                    var SaveDialogSuccessStats = new SaveFileDialog();
+                    SaveDialogSuccessStats.Title = "Save success stats as...";
+                    SaveDialogSuccessStats.ShowDialog("");
+                    var PathSuccessStats = SaveDialogSuccessStats.FileName;
+
+                    etoPlot.Plot.SaveFig(Path, 2560, 1440, false, 4);
+                    MessageBox.Show($"Saved as: {PathSuccessStats}");
                 }
                 catch (System.Exception E)
                 {
@@ -56,16 +66,24 @@ namespace HealthMonitor
             };
 
             var ReloadButton = new Button() { Text = "Reload" };
-            ReloadButton.Click += (e, a) => {  };
+            ReloadButton.Click += (e, a) => {
+                MessageBox.Show("Not implemented", MessageBoxType.Warning);
+            };
 
             var ResetButton = new Button() { Text = "Reset" };
-            ResetButton.Click += (e, a) => { etoPlot.Plot.AxisAuto(); etoPlot.Refresh(); };
+            ResetButton.Click += (e, a) => { 
+                etoPlot.Plot.AxisAuto(); 
+                etoPlot.Refresh();
+                etoPlotSuccessRates.Plot.AxisAuto();
+                etoPlotSuccessRates.Refresh();
+            };
 
             var TopStackLayout = new StackLayout() { Items = { null, ResetButton, ReloadButton, SaveButton, null }, Orientation = Eto.Forms.Orientation.Horizontal, Spacing= 20 };
 
             
             List<String> series;
             List<String> Decaminutes = new List<string>();
+            List<String> Hours = new List<string>();
             Dictionary<String, List < PingAverageByDecaminute >> PlotData = new();
             Dictionary<String, List<PingSuccessRateByDecaminute>> PlotDataSuccessRates = new();
             using (var logsContext = new LogsContext())
@@ -77,13 +95,17 @@ namespace HealthMonitor
             {
                 List<PingAverageByDecaminute> pingAveragesByDecaminute = new List<PingAverageByDecaminute>();
                 List<PingSuccessRateByDecaminute> pingSuccessRatesByDecaminute = new List<PingSuccessRateByDecaminute>();
+                List<PingSuccessRateByDecaminute> pingSuccessRatesByHour = new List<PingSuccessRateByDecaminute>();
                 using (var logsContext = new LogsContext())
                 {
                     
                     var GroupedByDecaminute = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 18)).ToList();
+                    var GroupedByHour = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 16)).ToList();
                     Decaminutes = GroupedByDecaminute.Select((e) => e.Key).ToList();
+                    Hours = GroupedByHour.Select((e) => e.Key).ToList();
                     pingAveragesByDecaminute = GroupedByDecaminute.Select(e => new PingAverageByDecaminute { Decaminute = e.Key, LatencyAverage = e.Average((x) => x.Latency) }).ToList();
                     pingSuccessRatesByDecaminute = GroupedByDecaminute.Select(e => new PingSuccessRateByDecaminute { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0 ) }).ToList();
+                    pingSuccessRatesByHour = GroupedByDecaminute.Select(e => new PingSuccessRateByDecaminute { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0) }).ToList();
                 }
                 PlotData.Add(item, pingAveragesByDecaminute);
                 PlotDataSuccessRates.Add(item, pingSuccessRatesByDecaminute);
@@ -99,28 +121,41 @@ namespace HealthMonitor
                 p.Label = item;
                 p.MarkerSize = 6;
                 p.MarkerLineWidth = 3;
-                pSuccessRates.MarkerSize = 6;
-                pSuccessRates.MarkerLineWidth = 3;
+                pSuccessRates.MarkerSize = 8;
+                pSuccessRates.MarkerLineWidth = 4;
 
             }
 
             etoPlot.Plot.Legend();
+            etoPlot.Plot.Legend().FontName = "Courier";
+            etoPlot.Plot.Legend().Location = Alignment.UpperLeft;
+            etoPlot.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
             etoPlot.Plot.Title("Ping stats");
-            etoPlot.Plot.XLabel("Date");
+            etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.Legend();
+            etoPlotSuccessRates.Plot.Legend().FontName = "Courier";
+            etoPlotSuccessRates.Plot.Legend().Location = Alignment.UpperLeft;
+            etoPlotSuccessRates.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
             etoPlotSuccessRates.Plot.Title("Ping stats");
-            etoPlotSuccessRates.Plot.XLabel("Date");
+            etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
             etoPlotSuccessRates.Refresh();
 
 
-            var VerticalStackLayout = new StackLayout() { Items = { TopStackLayout, etoPlot, etoPlotSuccessRates }, Orientation = Eto.Forms.Orientation.Vertical, Spacing = 20 };
+            var VerticalStackLayout = new StackLayout() { 
+                Items = { 
+                    TopStackLayout, 
+                    etoPlot, 
+                    etoPlotSuccessRates 
+                }, 
+                Orientation = Eto.Forms.Orientation.Vertical, 
+                Spacing = 20 
+            };
             Content = VerticalStackLayout;
             Resizable = false;
-
 
         }
     }
