@@ -57,7 +57,7 @@ namespace HealthMonitor
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
-                    etoPlot.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
+                    etoPlotSuccessRates.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {PathSuccessStats}");
                 }
                 catch (System.Exception E)
@@ -164,7 +164,6 @@ namespace HealthMonitor
             };
             Content = VerticalStackLayout;
             Resizable = false;
-
         }
     }
 }
