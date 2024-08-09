@@ -15,19 +15,19 @@ using ScottPlot.Renderable;
 
 namespace HealthMonitor
 {
-    public class PingAverageByDecaminute
+    public class PingAverageByHour
     {
         public string Decaminute;
         public double? LatencyAverage;
     }
-    public class PingSuccessRateByDecaminute
+    public class PingSuccessRateByHour
     {
         public string Decaminute;
         public double? SuccessRate;
     }
-    public class NetworkPingStatsForm: Form
+    public class NetworkPingStatsFormHourly: Form
     {
-        public NetworkPingStatsForm() {
+        public NetworkPingStatsFormHourly() {
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
             ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
@@ -82,10 +82,9 @@ namespace HealthMonitor
 
             
             List<String> series;
-            List<String> Decaminutes = new List<string>();
             List<String> Hours = new List<string>();
-            Dictionary<String, List < PingAverageByDecaminute >> PlotData = new();
-            Dictionary<String, List<PingSuccessRateByDecaminute>> PlotDataSuccessRates = new();
+            Dictionary<String, List < PingAverageByHour >> PlotData = new();
+            Dictionary<String, List<PingSuccessRateByHour>> PlotDataSuccessRates = new();
             using (var logsContext = new LogsContext())
             {
                 series = logsContext.Database.SqlQuery<String>($"SELECT DISTINCT(dest) FROM pings").ToList();
@@ -93,22 +92,17 @@ namespace HealthMonitor
             }
             foreach (var item in series)
             {
-                List<PingAverageByDecaminute> pingAveragesByDecaminute = new List<PingAverageByDecaminute>();
-                List<PingSuccessRateByDecaminute> pingSuccessRatesByDecaminute = new List<PingSuccessRateByDecaminute>();
-                List<PingSuccessRateByDecaminute> pingSuccessRatesByHour = new List<PingSuccessRateByDecaminute>();
+                List<PingAverageByHour> pingAveragesByHour = new List<PingAverageByHour>();
+                List<PingSuccessRateByHour> pingSuccessRatesByHour = new List<PingSuccessRateByHour>();
                 using (var logsContext = new LogsContext())
                 {
-                    
-                    var GroupedByDecaminute = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 18)).ToList();
-                    var GroupedByHour = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 16)).ToList();
-                    Decaminutes = GroupedByDecaminute.Select((e) => e.Key).ToList();
+                    var GroupedByHour = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 13)).ToList();
                     Hours = GroupedByHour.Select((e) => e.Key).ToList();
-                    pingAveragesByDecaminute = GroupedByDecaminute.Select(e => new PingAverageByDecaminute { Decaminute = e.Key, LatencyAverage = e.Average((x) => x.Latency) }).ToList();
-                    pingSuccessRatesByDecaminute = GroupedByDecaminute.Select(e => new PingSuccessRateByDecaminute { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0 ) }).ToList();
-                    pingSuccessRatesByHour = GroupedByDecaminute.Select(e => new PingSuccessRateByDecaminute { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0) }).ToList();
+                    pingAveragesByHour = GroupedByHour.Select(e => new PingAverageByHour { Decaminute = e.Key, LatencyAverage = e.Average((x) => x.Latency) }).ToList();
+                    pingSuccessRatesByHour = GroupedByHour.Select(e => new PingSuccessRateByHour { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0 ) }).ToList();
                 }
-                PlotData.Add(item, pingAveragesByDecaminute);
-                PlotDataSuccessRates.Add(item, pingSuccessRatesByDecaminute);
+                PlotData.Add(item, pingAveragesByHour);
+                PlotDataSuccessRates.Add(item, pingSuccessRatesByHour);
 
             }
 
@@ -116,8 +110,8 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.XAxis.DateTimeFormat(true);
             foreach (var item in series)
             {
-                var p = etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
-                var pSuccessRates = etoPlotSuccessRates.Plot.AddScatter(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray(), label: item);
+                var p = etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+":00:00").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
+                var pSuccessRates = etoPlotSuccessRates.Plot.AddScatter(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + ":00:00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray(), label: item);
                 p.Label = item;
                 p.MarkerSize = 6;
                 p.MarkerLineWidth = 3;
@@ -130,7 +124,7 @@ namespace HealthMonitor
             etoPlot.Plot.Legend().FontName = "Courier";
             etoPlot.Plot.Legend().Location = Alignment.UpperLeft;
             etoPlot.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlot.Plot.Title("Ping stats");
+            etoPlot.Plot.Title("Ping stats (Hourly averages)");
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
             etoPlot.Refresh();
@@ -139,7 +133,7 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Legend().FontName = "Courier";
             etoPlotSuccessRates.Plot.Legend().Location = Alignment.UpperLeft;
             etoPlotSuccessRates.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlotSuccessRates.Plot.Title("Ping stats (non-corrupt replies)");
+            etoPlotSuccessRates.Plot.Title("Ping stats (Hourly averages) - Success Rates (non-corrupt replies)");
             etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
             etoPlotSuccessRates.Refresh();

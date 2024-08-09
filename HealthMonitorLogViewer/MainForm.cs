@@ -10,8 +10,10 @@ namespace HealthMonitor
         {
             Title = "My Eto Form";
             MinimumSize = new Size(200, 200);
-            var NetworkPingStatsButton = new Button() { Text = "Network Ping Stats" };
+            var NetworkPingStatsButton = new Button() { Text = "Network Ping Stats (by decaminute (10 minutes))" };
             NetworkPingStatsButton.Click += (e, a) => { (new NetworkPingStatsForm()).Show(); };
+            var NetworkPingStatsButtonHourly = new Button() { Text = "Network Ping Stats (by hour)" };
+            NetworkPingStatsButtonHourly.Click += (e, a) => { (new NetworkPingStatsFormHourly()).Show(); };
             var ProcessStatsButton = new Button() { Text = "Process Stats" };
             ProcessStatsButton.Click += (e, a) => { MessageBox.Show("Not implemented", MessageBoxType.Warning); };
 
@@ -22,6 +24,7 @@ namespace HealthMonitor
                 Items =
                 {
                     NetworkPingStatsButton,
+                    NetworkPingStatsButtonHourly,
                     ProcessStatsButton
 
 				},
