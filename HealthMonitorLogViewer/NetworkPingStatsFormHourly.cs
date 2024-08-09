@@ -28,6 +28,7 @@ namespace HealthMonitor
     public class NetworkPingStatsFormHourly: Form
     {
         public NetworkPingStatsFormHourly() {
+            Title = "HealthMonitor Plots: by Hour";
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
             ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };

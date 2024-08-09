@@ -12,6 +12,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>cd_sat.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
+    <OutputType>Exe</OutputType>
 
   </PropertyGroup>
 
