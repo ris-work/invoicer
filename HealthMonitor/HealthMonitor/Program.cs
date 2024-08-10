@@ -4,13 +4,69 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.ComponentModel;
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Tomlyn;
 using Tomlyn.Model;
 
+
+
+void StartPing(string dest)
+{
+    while (true)
+    {
+        try
+        {
+            using (var ctx = new LogsContext())
+            {
+                var pingSender = new System.Net.NetworkInformation.Ping();
+                string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb";
+                byte[] buffer = Encoding.ASCII.GetBytes(data);
+                PingReply reply = pingSender.Send(dest, 4000, buffer);
+                Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
+                ctx.Pings.Add(new HealthMonitor.Ping { 
+                    WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0, 
+                    DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0 , 
+                    Dest = dest, Latency = (int)reply.RoundtripTime, 
+                    TimeNow = DateTime.UtcNow.ToString("o") 
+                });
+                ctx.SaveChanges();
+                
+            }
+        }
+        catch (Win32Exception E) { }
+        catch (System.Exception E)
+        {
+            E.ToString();
+        }
+        Thread.Sleep(5000);
+    }
+}
+
+string ConfigFile = System.IO.File.ReadAllText("HealthMonitor.toml");
+List<string> destinations = new List<string>();
+var TM = Toml.ToModel(ConfigFile);
+var TA = ((TomlArray)TM["destinations"]);
+int RetentionDays = 7;
+if (TM.ContainsKey("RetentionDays"))
+{
+    RetentionDays = ((int)((long)TM["RetentionDays"]));
+}
+
+destinations = TA.Select(x => (string)x).ToList();
+//destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
+foreach (var item in destinations)
+{
+    var t = new Thread(() => { StartPing(item); });
+    t.Start();
+    Console.WriteLine("Ping thread started for: {0}", item);
+};
+
 (new Thread(() =>
 {
+    Console.WriteLine($"Retention set to: {RetentionDays} days.");
     while (true)
     {
         var list = System.Diagnostics.Process.GetProcesses();
@@ -18,8 +74,9 @@ using Tomlyn.Model;
         {
             using (var ctx = new LogsContext())
             {
-                ctx.ProcessHistories.FromSql($"DELETE FROM pings WHERE time_now < datetime('now', '-7 days');").ToList();
-                ctx.ProcessHistories.FromSql($"DELETE FROM process_history WHERE time_now < datetime('now', '-7 days');").ToList();
+                var days_string = RetentionDays.ToString();
+                ctx.ProcessHistories.FromSql($"DELETE FROM pings WHERE time_now < datetime('now', '-{days_string} days');").ToList();
+                ctx.ProcessHistories.FromSql($"DELETE FROM process_history WHERE time_now < datetime('now', '-{days_string} days');").ToList();
                 foreach (var item in list)
                 {
                     try
@@ -67,52 +124,8 @@ using Tomlyn.Model;
             }
         }
         catch (System.Exception E) { }
-        
+
         Thread.Sleep(5000);
     }
 }
 )).Start();
-
-void StartPing(string dest)
-{
-    while (true)
-    {
-        try
-        {
-            using (var ctx = new LogsContext())
-            {
-                var pingSender = new System.Net.NetworkInformation.Ping();
-                string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb";
-                byte[] buffer = Encoding.ASCII.GetBytes(data);
-                PingReply reply = pingSender.Send(dest, 4000, buffer);
-                Console.WriteLine("{0} {1} {2}", dest, reply.RoundtripTime, reply.Buffer.SequenceEqual(buffer));
-                ctx.Pings.Add(new HealthMonitor.Ping { 
-                    WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0, 
-                    DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0 , 
-                    Dest = dest, Latency = (int)reply.RoundtripTime, 
-                    TimeNow = DateTime.UtcNow.ToString("o") 
-                });
-                ctx.SaveChanges();
-                
-            }
-        }
-        catch (Win32Exception E) { }
-        catch (System.Exception E)
-        {
-            E.ToString();
-        }
-        Thread.Sleep(5000);
-    }
-}
-
-string ConfigFile = System.IO.File.ReadAllText("HealthMonitor.toml");
-List<string> destinations = new List<string>();
-var TA = ((TomlArray)Toml.ToModel(ConfigFile)["destinations"]);
-destinations = TA.Select(x => (string)x).ToList();
-//destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
-foreach (var item in destinations)
-{
-    var t = new Thread(() => { StartPing(item); });
-    t.Start();
-    Console.WriteLine("Ping thread started for: {0}", item);
-};

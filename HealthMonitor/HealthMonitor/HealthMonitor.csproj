@@ -10,11 +10,11 @@
 	  <PublishSingleFile>true</PublishSingleFile>
     <InvariantGlobalization>true</InvariantGlobalization>
   <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  <ApplicationIcon>28042.ico</ApplicationIcon>
+  <ApplicationIcon>log_2.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="28042.ico" />
+    <Content Include="log_2.ico" />
   </ItemGroup>
 
   <ItemGroup>
