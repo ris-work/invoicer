@@ -11,6 +11,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   <ApplicationIcon>log_2.ico</ApplicationIcon>
+  <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

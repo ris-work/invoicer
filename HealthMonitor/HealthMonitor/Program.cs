@@ -75,20 +75,25 @@ foreach (var item in destinations)
             using (var ctx = new LogsContext())
             {
                 var days_string = RetentionDays.ToString();
-                ctx.ProcessHistories.FromSql($"DELETE FROM pings WHERE time_now < datetime('now', '-{days_string} days');").ToList();
-                ctx.ProcessHistories.FromSql($"DELETE FROM process_history WHERE time_now < datetime('now', '-{days_string} days');").ToList();
+                ctx.Database.SqlQuery<int>($"DELETE FROM pings WHERE time_now < datetime('now', '-{days_string} days');").ToList();
+                ctx.Database.SqlQuery<int>($"DELETE FROM process_history WHERE time_now < datetime('now', '-{days_string} days');").ToList();
                 foreach (var item in list)
                 {
                     try
                     {
-                        int syst = 0, ut = 0, tt = 0;
+                        int syst = 0, ut = 0, tt = 0, tc = 0; 
+                        string wsmem = "0", vmuse = "0", prmemuse="0";
                         string sttt = "0";
                         try
                         {
+                            vmuse = item.VirtualMemorySize64.ToString();
                             syst = (int)item.PrivilegedProcessorTime.TotalMilliseconds;
                             ut = (int)item.UserProcessorTime.TotalMilliseconds;
                             tt = (int)item.TotalProcessorTime.TotalMilliseconds;
                             sttt = item.StartTime.ToString("o");
+                            wsmem = item.WorkingSet64.ToString();
+                            prmemuse = item.PrivateMemorySize64.ToString();
+                            tc = item.Threads.Count;
                         }
                         catch (Win32Exception) { }
                         catch (System.Exception ex)
@@ -98,22 +103,22 @@ foreach (var item in destinations)
                             MainWindowTitle = item.MainWindowTitle,
                             PagedMemoryUse = item.PagedMemorySize64.ToString(),
                             Pid = item.Id,
-                            PrivateMemoryUse = item.PrivateMemorySize64.ToString(),
+                            PrivateMemoryUse = prmemuse,
                             ProcessName = item.ProcessName,
                             Started = sttt,
                             SystemTime = syst,
                             UserTime = ut,
                             TotalTime = tt,
-                            ThreadCount = item.Threads.Count,
+                            ThreadCount = tc,
                             TimeNow = DateTime.Now.ToString("o"),
-                            VirtualMemoryUse = item.VirtualMemorySize64.ToString(),
-                            WorkingSet = item.WorkingSet64.ToString()
+                            VirtualMemoryUse = vmuse,
+                            WorkingSet = wsmem
 
                         });
                     }
                     catch (Win32Exception E)
                     {
-
+                        //Console.WriteLine(E.ToString());
                     }
                     catch (System.Exception ex)
                     {
@@ -123,7 +128,9 @@ foreach (var item in destinations)
                 ctx.SaveChanges();
             }
         }
-        catch (System.Exception E) { }
+        catch (System.Exception E) {
+            Console.WriteLine(E.ToString());
+        }
 
         Thread.Sleep(5000);
     }
