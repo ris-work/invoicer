@@ -5,9 +5,9 @@ DROP VIEW window_titles;
 
 CREATE VIEW stats_decaminute AS
 SELECT decaminute, process_name, avg_working_set, max_working_set_for_one_instance, 
-(CASE WHEN total_time-prev_total_time < 0 THEN total_time-prev_total_time ELSE 0 END) AS cpu_diff,
-(CASE WHEN total_time-prev_total_time < 0 THEN total_time-prev_total_time ELSE 0 END)*
-100/(unixepoch(decaminute || '0') - unixepoch(prev_decaminute || '0'))  AS cpu_percent,
+(CASE WHEN total_time-prev_total_time > 0 THEN total_time-prev_total_time ELSE 0 END) AS cpu_diff,
+(CASE WHEN total_time-prev_total_time > 0 THEN total_time-prev_total_time ELSE 0 END)*
+100.0/(1000 * (unixepoch(decaminute || '0') - unixepoch(prev_decaminute || '0')))  AS cpu_percent,
 unixepoch(decaminute || '0') - unixepoch(prev_decaminute || '0') AS time_diff,
 thread_count FROM (
 SELECT substring(time_now, 1, 15) AS decaminute, process_name, sum(working_set)/tcbdm.count AS avg_working_set,
@@ -22,9 +22,9 @@ GROUP BY substring(time_now, 1, 15), process_name
 
 CREATE VIEW stats_hourly AS 
 SELECT hour, process_name, avg_working_set, max_working_set_for_one_instance, 
-(CASE WHEN total_time-prev_total_time < 0 THEN total_time-prev_total_time ELSE 0 END) AS cpu_diff,
-(CASE WHEN total_time-prev_total_time < 0 THEN total_time-prev_total_time ELSE 0 END)*
-100/(unixepoch(hour || '0') - unixepoch(prev_hour || '0'))  AS cpu_percent,
+(CASE WHEN total_time-prev_total_time > 0 THEN total_time-prev_total_time ELSE 0 END) AS cpu_diff,
+(CASE WHEN total_time-prev_total_time > 0 THEN total_time-prev_total_time ELSE 0 END)*
+100.0/(1000 * (unixepoch(hour || ':00') - unixepoch(prev_hour || ':00')))  AS cpu_percent,
 unixepoch(hour || ':00') - unixepoch(prev_hour || ':00') AS time_diff,
 thread_count FROM (
 SELECT substring(time_now, 1, 13) AS hour, process_name, sum(working_set)/tcbh.count AS avg_working_set,
