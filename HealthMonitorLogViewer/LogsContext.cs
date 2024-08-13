@@ -27,13 +27,17 @@ public partial class LogsContext : DbContext
 
     public virtual DbSet<ProcessHistory> ProcessHistories { get; set; }
 
+    public virtual DbSet<StatsDecaminute> StatsDecaminutes { get; set; }
+
+    public virtual DbSet<StatsHourly> StatsHourlies { get; set; }
+
     public virtual DbSet<TimesCollectedByDecaminute> TimesCollectedByDecaminutes { get; set; }
 
     public virtual DbSet<TimesCollectedByHour> TimesCollectedByHours { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlite($"Data Source={Config.LogFile}");
+        => optionsBuilder.UseSqlite("Data Source=logs.sqlite3");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +128,34 @@ public partial class LogsContext : DbContext
                 .HasColumnName("user_time");
             entity.Property(e => e.VirtualMemoryUse).HasColumnName("virtual_memory_use");
             entity.Property(e => e.WorkingSet).HasColumnName("working_set");
+        });
+
+        modelBuilder.Entity<StatsDecaminute>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("stats_decaminute");
+
+            entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
+            entity.Property(e => e.Decaminute).HasColumnName("decaminute");
+            entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
+            entity.Property(e => e.ProcessName).HasColumnName("process_name");
+            entity.Property(e => e.ThreadCount).HasColumnName("thread_count");
+            entity.Property(e => e.TotalTime).HasColumnName("total_time");
+        });
+
+        modelBuilder.Entity<StatsHourly>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("stats_hourly");
+
+            entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
+            entity.Property(e => e.Hour).HasColumnName("hour");
+            entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
+            entity.Property(e => e.ProcessName).HasColumnName("process_name");
+            entity.Property(e => e.ThreadCount).HasColumnName("thread_count");
+            entity.Property(e => e.TotalTime).HasColumnName("total_time");
         });
 
         modelBuilder.Entity<TimesCollectedByDecaminute>(entity =>
