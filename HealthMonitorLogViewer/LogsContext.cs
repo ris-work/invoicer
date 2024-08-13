@@ -137,11 +137,12 @@ public partial class LogsContext : DbContext
                 .ToView("stats_decaminute");
 
             entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
+            entity.Property(e => e.CpuDiff).HasColumnName("cpu_diff");
             entity.Property(e => e.Decaminute).HasColumnName("decaminute");
             entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
             entity.Property(e => e.ThreadCount).HasColumnName("thread_count");
-            entity.Property(e => e.TotalTime).HasColumnName("total_time");
+            entity.Property(e => e.TimeDiff).HasColumnName("time_diff");
         });
 
         modelBuilder.Entity<StatsHourly>(entity =>
@@ -151,11 +152,12 @@ public partial class LogsContext : DbContext
                 .ToView("stats_hourly");
 
             entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
+            entity.Property(e => e.CpuDiff).HasColumnName("cpu_diff");
             entity.Property(e => e.Hour).HasColumnName("hour");
             entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
             entity.Property(e => e.ThreadCount).HasColumnName("thread_count");
-            entity.Property(e => e.TotalTime).HasColumnName("total_time");
+            entity.Property(e => e.TimeDiff).HasColumnName("time_diff");
         });
 
         modelBuilder.Entity<TimesCollectedByDecaminute>(entity =>
