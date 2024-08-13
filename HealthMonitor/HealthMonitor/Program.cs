@@ -54,6 +54,11 @@ if (TM.ContainsKey("RetentionDays"))
 {
     RetentionDays = ((int)((long)TM["RetentionDays"]));
 }
+if (TM.ContainsKey("LogFile"))
+{
+    Config.LogFile = (((string)TM["LogFile"]));
+}
+Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}.");
 
 destinations = TA.Select(x => (string)x).ToList();
 //destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
@@ -77,6 +82,7 @@ foreach (var item in destinations)
                 var days_string = RetentionDays.ToString();
                 ctx.Database.SqlQuery<int>($"DELETE FROM pings WHERE time_now < datetime('now', '-{days_string} days');").ToList();
                 ctx.Database.SqlQuery<int>($"DELETE FROM process_history WHERE time_now < datetime('now', '-{days_string} days');").ToList();
+                string time_now = DateTime.Now.ToString("o");
                 foreach (var item in list)
                 {
                     try
@@ -110,7 +116,7 @@ foreach (var item in destinations)
                             UserTime = ut,
                             TotalTime = tt,
                             ThreadCount = tc,
-                            TimeNow = DateTime.Now.ToString("o"),
+                            TimeNow = time_now,
                             VirtualMemoryUse = vmuse,
                             WorkingSet = wsmem
 
@@ -136,3 +142,8 @@ foreach (var item in destinations)
     }
 }
 )).Start();
+
+public static class Config
+{
+    public static string LogFile = "logs.sqlite3";
+}
