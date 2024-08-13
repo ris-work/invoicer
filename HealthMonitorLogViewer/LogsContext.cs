@@ -21,6 +21,8 @@ public partial class LogsContext : DbContext
 
     public virtual DbSet<Exception> Exceptions { get; set; }
 
+    public virtual DbSet<MaxAvgWorkingSet> MaxAvgWorkingSets { get; set; }
+
     public virtual DbSet<MaxWorkingSet> MaxWorkingSets { get; set; }
 
     public virtual DbSet<Ping> Pings { get; set; }
@@ -34,6 +36,8 @@ public partial class LogsContext : DbContext
     public virtual DbSet<TimesCollectedByDecaminute> TimesCollectedByDecaminutes { get; set; }
 
     public virtual DbSet<TimesCollectedByHour> TimesCollectedByHours { get; set; }
+
+    public virtual DbSet<WindowTitle> WindowTitles { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -68,6 +72,17 @@ public partial class LogsContext : DbContext
 
             entity.Property(e => e.Exception1).HasColumnName("exception");
             entity.Property(e => e.TimeNow).HasColumnName("time_now");
+        });
+
+        modelBuilder.Entity<MaxAvgWorkingSet>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("max_avg_working_set");
+
+            entity.Property(e => e.AvgWorkingSetValue).HasColumnName("avg_working_set_value");
+            entity.Property(e => e.MaxWorkingSetValue).HasColumnName("max_working_set_value");
+            entity.Property(e => e.ProcessName).HasColumnName("process_name");
         });
 
         modelBuilder.Entity<MaxWorkingSet>(entity =>
@@ -138,6 +153,7 @@ public partial class LogsContext : DbContext
 
             entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
             entity.Property(e => e.CpuDiff).HasColumnName("cpu_diff");
+            entity.Property(e => e.CpuPercent).HasColumnName("cpu_percent");
             entity.Property(e => e.Decaminute).HasColumnName("decaminute");
             entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
@@ -153,6 +169,7 @@ public partial class LogsContext : DbContext
 
             entity.Property(e => e.AvgWorkingSet).HasColumnName("avg_working_set");
             entity.Property(e => e.CpuDiff).HasColumnName("cpu_diff");
+            entity.Property(e => e.CpuPercent).HasColumnName("cpu_percent");
             entity.Property(e => e.Hour).HasColumnName("hour");
             entity.Property(e => e.MaxWorkingSetForOneInstance).HasColumnName("max_working_set_for_one_instance");
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
@@ -178,6 +195,16 @@ public partial class LogsContext : DbContext
 
             entity.Property(e => e.Count).HasColumnName("count");
             entity.Property(e => e.TimeHour).HasColumnName("time_hour");
+        });
+
+        modelBuilder.Entity<WindowTitle>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("window_titles");
+
+            entity.Property(e => e.ProcessName).HasColumnName("process_name");
+            entity.Property(e => e.WindowName).HasColumnName("window_name");
         });
 
         OnModelCreatingPartial(modelBuilder);
