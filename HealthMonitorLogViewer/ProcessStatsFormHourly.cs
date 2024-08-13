@@ -30,16 +30,16 @@ namespace HealthMonitor
     public class ProcessStatsFormHourly: Form
     {
         public ProcessStatsFormHourly(string ProcessName) {
-            Title = "HealthMonitor Process Plots: by Hour";
+            Title = $"HealthMonitor Process Plots [{ProcessName}]: by Hour";
             Location = new Eto.Drawing.Point(50,50);
-            ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            etoPlot.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlot.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlot.Plot.Legend().FontSize = 10;
-            etoPlotSuccessRates.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlotSuccessRates.Plot.Legend().FontSize = 10;
+            ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1000, 300) };
+            ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1000, 300) };
+            etoPlotCpu.Plot.XAxis.LabelStyle(fontSize: 18);
+            etoPlotCpu.Plot.YAxis.LabelStyle(fontSize: 18);
+            etoPlotCpu.Plot.Legend().FontSize = 10;
+            etoPlotMem.Plot.XAxis.LabelStyle(fontSize: 18);
+            etoPlotMem.Plot.YAxis.LabelStyle(fontSize: 18);
+            etoPlotMem.Plot.Legend().FontSize = 10;
 
             var SaveButton = new Button() { Text = "Save As ..." };
             SaveButton.Click += (e, a) =>
@@ -51,7 +51,7 @@ namespace HealthMonitor
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
-                    etoPlot.Plot.SaveFig(Path, 2560, 1440, false, 4);
+                    etoPlotCpu.Plot.SaveFig(Path, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {Path}");
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
@@ -59,7 +59,7 @@ namespace HealthMonitor
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
-                    etoPlotSuccessRates.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
+                    etoPlotMem.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {PathSuccessStats}");
                 }
                 catch (System.Exception E)
@@ -75,16 +75,16 @@ namespace HealthMonitor
 
             var ResetButton = new Button() { Text = "Reset" };
             ResetButton.Click += (e, a) => { 
-                etoPlot.Plot.AxisAuto(); 
-                etoPlot.Refresh();
-                etoPlotSuccessRates.Plot.AxisAuto();
-                etoPlotSuccessRates.Refresh();
+                etoPlotCpu.Plot.AxisAuto(); 
+                etoPlotCpu.Refresh();
+                etoPlotMem.Plot.AxisAuto();
+                etoPlotMem.Refresh();
             };
 
             var FilterCriteria = new List<string>(){ "Any", "Process name", "Window title" };
             var RadioProcessFilter = new RadioButtonList() { DataStore = FilterCriteria, Orientation = Eto.Forms.Orientation.Vertical, SelectedValue = FilterCriteria[0], };
             var FilterText = new TextBox();
-            FilterText.PlaceholderText = "explorer";
+            FilterText.PlaceholderText = ProcessName;
             
             var FilterTextStack = new StackLayout() { 
                 Items = { null, new Label() { Text = "Filter text:" }, FilterText, null },
@@ -92,7 +92,7 @@ namespace HealthMonitor
                 Spacing = 5,
                 Size = new Eto.Drawing.Size(-1, -1),
                 HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
-                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Stretch,
+                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom,
             };
             var ProcessList = new ComboBox();
             var ProcessSelectorPanel = new StackLayout()
@@ -133,30 +133,46 @@ namespace HealthMonitor
                 
             }
             ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).ToList();
-            ProcessList.SelectedKey = "explorer";
-            ProcessList.AutoComplete = true;
+            ProcessList.SelectedKey = ProcessName;
             ProcessList.Width = 200;
+            ProcessList.AutoComplete = true;
+            ProcessList.TextInput += (e, a) => {
+                ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(ProcessList.Text)).Select(e => e.ProcessName).ToList(); 
+                ProcessList.IsDataContextChanging = true; 
+            };
+
+            if(ProcessCandidates.Where(x=>x.ProcessName == ProcessName).ToList().Count == 0)
+            {
+                ProcessName = "explorer";
+            }
                 
             List<CpuUsageByHour> cpuUsageByHour = new List<CpuUsageByHour>();   
             List<MemoryUsageByHour> memoryUseByHour = new List<MemoryUsageByHour>();
             List<MemoryUsageByHour> memoryUseByHourPeak = new List<MemoryUsageByHour>();
-            using (var logsContext = new LogsContext())
+            try
             {
-                    
-                var GroupedByHour = logsContext.StatsHourlies.Where(x => x.ProcessName == ProcessName).ToList();
-                cpuUsageByHour = GroupedByHour.Select(e => new CpuUsageByHour { Hour = e.Hour, CpuTimeDiff = double.Parse(Encoding.UTF8.GetString(e.CpuPercent ?? [((byte)'0')])) }).ToList();
-                memoryUseByHour = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = e.AvgWorkingSet }).ToList();
-                memoryUseByHourPeak = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = double.Parse(e.MaxWorkingSetForOneInstance) }).ToList();
+                using (var logsContext = new LogsContext())
+                {
+
+                    var GroupedByHour = logsContext.StatsHourlies.Where(x => x.ProcessName == ProcessName).ToList();
+                    cpuUsageByHour = GroupedByHour.Select(e => new CpuUsageByHour { Hour = e.Hour, CpuTimeDiff = double.Parse(Encoding.UTF8.GetString(e.CpuPercent ?? [((byte)'0')])) }).ToList();
+                    memoryUseByHour = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = e.AvgWorkingSet }).ToList();
+                    memoryUseByHourPeak = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = double.Parse(e.MaxWorkingSetForOneInstance) }).ToList();
+                }
+            }
+            catch(System.Exception E)
+            {
+                MessageBox.Show(E.ToString(), MessageBoxType.Error);
             }
             PlotData.Add("CPU %", cpuUsageByHour);
             PlotDataSuccessRates.Add("Mem [avg]", memoryUseByHour);
             PlotDataSuccessRates.Add("Mem [peak]", memoryUseByHourPeak);
 
-            etoPlot.Plot.XAxis.DateTimeFormat(true);
-            etoPlotSuccessRates.Plot.XAxis.DateTimeFormat(true);
-            var pCpu = etoPlot.Plot.AddScatter(PlotData["CPU %"].Select(e => (DateTime.Parse(e.Hour+":00").ToLocalTime().ToOADate())).ToArray(), PlotData["CPU %"].Select(e => e.CpuTimeDiff??0).ToArray(), label: "CPU %");
-            var pRamAvg = etoPlotSuccessRates.Plot.AddScatter(PlotDataSuccessRates["Mem [avg]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [avg]"].Select(e => e.WorkingSet ?? 0).ToArray(), label: "Mem [avg]");
-            var pRamMax = etoPlotSuccessRates.Plot.AddScatter(PlotDataSuccessRates["Mem [peak]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [peak]"].Select(e => e.WorkingSet ?? 0).ToArray(), label: "Mem [peak, highest process]");
+            etoPlotCpu.Plot.XAxis.DateTimeFormat(true);
+            etoPlotMem.Plot.XAxis.DateTimeFormat(true);
+            var pCpu = etoPlotCpu.Plot.AddScatter(PlotData["CPU %"].Select(e => (DateTime.Parse(e.Hour+":00").ToLocalTime().ToOADate())).ToArray(), PlotData["CPU %"].Select(e => e.CpuTimeDiff??0).ToArray(), label: "CPU %");
+            var pRamAvg = etoPlotMem.Plot.AddScatter(PlotDataSuccessRates["Mem [avg]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [avg]"].Select(e => (e.WorkingSet ?? 0) / (1024*1024)).ToArray(), label: "Mem [avg]");
+            var pRamMax = etoPlotMem.Plot.AddScatter(PlotDataSuccessRates["Mem [peak]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [peak]"].Select(e => (e.WorkingSet ?? 0)/(1024*1024)).ToArray(), label: "Mem [peak, highest process]");
             pCpu.Label = "CPU %";
             pCpu.MarkerSize = 6;
             pCpu.MarkerLineWidth = 3;
@@ -165,47 +181,56 @@ namespace HealthMonitor
             pRamAvg.MarkerSize = 8;
             pRamAvg.MarkerLineWidth = 4;
 
-            etoPlot.Plot.Legend();
-            etoPlot.Plot.Legend().FontName = "Courier";
-            etoPlot.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlot.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlot.Plot.Title("CPU usage");
-            etoPlot.Plot.XLabel("Date/Time");
-            etoPlot.Plot.YLabel("CPU-Hours %");
-            etoPlot.Refresh();
+            etoPlotCpu.Plot.SetAxisLimits(yMin: 0);
+            etoPlotCpu.Plot.Legend();
+            etoPlotCpu.Plot.Legend().FontName = "Courier";
+            etoPlotCpu.Plot.Legend().Location = Alignment.UpperLeft;
+            etoPlotCpu.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+            etoPlotCpu.Plot.Title($"CPU usage [{ProcessName}]");
+            etoPlotCpu.Plot.XLabel("Date/Time");
+            etoPlotCpu.Plot.YLabel("CPU-Hours %");
+            etoPlotCpu.Refresh();
 
-            etoPlotSuccessRates.Plot.Legend();
-            etoPlotSuccessRates.Plot.Legend().FontName = "Courier";
-            etoPlotSuccessRates.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlotSuccessRates.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlotSuccessRates.Plot.Title("Mem stats");
-            etoPlotSuccessRates.Plot.XLabel("Date/Time");
-            etoPlotSuccessRates.Plot.YLabel("Memory");
-            etoPlotSuccessRates.Refresh();
+            etoPlotMem.Plot.SetAxisLimits(yMin: 0);
+            etoPlotMem.Plot.Legend();
+            etoPlotMem.Plot.Legend().FontName = "Courier";
+            etoPlotMem.Plot.Legend().Location = Alignment.UpperLeft;
+            etoPlotMem.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+            etoPlotMem.Plot.Title($"Mem stats [{ProcessName}]");
+            etoPlotMem.Plot.XLabel("Date/Time");
+            etoPlotMem.Plot.YLabel("Memory (MiB)");
+            etoPlotMem.Refresh();
 
-            FilterText.TextInput += (e, a) => {
-                switch (RadioProcessFilter.SelectedKey) {
-                    case "Any":
-                        ProcessList.DataContext = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text) || x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
-                        break;
-                    case "Process name":
-                        ProcessList.DataContext = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
-                        break;
-                    case "Window title":
-                        ProcessList.DataContext = ProcessCandidates.Where(x => x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
-                        break;
-                }
-                MessageBox.Show(RadioProcessFilter.SelectedKey);
-                ProcessList.IsDataContextChanging = true;
+            FilterText.TextInput += Filter;
+            RadioProcessFilter.SelectedKeyChanged += Filter;
+
+            ProcessList.KeyDown += (e, a) => { 
+                if(a.Key == Keys.Enter && ProcessList.SelectedKey != null && ProcessList.SelectedKey.Length > 1) 
+                    (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show(); 
             };
 
+            void Filter(Object e, EventArgs a) {
+                switch (RadioProcessFilter.SelectedKey)
+                {
+                    case "Any":
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text) || x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        break;
+                    case "Process name":
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        break;
+                    case "Window title":
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        break;
+                }
+                ProcessList.IsDataContextChanging = true;
+            }
 
             var VerticalStackLayout = new StackLayout() { 
                 Items = { 
                     ProcessSelectorAndFilter,
                     TopStackLayout, 
-                    etoPlot, 
-                    etoPlotSuccessRates 
+                    etoPlotCpu, 
+                    etoPlotMem 
                 }, 
                 Orientation = Eto.Forms.Orientation.Vertical, 
                 Spacing = 20 

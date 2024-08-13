@@ -17,7 +17,7 @@ namespace HealthMonitor
             var ProcessStatsButton = new Button() { Text = "Process Stats", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             ProcessStatsButton.Click += (e, a) => { 
                 MessageBox.Show("Not implemented", MessageBoxType.Warning);
-                (new ProcessStatsFormHourly("explorer")).Show();
+                (new ProcessStatsFormHourly("Idle")).Show();
             };
 
             Content = new StackLayout

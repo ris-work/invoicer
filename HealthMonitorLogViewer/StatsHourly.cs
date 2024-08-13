@@ -9,11 +9,11 @@ public partial class StatsHourly
 
     public string ProcessName { get; set; }
 
-    public int? AvgWorkingSet { get; set; }
+    public long? AvgWorkingSet { get; set; }
 
     public string MaxWorkingSetForOneInstance { get; set; }
 
-    public int? CpuDiff { get; set; }
+    public long? CpuDiff { get; set; }
 
     public byte[] CpuPercent { get; set; }
 
