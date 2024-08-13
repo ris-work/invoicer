@@ -1,6 +1,7 @@
 using Eto.Drawing;
 using Eto.Forms;
 using System;
+using System.Collections.Generic;
 
 namespace HealthMonitor
 {
@@ -45,7 +46,14 @@ namespace HealthMonitor
             quitCommand.Executed += (sender, e) => Application.Instance.Quit();
 
             var aboutCommand = new Command { MenuText = "About..." };
-            aboutCommand.Executed += (sender, e) => new AboutDialog().ShowDialog(this);
+            aboutCommand.Executed += (sender, e) => new AboutDialog() { 
+                Copyright = "Rishikeshan Sulochana/Lavakumar", 
+                ProgramName = "Health Monitor Log Viewer", 
+                Website = new Uri("https://rishikeshan.com"), 
+                Title = $"Health Monitor Log Viewer (Detected: [{Eto.Platform.Detect.ToString()}, {Platform}])",   
+                License = "OSLv3 (no later versions)",
+                Developers = ["Rishikeshan S/L"]
+            }.ShowDialog(this);
 
             // create menu
             Menu = new MenuBar
