@@ -1,7 +1,7 @@
 CREATE VIEW stats_decaminute AS
 SELECT decaminute, process_name, avg_working_set, max_working_set_for_one_instance, 
 (CASE WHEN total_time_avg-prev_total_time_avg > 0 THEN total_time_avg-prev_total_time_avg ELSE 0 END) AS cpu_diff,
-unixepoch(hour) - unixepoch(prev_hour) AS time_diff,
+unixepoch(decaminute || '0') - unixepoch(prev_decaminute || '0') AS time_diff,
 thread_count FROM (
 SELECT substring(time_now, 1, 15) AS decaminute, process_name, avg(working_set)*count(process_name)/tcbdm.count AS avg_working_set,
 max(working_set) AS max_working_set_for_one_instance,
@@ -16,7 +16,7 @@ GROUP BY substring(time_now, 1, 15), process_name
 CREATE VIEW stats_hourly AS 
 SELECT hour, process_name, avg_working_set, max_working_set_for_one_instance, 
 (CASE WHEN total_time_avg-prev_total_time_avg > 0 THEN total_time_avg-prev_total_time_avg ELSE 0 END) AS cpu_diff,
-unixepoch(hour) - unixepoch(prev_hour) AS time_diff,
+unixepoch(hour || ':00') - unixepoch(prev_hour || ':00') AS time_diff,
 thread_count FROM (
 SELECT substring(time_now, 1, 13) AS hour, process_name, avg(working_set)*count(process_name)/tcbh.count AS avg_working_set,
 max(working_set) AS max_working_set_for_one_instance,
