@@ -9,6 +9,8 @@ namespace HealthMonitor
         [STAThread]
         static void Main(string[] args)
         {
+            Config.PNGFilter.Extensions = new string[] { "*.png" };
+            Config.PNGFilter.Name = "Portable Network Graphics";
             if (args.Length > 0)
             {
                 Config.LogFile = args[0];
@@ -22,4 +24,5 @@ namespace HealthMonitor
 public static class Config
 {
     public static string LogFile = "logs.sqlite3";
+    public static Eto.Forms.FileFilter PNGFilter  = new Eto.Forms.FileFilter();
 }

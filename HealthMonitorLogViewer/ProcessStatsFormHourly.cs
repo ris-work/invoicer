@@ -49,18 +49,20 @@ namespace HealthMonitor
             {
                 try
                 {
-                    var SaveDialog = new SaveFileDialog();
-                    SaveDialog.Title = "Save stats as (please add PNG extension yourself)...";
-                    SaveDialog.ShowDialog("");
-                    var Path = SaveDialog.FileName;
+                    var SaveDialogCPU = new SaveFileDialog();
+                    SaveDialogCPU.Title = "Save stats as (please add PNG extension yourself)...";
+                    SaveDialogCPU.Filters.Add(Config.PNGFilter);
+                    SaveDialogCPU.ShowDialog("");
+                    var Path = SaveDialogCPU.FileName;
 
                     etoPlotCpu.Plot.SaveFig(Path, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {Path}");
 
-                    var SaveDialogSuccessStats = new SaveFileDialog();
-                    SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
-                    SaveDialogSuccessStats.ShowDialog("");
-                    var PathSuccessStats = SaveDialogSuccessStats.FileName;
+                    var SaveDialogRAM = new SaveFileDialog();
+                    SaveDialogRAM.Title = "Save success stats as (please add PNG extension yourself)...";
+                    SaveDialogRAM.Filters.Add(Config.PNGFilter);
+                    SaveDialogRAM.ShowDialog("");
+                    var PathSuccessStats = SaveDialogRAM.FileName;
 
                     etoPlotMem.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
                     MessageBox.Show($"Saved as: {PathSuccessStats}");
@@ -403,7 +405,7 @@ namespace HealthMonitor
             Resizable = false;
             Lister.Size = new Eto.Drawing.Size(800, 600);
             Lister.CellFormatting += (a, b) => {
-                b.Font = new Eto.Drawing.Font("Courier New", 12, Eto.Drawing.FontStyle.Bold);
+                b.Font = new Eto.Drawing.Font("Courier New", 12);
                 if (b.Row == Lister.SelectedRow)
                 {
                     b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);

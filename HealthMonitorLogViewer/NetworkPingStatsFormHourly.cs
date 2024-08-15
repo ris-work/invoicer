@@ -46,6 +46,7 @@ namespace HealthMonitor
                 {
                     var SaveDialog = new SaveFileDialog();
                     SaveDialog.Title = "Save stats as (please add PNG extension yourself)...";
+                    SaveDialog.Filters.Add(Config.PNGFilter);
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
@@ -54,6 +55,7 @@ namespace HealthMonitor
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
                     SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
+                    SaveDialogSuccessStats.Filters.Add(Config.PNGFilter);
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
