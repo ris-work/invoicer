@@ -39,13 +39,13 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 18);
             etoPlotSuccessRates.Plot.Legend().FontSize = 10;
 
-            var SaveButton = new Button() { Text = "Save As ..." };
+            var SaveButton = new Button() { Text = "💾 Save As ..." };
             SaveButton.Click += (e, a) =>
             {
                 try
                 {
                     var SaveDialog = new SaveFileDialog();
-                    SaveDialog.Title = "Save stats as...";
+                    SaveDialog.Title = "Save stats as (please add PNG extension yourself)...";
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
@@ -53,7 +53,7 @@ namespace HealthMonitor
                     MessageBox.Show($"Saved as: {Path}");
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
-                    SaveDialogSuccessStats.Title = "Save success stats as...";
+                    SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
@@ -71,7 +71,7 @@ namespace HealthMonitor
                 MessageBox.Show("Not implemented", MessageBoxType.Warning);
             };
 
-            var ResetButton = new Button() { Text = "Reset" };
+            var ResetButton = new Button() { Text = "🔄 Reset" };
             ResetButton.Click += (e, a) => { 
                 etoPlot.Plot.AxisAuto(); 
                 etoPlot.Refresh();

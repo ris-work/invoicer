@@ -15,7 +15,7 @@ public partial class StatsHourly
 
     public long? CpuDiff { get; set; }
 
-    public byte[] CpuPercent { get; set; }
+    public byte[]? CpuPercent { get; set; }
 
     public byte[] TimeDiff { get; set; }
 

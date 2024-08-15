@@ -16,6 +16,7 @@ using ABI.System.Collections.Generic;
 using ScottPlot.SnapLogic;
 using System.Dynamic;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace HealthMonitor
 {
@@ -43,13 +44,13 @@ namespace HealthMonitor
             etoPlotMem.Plot.YAxis.LabelStyle(fontSize: 18);
             etoPlotMem.Plot.Legend().FontSize = 10;
 
-            var SaveButton = new Button() { Text = "Save As ..." };
+            var SaveButton = new Button() { Text = "💾 Save As ..." };
             SaveButton.Click += (e, a) =>
             {
                 try
                 {
                     var SaveDialog = new SaveFileDialog();
-                    SaveDialog.Title = "Save stats as...";
+                    SaveDialog.Title = "Save stats as (please add PNG extension yourself)...";
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
@@ -57,7 +58,7 @@ namespace HealthMonitor
                     MessageBox.Show($"Saved as: {Path}");
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
-                    SaveDialogSuccessStats.Title = "Save success stats as...";
+                    SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
@@ -75,7 +76,7 @@ namespace HealthMonitor
                 MessageBox.Show("Not implemented", MessageBoxType.Warning);
             };
 
-            var ResetButton = new Button() { Text = "Reset" };
+            var ResetButton = new Button() { Text = "🔄 Reset" };
             ResetButton.Click += (e, a) => { 
                 etoPlotCpu.Plot.AxisAuto(); 
                 etoPlotCpu.Refresh();
@@ -165,10 +166,58 @@ namespace HealthMonitor
                     );
                 if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
             };
+            var SortByRAM = new Button() { Text = "Sort by RAM 💾" };
+            SortByRAM.Click += (e, a) => {
+                List<List<string>> SortedByRAM = new List<List<string>>();
+                using (var ctx = new LogsContext())
+                {
+                    var ListedByRAM = ctx.MaxAvgWorkingSets.ToList();
+                    SortedByRAM = ListedByRAM.Select(e => new List<string> { e.ProcessName, e.AvgWorkingSetValue.GetValueOrDefault(0.0).ToString("N0"), e.MaxWorkingSetValue.GetValueOrDefault().ToString("N0") }).ToList();
+                    
+                }
+                (new ListerGridView(new List<string> { "Process Name", "Avg", "Max" }, SortedByRAM)).ShowModal();
+            };
+            var SortByCPU = new Button() { Text = "Sort by CPU [last rec hour] ⌛" };
+            SortByCPU.Click += (e, a) => {
+                List<List<string>> SortedByCPU = new List<List<string>>();
+                using (var ctx = new LogsContext())
+                {
+                    var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                    var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
+                    MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0,13)}");
+                    var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
+                    var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
+                    SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, Encoding.UTF8.GetString((e.CpuPercent ?? [0])), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
+                }
+                (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPU)).ShowModal();
+            };
+            var SortByCPULH = new Button() { Text = "Sort by CPU [last rec - 1 hour] ⌛" };
+            SortByCPULH.Click += (e, a) => {
+                List<List<string>> SortedByCPULH = new List<List<string>>();
+                using (var ctx = new LogsContext())
+                {
+                    var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                    var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
+                    var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
+                    MessageBox.Show($"From hour: {lastHour}");
+                    var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
+                    SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, Encoding.UTF8.GetString((e.CpuPercent ?? [0])), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+
+                }
+                (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPULH)).ShowModal();
+            };
+            var SorterButtons = new StackLayout()
+            {
+                Items = { SortByRAM, SortByCPU, SortByCPULH },
+                Orientation = Eto.Forms.Orientation.Vertical,
+                Spacing = 5,
+                HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
+                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Center,
+            };
             var ProcessSelectorAndFilter = new StackLayout()
             {
-                Items = { null, FilterTextStack, ProcessList, RadioProcessFilter, GridMatchedProcessNames, null },
+                Items = { null, FilterTextStack, ProcessList, RadioProcessFilter, GridMatchedProcessNames, SorterButtons, null },
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 20,
                 Size = new Eto.Drawing.Size(-1, -1),
@@ -323,6 +372,61 @@ namespace HealthMonitor
             };
             Content = VerticalStackLayout;
             Resizable = false;
+        }
+    }
+
+    public class ListerGridView: Dialog
+    {
+        public ListerGridView(List<string> Cols, List<List<string>> L) {
+            
+            GridView Lister = new GridView();
+            int seq = 0;
+            try
+            {
+                foreach (var item in Cols)
+                {
+                    var x = int.TryParse(L[0][seq], NumberStyles.AllowThousands, null, out var _);
+                    if (x == false)
+                        Lister.Columns.Add(new GridColumn { HeaderText = item, DataCell = new TextBoxCell(seq), Sortable = false });
+                    else
+                        Lister.Columns.Add(new GridColumn { HeaderText = item, DataCell = new TextBoxCell(seq) { TextAlignment = Eto.Forms.TextAlignment.Right }, Sortable = false });
+                    seq++;
+                }
+            }
+            catch(System.Exception E)
+            {
+                MessageBox.Show(E.ToString(), MessageBoxType.Error);
+            }
+            Lister.DataStore = L;
+            Content = Lister;
+            Title = "Listing";
+            Resizable = false;
+            Lister.Size = new Eto.Drawing.Size(800, 600);
+            Lister.CellFormatting += (a, b) => {
+                b.Font = new Eto.Drawing.Font("Courier New", 12, Eto.Drawing.FontStyle.Bold);
+                if (b.Row == Lister.SelectedRow)
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);
+                    b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
+                }
+                else if (b.Row % 2 == 0)
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
+                }
+                else if (b.Column.DisplayIndex % 2 == 0)
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
+                }
+                else
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
+                }
+            };
+            Lister.MouseUp += (e, a) => Lister.Invalidate();
+            Resizable = false;
+            Topmost = true;
+            
+            
         }
     }
 }
