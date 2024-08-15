@@ -35,8 +35,8 @@ namespace HealthMonitor
         public ProcessStatsFormHourly(string ProcessName) {
             Title = $"HealthMonitor Process Plots [{ProcessName}]: by Hour";
             Location = new Eto.Drawing.Point(50,50);
-            ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1000, 300) };
+            ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1080, 300) };
+            ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1080, 300) };
             etoPlotCpu.Plot.XAxis.LabelStyle(fontSize: 18);
             etoPlotCpu.Plot.YAxis.LabelStyle(fontSize: 18);
             etoPlotCpu.Plot.Legend().FontSize = 10;
@@ -92,7 +92,7 @@ namespace HealthMonitor
             FilterText.PlaceholderText = ProcessName;
             
             var FilterTextStack = new StackLayout() { 
-                Items = { null, new Label() { Text = "Filter text:" }, FilterText, null },
+                Items = { null, new Label() { Text = "Filter text:" }, new Label() { Text = "[ESC] to cancel all" }, FilterText },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Spacing = 5,
                 Size = new Eto.Drawing.Size(-1, -1),
@@ -100,11 +100,12 @@ namespace HealthMonitor
                 VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom,
             };
             var ProcessList = new ComboBox();
+            ProcessList.ToolTip = "Choose one and press [Enter]";
             var ProcessSelectorPanel = new StackLayout()
             {
 
             };
-            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 70), GridLines = GridLines.Both, ShowHeader = true };
+            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill" };
             GridMatchedProcessNames.CellFormatting += (a, b) => {
                 b.Font = new Eto.Drawing.Font("Courier New", 7, Eto.Drawing.FontStyle.Bold);
                 if (b.Row == GridMatchedProcessNames.SelectedRow)
@@ -374,6 +375,7 @@ namespace HealthMonitor
             };
             Content = VerticalStackLayout;
             Resizable = false;
+            Filter(null, null);
         }
     }
 
@@ -405,7 +407,9 @@ namespace HealthMonitor
             Resizable = false;
             Lister.Size = new Eto.Drawing.Size(800, 600);
             Lister.CellFormatting += (a, b) => {
-                b.Font = new Eto.Drawing.Font("Courier New", 12);
+                b.Font = new Eto.Drawing.Font("Courier New", 10);
+                b.Font = new Eto.Drawing.Font("MONOSPACE", 10);
+
                 if (b.Row == Lister.SelectedRow)
                 {
                     b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);
