@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using ScottPlot.Renderable;
 using ABI.System.Collections.Generic;
 using ScottPlot.SnapLogic;
+using System.Dynamic;
+using System.Diagnostics;
 
 namespace HealthMonitor
 {
@@ -99,9 +101,74 @@ namespace HealthMonitor
             {
 
             };
+            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 70), GridLines = GridLines.Both, ShowHeader = true };
+            GridMatchedProcessNames.CellFormatting += (a, b) => {
+                b.Font = new Eto.Drawing.Font("Courier New", 7, Eto.Drawing.FontStyle.Bold);
+                if (b.Row == GridMatchedProcessNames.SelectedRow)
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(50,50,50,255);
+                    b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
+                }
+                else if (b.Row % 2 == 0) 
+                { 
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
+                } 
+                else if (b.Column.DisplayIndex % 2 == 0)
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
+                }
+                else
+                {
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
+                }
+            };
+            GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Process Name", DataCell = new TextBoxCell(0), Resizable = true, AutoSize = true });
+            GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Window Title", DataCell = new TextBoxCell(1), Resizable = true, AutoSize = true });
+            GridMatchedProcessNames.SelectionChanged += (e, a) => GridMatchedProcessNames.Invalidate();
+            GridMatchedProcessNames.KeyUp += (e, a) =>
+            {
+                var SelectedProcessName = (string)((List<string>)(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
+                if (a.Key == Keys.Delete)
+                {
+                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.ProcessName == SelectedProcessName).ToList();
+                    var Choice = MessageBox.Show($"Do you want to kill {CandidateList.Count} processes named {SelectedProcessName}?", MessageBoxButtons.YesNo, MessageBoxType.Warning);
+                    if (Choice == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            foreach (var item in CandidateList)
+                            {
+                                try
+                                {
+                                    item.Kill();
+                                }
+                                catch(System.Exception E)
+                                {
+                                    MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                                }
+                            }
+                        }
+                        catch(System.Exception E)
+                        {
+                            MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                        }
+                    }
+                }
+                
+            };
+            GridMatchedProcessNames.CellDoubleClick += (e, a) => {
+                var SelectedProcessName = (string)((List<string>)(GridMatchedProcessNames.DataStore.ElementAt(a.Row))).ElementAt(0);
+                var result = MessageBox.Show(
+                    $"View stats for: {SelectedProcessName}?", 
+                    MessageBoxButtons.YesNo, 
+                    MessageBoxType.Information
+                    );
+                if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+            };
+
             var ProcessSelectorAndFilter = new StackLayout()
             {
-                Items = { null, FilterTextStack, ProcessList, RadioProcessFilter, null },
+                Items = { null, FilterTextStack, ProcessList, RadioProcessFilter, GridMatchedProcessNames, null },
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 20,
                 Size = new Eto.Drawing.Size(-1, -1),
@@ -139,6 +206,14 @@ namespace HealthMonitor
             ProcessList.TextInput += (e, a) => {
                 ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(ProcessList.Text)).Select(e => e.ProcessName).ToList(); 
                 ProcessList.IsDataContextChanging = true; 
+            };
+            ProcessList.KeyUp += (e, a) =>
+            {
+                if(a.Key == Keys.Escape)
+                {
+                    ProcessList.SelectedValue = false;
+                    ProcessList.Invalidate();
+                }
             };
 
             if(ProcessCandidates.Where(x=>x.ProcessName == ProcessName).ToList().Count == 0)
@@ -206,24 +281,35 @@ namespace HealthMonitor
 
             ProcessList.KeyDown += (e, a) => { 
                 if(a.Key == Keys.Enter && ProcessList.SelectedKey != null && ProcessList.SelectedKey.Length > 1) 
-                    (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show(); 
+                    (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show();
+                else if (a.Key == Keys.Escape)
+                {
+                    ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).ToList();
+                    ProcessList.IsDataContextChanging = true;
+                }
             };
 
             void Filter(Object e, EventArgs a) {
                 switch (RadioProcessFilter.SelectedKey)
                 {
                     case "Any":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text) || x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant()) || x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.ProcessName).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant()) || x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new List<string> { e.ProcessName, e.WindowName }).ToList();
                         break;
                     case "Process name":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new List<string> { e.ProcessName, e.WindowName }). ToList();
                         break;
                     case "Window title":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.ProcessName).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new List<string> { e.ProcessName, e.WindowName }).ToList();
                         break;
                 }
                 ProcessList.IsDataContextChanging = true;
+                GridMatchedProcessNames.Invalidate();
             }
+
+            
 
             var VerticalStackLayout = new StackLayout() { 
                 Items = { 
