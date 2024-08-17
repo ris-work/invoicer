@@ -73,9 +73,9 @@ namespace HealthMonitor
                 }
             };
 
-            var ReloadButton = new Button() { Text = "⬇ Reload" };
+            var ReloadButton = new Button() { Text = "⬇⬇ Reload" };
             ReloadButton.Click += (e, a) => {
-                MessageBox.Show("Beta version!", MessageBoxType.Warning);
+                MessageBox.Show("Not implemented!", "😟😟 Not implemented!", MessageBoxType.Warning);
             };
 
             var ResetButton = new Button() { Text = "🔄 Reset" };
@@ -164,6 +164,7 @@ namespace HealthMonitor
                 var SelectedProcessName = (string)((List<string>)(GridMatchedProcessNames.DataStore.ElementAt(a.Row))).ElementAt(0);
                 var result = MessageBox.Show(
                     $"View stats for: {SelectedProcessName}?", 
+                    "View stats (confirm)",
                     MessageBoxButtons.YesNo, 
                     MessageBoxType.Information
                     );
@@ -189,7 +190,7 @@ namespace HealthMonitor
                     {
                         var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
                         var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
-                        MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0, 13)}");
+                        MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0, 13)}", "Time info", MessageBoxType.Information);
                         var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
                         var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
                         SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
@@ -212,7 +213,7 @@ namespace HealthMonitor
                         var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
                         var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
                         var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
-                        MessageBox.Show($"From hour: {lastHour}");
+                        MessageBox.Show("Time info", $"From hour: {lastHour}", MessageBoxType.Information);
                         var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
                         SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
@@ -453,6 +454,7 @@ namespace HealthMonitor
             {
                 MessageBox.Show(E.ToString(), MessageBoxType.Error);
             }
+            Icon = new Eto.Drawing.Icon("ListViewer.ico");
             
             
         }

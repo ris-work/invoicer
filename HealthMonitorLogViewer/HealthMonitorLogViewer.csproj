@@ -37,6 +37,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="ListViewer.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="logs.sqlite3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

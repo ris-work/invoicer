@@ -51,7 +51,7 @@ namespace HealthMonitor
                     var Path = SaveDialog.FileName;
 
                     etoPlot.Plot.SaveFig(Path, 2560, 1440, false, 4);
-                    MessageBox.Show($"Saved as: {Path}");
+                    MessageBox.Show($"Saved as: {Path}", "Saved!", MessageBoxType.Information);
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
                     SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
@@ -60,7 +60,7 @@ namespace HealthMonitor
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
                     etoPlotSuccessRates.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
-                    MessageBox.Show($"Saved as: {PathSuccessStats}");
+                    MessageBox.Show($"Saved as: {PathSuccessStats}", "Saved!", MessageBoxType.Information);
                 }
                 catch (System.Exception E)
                 {

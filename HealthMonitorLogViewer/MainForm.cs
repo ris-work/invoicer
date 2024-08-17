@@ -17,7 +17,7 @@ namespace HealthMonitor
             NetworkPingStatsButtonHourly.Click += (e, a) => { (new NetworkPingStatsFormHourly()).Show(); };
             var ProcessStatsButton = new Button() { Text = "Process Stats", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             ProcessStatsButton.Click += (e, a) => { 
-                MessageBox.Show("Not implemented", MessageBoxType.Warning);
+                MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
                 (new ProcessStatsFormHourly("Idle")).Show();
             };
 
