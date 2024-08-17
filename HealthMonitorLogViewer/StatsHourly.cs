@@ -15,9 +15,9 @@ public partial class StatsHourly
 
     public long? CpuDiff { get; set; }
 
-    public byte[]? CpuPercent { get; set; }
+    public double? CpuPercent { get; set; }
 
-    public byte[] TimeDiff { get; set; }
+    public double? TimeDiff { get; set; }
 
     public double? ThreadCount { get; set; }
 }

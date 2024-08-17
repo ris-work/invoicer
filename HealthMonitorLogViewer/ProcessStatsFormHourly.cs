@@ -75,7 +75,7 @@ namespace HealthMonitor
 
             var ReloadButton = new Button() { Text = "Reload" };
             ReloadButton.Click += (e, a) => {
-                MessageBox.Show("Not implemented", MessageBoxType.Warning);
+                MessageBox.Show("Beta version!", MessageBoxType.Warning);
             };
 
             var ResetButton = new Button() { Text = "🔄 Reset" };
@@ -182,33 +182,47 @@ namespace HealthMonitor
             };
             var SortByCPU = new Button() { Text = "Sort by CPU [last rec hour] ⌛" };
             SortByCPU.Click += (e, a) => {
-                List<List<string>> SortedByCPU = new List<List<string>>();
-                using (var ctx = new LogsContext())
+                try
                 {
-                    var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
-                    var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
-                    MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0,13)}");
-                    var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
-                    var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
-                    SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, Encoding.UTF8.GetString((e.CpuPercent ?? [0])), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                    List<List<string>> SortedByCPU = new List<List<string>>();
+                    using (var ctx = new LogsContext())
+                    {
+                        var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                        var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
+                        MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0, 13)}");
+                        var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
+                        var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
+                        SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
-                }
+                    }
                 (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPU)).ShowModal();
+                }
+                catch(System.Exception E)
+                {
+                    MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                }
             };
             var SortByCPULH = new Button() { Text = "Sort by CPU [last rec - 1 hour] ⌛" };
             SortByCPULH.Click += (e, a) => {
-                List<List<string>> SortedByCPULH = new List<List<string>>();
-                using (var ctx = new LogsContext())
+                try
                 {
-                    var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
-                    var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
-                    var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
-                    MessageBox.Show($"From hour: {lastHour}");
-                    var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
-                    SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, Encoding.UTF8.GetString((e.CpuPercent ?? [0])), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                    List<List<string>> SortedByCPULH = new List<List<string>>();
+                    using (var ctx = new LogsContext())
+                    {
+                        var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                        var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
+                        var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
+                        MessageBox.Show($"From hour: {lastHour}");
+                        var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
+                        SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
-                }
+                    }
                 (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPULH)).ShowModal();
+                }
+                catch(System.Exception E)
+                {
+                    MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                }
             };
             var SorterButtons = new StackLayout()
             {
@@ -282,7 +296,7 @@ namespace HealthMonitor
                 {
 
                     var GroupedByHour = logsContext.StatsHourlies.Where(x => x.ProcessName == ProcessName).ToList();
-                    cpuUsageByHour = GroupedByHour.Select(e => new CpuUsageByHour { Hour = e.Hour, CpuTimeDiff = double.Parse(Encoding.UTF8.GetString(e.CpuPercent ?? [((byte)'0')])) }).ToList();
+                    cpuUsageByHour = GroupedByHour.Select(e => new CpuUsageByHour { Hour = e.Hour, CpuTimeDiff = (e.CpuPercent.GetValueOrDefault()) }).ToList();
                     memoryUseByHour = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = e.AvgWorkingSet }).ToList();
                     memoryUseByHourPeak = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = double.Parse(e.MaxWorkingSetForOneInstance) }).ToList();
                 }
@@ -401,36 +415,44 @@ namespace HealthMonitor
             {
                 MessageBox.Show(E.ToString(), MessageBoxType.Error);
             }
-            Lister.DataStore = L;
-            Content = Lister;
-            Title = "Listing";
-            Resizable = false;
-            Lister.Size = new Eto.Drawing.Size(800, 600);
-            Lister.CellFormatting += (a, b) => {
-                b.Font = new Eto.Drawing.Font("Courier New", 10);
-                b.Font = new Eto.Drawing.Font("MONOSPACE", 10);
+            try
+            {
+                Lister.DataStore = L;
+                Content = Lister;
+                Title = "Listing";
+                Resizable = false;
+                Lister.Size = new Eto.Drawing.Size(800, 600);
+                Lister.CellFormatting += (a, b) =>
+                {
+                    b.Font = new Eto.Drawing.Font("Courier New", 10);
+                    b.Font = new Eto.Drawing.Font("MONOSPACE", 10);
 
-                if (b.Row == Lister.SelectedRow)
-                {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);
-                    b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
-                }
-                else if (b.Row % 2 == 0)
-                {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
-                }
-                else if (b.Column.DisplayIndex % 2 == 0)
-                {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
-                }
-                else
-                {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
-                }
-            };
-            Lister.MouseUp += (e, a) => Lister.Invalidate();
-            Resizable = false;
-            Topmost = true;
+                    if (b.Row == Lister.SelectedRow)
+                    {
+                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);
+                        b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
+                    }
+                    else if (b.Row % 2 == 0)
+                    {
+                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
+                    }
+                    else if (b.Column.DisplayIndex % 2 == 0)
+                    {
+                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
+                    }
+                    else
+                    {
+                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
+                    }
+                };
+                Lister.MouseUp += (e, a) => Lister.Invalidate();
+                Resizable = false;
+                Topmost = true;
+            }
+            catch(System.Exception E)
+            {
+                MessageBox.Show(E.ToString(), MessageBoxType.Error);
+            }
             
             
         }
