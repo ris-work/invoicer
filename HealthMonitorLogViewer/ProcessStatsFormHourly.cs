@@ -73,7 +73,7 @@ namespace HealthMonitor
                 }
             };
 
-            var ReloadButton = new Button() { Text = "Reload" };
+            var ReloadButton = new Button() { Text = "⬇ Reload" };
             ReloadButton.Click += (e, a) => {
                 MessageBox.Show("Beta version!", MessageBoxType.Warning);
             };
