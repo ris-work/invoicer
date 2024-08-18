@@ -53,19 +53,19 @@ namespace HealthMonitor
                     SaveDialogCPU.Title = "Save stats as (please add PNG extension yourself)...";
                     SaveDialogCPU.Filters.Add(Config.PNGFilter);
                     SaveDialogCPU.ShowDialog("");
-                    var Path = SaveDialogCPU.FileName;
+                    var PathCPUStats = SaveDialogCPU.FileName;
 
-                    etoPlotCpu.Plot.SaveFig(Path, 2560, 1440, false, 4);
-                    MessageBox.Show($"Saved as: {Path}");
+                    etoPlotCpu.Plot.SaveFig(PathCPUStats, 2560, 1440, false, 4);
+                    MessageBox.Show($"Saved as: {PathCPUStats}", "CPU stats saved", MessageBoxType.Information);
 
                     var SaveDialogRAM = new SaveFileDialog();
                     SaveDialogRAM.Title = "Save success stats as (please add PNG extension yourself)...";
                     SaveDialogRAM.Filters.Add(Config.PNGFilter);
                     SaveDialogRAM.ShowDialog("");
-                    var PathSuccessStats = SaveDialogRAM.FileName;
+                    var PathRAMStats = SaveDialogRAM.FileName;
 
-                    etoPlotMem.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
-                    MessageBox.Show($"Saved as: {PathSuccessStats}");
+                    etoPlotMem.Plot.SaveFig(PathRAMStats, 2560, 1440, false, 4);
+                    MessageBox.Show($"Saved as: {PathRAMStats}", "RAM stats saved", MessageBoxType.Information);
                 }
                 catch (System.Exception E)
                 {
@@ -170,13 +170,26 @@ namespace HealthMonitor
                     );
                 if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
             };
+            GridMatchedProcessNames.KeyDown += (e, a) => {
+                if (a.Key == Keys.Enter)
+                {
+                    var SelectedProcessName = (string)((List<string>)(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
+                    var result = MessageBox.Show(
+                        $"View stats for: {SelectedProcessName}?",
+                        "View stats (confirm)",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxType.Information
+                        );
+                    if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                }
+            };
             var SortByRAM = new Button() { Text = "Sort by RAM 💾" };
             SortByRAM.Click += (e, a) => {
-                List<List<string>> SortedByRAM = new List<List<string>>();
+                List<string[]> SortedByRAM = new List<string[]>();
                 using (var ctx = new LogsContext())
                 {
                     var ListedByRAM = ctx.MaxAvgWorkingSets.ToList();
-                    SortedByRAM = ListedByRAM.Select(e => new List<string> { e.ProcessName, e.AvgWorkingSetValue.GetValueOrDefault(0.0).ToString("N0"), e.MaxWorkingSetValue.GetValueOrDefault().ToString("N0") }).ToList();
+                    SortedByRAM = ListedByRAM.Select(e => new [] { e.ProcessName, e.AvgWorkingSetValue.GetValueOrDefault(0.0).ToString("N0"), e.MaxWorkingSetValue.GetValueOrDefault().ToString("N0") }).ToList();
                     
                 }
                 (new ListerGridView(new List<string> { "Process Name", "Avg", "Max" }, SortedByRAM)).ShowModal();
@@ -185,7 +198,7 @@ namespace HealthMonitor
             SortByCPU.Click += (e, a) => {
                 try
                 {
-                    List<List<string>> SortedByCPU = new List<List<string>>();
+                    List<string[]> SortedByCPU = new List<string[]>();
                     using (var ctx = new LogsContext())
                     {
                         var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
@@ -193,7 +206,7 @@ namespace HealthMonitor
                         MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0, 13)}", "Time info", MessageBoxType.Information);
                         var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
                         var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
-                        SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                        SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new[] { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
                     }
                 (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPU)).ShowModal();
@@ -207,15 +220,15 @@ namespace HealthMonitor
             SortByCPULH.Click += (e, a) => {
                 try
                 {
-                    List<List<string>> SortedByCPULH = new List<List<string>>();
+                    List<string[]> SortedByCPULH = new List<string[]>();
                     using (var ctx = new LogsContext())
                     {
                         var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
                         var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
                         var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
-                        MessageBox.Show("Time info", $"From hour: {lastHour}", MessageBoxType.Information);
+                        MessageBox.Show($"From hour: {lastHour}", "Time info", MessageBoxType.Information);
                         var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
-                        SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new List<string> { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                        SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new [] { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
                     }
                 (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPULH)).ShowModal();
@@ -357,19 +370,20 @@ namespace HealthMonitor
             };
 
             void Filter(Object e, EventArgs a) {
+                var LowerCaseFilterText = FilterText.Text.ToLowerInvariant();
                 switch (RadioProcessFilter.SelectedKey)
                 {
                     case "Any":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant()) || x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.ProcessName).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant()) || x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new List<string> { e.ProcessName, e.WindowName }).ToList();
+                        ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.ProcessName.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.ProcessName).AsSequential().ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.ProcessName.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.ProcessName, e.WindowName }).AsSequential().ToList();
                         break;
                     case "Process name":
                         ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new List<string> { e.ProcessName, e.WindowName }). ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.ProcessName, e.WindowName }). ToList();
                         break;
                     case "Window title":
                         ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.ProcessName).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new List<string> { e.ProcessName, e.WindowName }).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.ProcessName, e.WindowName }).ToList();
                         break;
                 }
                 ProcessList.IsDataContextChanging = true;
@@ -396,7 +410,7 @@ namespace HealthMonitor
 
     public class ListerGridView: Dialog
     {
-        public ListerGridView(List<string> Cols, List<List<string>> L) {
+        public ListerGridView(IList<string> Cols, IList<string[]> L) {
             
             GridView Lister = new GridView();
             int seq = 0;
