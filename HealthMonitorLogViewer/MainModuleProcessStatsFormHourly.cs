@@ -17,6 +17,7 @@ using ScottPlot.SnapLogic;
 using System.Dynamic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection.Metadata.Ecma335;
 
 namespace HealthMonitor
 {
@@ -125,7 +126,7 @@ namespace HealthMonitor
                 var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
                 if (a.Key == Keys.Delete)
                 {
-                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.MainModule.FileName == SelectedProcessName).ToList();
+                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => { try { return e.MainModule.FileName == SelectedProcessName; } catch (System.Exception) { return false; };  }).ToList();
                     var Choice = MessageBox.Show($"Do you want to kill {CandidateList.Count} processes named {SelectedProcessName}?", MessageBoxButtons.YesNo, MessageBoxType.Warning);
                     if (Choice == DialogResult.Yes)
                     {
