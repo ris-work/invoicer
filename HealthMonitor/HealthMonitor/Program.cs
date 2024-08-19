@@ -2,6 +2,7 @@
 using HealthMonitor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Buffers;
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Net.Http.Headers;
@@ -90,6 +91,13 @@ foreach (var item in destinations)
                         int syst = 0, ut = 0, tt = 0, tc = 0; 
                         string wsmem = "0", vmuse = "0", prmemuse="0";
                         string sttt = "0";
+                        string mmpath = "", mmver = "";
+                        try {
+                            mmpath = item.MainModule.FileName;
+                            mmver = item.MainModule.FileVersionInfo.ToString();
+                        }
+                        catch (System.Exception E) { 
+                        }
                         try
                         {
                             vmuse = item.VirtualMemorySize64.ToString();
@@ -118,8 +126,9 @@ foreach (var item in destinations)
                             ThreadCount = tc,
                             TimeNow = time_now,
                             VirtualMemoryUse = vmuse,
-                            WorkingSet = wsmem
-
+                            WorkingSet = wsmem,
+                            MainModulePath = mmpath,
+                            MainModuleVersion = mmver
                         });
                     }
                     catch (Win32Exception E)
