@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace HealthMonitor;
 
-public partial class StatsDecaminute
+public partial class StatsDecaminuteMainModulePath
 {
     public string Decaminute { get; set; }
 
-    public string ProcessName { get; set; }
+    public string MainModulePath { get; set; }
 
     public long? AvgWorkingSet { get; set; }
 

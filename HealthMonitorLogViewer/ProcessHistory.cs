@@ -30,4 +30,8 @@ public partial class ProcessHistory
     public int? UserTime { get; set; }
 
     public int? TotalTime { get; set; }
+
+    public string MainModulePath { get; set; }
+
+    public string MainModuleVersion { get; set; }
 }
