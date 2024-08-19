@@ -18,6 +18,7 @@ public partial class LogsContext : DbContext
     public virtual DbSet<AvgWorkingSet> AvgWorkingSets { get; set; }
 
     public virtual DbSet<DistinctProcess> DistinctProcesses { get; set; }
+    public virtual DbSet<DistinctProcessesMainModule> DistinctProcessesMainModules { get; set; }
 
     public virtual DbSet<Exception> Exceptions { get; set; }
 
@@ -43,6 +44,8 @@ public partial class LogsContext : DbContext
 
     public virtual DbSet<WindowTitle> WindowTitles { get; set; }
 
+    public virtual DbSet<WindowTitlesMainModule> WindowTitlesMainModules { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlite($"Data Source={Config.LogFile}");
@@ -66,6 +69,15 @@ public partial class LogsContext : DbContext
                 .ToView("distinct_processes");
 
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
+        });
+        
+        modelBuilder.Entity<DistinctProcessesMainModule>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("distinct_processes_main_module");
+
+            entity.Property(e => e.MainModulePath).HasColumnName("main_module_path");
         });
 
         modelBuilder.Entity<Exception>(entity =>
@@ -242,6 +254,16 @@ public partial class LogsContext : DbContext
                 .ToView("window_titles");
 
             entity.Property(e => e.ProcessName).HasColumnName("process_name");
+            entity.Property(e => e.WindowName).HasColumnName("window_name");
+        });
+        
+        modelBuilder.Entity<WindowTitlesMainModule>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("window_titles_main_module");
+
+            entity.Property(e => e.MainModulePath).HasColumnName("main_module_path");
             entity.Property(e => e.WindowName).HasColumnName("window_name");
         });
 
