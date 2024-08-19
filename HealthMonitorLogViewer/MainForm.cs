@@ -20,6 +20,11 @@ namespace HealthMonitor
                 MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
                 (new ProcessStatsFormHourly("Idle")).Show();
             };
+            var AdvancedProcessStatsButton = new Button() { Text = "Process Stats (Advanced)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            AdvancedProcessStatsButton.Click += (e, a) => {
+                MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
+                (new MainModuleProcessStatsFormHourly("C:\\Windows\\explorer.exe")).Show();
+            };
 
             Content = new StackLayout
             {
@@ -29,7 +34,8 @@ namespace HealthMonitor
                 {
                     NetworkPingStatsButton,
                     NetworkPingStatsButtonHourly,
-                    ProcessStatsButton
+                    ProcessStatsButton,
+                    AdvancedProcessStatsButton
 
 				},
                 Orientation = Orientation.Vertical,

@@ -20,20 +20,11 @@ using System.Globalization;
 
 namespace HealthMonitor
 {
-    public class MemoryUsageByHour
+
+    public class MainModuleProcessStatsFormHourly: Form
     {
-        public string Hour;
-        public double? WorkingSet;
-    }
-    public class CpuUsageByHour
-    {
-        public string Hour;
-        public double? CpuTimeDiff;
-    }
-    public class ProcessStatsFormHourly: Form
-    {
-        public ProcessStatsFormHourly(string ProcessName) {
-            Title = $"HealthMonitor Process Plots [{ProcessName}]: by Hour";
+        public MainModuleProcessStatsFormHourly(string MainModuleProcessName) {
+            Title = $"HealthMonitor Process Plots [{MainModuleProcessName}]: by Hour";
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1080, 300) };
             ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1080, 300) };
@@ -86,10 +77,10 @@ namespace HealthMonitor
                 etoPlotMem.Refresh();
             };
 
-            var FilterCriteria = new List<string>(){ "Any", "Process name", "Window title" };
+            var FilterCriteria = new List<string>(){ "Any", "Process name/path", "Window title" };
             var RadioProcessFilter = new RadioButtonList() { DataStore = FilterCriteria, Orientation = Eto.Forms.Orientation.Vertical, SelectedValue = FilterCriteria[0], };
             var FilterText = new TextBox();
-            FilterText.PlaceholderText = ProcessName;
+            FilterText.PlaceholderText = MainModuleProcessName;
             
             var FilterTextStack = new StackLayout() { 
                 Items = { null, new Label() { Text = "Filter text:" }, new Label() { Text = "[ESC] to cancel all" }, FilterText },
@@ -126,7 +117,7 @@ namespace HealthMonitor
                     b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
                 }
             };
-            GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Process Name", DataCell = new TextBoxCell(0), Resizable = true, AutoSize = true });
+            GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Process Name/Path", DataCell = new TextBoxCell(0), Resizable = true, AutoSize = true });
             GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Window Title", DataCell = new TextBoxCell(1), Resizable = true, AutoSize = true });
             GridMatchedProcessNames.SelectionChanged += (e, a) => GridMatchedProcessNames.Invalidate();
             GridMatchedProcessNames.KeyUp += (e, a) =>
@@ -134,7 +125,7 @@ namespace HealthMonitor
                 var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
                 if (a.Key == Keys.Delete)
                 {
-                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.ProcessName == SelectedProcessName).ToList();
+                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.MainModule.FileName == SelectedProcessName).ToList();
                     var Choice = MessageBox.Show($"Do you want to kill {CandidateList.Count} processes named {SelectedProcessName}?", MessageBoxButtons.YesNo, MessageBoxType.Warning);
                     if (Choice == DialogResult.Yes)
                     {
@@ -168,7 +159,7 @@ namespace HealthMonitor
                     MessageBoxButtons.YesNo, 
                     MessageBoxType.Information
                     );
-                if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                if (result == DialogResult.Yes) (new MainModuleProcessStatsFormHourly(SelectedProcessName)).Show();
             };
             GridMatchedProcessNames.KeyDown += (e, a) => {
                 if (a.Key == Keys.Enter)
@@ -180,7 +171,7 @@ namespace HealthMonitor
                         MessageBoxButtons.YesNo,
                         MessageBoxType.Information
                         );
-                    if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                    if (result == DialogResult.Yes) (new MainModuleProcessStatsFormHourly(SelectedProcessName)).Show();
                 }
             };
             var SortByRAM = new Button() { Text = "Sort by RAM 💾" };
@@ -201,15 +192,15 @@ namespace HealthMonitor
                     List<string[]> SortedByCPU = new List<string[]>();
                     using (var ctx = new LogsContext())
                     {
-                        var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                        var lastAvailableHour = ctx.StatsHourlyMainModulePaths.Max(e => e.Hour);
                         var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
                         MessageBox.Show($"From hour: {lastAvailableHourDT.ToString("o").Substring(0, 13)}", "Time info", MessageBoxType.Information);
                         var curHour = lastAvailableHourDT.ToString("o").Substring(0, 13);
-                        var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == curHour).ToList();
-                        SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new[] { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                        var ListedByCPU = ctx.StatsHourlyMainModulePaths.Where(e => e.Hour == curHour).ToList();
+                        SortedByCPU = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new[] { e.MainModulePath, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
                     }
-                (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPU)).ShowModal();
+                (new ListerGridView(new List<string> { "Process Name/Path", "CPU %", "TC" }, SortedByCPU)).ShowModal();
                 }
                 catch(System.Exception E)
                 {
@@ -223,15 +214,15 @@ namespace HealthMonitor
                     List<string[]> SortedByCPULH = new List<string[]>();
                     using (var ctx = new LogsContext())
                     {
-                        var lastAvailableHour = ctx.StatsHourlies.Max(e => e.Hour);
+                        var lastAvailableHour = ctx.StatsHourlyMainModulePaths.Max(e => e.Hour);
                         var lastAvailableHourDT = DateTime.Parse(lastAvailableHour + ":00");
                         var lastHour = lastAvailableHourDT.AddHours(-1).ToString("o").Substring(0, 13);
                         MessageBox.Show($"From hour: {lastHour}", "Time info", MessageBoxType.Information);
-                        var ListedByCPU = ctx.StatsHourlies.Where(e => e.Hour == lastHour).ToList();
-                        SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new [] { e.ProcessName, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
+                        var ListedByCPU = ctx.StatsHourlyMainModulePaths.Where(e => e.Hour == lastHour).ToList();
+                        SortedByCPULH = ListedByCPU.OrderByDescending(e => e.CpuPercent).Select(e => new [] { e.MainModulePath, (e.CpuPercent.GetValueOrDefault()).ToString(), e.ThreadCount.GetValueOrDefault(0.0).ToString("N0") }).ToList();
 
                     }
-                (new ListerGridView(new List<string> { "Process Name", "CPU %", "TC" }, SortedByCPULH)).ShowModal();
+                (new ListerGridView(new List<string> { "Process Name/Path", "CPU %", "TC" }, SortedByCPULH)).ShowModal();
                 }
                 catch(System.Exception E)
                 {
@@ -270,21 +261,21 @@ namespace HealthMonitor
             };
 
             
-            List<WindowTitle> ProcessCandidates;
+            List<WindowTitlesMainModule> ProcessCandidates;
             List<String> Decaminutes = new List<string>();
             Dictionary<String, List < CpuUsageByHour >> PlotData = new();
             Dictionary<String, List<MemoryUsageByHour>> PlotDataSuccessRates = new();
             using (var logsContext = new LogsContext())
             {
-                ProcessCandidates = logsContext.WindowTitles.OrderBy(wt => wt.ProcessName).ToList();
+                ProcessCandidates = logsContext.WindowTitlesMainModules.OrderBy(wt => wt.MainModulePath).ToList();
                 
             }
-            ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).ToList();
-            ProcessList.SelectedKey = ProcessName;
+            ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).ToList();
+            ProcessList.SelectedKey = MainModuleProcessName;
             ProcessList.Width = 200;
             ProcessList.AutoComplete = true;
             ProcessList.TextInput += (e, a) => {
-                ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.Contains(ProcessList.Text)).Select(e => e.ProcessName).ToList(); 
+                ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.Contains(ProcessList.Text)).Select(e => e.MainModulePath).ToList(); 
                 ProcessList.IsDataContextChanging = true; 
             };
             ProcessList.KeyUp += (e, a) =>
@@ -296,9 +287,9 @@ namespace HealthMonitor
                 }
             };
 
-            if(ProcessCandidates.Where(x=>x.ProcessName == ProcessName).ToList().Count == 0)
+            if(ProcessCandidates.Where(x=>x.MainModulePath == MainModuleProcessName).ToList().Count == 0)
             {
-                ProcessName = "explorer";
+                MainModuleProcessName = "C:\\Windows\\explorer.exe";
             }
                 
             List<CpuUsageByHour> cpuUsageByHour = new List<CpuUsageByHour>();   
@@ -309,7 +300,7 @@ namespace HealthMonitor
                 using (var logsContext = new LogsContext())
                 {
 
-                    var GroupedByHour = logsContext.StatsHourlies.Where(x => x.ProcessName == ProcessName).ToList();
+                    var GroupedByHour = logsContext.StatsHourlyMainModulePaths.Where(x => x.MainModulePath.ToLower() == MainModuleProcessName.ToLower()).ToList();
                     cpuUsageByHour = GroupedByHour.Select(e => new CpuUsageByHour { Hour = e.Hour, CpuTimeDiff = (e.CpuPercent.GetValueOrDefault()) }).ToList();
                     memoryUseByHour = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = e.AvgWorkingSet }).ToList();
                     memoryUseByHourPeak = GroupedByHour.Select(e => new MemoryUsageByHour { Hour = e.Hour, WorkingSet = double.Parse(e.MaxWorkingSetForOneInstance) }).ToList();
@@ -336,25 +327,32 @@ namespace HealthMonitor
             pRamAvg.MarkerSize = 8;
             pRamAvg.MarkerLineWidth = 4;
 
-            etoPlotCpu.Plot.SetAxisLimits(yMin: 0);
-            etoPlotCpu.Plot.Legend();
-            etoPlotCpu.Plot.Legend().FontName = "Courier";
-            etoPlotCpu.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlotCpu.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlotCpu.Plot.Title($"CPU usage [{ProcessName}]");
-            etoPlotCpu.Plot.XLabel("Date/Time");
-            etoPlotCpu.Plot.YLabel("CPU-Hours %");
-            etoPlotCpu.Refresh();
+            try
+            {
+                etoPlotCpu.Plot.SetAxisLimits(yMin: 0);
+                etoPlotCpu.Plot.Legend();
+                etoPlotCpu.Plot.Legend().FontName = "Courier";
+                etoPlotCpu.Plot.Legend().Location = Alignment.UpperLeft;
+                etoPlotCpu.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+                etoPlotCpu.Plot.Title($"CPU usage [{MainModuleProcessName}]");
+                etoPlotCpu.Plot.XLabel("Date/Time");
+                etoPlotCpu.Plot.YLabel("CPU-Hours %");
+                etoPlotCpu.Refresh();
 
-            etoPlotMem.Plot.SetAxisLimits(yMin: 0);
-            etoPlotMem.Plot.Legend();
-            etoPlotMem.Plot.Legend().FontName = "Courier";
-            etoPlotMem.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlotMem.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
-            etoPlotMem.Plot.Title($"Mem stats [{ProcessName}]");
-            etoPlotMem.Plot.XLabel("Date/Time");
-            etoPlotMem.Plot.YLabel("Memory (MiB)");
-            etoPlotMem.Refresh();
+                etoPlotMem.Plot.SetAxisLimits(yMin: 0);
+                etoPlotMem.Plot.Legend();
+                etoPlotMem.Plot.Legend().FontName = "Courier";
+                etoPlotMem.Plot.Legend().Location = Alignment.UpperLeft;
+                etoPlotMem.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+                etoPlotMem.Plot.Title($"Mem stats [{MainModuleProcessName}]");
+                etoPlotMem.Plot.XLabel("Date/Time");
+                etoPlotMem.Plot.YLabel("Memory (MiB)");
+                etoPlotMem.Refresh();
+            }
+            catch (System.Exception E)
+            {
+                MessageBox.Show($"{E.ToString()} \r\n {E.Message} \r\n {E.StackTrace}", "Exception");
+            }
 
             FilterText.TextInput += Filter;
             RadioProcessFilter.SelectedKeyChanged += Filter;
@@ -364,7 +362,7 @@ namespace HealthMonitor
                     (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show();
                 else if (a.Key == Keys.Escape)
                 {
-                    ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).ToList();
+                    ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).ToList();
                     ProcessList.IsDataContextChanging = true;
                 }
             };
@@ -374,16 +372,16 @@ namespace HealthMonitor
                 switch (RadioProcessFilter.SelectedKey)
                 {
                     case "Any":
-                        ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.ProcessName.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.ProcessName).AsSequential().ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.ProcessName.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.ProcessName, e.WindowName }).AsSequential().ToList();
+                        ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.MainModulePath).AsSequential().ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.MainModulePath, e.WindowName }).AsSequential().ToList();
                         break;
-                    case "Process name":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.ProcessName).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.ProcessName.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.ProcessName, e.WindowName }). ToList();
+                    case "Process path/name":
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.MainModulePath).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.MainModulePath, e.WindowName }). ToList();
                         break;
                     case "Window title":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.ProcessName).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.ProcessName, e.WindowName }).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.MainModulePath).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.MainModulePath, e.WindowName }).ToList();
                         break;
                 }
                 ProcessList.IsDataContextChanging = true;
@@ -408,69 +406,5 @@ namespace HealthMonitor
         }
     }
 
-    public class ListerGridView: Dialog
-    {
-        public ListerGridView(IList<string> Cols, IList<string[]> L) {
-            
-            GridView Lister = new GridView();
-            int seq = 0;
-            try
-            {
-                foreach (var item in Cols)
-                {
-                    var x = int.TryParse(L[0][seq], NumberStyles.AllowThousands, null, out var _);
-                    if (x == false)
-                        Lister.Columns.Add(new GridColumn { HeaderText = item, DataCell = new TextBoxCell(seq), Sortable = false });
-                    else
-                        Lister.Columns.Add(new GridColumn { HeaderText = item, DataCell = new TextBoxCell(seq) { TextAlignment = Eto.Forms.TextAlignment.Right }, Sortable = false });
-                    seq++;
-                }
-            }
-            catch(System.Exception E)
-            {
-                MessageBox.Show(E.ToString(), MessageBoxType.Error);
-            }
-            try
-            {
-                Lister.DataStore = L;
-                Content = Lister;
-                Title = "Listing";
-                Resizable = false;
-                Lister.Size = new Eto.Drawing.Size(800, 600);
-                Lister.CellFormatting += (a, b) =>
-                {
-                    b.Font = new Eto.Drawing.Font("Courier New", 10);
-                    b.Font = new Eto.Drawing.Font("MONOSPACE", 10);
-
-                    if (b.Row == Lister.SelectedRow)
-                    {
-                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(50, 50, 50, 255);
-                        b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
-                    }
-                    else if (b.Row % 2 == 0)
-                    {
-                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
-                    }
-                    else if (b.Column.DisplayIndex % 2 == 0)
-                    {
-                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
-                    }
-                    else
-                    {
-                        b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
-                    }
-                };
-                Lister.MouseUp += (e, a) => Lister.Invalidate();
-                Resizable = false;
-                Topmost = true;
-            }
-            catch(System.Exception E)
-            {
-                MessageBox.Show(E.ToString(), MessageBoxType.Error);
-            }
-            Icon = new Eto.Drawing.Icon("ListViewer.ico");
-            
-            
-        }
-    }
+   
 }
