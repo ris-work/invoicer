@@ -34,3 +34,9 @@ avg(thread_count) AS thread_count
 FROM process_history ph JOIN times_collected_by_hour tcbh ON hour=tcbh.time_hour
 GROUP BY substring(time_now, 1, 13), main_module_path
 );
+
+CREATE VIEW distinct_processes_main_module AS SELECT DISTINCT(main_module_path) AS main_module_path FROM process_history ORDER BY main_module_path;
+
+CREATE VIEW window_titles_main_module AS
+SELECT DISTINCT ifnull(main_window_title, '') AS window_name, main_module_path
+FROM process_history;
