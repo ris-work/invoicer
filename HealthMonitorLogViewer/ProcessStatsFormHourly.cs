@@ -105,7 +105,7 @@ namespace HealthMonitor
             {
 
             };
-            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill" };
+            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill, [SPACE] to see count" };
             GridMatchedProcessNames.CellFormatting += (a, b) => {
                 b.Font = new Eto.Drawing.Font("Courier New", 7, Eto.Drawing.FontStyle.Bold);
                 if (b.Row == GridMatchedProcessNames.SelectedRow)
@@ -181,6 +181,9 @@ namespace HealthMonitor
                         MessageBoxType.Information
                         );
                     if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                }
+                else if (a.Key == Keys.Space) {
+                    MessageBox.Show($"Count: {GridMatchedProcessNames.DataStore.Count()}", "Count", MessageBoxType.Information);
                 }
             };
             var SortByRAM = new Button() { Text = "Sort by RAM 💾" };

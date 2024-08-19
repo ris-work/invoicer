@@ -97,7 +97,7 @@ namespace HealthMonitor
             {
 
             };
-            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill" };
+            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill, [SPACE] to count" };
             GridMatchedProcessNames.CellFormatting += (a, b) => {
                 b.Font = new Eto.Drawing.Font("Courier New", 7, Eto.Drawing.FontStyle.Bold);
                 if (b.Row == GridMatchedProcessNames.SelectedRow)
@@ -149,6 +149,10 @@ namespace HealthMonitor
                             MessageBox.Show(E.ToString(), MessageBoxType.Error);
                         }
                     }
+                }
+                else if (a.Key == Keys.Space)
+                {
+                    MessageBox.Show($"Count: {GridMatchedProcessNames.DataStore.Count()}", "Count", MessageBoxType.Information);
                 }
                 
             };
@@ -271,12 +275,12 @@ namespace HealthMonitor
                 ProcessCandidates = logsContext.WindowTitlesMainModules.OrderBy(wt => wt.MainModulePath).ToList();
                 
             }
-            ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).ToList();
+            ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).OrderBy(e => e).ToList();
             ProcessList.SelectedKey = MainModuleProcessName;
             ProcessList.Width = 200;
             ProcessList.AutoComplete = true;
             ProcessList.TextInput += (e, a) => {
-                ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.Contains(ProcessList.Text)).Select(e => e.MainModulePath).ToList(); 
+                ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.Contains(ProcessList.Text)).Select(e => e.MainModulePath).OrderBy(e => e).ToList(); 
                 ProcessList.IsDataContextChanging = true; 
             };
             ProcessList.KeyUp += (e, a) =>
@@ -374,15 +378,15 @@ namespace HealthMonitor
                 {
                     case "Any":
                         ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.MainModulePath).AsSequential().ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.MainModulePath, e.WindowName }).AsSequential().ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.MainModulePath, e.WindowName }).AsSequential().OrderBy( e => e[0]).ToList();
                         break;
-                    case "Process path/name":
+                    case "Process name/path":
                         ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.MainModulePath).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.MainModulePath, e.WindowName }). ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0]).ToList();
                         break;
                     case "Window title":
                         ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.MainModulePath).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.MainModulePath, e.WindowName }).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0]).ToList();
                         break;
                 }
                 ProcessList.IsDataContextChanging = true;

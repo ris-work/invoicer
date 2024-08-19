@@ -1,4 +1,4 @@
-using Eto.Drawing;
+﻿using Eto.Drawing;
 using Eto.Forms;
 using System;
 using System.Collections.Generic;
@@ -11,16 +11,16 @@ namespace HealthMonitor
         {
             Title = "HealthMonitor Log Analyzer & Viewer";
             MinimumSize = new Size(200, 200);
-            var NetworkPingStatsButton = new Button() { Text = "Network Ping Stats (by decaminute (10 minutes))", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            var NetworkPingStatsButton = new Button() { Text = "🕸 Network Ping Stats (by decaminute (10 minutes)) 💾", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             NetworkPingStatsButton.Click += (e, a) => { (new NetworkPingStatsForm()).Show(); };
-            var NetworkPingStatsButtonHourly = new Button() { Text = "Network Ping Stats (by hour)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            var NetworkPingStatsButtonHourly = new Button() { Text = "⏱ Network Ping Stats (by hour)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             NetworkPingStatsButtonHourly.Click += (e, a) => { (new NetworkPingStatsFormHourly()).Show(); };
-            var ProcessStatsButton = new Button() { Text = "Process Stats", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            var ProcessStatsButton = new Button() { Text = "📃 Process Stats", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             ProcessStatsButton.Click += (e, a) => { 
                 MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
                 (new ProcessStatsFormHourly("Idle")).Show();
             };
-            var AdvancedProcessStatsButton = new Button() { Text = "Process Stats (Advanced)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            var AdvancedProcessStatsButton = new Button() { Text = "⚙ Process Stats (Advanced)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             AdvancedProcessStatsButton.Click += (e, a) => {
                 MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
                 (new MainModuleProcessStatsFormHourly("C:\\Windows\\explorer.exe")).Show();
@@ -29,7 +29,7 @@ namespace HealthMonitor
             Content = new StackLayout
             {
                 Padding = 30,
-                Spacing = 30,
+                Spacing = 10,
                 Items =
                 {
                     NetworkPingStatsButton,
