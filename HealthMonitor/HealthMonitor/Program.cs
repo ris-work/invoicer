@@ -67,6 +67,16 @@ if (TM.ContainsKey("SleepTimeMsBetweeenPointsProc"))
 {
     Config.SleepTimeMsBetweenPointsProc = (((int)TM["SleepTimeMsBetweeenPointsProc"]));
 }
+if (Config.SleepTimeMsBetweenPointsPing < 500)
+{
+    Config.SleepTimeMsBetweenPointsPing = 500;
+    Console.WriteLine("Warning: Ping monitoring sleep time between points is too low, set to 500.");
+}
+if (Config.SleepTimeMsBetweenPointsProc < 1000)
+{
+    Config.SleepTimeMsBetweenPointsProc = 5000;
+    Console.WriteLine("Warning: Process monitoring sleep time betweeen points is too low, set to 5000.");
+}
 Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, SleepTimeMsBetweenPointsProc: {Config.SleepTimeMsBetweenPointsProc}, SleepTimeMsBetweenPointsPing: {Config.SleepTimeMsBetweenPointsPing}.");
 
 destinations = TA.Select(x => (string)x).ToList();
