@@ -1,3 +1,4 @@
+#Privileged run
 New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR
 mkdir 'HKCU:\software\microsoft\windows\CurrentVersion\App Paths\HealthMonitorLogViewer.exe'
 $a = @{
@@ -34,8 +35,91 @@ $a = @{
     Value = ""
 }
 New-ItemProperty -Force @a
+mkdir 'HKCR:\Applications\HealthMonitorLogViewer.exe\shell'
+mkdir 'HKCR:\Applications\HealthMonitorLogViewer.exe\shell\open'
+mkdir 'HKCR:\Applications\HealthMonitorLogViewer.exe\shell\open\command'
+
+$a = @{
+    Path = 'HKCR:\Applications\HealthMonitorLogViewer.exe\shell\open\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
 
 
+mkdir 'HKCR:\.rvhealthmonitorlogfile'
+mkdir 'HKCR:\.rvhealthmonitorlogfile\shell'
+mkdir 'HKCR:\.rvhealthmonitorlogfile\shell\open'
+mkdir 'HKCR:\.rvhealthmonitorlogfile\shell\open\command'
+
+$a = @{
+    Path = 'HKCR:\.rvhealthmonitorlogfile\shell\open\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = 'HKCR:\.rvhealthmonitorlogfile\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "HealthMonitorLogViewer"
+}
+New-ItemProperty -Force @a
+
+
+mkdir 'HKCR:\HealthMonitorLogViewer'
+$a = @{
+    Path = 'HKCU:\Software\Classes\HealthMonitorLogViewer\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "Health Monitor Log File"
+    #Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+mkdir 'HKCR:\.rvhealthmonitorlogfile\DefaultIcon'
+$a = @{
+    Path = 'HKCR:\.rvhealthmonitorlogfile\DefaultIcon\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "$pwd\cd_file.ico"
+}
+New-ItemProperty -Force @a
+
+
+mkdir 'HKCR:\HealthMonitorLogViewer\DefaultIcon'
+$a = @{
+    Path = 'HKCR:\HealthMonitorLogViewer\DefaultIcon\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "$pwd\cd_file.ico"
+}
+New-ItemProperty -Force @a
+
+mkdir 'HKCR:\HealthMonitorLogViewer\shell'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell\open'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell\open\command'
+
+$a = @{
+    Path = 'HKCR:\HealthMonitorLogViewer\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "Health Monitor Log File"
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = 'HKCU:\Software\Classes\HealthMonitorLogViewer\shell\open\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+#HKCU things
 mkdir 'HKCU:\Software\Classes\Applications\HealthMonitorLogViewer.exe'
 $a = @{
     Path = 'HKCU:\Software\Classes\Applications\HealthMonitorLogViewer.exe\HealthMonitorLogViewer.exe'
@@ -136,5 +220,12 @@ $a = @{
     Name = "(default)"
     PropertyType = "String"
     Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+$a = @{
+    Path = 'HKCU:\Software\Classes\HealthMonitorLogViewer\'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "Health Monitor Log File"
 }
 New-ItemProperty -Force @a
