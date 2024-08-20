@@ -12,8 +12,6 @@ using System.Text;
 using Tomlyn;
 using Tomlyn.Model;
 
-
-
 void StartPing(string dest)
 {
     while (true)
