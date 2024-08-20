@@ -42,7 +42,7 @@ void StartPing(string dest)
         {
             E.ToString();
         }
-        Thread.Sleep(5000);
+        Thread.Sleep(Config.SleepTimeMsBetweenPointsProc);
     }
 }
 
@@ -59,7 +59,15 @@ if (TM.ContainsKey("LogFile"))
 {
     Config.LogFile = (((string)TM["LogFile"]));
 }
-Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}.");
+if (TM.ContainsKey("SleepTimeMsBetweenPointsPing"))
+{
+    Config.SleepTimeMsBetweenPointsPing = (((int)TM["SleepTimeMsBetweeenPointsPing"]));
+}
+if (TM.ContainsKey("SleepTimeMsBetweeenPointsProc"))
+{
+    Config.SleepTimeMsBetweenPointsProc = (((int)TM["SleepTimeMsBetweeenPointsProc"]));
+}
+Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, SleepTimeMsBetweenPointsProc: {Config.SleepTimeMsBetweenPointsProc}, SleepTimeMsBetweenPointsPing: {Config.SleepTimeMsBetweenPointsPing}.");
 
 destinations = TA.Select(x => (string)x).ToList();
 //destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
@@ -147,7 +155,7 @@ foreach (var item in destinations)
             Console.WriteLine(E.ToString());
         }
 
-        Thread.Sleep(5000);
+        Thread.Sleep(Config.SleepTimeMsBetweenPointsPing);
     }
 }
 )).Start();
@@ -155,4 +163,6 @@ foreach (var item in destinations)
 public static class Config
 {
     public static string LogFile = "logs.sqlite3";
+    public static int SleepTimeMsBetweenPointsPing = 5000;
+    public static int SleepTimeMsBetweenPointsProc = 5000;
 }

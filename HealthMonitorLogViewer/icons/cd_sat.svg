@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   id="svg2"
+   sodipodi:docname="1405056740_2.svg"
+   inkscape:export-filename="/home/john/Images/cd.png"
+   viewBox="0 0 284399.97 284400"
+   inkscape:export-xdpi="90"
+   version="1.1"
+   inkscape:export-ydpi="90"
+   inkscape:version="0.48.3.1 r9886"
+   width="284399.97"
+   height="284400"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:window-y="-9"
+     pagecolor="#ffffff"
+     inkscape:window-height="1001"
+     inkscape:window-maximized="1"
+     inkscape:zoom="0.87142857"
+     inkscape:window-x="-9"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="g4562"
+     inkscape:cx="314.42623"
+     inkscape:cy="313.85246"
+     inkscape:window-width="1920"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <defs
+     id="defs4">
+    <clipPath
+       id="clipPath3570"
+       clipPathUnits="userSpaceOnUse">
+      <circle
+         id="path3572"
+         style="fill:#f57900;fill-rule:evenodd"
+         transform="translate(-683.57,355.3)"
+         cx="-311.42856"
+         cy="180.93361"
+         r="225.71428" />
+    </clipPath>
+    <filter
+       id="filter4538"
+       height="1.3810231"
+       width="1.3753021"
+       color-interpolation-filters="sRGB"
+       y="-0.1903111"
+       x="-0.1876542"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur4540"
+         stdDeviation="48.833377"
+         inkscape:collect="always" />
+    </filter>
+  </defs>
+  <g
+     id="layer1"
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     transform="translate(-56250.914,-70534.641)">
+    <g
+       id="g4615"
+       transform="translate(255,215.57)">
+      <g
+         id="g4562"
+         transform="translate(634.29,111.43)"
+         style="opacity:1">
+        <g
+           id="g3558"
+           style="opacity:0.843602;stroke:#ffffff;stroke-width:2;filter:url(#filter4538)"
+           transform="translate(420.71,-103.87)"
+           clip-path="url(#clipPath3570)"
+           inkscape:export-filename="cd_sat.svg"
+           inkscape:export-xdpi="544.40509"
+           inkscape:export-ydpi="544.40509">
+          <path
+             id="path3536"
+             style="fill:#8ae234;stroke:#ffffff;stroke-width:2"
+             d="m -1102.1,827.92 h 219.83 l -109.92,-301.99 -109.92,301.99 z"
+             inkscape:transform-center-y="150.99634"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3538"
+             style="fill:#8ae234;stroke:#ffffff;stroke-width:2"
+             d="m -1102.1,827.92 h 219.83 l -109.92,-301.99 -109.92,301.99 z"
+             inkscape:transform-center-y="150.99634"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3540"
+             style="fill:#3465a4;stroke:#ffffff;stroke-width:2"
+             d="m -1270.5,686.61 168.4,141.31 109.92,-301.99 -278.32,160.69 z"
+             inkscape:transform-center-x="139.15896"
+             inkscape:transform-center-y="150.99633"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3542"
+             style="fill:#ef2929;stroke:#ffffff;stroke-width:2"
+             d="m -1308.6,470.12 38.174,216.49 278.32,-160.69 -316.49,-55.806 z"
+             inkscape:transform-center-x="158.24575"
+             inkscape:transform-center-y="52.440505"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3544"
+             style="fill:#75507b;stroke:#ffffff;stroke-width:2"
+             d="m -1198.7,279.74 -109.92,190.38 316.49,55.806 -206.58,-246.19 z"
+             inkscape:transform-center-x="158.24575"
+             inkscape:transform-center-y="-123.09333"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3546"
+             style="fill:#ce5c00;stroke:#ffffff;stroke-width:2"
+             d="m -992.14,204.55 -206.58,75.187 206.58,246.19 -8e-5,-321.37 z"
+             inkscape:transform-center-x="103.2876"
+             inkscape:transform-center-y="-160.68695"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3548"
+             style="fill:#c4a000;stroke:#ffffff;stroke-width:2"
+             d="M -675.65,470.12 -785.57,279.74 -992.14,525.93 Z"
+             inkscape:transform-center-x="-158.24575"
+             inkscape:transform-center-y="-123.09336"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3550"
+             style="fill:#4e9a06;stroke:#ffffff;stroke-width:2"
+             d="m -785.57,279.74 -206.58,-75.187 7e-5,321.37 206.58,-246.19 z"
+             inkscape:transform-center-x="-103.28753"
+             inkscape:transform-center-y="-160.68695"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3552"
+             style="fill:#729fcf;stroke:#ffffff;stroke-width:2"
+             d="m -713.82,686.61 38.174,-216.49 -316.49,55.806 278.32,160.69 z"
+             inkscape:transform-center-x="-158.24575"
+             inkscape:transform-center-y="52.44042"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+          <path
+             id="path3554"
+             style="fill:#f57900;stroke:#ffffff;stroke-width:2"
+             d="M -882.23,827.92 -713.82,686.61 -992.14,525.93 Z"
+             inkscape:transform-center-x="-139.159"
+             inkscape:transform-center-y="150.99634"
+             inkscape:connector-curvature="0"
+             inkscape:label="Triangle" />
+        </g>
+      </g>
+      <g
+         id="g4558"
+         transform="translate(704.57,488.29)"
+         style="opacity:1">
+        <ellipse
+           id="path4400"
+           style="fill:#2e3436;fill-opacity:0.71765;fill-rule:evenodd;stroke:#dfd3e8;stroke-width:57.311;stroke-opacity:0.94118"
+           transform="matrix(0.33152,0,0,0.33152,-577.05,-42.155)"
+           cx="-205.71428"
+           cy="306.64789"
+           rx="268.57144"
+           ry="262.85715" />
+        <ellipse
+           id="path4556"
+           style="fill:#ffffff;fill-rule:evenodd;stroke:#dfd3e8;stroke-width:57.311;stroke-opacity:0.94118"
+           transform="matrix(0.16131,0,0,0.16131,-612.06,11.924)"
+           cx="-205.71428"
+           cy="306.64789"
+           rx="268.57144"
+           ry="262.85715" />
+      </g>
+    </g>
+  </g>
+  <metadata
+     id="metadata1">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
