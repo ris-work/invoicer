@@ -408,6 +408,14 @@ namespace HealthMonitor
             Content = VerticalStackLayout;
             Resizable = false;
             Filter(null, null);
+            try
+            {
+                Icon = new Eto.Drawing.Icon("time-view.ico");
+            }
+            catch (System.Exception E)
+            {
+                MessageBox.Show($"{E.ToString()} \r\n {E.Message}", "Icon loading failed", MessageBoxType.Error);
+            }
         }
     }
 

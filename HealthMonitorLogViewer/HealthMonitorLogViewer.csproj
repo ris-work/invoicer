@@ -23,7 +23,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="cd_sat.ico" />
+    <None Remove="cd_file.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="cd_file.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cd_sat.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -37,10 +46,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="assoc.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="ListViewer.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="logs.sqlite3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="time-view.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
