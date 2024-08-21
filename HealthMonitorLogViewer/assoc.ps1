@@ -71,12 +71,34 @@ New-ItemProperty -Force @a
 
 
 mkdir 'HKCR:\HealthMonitorLogViewer'
+mkdir 'HKCR:\HealthMonitorLogViewer\DefaultIcon'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell\open'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell\open\command'
+
+
 $a = @{
-    Path = 'HKCU:\Software\Classes\HealthMonitorLogViewer\'
+    Path = 'HKCR:\HealthMonitorLogViewer\'
     Name = "(default)"
     PropertyType = "String"
     Value = "Health Monitor Log File"
     #Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = 'HKCR:\HealthMonitorLogViewer\shell\open\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$pwd\HealthMonitorLogViewer.exe`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = 'HKCR:\HealthMonitorLogViewer\DefaultIcon'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "$pwd\cd_file.ico"
 }
 New-ItemProperty -Force @a
 

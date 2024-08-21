@@ -278,7 +278,7 @@ namespace HealthMonitor
             ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).OrderBy(e => e).ToList();
             ProcessList.SelectedKey = MainModuleProcessName;
             ProcessList.Width = 200;
-            ProcessList.AutoComplete = true;
+            //ProcessList.AutoComplete = true;
             ProcessList.TextInput += (e, a) => {
                 ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.Contains(ProcessList.Text)).Select(e => e.MainModulePath).OrderBy(e => e).ToList(); 
                 ProcessList.IsDataContextChanging = true; 
@@ -287,10 +287,26 @@ namespace HealthMonitor
             {
                 if(a.Key == Keys.Escape)
                 {
-                    ProcessList.SelectedValue = false;
+                    ProcessList.SelectedValue = null;
                     ProcessList.Invalidate();
+                    RadioProcessFilter.SelectedIndex = 0;
+                    FilterText.Text = "";
+                    Filter(e, a);
+
                 }
             };
+            FilterText.KeyUp += (e, a) => {
+                if (a.Key == Keys.Escape)
+                {
+                    ProcessList.SelectedValue = null;
+                    ProcessList.Invalidate();
+                    RadioProcessFilter.SelectedIndex = 0;
+                    FilterText.Text = "";
+                    Filter(e, a);
+
+                }
+            };
+
 
             if(ProcessCandidates.Where(x=>x.MainModulePath == MainModuleProcessName).ToList().Count == 0)
             {
@@ -367,7 +383,7 @@ namespace HealthMonitor
                     (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show();
                 else if (a.Key == Keys.Escape)
                 {
-                    ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).ToList();
+                    ProcessList.DataStore = ProcessCandidates.Select(e => e.MainModulePath).OrderBy(e => e.ToLowerInvariant()).ToList();
                     ProcessList.IsDataContextChanging = true;
                 }
             };
@@ -377,16 +393,16 @@ namespace HealthMonitor
                 switch (RadioProcessFilter.SelectedKey)
                 {
                     case "Any":
-                        ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.MainModulePath).AsSequential().ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.MainModulePath, e.WindowName }).AsSequential().OrderBy( e => e[0]).ToList();
+                        ProcessList.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => e.MainModulePath).AsSequential().OrderBy(e => e.ToLowerInvariant()).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.AsParallel().Where(x => x.MainModulePath.ToLowerInvariant().Contains(LowerCaseFilterText) || x.WindowName.ToLowerInvariant().Contains(LowerCaseFilterText)).Select(e => new string[] { e.MainModulePath, e.WindowName }).AsSequential().OrderBy( e => e[0].ToLowerInvariant()).ToList();
                         break;
                     case "Process name/path":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.MainModulePath).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0]).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => e.MainModulePath).OrderBy(e => e.ToLowerInvariant()).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.MainModulePath.ToLowerInvariant().Contains(FilterText.Text)).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0].ToLowerInvariant()).ToList();
                         break;
                     case "Window title":
-                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.MainModulePath).ToList();
-                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0]).ToList();
+                        ProcessList.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => e.MainModulePath).OrderBy(e => e.ToLowerInvariant()).ToList();
+                        GridMatchedProcessNames.DataStore = ProcessCandidates.Where(x => x.WindowName.ToLowerInvariant().Contains(FilterText.Text.ToLowerInvariant())).Select(e => new string[] { e.MainModulePath, e.WindowName }).OrderBy(e => e[0].ToLowerInvariant()).ToList();
                         break;
                 }
                 ProcessList.IsDataContextChanging = true;
