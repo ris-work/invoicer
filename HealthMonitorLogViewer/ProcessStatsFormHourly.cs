@@ -385,6 +385,14 @@ namespace HealthMonitor
                     ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).OrderBy(e => e.ToLowerInvariant()).ToList();
                     ProcessList.IsDataContextChanging = true;
                 }
+                /*TODO: else if (a.Key == Keys.Down)
+                {
+                    if(Eto.Platform.Instance.ToString() == Eto.Platforms.Wpf)
+                    {
+                        ProcessList.ToNative().DroppedDown = true;
+                    }
+                }*/
+
             };
 
             void Filter(Object e, EventArgs a) {
