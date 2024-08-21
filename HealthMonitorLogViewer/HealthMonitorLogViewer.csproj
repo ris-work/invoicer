@@ -52,8 +52,11 @@
     <None Update="ListViewer.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="logs.sqlite3">
+    <None Update="logs.sqlite3.rvhealthmonitorlogfile">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="logs.sqlite3">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="time-view.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

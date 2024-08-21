@@ -23,6 +23,6 @@ namespace HealthMonitor
 
 public static class Config
 {
-    public static string LogFile = "logs.sqlite3";
+    public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
     public static Eto.Forms.FileFilter PNGFilter  = new Eto.Forms.FileFilter();
 }
