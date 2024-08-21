@@ -33,7 +33,7 @@ namespace HealthMonitor
     public class ProcessStatsFormHourly: Form
     {
         public ProcessStatsFormHourly(string ProcessName) {
-            Title = $"HealthMonitor Process Plots [{ProcessName}]: by Hour";
+            Title = $"HealthMonitor Process Plots [{ProcessName}]: by Hour [{Config.LogFile}]";
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1080, 300) };
             ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1080, 300) };
@@ -43,6 +43,7 @@ namespace HealthMonitor
             etoPlotMem.Plot.XAxis.LabelStyle(fontSize: 18);
             etoPlotMem.Plot.YAxis.LabelStyle(fontSize: 18);
             etoPlotMem.Plot.Legend().FontSize = 10;
+            //MovableByWindowBackground = true;
 
             var SaveButton = new Button() { Text = "💾 Save As ..." };
             SaveButton.Click += (e, a) =>
@@ -131,49 +132,54 @@ namespace HealthMonitor
             GridMatchedProcessNames.SelectionChanged += (e, a) => GridMatchedProcessNames.Invalidate();
             GridMatchedProcessNames.KeyUp += (e, a) =>
             {
-                var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
-                if (a.Key == Keys.Delete)
+                try
                 {
-                    var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.ProcessName == SelectedProcessName).ToList();
-                    var Choice = MessageBox.Show($"Do you want to kill {CandidateList.Count} processes named {SelectedProcessName}?", MessageBoxButtons.YesNo, MessageBoxType.Warning);
-                    if (Choice == DialogResult.Yes)
+                    var SelectedRow = GridMatchedProcessNames.SelectedRow;
+                    Object SelectedProcess;
+                    if (SelectedRow == -1)
                     {
-                        try
+                        SelectedProcess = GridMatchedProcessNames.DataStore.ElementAt(0);
+                    }
+                    else
+                    {
+                        SelectedProcess = GridMatchedProcessNames.DataStore.ElementAt(SelectedRow);
+                    }
+                    string SelectedProcessName;
+                    SelectedProcessName = ((string[])(SelectedProcess))[0];
+                    if (a.Key == Keys.Delete)
+                    {
+                        var CandidateList = System.Diagnostics.Process.GetProcesses().Where(e => e.ProcessName == SelectedProcessName).ToList();
+                        var Choice = MessageBox.Show($"Do you want to kill {CandidateList.Count} processes named {SelectedProcessName}?", MessageBoxButtons.YesNo, MessageBoxType.Warning);
+                        if (Choice == DialogResult.Yes)
                         {
-                            foreach (var item in CandidateList)
+                            try
                             {
-                                try
+                                foreach (var item in CandidateList)
                                 {
-                                    item.Kill();
-                                }
-                                catch(System.Exception E)
-                                {
-                                    MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                                    try
+                                    {
+                                        item.Kill();
+                                    }
+                                    catch (System.Exception E)
+                                    {
+                                        MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                                    }
                                 }
                             }
-                        }
-                        catch(System.Exception E)
-                        {
-                            MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                            catch (System.Exception E)
+                            {
+                                MessageBox.Show(E.ToString(), MessageBoxType.Error);
+                            }
                         }
                     }
                 }
+                catch (System.Exception E) { }
                 
             };
             GridMatchedProcessNames.CellDoubleClick += (e, a) => {
-                var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(a.Row))).ElementAt(0);
-                var result = MessageBox.Show(
-                    $"View stats for: {SelectedProcessName}?", 
-                    "View stats (confirm)",
-                    MessageBoxButtons.YesNo, 
-                    MessageBoxType.Information
-                    );
-                if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
-            };
-            GridMatchedProcessNames.KeyDown += (e, a) => {
-                if (a.Key == Keys.Enter)
+                try
                 {
-                    var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(GridMatchedProcessNames.SelectedRow))).ElementAt(0);
+                    var SelectedProcessName = (string)((string[])(GridMatchedProcessNames.DataStore.ElementAt(a.Row))).ElementAt(0);
                     var result = MessageBox.Show(
                         $"View stats for: {SelectedProcessName}?",
                         "View stats (confirm)",
@@ -182,9 +188,39 @@ namespace HealthMonitor
                         );
                     if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
                 }
-                else if (a.Key == Keys.Space) {
-                    MessageBox.Show($"Count: {GridMatchedProcessNames.DataStore.Count()}", "Count", MessageBoxType.Information);
+                catch (System.Exception E) { }
+            };
+            GridMatchedProcessNames.KeyDown += (e, a) => {
+                try
+                {
+                    if (a.Key == Keys.Enter)
+                    {
+                        var SelectedRow = GridMatchedProcessNames.SelectedRow;
+                        Object SelectedProcess;
+                        if (SelectedRow == -1)
+                        {
+                            SelectedProcess = GridMatchedProcessNames.DataStore.ElementAt(0);
+                        }
+                        else
+                        {
+                            SelectedProcess = GridMatchedProcessNames.DataStore.ElementAt(SelectedRow);
+                        }
+                        string SelectedProcessName;
+                        SelectedProcessName = ((string[])(SelectedProcess))[0];
+                        var result = MessageBox.Show(
+                            $"View stats for: {SelectedProcessName}?",
+                            "View stats (confirm)",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxType.Information
+                            );
+                        if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                    }
+                    else if (a.Key == Keys.Space)
+                    {
+                        MessageBox.Show($"Count: {GridMatchedProcessNames.DataStore.Count()}", "Count", MessageBoxType.Information);
+                    }
                 }
+                catch  { }
             };
             var SortByRAM = new Button() { Text = "Sort by RAM 💾" };
             SortByRAM.Click += (e, a) => {
@@ -311,6 +347,10 @@ namespace HealthMonitor
                     RadioProcessFilter.SelectedIndex = 0;
                     Filter(e, a);
 
+                }
+                else if (a.Key == Keys.Enter)
+                {
+                    GridMatchedProcessNames.Focus();
                 }
             };
 
@@ -443,7 +483,7 @@ namespace HealthMonitor
 
     public class ListerGridView: Dialog
     {
-        public ListerGridView(IList<string> Cols, IList<string[]> L) {
+        public ListerGridView(IList<string> Cols, IList<string[]> L, string WindowTitle = "Listing ([ESC] to quit)") {
             
             GridView Lister = new GridView();
             int seq = 0;
@@ -467,7 +507,7 @@ namespace HealthMonitor
             {
                 Lister.DataStore = L;
                 Content = Lister;
-                Title = "Listing";
+                Title = WindowTitle;
                 Resizable = false;
                 Lister.Size = new Eto.Drawing.Size(800, 600);
                 Lister.CellFormatting += (a, b) =>
@@ -501,8 +541,20 @@ namespace HealthMonitor
                 };
                 Resizable = false;
                 Topmost = true;
+                Padding = 10;
+                MovableByWindowBackground = true;
+                KeyUp += (e, a) =>
+                {
+                    if (a.Key == Keys.Escape)
+                    {
+                        Close();
+                    }
+                };
+                ShowInTaskbar = true;
+                Topmost = true;
+                Opacity = 0.7;
             }
-            catch(System.Exception E)
+            catch (System.Exception E)
             {
                 MessageBox.Show(E.ToString(), MessageBoxType.Error);
             }

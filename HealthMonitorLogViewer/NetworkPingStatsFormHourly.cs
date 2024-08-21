@@ -28,7 +28,7 @@ namespace HealthMonitor
     public class NetworkPingStatsFormHourly: Form
     {
         public NetworkPingStatsFormHourly() {
-            Title = "HealthMonitor Plots: by Hour";
+            Title = $"HealthMonitor Plots: by Hour [{Config.LogFile}]";
             Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
             ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
@@ -38,6 +38,8 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.XAxis.LabelStyle(fontSize: 18);
             etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 18);
             etoPlotSuccessRates.Plot.Legend().FontSize = 10;
+            //MovableByWindowBackground = true;
+            
 
             var SaveButton = new Button() { Text = "💾 Save As ..." };
             SaveButton.Click += (e, a) =>
@@ -130,6 +132,7 @@ namespace HealthMonitor
             etoPlot.Plot.Title("Ping stats (Hourly averages)");
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
+            etoPlot.Plot.SetAxisLimits(yMin: -5);
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.Legend();
@@ -139,8 +142,8 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Title("Ping stats (Hourly averages) - Success Rates (non-corrupt replies)");
             etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
+            etoPlotSuccessRates.Plot.SetAxisLimits(yMin: -5, yMax: 105);
             etoPlotSuccessRates.Refresh();
-
 
             var VerticalStackLayout = new StackLayout() { 
                 Items = { 

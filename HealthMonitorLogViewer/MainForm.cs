@@ -9,7 +9,8 @@ namespace HealthMonitor
     {
         public MainForm()
         {
-            Title = "HealthMonitor Log Analyzer & Viewer";
+            Title = $"HealthMonitor Log Analyzer & Viewer [{Config.LogFile}]";
+            MovableByWindowBackground = true;
             MinimumSize = new Size(200, 200);
             var NetworkPingStatsButton = new Button() { Text = "🕸 Network Ping Stats (by decaminute (10 minutes)) 💾", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             NetworkPingStatsButton.Click += (e, a) => { (new NetworkPingStatsForm()).Show(); };
@@ -45,11 +46,13 @@ namespace HealthMonitor
             };
 
             // create a few commands that can be used for the menu and toolbar
-            var clickMe = new Command { MenuText = "Click Me!", ToolBarText = "Click Me!" };
-            clickMe.Executed += (sender, e) => MessageBox.Show(this, "I was clicked!");
+            //var clickMe = new Command { MenuText = "Click Me!", ToolBarText = "Click Me!" };
+            //clickMe.Executed += (sender, e) => MessageBox.Show(this, "I was clicked!");
 
             var quitCommand = new Command { MenuText = "Quit", Shortcut = Application.Instance.CommonModifier | Keys.Q };
+            var infoCommand = new Command { MenuText = "Info", Shortcut = Application.Instance.CommonModifier | Keys.I };
             quitCommand.Executed += (sender, e) => Application.Instance.Quit();
+            infoCommand.Executed += (sender, e) => MessageBox.Show($"File: {Config.LogFile}", "Log File Information", MessageBoxType.Information);
 
             var aboutCommand = new Command { MenuText = "About..." };
             aboutCommand.Executed += (sender, e) => new AboutDialog() { 
@@ -67,21 +70,21 @@ namespace HealthMonitor
                 Items =
                 {
 					// File submenu
-					new SubMenuItem { Text = "&File", Items = { clickMe } },
+					new SubMenuItem { Text = "&File", Items = { infoCommand } },
 					// new SubMenuItem { Text = "&Edit", Items = { /* commands/items */ } },
 					// new SubMenuItem { Text = "&View", Items = { /* commands/items */ } },
 				},
                 ApplicationItems =
                 {
 					// application (OS X) or file menu (others)
-					new ButtonMenuItem { Text = "&Preferences..." },
+					//new ButtonMenuItem { Text = "&Preferences..." },
                 },
                 QuitItem = quitCommand,
                 AboutItem = aboutCommand
             };
 
             // create toolbar			
-            ToolBar = new ToolBar { Items = { clickMe } };
+            //ToolBar = new ToolBar { Items = { clickMe } };
             Resizable = false;
         }
     }
