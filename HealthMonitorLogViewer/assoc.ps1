@@ -251,3 +251,28 @@ $a = @{
     Value = "Health Monitor Log File"
 }
 New-ItemProperty -Force @a
+
+#FILE ASSOCIATION
+#LOCAL USER
+
+mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\HealthMonitorLogViewer'
+mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\HealthMonitorLogViewer\ShellNew'
+$a = @{
+    Path = 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\HealthMonitorLogViewer\ShellNew'
+    Name = "FileName"
+    PropertyType = "String"
+    Value = "$pwd\new.logs.sqlite3.rvhealthmonitorlogfile"
+}
+New-ItemProperty -Force @a
+
+#SYSTEM
+
+mkdir 'HKCR:\.rvhealthmonitorlogfile\HealthMonitorLogViewer'
+mkdir 'HKCR:\.rvhealthmonitorlogfile\HealthMonitorLogViewer\ShellNew'
+$a = @{
+    Path = 'HKCR:\Software\Classes\.rvhealthmonitorlogfile\HealthMonitorLogViewer\ShellNew'
+    Name = "FileName"
+    PropertyType = "String"
+    Value = "$pwd\new.logs.sqlite3.rvhealthmonitorlogfile"
+}
+New-ItemProperty -Force @a
