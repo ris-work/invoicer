@@ -20,6 +20,17 @@ void StartPing(string dest)
         {
             using (var ctx = new LogsContext())
             {
+                if (Config.AutoVacuum)
+                {
+                    try
+                    {
+                        ctx.Database.ExecuteSqlRaw($"PRAGMA auto_vacuum=FULL;");
+                    }
+                    catch (System.Exception E)
+                    {
+                        Console.WriteLine($"Error while VACUUM/ANALYZE: {E.ToString()}");
+                    }
+                }
                 var pingSender = new System.Net.NetworkInformation.Ping();
                 string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb";
                 byte[] buffer = Encoding.ASCII.GetBytes(data);
@@ -59,11 +70,11 @@ if (TM.ContainsKey("LogFile"))
 }
 if (TM.ContainsKey("SleepTimeMsBetweenPointsPing"))
 {
-    Config.SleepTimeMsBetweenPointsPing = (((int)TM["SleepTimeMsBetweeenPointsPing"]));
+    Config.SleepTimeMsBetweenPointsPing = (((int)((long)TM["SleepTimeMsBetweenPointsPing"])));
 }
-if (TM.ContainsKey("SleepTimeMsBetweeenPointsProc"))
+if (TM.ContainsKey("SleepTimeMsBetweenPointsProc"))
 {
-    Config.SleepTimeMsBetweenPointsProc = (((int)TM["SleepTimeMsBetweeenPointsProc"]));
+    Config.SleepTimeMsBetweenPointsProc = (((int)((long)TM["SleepTimeMsBetweenPointsProc"])));
 }
 if (Config.SleepTimeMsBetweenPointsPing < 500)
 {
@@ -75,7 +86,41 @@ if (Config.SleepTimeMsBetweenPointsProc < 1000)
     Config.SleepTimeMsBetweenPointsProc = 5000;
     Console.WriteLine("Warning: Process monitoring sleep time betweeen points is too low, set to 5000.");
 }
-Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, SleepTimeMsBetweenPointsProc: {Config.SleepTimeMsBetweenPointsProc}, SleepTimeMsBetweenPointsPing: {Config.SleepTimeMsBetweenPointsPing}.");
+if (TM.ContainsKey("AutoVacuumOnStartup"))
+{
+    Config.AutoVacuumOnStartup = ((bool)(TM["AutoVacuumOnStartup"]));
+    Console.WriteLine($"Vacuum on startup set to {Config.AutoVacuumOnStartup}");
+}
+if (TM.ContainsKey("AutoVacuum"))
+{
+    Config.AutoVacuum = ((bool)(TM["AutoVacuum"]));
+    Console.WriteLine($"Vacuum on startup set to {Config.AutoVacuum}");
+}
+    Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, SleepTimeMsBetweenPointsProc: {Config.SleepTimeMsBetweenPointsProc}, SleepTimeMsBetweenPointsPing: {Config.SleepTimeMsBetweenPointsPing}.");
+FileInfo F = new FileInfo(Config.LogFile);
+try
+{
+    Console.WriteLine($"File size (log) : {F.Length}");
+}
+catch (System.Exception E)
+{
+    Console.WriteLine($"Unable to get File Info: {E.ToString()}");
+}
+if (Config.AutoVacuumOnStartup) {
+    try
+    {
+        using (var ctx = new LogsContext())
+        {
+            ctx.Database.ExecuteSqlRaw($"VACUUM;");
+            ctx.Database.ExecuteSqlRaw($"ANALYZE;");
+        }
+    }
+    catch (System.Exception E)
+    {
+        Console.WriteLine($"Error while VACUUM/ANALYZE: {E.ToString()}");
+    }
+}
+
 
 destinations = TA.Select(x => (string)x).ToList();
 //destinations = new string[] {"192.168.1.1", "8.8.8.8", "1.1.1.1"};
@@ -96,6 +141,17 @@ foreach (var item in destinations)
         {
             using (var ctx = new LogsContext())
             {
+                if (Config.AutoVacuum)
+                {
+                    try
+                    {
+                        ctx.Database.ExecuteSqlRaw($"PRAGMA auto_vacuum=FULL;");
+                    }
+                    catch (System.Exception E)
+                    {
+                        Console.WriteLine($"Error while VACUUM/ANALYZE: {E.ToString()}");
+                    }
+                }
                 var days_string = RetentionDays.ToString();
                 ctx.Database.SqlQuery<int>($"DELETE FROM pings WHERE time_now < datetime('now', '-{days_string} days');").ToList();
                 ctx.Database.SqlQuery<int>($"DELETE FROM process_history WHERE time_now < datetime('now', '-{days_string} days');").ToList();
@@ -170,7 +226,9 @@ foreach (var item in destinations)
 
 public static class Config
 {
-    public static string LogFile = "logs.sqlite3";
+    public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
     public static int SleepTimeMsBetweenPointsPing = 5000;
     public static int SleepTimeMsBetweenPointsProc = 5000;
+    public static bool AutoVacuumOnStartup = true;
+    public static bool AutoVacuum = true;
 }

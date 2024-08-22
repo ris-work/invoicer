@@ -1,3 +1,7 @@
 destinations = ["192.168.1.1", "8.8.8.8", "1.1.1.1"]
 RetentionDays = 15
-LogFile = "logs.sqlite3"
+LogFile = "logs.sqlite3.rvhealthmonitorlogfile"
+SleepTimeMsBetweenPointsProc = 20000
+SleepTimeMsBetweenPointsPing = 5000
+AutoVacuum = true
+AutoVacuumOnStartup = true
