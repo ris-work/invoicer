@@ -276,3 +276,69 @@ $a = @{
     Value = "$pwd\new.logs.sqlite3.rvhealthmonitorlogfile"
 }
 New-ItemProperty -Force @a
+
+#Control panel things
+$guid = Get-Content "guid.guid"
+mkdir "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\$guid"
+mkdir "HKCR:\CLSID\$guid"
+
+$a = @{
+    Path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\$guid"
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "Health Monitor Log Viewer"
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = "HKCR:\CLSID\$guid"
+    Name = "LocalizedString"
+    PropertyType = "String"
+    Value = "Health Monitor Log Viewer"
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = "HKCR:\CLSID\$guid"
+    Name = "InfoTip"
+    PropertyType = "String"
+    Value = "Health Monitor Log Viewer"
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = "HKCR:\CLSID\$guid"
+    Name = "System.ApplicationName"
+    PropertyType = "String"
+    Value = "HealthMonitorLogViewer"
+}
+New-ItemProperty -Force @a
+
+$a = @{
+    Path = "HKCR:\CLSID\$guid"
+    Name = "System.ControlPanel.Category"
+    PropertyType = "String"
+    Value = "0,2,3,8"
+}
+New-ItemProperty -Force @a
+
+mkdir "HKCR:\CLSID\$guid\DefaultIcon\"
+$a = @{
+    Path = "HKCR:\CLSID\$guid\DefaultIcon\"
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "$pwd\time-view.ico"
+}
+New-ItemProperty -Force @a
+
+
+mkdir "HKCR:\CLSID\$guid\shell"
+mkdir "HKCR:\CLSID\$guid\shell\open"
+mkdir "HKCR:\CLSID\$guid\shell\open\command"
+$a = @{
+    Path = "HKCR:\CLSID\$guid\DefaultIcon\"
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "$pwd\HealthMonitorLogViewer.exe"
+}
+New-ItemProperty -Force @a
