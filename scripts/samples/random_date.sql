@@ -1,0 +1,2 @@
+SELECT  now() + CAST (((cast(round(730.0*RANDOM())::int % 730 AS TEXT)) || ' DAYS') AS interval)
+--SELECT ((cast(round(730.0*RANDOM())::int % 730 AS TEXT)) || ' DAYS') --now() +  INTERVAL ((cast(RANDOM()*730)%730 AS TEXT) || ' DAYS')
