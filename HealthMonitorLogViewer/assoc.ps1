@@ -342,3 +342,35 @@ $a = @{
     Value = "$pwd\HealthMonitorLogViewer.exe"
 }
 New-ItemProperty -Force @a
+
+winget install SQLite.SQLite --scope Machine
+$SQLite3ExePathMachine = (Get-Command "sqlite3.exe" | Select -Last 1).Path
+
+$EWS = "Edit with SQLite3"
+mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile'
+mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell'
+mkdir "HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\$EWS"
+mkdir "HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\$EWS\command"
+
+mkdir 'HKCR:\.rvhealthmonitorlogfile'
+mkdir 'HKCR:\.rvhealthmonitorlogfile\shell'
+mkdir "HKCR:\.rvhealthmonitorlogfile\shell\$EWS"
+mkdir "HKCR:\.rvhealthmonitorlogfile\shell\$EWS\command"
+
+$a = @{
+    Path = 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\Edit with SQLite\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$SQLite3ExePathMachine`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+winget install SQLite.SQLite --scope Local
+$SQLite3ExePathLocal = ((Get-Command "sqlite3.exe") | Select -First 1).Path
+$a = @{
+    Path = 'HKCR:\.rvhealthmonitorlogfile\shell\Edit with SQLite\command'
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$SQLite3ExePathLocal`" `"%1`""
+}
+New-ItemProperty -Force @a
