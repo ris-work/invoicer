@@ -27,6 +27,10 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Inventory> Inventories { get; set; }
 
+    public virtual DbSet<Sih> Sihs { get; set; }
+
+    public virtual DbSet<SihCurrent> SihCurrents { get; set; }
+
     public virtual DbSet<Token> Tokens { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -72,7 +76,7 @@ public partial class NewinvContext : DbContext
 
             entity.ToTable("catalogue");
 
-            entity.HasIndex(e => new { e.Description, e.DescriptionWeb, e.DescriptionPos }, "unique_description").IsUnique();
+            entity.HasIndex(e => e.Description, "unique_desc").IsUnique();
 
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Active)
@@ -96,6 +100,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.EnforceAboveCost)
                 .HasDefaultValue(true)
                 .HasColumnName("enforce_above_cost");
+            entity.Property(e => e.ExpiryTrackingEnabled)
+                .HasDefaultValue(false)
+                .HasColumnName("expiry_tracking_enabled");
             entity.Property(e => e.PriceManual)
                 .HasDefaultValue(false)
                 .HasColumnName("price_manual");
@@ -180,6 +187,36 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VolumeDiscounts)
                 .HasDefaultValue(false)
                 .HasColumnName("volume_discounts");
+        });
+
+        modelBuilder.Entity<Sih>(entity =>
+        {
+            entity.HasKey(e => e.Itemcode).HasName("sih_pkey");
+
+            entity.ToTable("sih", "imported_dummy");
+
+            entity.Property(e => e.Itemcode)
+                .ValueGeneratedNever()
+                .HasColumnName("itemcode");
+            entity.Property(e => e.Cost).HasColumnName("cost");
+            entity.Property(e => e.Desc).HasColumnName("desc");
+            entity.Property(e => e.Sell).HasColumnName("sell");
+            entity.Property(e => e.Sih1).HasColumnName("sih");
+        });
+
+        modelBuilder.Entity<SihCurrent>(entity =>
+        {
+            entity.HasKey(e => e.Itemcode).HasName("sih_current_pkey");
+
+            entity.ToTable("sih_current", "imported_dummy");
+
+            entity.Property(e => e.Itemcode)
+                .ValueGeneratedNever()
+                .HasColumnName("itemcode");
+            entity.Property(e => e.Cost).HasColumnName("cost");
+            entity.Property(e => e.Desc).HasColumnName("desc");
+            entity.Property(e => e.Sell).HasColumnName("sell");
+            entity.Property(e => e.Sih).HasColumnName("sih");
         });
 
         modelBuilder.Entity<Token>(entity =>
