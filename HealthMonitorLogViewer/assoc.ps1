@@ -351,24 +351,49 @@ mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile'
 mkdir 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell'
 mkdir "HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\$EWS"
 mkdir "HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\$EWS\command"
+mkdir 'HKCU:\Software\Classes\HealthMonitorLogViewer'
+mkdir 'HKCU:\Software\Classes\HealthMonitorLogViewer\shell'
+mkdir "HKCU:\Software\Classes\HealthMonitorLogViewer\shell\$EWS"
+mkdir "HKCU:\Software\Classes\HealthMonitorLogViewer\shell\$EWS\command"
 
 mkdir 'HKCR:\.rvhealthmonitorlogfile'
 mkdir 'HKCR:\.rvhealthmonitorlogfile\shell'
 mkdir "HKCR:\.rvhealthmonitorlogfile\shell\$EWS"
 mkdir "HKCR:\.rvhealthmonitorlogfile\shell\$EWS\command"
+mkdir 'HKCR:\HealthMonitorLogViewer'
+mkdir 'HKCR:\HealthMonitorLogViewer\shell'
+mkdir "HKCR:\HealthMonitorLogViewer\shell\$EWS"
+mkdir "HKCR:\HealthMonitorLogViewer\shell\$EWS\command"
 
 $a = @{
-    Path = 'HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\Edit with SQLite\command'
+    Path = "HKCU:\Software\Classes\.rvhealthmonitorlogfile\shell\$EWS\command"
     Name = "(default)"
     PropertyType = "String"
     Value = "`"$SQLite3ExePathMachine`" `"%1`""
 }
 New-ItemProperty -Force @a
 
-winget install SQLite.SQLite --scope Local
+$a = @{
+    Path = "HKCU:\Software\Classes\HealthMonitorLogViewer\shell\$EWS\command"
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$SQLite3ExePathMachine`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+winget install SQLite.SQLite --scope User
 $SQLite3ExePathLocal = ((Get-Command "sqlite3.exe") | Select -First 1).Path
 $a = @{
-    Path = 'HKCR:\.rvhealthmonitorlogfile\shell\Edit with SQLite\command'
+    Path = "HKCR:\.rvhealthmonitorlogfile\shell\$EWS\command"
+    Name = "(default)"
+    PropertyType = "String"
+    Value = "`"$SQLite3ExePathLocal`" `"%1`""
+}
+New-ItemProperty -Force @a
+
+
+$a = @{
+    Path = "HKCR:\HealthMonitorLogViewer\shell\$EWS\command"
     Name = "(default)"
     PropertyType = "String"
     Value = "`"$SQLite3ExePathLocal`" `"%1`""
