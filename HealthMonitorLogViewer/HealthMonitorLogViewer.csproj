@@ -15,7 +15,7 @@
     <OutputType>Exe</OutputType>
 	  <Description>Health Monitor Log Viewer $([System.DateTime]::Now.ToString("o"))</Description>
 	  <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
-	  <Version>0.1.0</Version>
+	  <Version>0.2.0</Version>
 	  <PublisherName>Rishikeshan S/L</PublisherName>
 	  <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
 	  <WebPage>https://rishikeshan.com</WebPage>

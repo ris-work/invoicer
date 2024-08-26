@@ -127,8 +127,8 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.XAxis.DateTimeFormat(true);
             foreach (var item in series)
             {
-                var p = etoPlot.Plot.AddScatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
-                var pSuccessRates = etoPlotSuccessRates.Plot.AddScatter(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray(), label: item);
+                var p = etoPlot.Plot.AddSignalXY(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
+                var pSuccessRates = etoPlotSuccessRates.Plot.AddSignalXY(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray(), label: item);
                 p.Label = item;
                 p.MarkerSize = 6;
                 p.MarkerLineWidth = 3;
