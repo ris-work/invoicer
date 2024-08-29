@@ -1,0 +1,6 @@
+INSERT INTO pings SELECT dest, date(time_now, '-15 days'), latency, 
+	was_it_ok_not_corrupt, did_it_succeed FROM pings;
+INSERT INTO pings SELECT dest, date(time_now, '-30 days'), latency, 
+	was_it_ok_not_corrupt, did_it_succeed FROM pings;
+INSERT INTO pings SELECT dest, date(time_now, '-60 days'), latency, 
+	was_it_ok_not_corrupt, did_it_succeed FROM pings;

@@ -40,6 +40,9 @@
     <None Update="logs.sqlite3">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="logs.sqlite3.rvhealthmonitorlogfile">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Update="new.logs.sqlite3.rvhealthmonitorlogfile">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
