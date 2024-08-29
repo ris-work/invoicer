@@ -153,8 +153,8 @@ foreach (var item in destinations)
                     }
                 }
                 var days_string = RetentionDays.ToString();
-                var PingCleaner = ctx.Database.ExecuteSql($"DELETE FROM pings WHERE time_now < {DateTime.Now.Subtract(TimeSpan.FromDays(15))};");
-                var ProcessHistoryCleaner = ctx.Database.ExecuteSql($"DELETE FROM main.process_history WHERE time_now < {DateTime.Now.Subtract(TimeSpan.FromDays(15))};");
+                var PingCleaner = ctx.Database.ExecuteSql($"DELETE FROM pings WHERE time_now < {DateTime.Now.Subtract(TimeSpan.FromDays(RetentionDays))};");
+                var ProcessHistoryCleaner = ctx.Database.ExecuteSql($"DELETE FROM main.process_history WHERE time_now < {DateTime.Now.Subtract(TimeSpan.FromDays(RetentionDays))};");
                 Console.WriteLine($"{PingCleaner.ToString()}, {ProcessHistoryCleaner.ToString()}");
                 //PingCleaner.ToList();
                 //ProcessHistoryCleaner.ToList();
