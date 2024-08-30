@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
+using SharpDX.Direct2D1;
 
 namespace EtoFE
 {
@@ -20,28 +21,41 @@ namespace EtoFE
             Results.Columns.Add(new GridColumn { HeaderText = "Itemcode", DataCell = new TextBoxCell(0) });
             Results.Columns.Add(new GridColumn { HeaderText = "Description", DataCell = new TextBoxCell(1) });
             TextBox SearchBox = new TextBox();
-            SearchBox.KeyUp += (e, a) =>
+            MessageBox.Show($"PC: {PC.Count()}");
+            bool searching = false;
+            List<PosCatalogue> Filtered = new List<PosCatalogue>();
+            List<PosCatalogue> FilteredTemp = new List<PosCatalogue>();
+            MessageBox.Show($"Last: {PC.Last().itemcode} Desc: {PC.Last().itemdesc}");
+            int FilteredCount = 0;
+            SearchBox.KeyDown += (e, a) =>
             {
-                if (SearchBox.Text.Length > 3)
+                if (SearchBox.Text.Length > 0 && searching != true)
                 {
-                    bool searching = true;
+                    var searchString = SearchBox.Text.ToLowerInvariant();
+                    searching = true;
                     (new Thread(() =>
                     {
-                        List<PosCatalogue> Filtered = PC.Where((x) => x.itemdesc.Contains(SearchBox.Text)).Take(100).ToList();
-                        List<GridItem> GI = new List<GridItem>();
-                        foreach (var item in Filtered)
-                        {
-                            GI.Add(new GridItem(item.itemcode, item.itemdesc) { });
-
-                        }
+                        var FilteredBeforeCounting = PC.AsParallel().Where((x) => x.itemdesc.ToLowerInvariant().Contains(searchString)).AsSequential();
+                        FilteredTemp = FilteredBeforeCounting.Take(100).ToList();
+                        FilteredCount = Filtered.Count();
                         searching = false;
-                        Results.DataStore = Filtered;
+                        //MessageBox.Show(FilteredCount.ToString());
                     })).Start();
                     
                 }
+                List<GridItem> GI = new List<GridItem>();
+                foreach (var item in FilteredTemp)
+                {
+                    GI.Add(new GridItem(item.itemcode, item.itemdesc) { });
+
+                }
+                Filtered = FilteredTemp;
+                Results.DataStore = Filtered;
+                this.Title = $"Found {FilteredCount} ";
             };
 
-
+            TL.Rows.Add(new TableRow(SearchBox));
+            TL.Rows.Add(new TableRow(Results));
             Content = TL;
         }
     }

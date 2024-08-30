@@ -60,32 +60,51 @@ namespace RV.InvNew.Common
     }
 
     [JsonSerializable(typeof(PosRefresh))]
+    [JsonSerializable(typeof(List<PosBatch>))]
+    [JsonSerializable(typeof(List<PosCatalogue>))]
+    [JsonSerializable(typeof(List<VatCategory>))]
     [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosRefresh{
-        public List<PosCatalogue> Catalogue;
-        public List<PosBatch> Batches;
-        public List<VatCategory> VatCategories;
+        [JsonInclude] public List<PosCatalogue> Catalogue;
+        [JsonInclude] public List<PosBatch> Batches;
+        [JsonInclude] public List<VatCategory> VatCategories;
     }
 
+    
     [JsonSerializable(typeof(PosCatalogue))]
     [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosCatalogue
     {
-        public long itemcode;
-        public string itemdesc;
-        public bool VatCategoryAdjustable;
-        public bool VatDependsOnUser;
-        public bool ManualPrice;
-        public bool EnforceAboveCost;
+        [JsonInclude] public long itemcode;
+        [JsonInclude] public string itemdesc;
+        [JsonInclude] public bool VatCategoryAdjustable;
+        [JsonInclude] public bool VatDependsOnUser;
+        [JsonInclude] public bool ManualPrice;
+        [JsonInclude] public bool EnforceAboveCost;
     }
 
     [JsonSerializable(typeof(PosBatch))]
+    
     [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosBatch
     {
-        public long itemcode;
-        public long batchcode;
-        public double selling;
-        public double marked;
+        [JsonInclude] public long itemcode;
+        [JsonInclude] public long batchcode;
+        [JsonInclude] public double selling;
+        [JsonInclude] public double marked;
     }
+
+    [JsonSerializable(typeof(List<PosBatch>))]
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public partial class PosBatchSerialize: JsonSerializerContext { }
+
+    [JsonSerializable(typeof(List<PosCatalogue>))]
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public partial class PosCatalogueSerialize : JsonSerializerContext { }
+
+    [JsonSerializable(typeof(List<VatCategory>))]
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public partial class VatCategoriesSerialize : JsonSerializerContext { }
+
+
 }

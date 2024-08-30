@@ -45,7 +45,21 @@ namespace EtoFE
             TL.Rows.Add(new TableRow(LabelPrice, Price));
             TL.Rows.Add(new TableRow(LabelQuantity, Quantity));
             TL.Rows.Add(new TableRow(LabelVatCategory, VatCategory, CurrentVatRate, CurrentVatCategory));
-            Barcode.KeyDown += (e, a) => { new SearchBox(); };
+            PosData.Wait();
+            var PosDataResponse = PosData.Result;
+            PosDataResponse.EnsureSuccessStatusCode();
+            PosRefresh PR;
+            var TPosDataResponse = PosDataResponse.Content.ReadAsAsync<PosRefresh>();
+            //var strres = PosDataResponse.Content.ReadAsStringAsync();
+            //strres.Wait();
+            TPosDataResponse.Wait();
+            //MessageBox.Show(strres.Result);
+
+            PR = TPosDataResponse.Result;
+            MessageBox.Show(PR.Catalogue.Count().ToString());
+            
+            
+            Barcode.KeyDown += (e, a) => { (new SearchDialog(PR.Catalogue)).ShowModal(); };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];

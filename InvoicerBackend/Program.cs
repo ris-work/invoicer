@@ -4,6 +4,7 @@ using System.Text;
 using System;
 using System.Security.Principal;
 using System.Security.AccessControl;
+using System.Text.Json;
 
 static bool IsTokenValid(LoginToken T, string AccessLevel)
 {
@@ -144,10 +145,17 @@ app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
             VC = ctx.VatCategories.ToList();
 
         }
+        Console.WriteLine($"Sending PC: {PC.Count()} PB: {PB.Count} VC: {VC.Count}");
+        var JSO = new JsonSerializerOptions { IncludeFields = true };
+        //Console.WriteLine(JsonSerializer.Serialize(new PosRefresh() { VatCategories = VC, Batches = PB, Catalogue = PC }, JSO));
         return new PosRefresh() { VatCategories = VC, Batches = PB, Catalogue = PC };
 
     }
-    else throw new UnauthorizedAccessException();
+    else {
+        Console.WriteLine("Unauthorized");
+        throw new UnauthorizedAccessException();
+
+    };
 }).WithName("PosRefresh")
 .WithOpenApi();
 
