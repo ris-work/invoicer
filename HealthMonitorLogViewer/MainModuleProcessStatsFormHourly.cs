@@ -49,7 +49,14 @@ namespace HealthMonitor
                     SaveDialogCPU.ShowDialog("");
                     var PathCPUStats = SaveDialogCPU.FileName;
 
-                    etoPlotCpu.Plot.Save(PathCPUStats, 2560, 1440, quality: 100);
+                    if (SaveDialogCPU.CurrentFilterIndex == 0)
+                    {
+                        etoPlotCpu.Plot.Save(PathCPUStats, 2560, 1440, quality: 100);
+                    }
+                    else
+                    {
+                        etoPlotCpu.Plot.Save(PathCPUStats, 2560, 1440, ScottPlot.ImageFormat.Svg, quality: 100);
+                    }
                     MessageBox.Show($"Saved as: {PathCPUStats}", "CPU stats saved", MessageBoxType.Information);
 
                     var SaveDialogRAM = new SaveFileDialog();
@@ -59,7 +66,14 @@ namespace HealthMonitor
                     SaveDialogRAM.ShowDialog("");
                     var PathRAMStats = SaveDialogRAM.FileName;
 
-                    etoPlotMem.Plot.Save(PathRAMStats, 2560, 1440, quality: 100);
+                    if (SaveDialogRAM.CurrentFilterIndex == 0)
+                    {
+                        etoPlotMem.Plot.Save(PathRAMStats, 2560, 1440, quality: 100);
+                    }
+                    else
+                    {
+                        etoPlotMem.Plot.Save(PathRAMStats, 2560, 1440, ScottPlot.ImageFormat.Svg, quality: 100);
+                    }
                     MessageBox.Show($"Saved as: {PathRAMStats}", "RAM stats saved", MessageBoxType.Information);
                 }
                 catch (System.Exception E)

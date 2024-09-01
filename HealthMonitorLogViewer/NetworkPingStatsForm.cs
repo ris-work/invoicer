@@ -57,7 +57,14 @@ namespace HealthMonitor
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
-                    etoPlot.Plot.Save(Path, 2560, 1440);
+                    if (SaveDialog.CurrentFilterIndex == 0)
+                    {
+                        etoPlot.Plot.Save(Path, 2560, 1440);
+                    }
+                    else
+                    {
+                        etoPlot.Plot.Save(Path, 2560, 1440, ScottPlot.ImageFormat.Svg);
+                    }
                     MessageBox.Show($"Saved as: {Path}", "Saved!", MessageBoxType.Information);
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
@@ -66,8 +73,16 @@ namespace HealthMonitor
                     SaveDialogSuccessStats.Filters.Add(Config.SVGFilter);
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
+                    if (SaveDialog.CurrentFilterIndex == 0)
+                    {
+                        etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440);
+                    }
+                    else
+                    {
+                        etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440, ScottPlot.ImageFormat.Svg);
+                    }
 
-                    etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440);
+                    
                     MessageBox.Show($"Saved as: {PathSuccessStats}", "Saved!", MessageBoxType.Information);
                 }
                 catch (System.Exception E)

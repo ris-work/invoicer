@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <None Remove="cd_file.ico" />
+    <None Remove="res\cd_result.ico" />
+    <None Remove="res\ListViewer.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,6 +46,14 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
     <PackageReference Include="ScottPlot.Eto" Version="5.0.37" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="res\cd_file.ico" />
+    <Resource Include="res\cd_result.ico" />
+    <Resource Include="res\cd_sat.ico" />
+    <Resource Include="res\ListViewer.ico" />
+    <Resource Include="res\time-view.ico" />
   </ItemGroup>
 
   <ItemGroup>
