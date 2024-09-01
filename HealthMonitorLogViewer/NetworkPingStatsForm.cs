@@ -7,11 +7,16 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using Eto.Drawing;
 using ScottPlot.Eto;
-using ScottPlot;
 using System.Security;
 using System.Drawing.Text;
 using Microsoft.EntityFrameworkCore;
-using ScottPlot.Renderable;
+using ScottPlot.Rendering;
+using ABI.System.Collections.Generic;
+//using ScottPlot;
+using System.Dynamic;
+using System.Diagnostics;
+using System.Globalization;
+
 
 namespace HealthMonitor
 {
@@ -30,14 +35,14 @@ namespace HealthMonitor
         public NetworkPingStatsForm() {
             Title = $"HealthMonitor Plots: by Decaminute [{Config.LogFile}]";
             Location = new Eto.Drawing.Point(50,50);
-            ScottPlot.Eto.PlotView etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            ScottPlot.Eto.PlotView etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
-            etoPlot.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlot.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlot.Plot.Legend().FontSize = 10;
-            etoPlotSuccessRates.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlotSuccessRates.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlotSuccessRates.Plot.Legend().FontSize = 10;
+            ScottPlot.Eto.EtoPlot etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
+            ScottPlot.Eto.EtoPlot etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
+            etoPlot.Plot.Axes.Bottom.Label.FontSize = 18;
+            etoPlot.Plot.Axes.Left.Label.FontSize = 18;
+            etoPlot.Plot.Legend.FontSize = 10;
+            etoPlotSuccessRates.Plot.Axes.Bottom.Label.FontSize = 18;
+            etoPlotSuccessRates.Plot.Axes.Left.Label.FontSize = 18;
+            etoPlotSuccessRates.Plot.Legend.FontSize = 10;
             //MovableByWindowBackground = true;
 
             var SaveButton = new Button() { Text = "💾 Save As ..." };
@@ -51,7 +56,7 @@ namespace HealthMonitor
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
-                    etoPlot.Plot.SaveFig(Path, 2560, 1440, false, 4);
+                    etoPlot.Plot.Save(Path, 2560, 1440);
                     MessageBox.Show($"Saved as: {Path}", "Saved!", MessageBoxType.Information);
 
                     var SaveDialogSuccessStats = new SaveFileDialog();
@@ -60,7 +65,7 @@ namespace HealthMonitor
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
-                    etoPlotSuccessRates.Plot.SaveFig(PathSuccessStats, 2560, 1440, false, 4);
+                    etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440);
                     MessageBox.Show($"Saved as: {PathSuccessStats}", "Saved!", MessageBoxType.Information);
                 }
                 catch (System.Exception E)
@@ -76,9 +81,9 @@ namespace HealthMonitor
 
             var ResetButton = new Button() { Text = "🔄 Reset" };
             ResetButton.Click += (e, a) => { 
-                etoPlot.Plot.AxisAuto(); 
+                etoPlot.Plot.Axes.AutoScale(); 
                 etoPlot.Refresh();
-                etoPlotSuccessRates.Plot.AxisAuto();
+                etoPlotSuccessRates.Plot.Axes.AutoScale();
                 etoPlotSuccessRates.Refresh();
             };
 
@@ -123,38 +128,39 @@ namespace HealthMonitor
 
             }
 
-            etoPlot.Plot.XAxis.DateTimeFormat(true);
-            etoPlotSuccessRates.Plot.XAxis.DateTimeFormat(true);
+            etoPlot.Plot.Axes.DateTimeTicksBottom();
+            etoPlotSuccessRates.Plot.Axes.DateTimeTicksBottom();
             foreach (var item in series)
             {
-                var p = etoPlot.Plot.AddSignalXY(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray(), label: item);
-                var pSuccessRates = etoPlotSuccessRates.Plot.AddSignalXY(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray(), label: item);
-                p.Label = item;
+                var p = etoPlot.Plot.Add.SignalXY(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray());
+                var pSuccessRates = etoPlotSuccessRates.Plot.Add.SignalXY(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray());
+                p.LegendText = item;
                 p.MarkerSize = 6;
                 p.MarkerLineWidth = 3;
+                pSuccessRates.LegendText = item;
                 pSuccessRates.MarkerSize = 8;
                 pSuccessRates.MarkerLineWidth = 4;
 
             }
 
-            etoPlot.Plot.Legend();
-            etoPlot.Plot.Legend().FontName = "Courier";
-            etoPlot.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlot.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+            etoPlot.Plot.ShowLegend();
+            etoPlot.Plot.Legend.FontName = "Courier";
+            etoPlot.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
+            etoPlot.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
             etoPlot.Plot.Title("Ping stats");
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
-            etoPlot.Plot.SetAxisLimits(yMin: -5);
+            etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: double.PositiveInfinity);
             etoPlot.Refresh();
 
-            etoPlotSuccessRates.Plot.Legend();
-            etoPlotSuccessRates.Plot.Legend().FontName = "Courier";
-            etoPlotSuccessRates.Plot.Legend().Location = Alignment.UpperLeft;
-            etoPlotSuccessRates.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+            etoPlotSuccessRates.Plot.ShowLegend();
+            etoPlotSuccessRates.Plot.Legend.FontName = "Courier";
+            etoPlotSuccessRates.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
+            etoPlotSuccessRates.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
             etoPlotSuccessRates.Plot.Title("Ping stats (non-corrupt replies)");
             etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
-            etoPlotSuccessRates.Plot.SetAxisLimits(yMin: -5, yMax: 105);
+            etoPlotSuccessRates.Plot.Axes.SetLimitsY(bottom: -5, top: 105);
             etoPlotSuccessRates.Refresh();
 
 

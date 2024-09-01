@@ -11,13 +11,12 @@ using ScottPlot;
 using System.Security;
 using System.Drawing.Text;
 using Microsoft.EntityFrameworkCore;
-using ScottPlot.Renderable;
+using ScottPlot.Rendering;
 using ABI.System.Collections.Generic;
-using ScottPlot.SnapLogic;
+//using ScottPlot;
 using System.Dynamic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
 
 namespace HealthMonitor
 {
@@ -27,14 +26,14 @@ namespace HealthMonitor
         public MainModuleProcessStatsFormHourly(string MainModuleProcessName) {
             Title = $"HealthMonitor Process Plots [{MainModuleProcessName}]: by Hour [{Config.LogFile}]";
             Location = new Eto.Drawing.Point(50,50);
-            ScottPlot.Eto.PlotView etoPlotCpu = new() { Size = new Eto.Drawing.Size(1080, 300) };
-            ScottPlot.Eto.PlotView etoPlotMem = new() { Size = new Eto.Drawing.Size(1080, 300) };
-            etoPlotCpu.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlotCpu.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlotCpu.Plot.Legend().FontSize = 10;
-            etoPlotMem.Plot.XAxis.LabelStyle(fontSize: 18);
-            etoPlotMem.Plot.YAxis.LabelStyle(fontSize: 18);
-            etoPlotMem.Plot.Legend().FontSize = 10;
+            ScottPlot.Eto.EtoPlot etoPlotCpu = new() { Size = new Eto.Drawing.Size(1080, 300) };
+            ScottPlot.Eto.EtoPlot etoPlotMem = new() { Size = new Eto.Drawing.Size(1080, 300) };
+            etoPlotCpu.Plot.Axes.Bottom.Label.FontSize = 18;
+            etoPlotCpu.Plot.Axes.Left.Label.FontSize = 18;
+            etoPlotCpu.Plot.Legend.FontSize = 10;
+            etoPlotMem.Plot.Axes.Bottom.Label.FontSize = 18;
+            etoPlotMem.Plot.Axes.Left.Label.FontSize = 18;
+            etoPlotMem.Plot.Legend.FontSize = 10;
             //MovableByWindowBackground = true;
 
             var SaveButton = new Button() { Text = "💾 Save As ..." };
@@ -48,7 +47,7 @@ namespace HealthMonitor
                     SaveDialogCPU.ShowDialog("");
                     var PathCPUStats = SaveDialogCPU.FileName;
 
-                    etoPlotCpu.Plot.SaveFig(PathCPUStats, 2560, 1440, false, 4);
+                    etoPlotCpu.Plot.Save(PathCPUStats, 2560, 1440, quality: 100);
                     MessageBox.Show($"Saved as: {PathCPUStats}", "CPU stats saved", MessageBoxType.Information);
 
                     var SaveDialogRAM = new SaveFileDialog();
@@ -57,7 +56,7 @@ namespace HealthMonitor
                     SaveDialogRAM.ShowDialog("");
                     var PathRAMStats = SaveDialogRAM.FileName;
 
-                    etoPlotMem.Plot.SaveFig(PathRAMStats, 2560, 1440, false, 4);
+                    etoPlotMem.Plot.Save(PathRAMStats, 2560, 1440, quality: 100);
                     MessageBox.Show($"Saved as: {PathRAMStats}", "RAM stats saved", MessageBoxType.Information);
                 }
                 catch (System.Exception E)
@@ -73,9 +72,9 @@ namespace HealthMonitor
 
             var ResetButton = new Button() { Text = "🔄 Reset" };
             ResetButton.Click += (e, a) => { 
-                etoPlotCpu.Plot.AxisAuto(); 
+                etoPlotCpu.Plot.Axes.AutoScale(); 
                 etoPlotCpu.Refresh();
-                etoPlotMem.Plot.AxisAuto();
+                etoPlotMem.Plot.Axes.AutoScale();
                 etoPlotMem.Refresh();
             };
 
@@ -85,7 +84,7 @@ namespace HealthMonitor
             FilterText.PlaceholderText = MainModuleProcessName;
             
             var FilterTextStack = new StackLayout() { 
-                Items = { null, new Label() { Text = "Filter text:" }, new Label() { Text = "[ESC] to cancel all" }, FilterText },
+                Items = { null, new Eto.Forms.Label() { Text = "Filter text:" }, new Eto.Forms.Label() { Text = "[ESC] to cancel all" }, FilterText },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Spacing = 5,
                 Size = new Eto.Drawing.Size(-1, -1),
@@ -373,12 +372,15 @@ namespace HealthMonitor
             PlotDataSuccessRates.Add("Mem [avg]", memoryUseByHour);
             PlotDataSuccessRates.Add("Mem [peak]", memoryUseByHourPeak);
 
-            etoPlotCpu.Plot.XAxis.DateTimeFormat(true);
-            etoPlotMem.Plot.XAxis.DateTimeFormat(true);
-            var pCpu = etoPlotCpu.Plot.AddScatter(PlotData["CPU %"].Select(e => (DateTime.Parse(e.Hour+":00").ToLocalTime().ToOADate())).ToArray(), PlotData["CPU %"].Select(e => e.CpuTimeDiff??0).ToArray(), label: "CPU %");
-            var pRamAvg = etoPlotMem.Plot.AddScatter(PlotDataSuccessRates["Mem [avg]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [avg]"].Select(e => (e.WorkingSet ?? 0) / (1024*1024)).ToArray(), label: "Mem [avg]");
-            var pRamMax = etoPlotMem.Plot.AddScatter(PlotDataSuccessRates["Mem [peak]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [peak]"].Select(e => (e.WorkingSet ?? 0)/(1024*1024)).ToArray(), label: "Mem [peak, highest process]");
-            pCpu.Label = "CPU %";
+            etoPlotCpu.Plot.Axes.DateTimeTicksBottom();
+            etoPlotMem.Plot.Axes.DateTimeTicksBottom();
+            var pCpu = etoPlotCpu.Plot.Add.Scatter(PlotData["CPU %"].Select(e => (DateTime.Parse(e.Hour+":00").ToLocalTime().ToOADate())).ToArray(), PlotData["CPU %"].Select(e => e.CpuTimeDiff??0).ToArray());
+            pCpu.LegendText = "CPU [core %]";
+            var pRamAvg = etoPlotMem.Plot.Add.Scatter(PlotDataSuccessRates["Mem [avg]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [avg]"].Select(e => (e.WorkingSet ?? 0) / (1024*1024)).ToArray());
+            pRamAvg.LegendText = "Mem [avg]";
+            var pRamMax = etoPlotMem.Plot.Add.Scatter(PlotDataSuccessRates["Mem [peak]"].Select(e => (DateTime.Parse(e.Hour + ":00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates["Mem [peak]"].Select(e => (e.WorkingSet ?? 0)/(1024*1024)).ToArray());
+            pRamMax.LegendText = "Mem [peak, highest process]";
+            pCpu.LegendText = "CPU %";
             pCpu.MarkerSize = 6;
             pCpu.MarkerLineWidth = 3;
             pRamMax.MarkerSize = 8;
@@ -388,21 +390,21 @@ namespace HealthMonitor
 
             try
             {
-                etoPlotCpu.Plot.SetAxisLimits(yMin: 0);
-                etoPlotCpu.Plot.Legend();
-                etoPlotCpu.Plot.Legend().FontName = "Courier";
-                etoPlotCpu.Plot.Legend().Location = Alignment.UpperLeft;
-                etoPlotCpu.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+                etoPlotCpu.Plot.Axes.SetLimitsY(bottom: 0, top: double.PositiveInfinity);
+                etoPlotCpu.Plot.ShowLegend();
+                etoPlotCpu.Plot.Legend.FontName = "Courier";
+                etoPlotCpu.Plot.Legend.Alignment = Alignment.UpperLeft;
+                etoPlotCpu.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
                 etoPlotCpu.Plot.Title($"CPU usage [{MainModuleProcessName}]");
                 etoPlotCpu.Plot.XLabel("Date/Time");
                 etoPlotCpu.Plot.YLabel("CPU-Hours %");
                 etoPlotCpu.Refresh();
 
-                etoPlotMem.Plot.SetAxisLimits(yMin: 0);
-                etoPlotMem.Plot.Legend();
-                etoPlotMem.Plot.Legend().FontName = "Courier";
-                etoPlotMem.Plot.Legend().Location = Alignment.UpperLeft;
-                etoPlotMem.Plot.Style(dataBackground: System.Drawing.Color.Transparent);
+                etoPlotMem.Plot.Axes.SetLimitsY(bottom: 0, top: double.PositiveInfinity);
+                etoPlotMem.Plot.ShowLegend();
+                etoPlotMem.Plot.Legend.FontName = "Courier";
+                etoPlotMem.Plot.Legend.Alignment = Alignment.UpperLeft;
+                etoPlotMem.Plot.DataBackground = new BackgroundStyle();
                 etoPlotMem.Plot.Title($"Mem stats [{MainModuleProcessName}]");
                 etoPlotMem.Plot.XLabel("Date/Time");
                 etoPlotMem.Plot.YLabel("Memory (MiB)");
