@@ -53,6 +53,7 @@ namespace HealthMonitor
                     var SaveDialogCPU = new SaveFileDialog();
                     SaveDialogCPU.Title = "Save stats as (please add PNG extension yourself)...";
                     SaveDialogCPU.Filters.Add(Config.PNGFilter);
+                    SaveDialogCPU.Filters.Add(Config.SVGFilter);
                     SaveDialogCPU.ShowDialog("");
                     var PathCPUStats = SaveDialogCPU.FileName;
 
@@ -62,6 +63,7 @@ namespace HealthMonitor
                     var SaveDialogRAM = new SaveFileDialog();
                     SaveDialogRAM.Title = "Save success stats as (please add PNG extension yourself)...";
                     SaveDialogRAM.Filters.Add(Config.PNGFilter);
+                    SaveDialogRAM.Filters.Add(Config.SVGFilter);
                     SaveDialogRAM.ShowDialog("");
                     var PathRAMStats = SaveDialogRAM.FileName;
 

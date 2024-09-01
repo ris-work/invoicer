@@ -53,6 +53,7 @@ namespace HealthMonitor
                     var SaveDialog = new SaveFileDialog();
                     SaveDialog.Title = "Save stats as (please add PNG extension yourself)...";
                     SaveDialog.Filters.Add(Config.PNGFilter);
+                    SaveDialog.Filters.Add(Config.SVGFilter);
                     SaveDialog.ShowDialog("");
                     var Path = SaveDialog.FileName;
 
@@ -62,6 +63,7 @@ namespace HealthMonitor
                     var SaveDialogSuccessStats = new SaveFileDialog();
                     SaveDialogSuccessStats.Title = "Save success stats as (please add PNG extension yourself)...";
                     SaveDialogSuccessStats.Filters.Add(Config.PNGFilter);
+                    SaveDialogSuccessStats.Filters.Add(Config.SVGFilter);
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
@@ -137,13 +139,21 @@ namespace HealthMonitor
                 p.LegendText = item;
                 p.MarkerSize = 6;
                 p.MarkerLineWidth = 3;
+                ScottPlot.MarkerShape MarkerShapeForItem = PlotUtils.GetRandomMarkerShape();
+                ScottPlot.LinePattern LinePatternForItem = PlotUtils.GetRandomLinePattern();
+                p.MarkerShape = MarkerShapeForItem;
+                p.LinePattern = LinePatternForItem;
                 pSuccessRates.LegendText = item;
                 pSuccessRates.MarkerSize = 8;
                 pSuccessRates.MarkerLineWidth = 4;
+                pSuccessRates.MarkerShape = MarkerShapeForItem;
+                pSuccessRates.LinePattern = LinePatternForItem;
+
 
             }
 
             etoPlot.Plot.ShowLegend();
+            etoPlot.Plot.Legend.SymbolWidth = 40;
             etoPlot.Plot.Legend.FontName = "Courier";
             etoPlot.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlot.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
@@ -154,6 +164,7 @@ namespace HealthMonitor
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.ShowLegend();
+            etoPlotSuccessRates.Plot.Legend.SymbolWidth = 40;
             etoPlotSuccessRates.Plot.Legend.FontName = "Courier";
             etoPlotSuccessRates.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlotSuccessRates.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
