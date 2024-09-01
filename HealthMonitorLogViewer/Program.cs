@@ -2,6 +2,7 @@
 using Eto.Forms;
 using ScottPlot;
 using System;
+using System.Collections.Generic;
 
 namespace HealthMonitor
 {
@@ -39,6 +40,7 @@ namespace HealthMonitor
         [STAThread]
         static void Main(string[] args)
         {
+            Config.Platform = Eto.Platform.Detect.ToString();
             Config.PNGFilter.Extensions = new string[] { "*.png" };
             Config.PNGFilter.Name = "Portable Network Graphics (*.png)";
             Config.SVGFilter.Extensions = new string[] { "*.svg" };
@@ -46,6 +48,10 @@ namespace HealthMonitor
             if (args.Length > 0)
             {
                 Config.LogFile = args[0];
+            }
+            if (args.Length > 1)
+            {
+                Config.Platform = args[1];
             }
             Console.WriteLine($"LogFile: {Config.LogFile}");
             new Application(Eto.Platform.Detect).Run(new MainForm());
@@ -56,6 +62,7 @@ namespace HealthMonitor
 public static class Config
 {
     public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
-    public static Eto.Forms.FileFilter PNGFilter  = new Eto.Forms.FileFilter();
+    public static string Platform = Eto.Platform.Detect.ToString();
+    public static Eto.Forms.FileFilter PNGFilter = new Eto.Forms.FileFilter();
     public static Eto.Forms.FileFilter SVGFilter = new Eto.Forms.FileFilter();
 }

@@ -1,7 +1,10 @@
 ﻿using Eto.Drawing;
 using Eto.Forms;
+using Microsoft.VisualBasic.Devices;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 
 namespace HealthMonitor
 {
@@ -26,6 +29,48 @@ namespace HealthMonitor
                 MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
                 (new MainModuleProcessStatsFormHourly("C:\\Windows\\explorer.exe")).Show();
             };
+            var FileAndSystemInformationButton = new Button() { Text = "ℹ File information", MinimumSize = new Eto.Drawing.Size(-1, 40) };
+            FileAndSystemInformationButton.Click += (e, a) => {
+                FileInfo F = new FileInfo(Config.LogFile);
+                ComputerInfo C = new ComputerInfo();
+                MessageBox.Show(
+                    $"Filename: {Config.LogFile}\r\n" +
+                    $"File size: {F.Length}\r\n" +
+                    $"Full path: {F.FullName}\r\n" +
+                    $"Last Written: {F.LastWriteTime} ({(DateTime.UtcNow - F.LastWriteTimeUtc).TotalHours.ToString("F")} hours ago)\r\n"+
+                    $"↔↔↔↔SYSTEM INFO BELOW↔↔↔↔\r\n" +
+                    $"RAM: {C.TotalPhysicalMemory} ({(C.TotalPhysicalMemory/1024.0/1024/1024).ToString("F")} GiB)\r\n" +                
+                    $"OS name: {C.OSFullName}\r\n" +
+                    $"Culture: {C.InstalledUICulture}\r\n" +
+                    $"OS full name: {C.OSFullName}\r\n" +
+                    $"OS version: {C.OSVersion}\r\n" +
+                    $"OS platform: {C.OSPlatform}", 
+                    "File and System Info", 
+                    MessageBoxType.Information);
+                var drives = DriveInfo.GetDrives();
+                string driveInfo = "";
+                int count = 0;
+                foreach(var drive in drives)
+                {
+                    
+                    driveInfo += $"Root: {drive.RootDirectory} " +
+                    $"Name: {drive.Name}\r\n" +
+                    $"Free space: {drive.AvailableFreeSpace} ({(drive.AvailableFreeSpace/(1024.0*1024*1024)).ToString("F")} GiB) ({(100.0*drive.AvailableFreeSpace/drive.TotalSize).ToString("F")}%)\r\n" +
+                    $"Total size: {drive.TotalSize} ({(drive.TotalSize / (1024.0 * 1024 * 1024)).ToString("F")} GiB)\r\n" +
+                    $"Format: {drive.DriveFormat} " +
+                    $"Count: {count+1}\r\n" +
+                    $"Label: {drive.VolumeLabel}\r\n✨✨✨✨✨✨✨✨\r\n";
+                    count++;
+                    if (count > 0 && count % 4 == 0)
+                    {
+                        MessageBox.Show(driveInfo, "Drive information", MessageBoxType.Information);
+                        driveInfo = "";
+                    }
+                }
+                if (driveInfo != "") { 
+                    MessageBox.Show(driveInfo, "Drive information", MessageBoxType.Information);
+                }
+            };
 
             Content = new StackLayout
             {
@@ -36,7 +81,8 @@ namespace HealthMonitor
                     NetworkPingStatsButton,
                     NetworkPingStatsButtonHourly,
                     ProcessStatsButton,
-                    AdvancedProcessStatsButton
+                    AdvancedProcessStatsButton,
+                    FileAndSystemInformationButton
 
 				},
                 Orientation = Orientation.Vertical,

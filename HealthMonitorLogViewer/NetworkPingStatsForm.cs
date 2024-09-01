@@ -137,15 +137,15 @@ namespace HealthMonitor
                 var p = etoPlot.Plot.Add.SignalXY(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+"0").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray());
                 var pSuccessRates = etoPlotSuccessRates.Plot.Add.SignalXY(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + "0").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray());
                 p.LegendText = item;
-                p.MarkerSize = 6;
-                p.MarkerLineWidth = 3;
+                p.MarkerSize = 8;
+                p.MarkerLineWidth = 8;
                 ScottPlot.MarkerShape MarkerShapeForItem = PlotUtils.GetRandomMarkerShape();
                 ScottPlot.LinePattern LinePatternForItem = PlotUtils.GetRandomLinePattern();
                 p.MarkerShape = MarkerShapeForItem;
                 p.LinePattern = LinePatternForItem;
                 pSuccessRates.LegendText = item;
                 pSuccessRates.MarkerSize = 8;
-                pSuccessRates.MarkerLineWidth = 4;
+                pSuccessRates.MarkerLineWidth = 8;
                 pSuccessRates.MarkerShape = MarkerShapeForItem;
                 pSuccessRates.LinePattern = LinePatternForItem;
 
@@ -155,6 +155,7 @@ namespace HealthMonitor
             etoPlot.Plot.ShowLegend();
             etoPlot.Plot.Legend.SymbolWidth = 40;
             etoPlot.Plot.Legend.FontName = "Courier";
+            etoPlot.Plot.Legend.InterItemPadding = new ScottPlot.PixelPadding(1, 1, 1, 1);
             etoPlot.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlot.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
             etoPlot.Plot.Title("Ping stats");
@@ -166,6 +167,8 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.ShowLegend();
             etoPlotSuccessRates.Plot.Legend.SymbolWidth = 40;
             etoPlotSuccessRates.Plot.Legend.FontName = "Courier";
+            etoPlotSuccessRates.DisplayScale = 1;
+            etoPlotSuccessRates.Plot.Legend.InterItemPadding = new ScottPlot.PixelPadding(1, 1, 1, 1);
             etoPlotSuccessRates.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlotSuccessRates.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
             etoPlotSuccessRates.Plot.Title("Ping stats (non-corrupt replies)");

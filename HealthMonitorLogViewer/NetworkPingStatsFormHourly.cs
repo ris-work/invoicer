@@ -124,15 +124,15 @@ namespace HealthMonitor
                 var p = etoPlot.Plot.Add.Scatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute+":00:00").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage??0).ToArray());
                 var pSuccessRates = etoPlotSuccessRates.Plot.Add.Scatter(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + ":00:00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray());
                 p.LegendText = item;
-                p.MarkerSize = 6;
-                p.MarkerLineWidth = 3;
+                p.MarkerSize = 8;
+                p.MarkerLineWidth = 8;
                 ScottPlot.MarkerShape MarkerShapeForItem = PlotUtils.GetRandomMarkerShape();
                 ScottPlot.LinePattern LinePatternForItem = PlotUtils.GetRandomLinePattern();
                 p.MarkerShape = MarkerShapeForItem;
                 p.LinePattern = LinePatternForItem;
                 pSuccessRates.LegendText = item;
                 pSuccessRates.MarkerSize = 8;
-                pSuccessRates.MarkerLineWidth = 4;
+                pSuccessRates.MarkerLineWidth = 8;
                 pSuccessRates.MarkerShape = MarkerShapeForItem;
                 pSuccessRates.LinePattern = LinePatternForItem;
 
