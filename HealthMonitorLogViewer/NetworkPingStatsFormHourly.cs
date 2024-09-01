@@ -74,7 +74,7 @@ namespace HealthMonitor
                     SaveDialogSuccessStats.ShowDialog("");
                     var PathSuccessStats = SaveDialogSuccessStats.FileName;
 
-                    if (SaveDialog.CurrentFilterIndex == 0)
+                    if (SaveDialogSuccessStats.CurrentFilterIndex == 0)
                     {
                         etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440);
                     }
