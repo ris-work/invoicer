@@ -63,7 +63,7 @@ namespace HealthMonitor
                     }
                     else
                     {
-                        etoPlot.Plot.Save(Path, 2560, 1440, ScottPlot.ImageFormat.Svg);
+                        etoPlot.Plot.SaveSvg(Path, 2560, 1440);
                     }
                     MessageBox.Show($"Saved as: {Path}", "Saved!", MessageBoxType.Information);
 
@@ -79,7 +79,7 @@ namespace HealthMonitor
                     }
                     else
                     {
-                        etoPlotSuccessRates.Plot.Save(PathSuccessStats, 2560, 1440, ScottPlot.ImageFormat.Svg);
+                        etoPlotSuccessRates.Plot.SaveSvg(PathSuccessStats, 2560, 1440);
                     }
 
                     

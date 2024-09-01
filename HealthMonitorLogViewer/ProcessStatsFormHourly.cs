@@ -63,7 +63,7 @@ namespace HealthMonitor
                     }
                     else
                     {
-                        etoPlotCpu.Plot.Save(PathCPUStats, 2560, 1440, ScottPlot.ImageFormat.Svg, quality: 100);
+                        etoPlotCpu.Plot.SaveSvg(PathCPUStats, 2560, 1440);
                     }
                         
                     MessageBox.Show($"Saved as: {PathCPUStats}", "CPU stats saved", MessageBoxType.Information);
@@ -81,7 +81,7 @@ namespace HealthMonitor
                     }
                     else
                     {
-                        etoPlotMem.Plot.Save(PathRAMStats, 2560, 1440, ScottPlot.ImageFormat.Svg, quality: 100);
+                        etoPlotMem.Plot.SaveSvg(PathRAMStats, 2560, 1440);
                     }
                     MessageBox.Show($"Saved as: {PathRAMStats}", "RAM stats saved", MessageBoxType.Information);
                 }
