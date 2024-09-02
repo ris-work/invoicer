@@ -19,6 +19,8 @@
 	  <PublisherName>Rishikeshan S/L</PublisherName>
 	  <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
 	  <WebPage>https://rishikeshan.com</WebPage>
+	  <TrimMode>partial</TrimMode>
+	  
 
   </PropertyGroup>
 
@@ -46,6 +48,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
     <PackageReference Include="ScottPlot.Eto" Version="5.0.37" />
+
   </ItemGroup>
 
   <ItemGroup>
