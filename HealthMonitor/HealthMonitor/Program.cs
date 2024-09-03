@@ -51,7 +51,7 @@ void StartPing(string dest)
         {
             E.ToString();
         }
-        Thread.Sleep(Config.SleepTimeMsBetweenPointsProc);
+        Thread.Sleep(Config.SleepTimeMsBetweenPointsPing);
     }
 }
 
@@ -81,10 +81,10 @@ if (Config.SleepTimeMsBetweenPointsPing < 500)
     Config.SleepTimeMsBetweenPointsPing = 500;
     Console.WriteLine("Warning: Ping monitoring sleep time between points is too low, set to 500.");
 }
-if (Config.SleepTimeMsBetweenPointsProc < 1000)
+if (Config.SleepTimeMsBetweenPointsProc < 5000)
 {
-    Config.SleepTimeMsBetweenPointsProc = 5000;
-    Console.WriteLine("Warning: Process monitoring sleep time betweeen points is too low, set to 5000.");
+    Config.SleepTimeMsBetweenPointsProc = 300000;
+    Console.WriteLine("Warning: Process monitoring sleep time betweeen points is too low, set to 5000. It would generate too much of data and recommended value is more than 300000ms for long runs.");
 }
 if (TM.ContainsKey("AutoVacuumOnStartup"))
 {
@@ -96,7 +96,12 @@ if (TM.ContainsKey("AutoVacuum"))
     Config.AutoVacuum = ((bool)(TM["AutoVacuum"]));
     Console.WriteLine($"Vacuum on startup set to {Config.AutoVacuum}");
 }
-    Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, SleepTimeMsBetweenPointsProc: {Config.SleepTimeMsBetweenPointsProc}, SleepTimeMsBetweenPointsPing: {Config.SleepTimeMsBetweenPointsPing}.");
+if (TM.ContainsKey("Title"))
+{
+    Config.Title = ((string)(TM["Title"]));
+    Console.WriteLine($"Console.Title set to \"{Config.Title}\".");
+}
+Console.WriteLine($"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, \nSleepTimeMsBetweenPointsProc (time waited for next proc stats collection): {Config.SleepTimeMsBetweenPointsProc}ms, \nSleepTimeMsBetweenPointsPing (likewise for pings): {Config.SleepTimeMsBetweenPointsPing}ms.");
 FileInfo F = new FileInfo(Config.LogFile);
 try
 {
@@ -222,16 +227,28 @@ foreach (var item in destinations)
             Console.WriteLine(E.ToString());
         }
 
-        Thread.Sleep(Config.SleepTimeMsBetweenPointsPing);
+        Thread.Sleep(Config.SleepTimeMsBetweenPointsProc);
     }
 }
 )).Start();
+try
+{
+    Console.Title = Config.Title;
+    Console.ForegroundColor = ConsoleColor.DarkYellow;
+    Console.BackgroundColor = ConsoleColor.DarkBlue;
+    Console.CursorVisible = true;
+}
+catch (System.Exception E)
+{
+    Console.WriteLine($"Unable to set title: {E.ToString()}, {E.StackTrace}");
+}
 
 public static class Config
 {
     public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
-    public static int SleepTimeMsBetweenPointsPing = 5000;
-    public static int SleepTimeMsBetweenPointsProc = 5000;
+    public static int SleepTimeMsBetweenPointsPing = 30000;
+    public static int SleepTimeMsBetweenPointsProc = 300000;
     public static bool AutoVacuumOnStartup = true;
     public static bool AutoVacuum = true;
+    public static string Title = "Health Monitor (logging service), © Rishikeshan S/L, License: Open Software License, V3 (no later).";
 }

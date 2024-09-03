@@ -12,12 +12,15 @@
   <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   <ApplicationIcon>log_2.ico</ApplicationIcon>
   <Platforms>AnyCPU;x64</Platforms>
-	  <Description>Health Monitor $([System.DateTime]::Now.ToString("o"))</Description>
+	  <Description>Health Monitor (Built: $([System.DateTime]::Now.ToString("o")))</Description>
 	  <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
 	  <Version>0.1.0</Version>
 	  <PublisherName>Rishikeshan S/L</PublisherName>
-	  <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
+	  <ProductVersion>0.1.0 $([System.DateTime]::Now.ToString("o"))</ProductVersion>
 	  <WebPage>https://rishikeshan.com</WebPage>
+	  <PackageLicenseExpression>OSL-3.0</PackageLicenseExpression>
+	  <Optimize>true</Optimize>
+	  <Title>Health Monitor</Title>
   </PropertyGroup>
 
   <ItemGroup>

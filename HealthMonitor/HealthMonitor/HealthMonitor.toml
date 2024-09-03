@@ -1,7 +1,8 @@
 destinations = ["192.168.1.1", "8.8.8.8", "1.1.1.1"]
-RetentionDays = 15
+RetentionDays = 15 # Should be a sensible default
 LogFile = "logs.sqlite3.rvhealthmonitorlogfile"
-SleepTimeMsBetweenPointsProc = 60000
-SleepTimeMsBetweenPointsPing = 15000
+SleepTimeMsBetweenPointsProc = 900000 # 15 minutes
+SleepTimeMsBetweenPointsPing = 30000 # Half a minute
 AutoVacuum = true
 AutoVacuumOnStartup = true
+Title = "Health Monitor (logging service), © Rishikeshan S/L, License: Open Software License, V3 (no later)."
