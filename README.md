@@ -1,0 +1,2 @@
+# What's this?
+This is a monorepo for an inventory management system (Invoicer); see individual project folders for the license. It also contains tools like [HealthMonitor](HealthMonitor/HealthMonitor) and [Health Monitor Log Viewer](HealthMonitorLogViewer), which are cross-platform system monitoring tools. Some projects' licenses are TBD, please stay tuned.
