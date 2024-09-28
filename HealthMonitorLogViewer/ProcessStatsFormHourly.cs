@@ -119,6 +119,9 @@ namespace HealthMonitor
             };
             var ProcessList = new ComboBox();
             ProcessList.ToolTip = "Choose one and press [Enter]";
+            ProcessList.GotFocus += (e, a) => {
+                ProcessList.LaunchDropDown();
+            };
             var ProcessSelectorPanel = new StackLayout()
             {
 

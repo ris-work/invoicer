@@ -11,16 +11,28 @@ powershell -ExecutionPolicy Bypass .\assoc.ps1
 ```
 
 ### Screenshots
+
 <img src="screenshots/launcher.png"></img>
+
 Process stats:
+
+
 <img src="screenshots/sqlservr.png"></img>
+
 Ping stats:
+
 <img src="screenshots/screen_netmon.png"></img>
 
 #### Exported images (are high-res)
+
 Process stats:
+
 <img src="screenshots/sqlservr_1.png"></img>
+
 <img src="screenshots/sqlservr_2.png"></img>
+
 Ping stats:
+
 <img src="screenshots/screen_pingstats_1.png"></img>
+
 <img src="screenshots/screen_pingstats_2.png"></img>
