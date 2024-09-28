@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+ * Copyright (c) Rishikeshan Sulochana/Lavakumar 2024
+ * As a special exception, this file is (at your option)
+ * also under the MIT license, regardless of the other
+ * files' license.
+ *
+ * Why is this code here?
+ * This is an extension helper for making a ComboBox Drop 
+ * Down.
+ *
+ * Tested and is working on WinForms/WPF. Should work on 
+ * GTK# too. Please load the appropriate Eto.Platform
+ * assemblies referenced in this file before compiling,
+ * even though your program might not care about them.
+ * *
+ * */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
