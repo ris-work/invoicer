@@ -44,8 +44,38 @@ namespace Eto.Forms
             else if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
             {
                 Gtk.ComboBox N = (Gtk.ComboBox)Eto.Forms.Gtk3Helpers.ToNative(C);
-                N.Popup();
+                N.Popdown();
             }
+            else if (P == Eto.Platform.Get(Eto.Platforms.Mac64).ToString())
+            {
+                //Implement mac
+            }
+
+        }
+        public static void UnlaunchDropDown(this ComboBox C)
+        {
+            //Eto.Forms.MessageBox.Show($"{Eto.Platform.Detect}, {Eto.Platform.Get(Eto.Platforms.WinForms)}");
+            var P = Eto.Platform.Instance.ToString();
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.ComboBox N = (System.Windows.Forms.ComboBox)Eto.Forms.WinFormsHelpers.ToNative(C);
+                N.DroppedDown = false;
+            }
+            else if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                System.Windows.Controls.ComboBox N = (System.Windows.Controls.ComboBox)Eto.Forms.WpfHelpers.ToNative(C);
+                N.IsDropDownOpen = false;
+            }
+            else if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                Gtk.ComboBox N = (Gtk.ComboBox)Eto.Forms.Gtk3Helpers.ToNative(C);
+                N.Popdown();
+            }
+            else if (P == Eto.Platform.Get(Eto.Platforms.Mac64).ToString())
+            {
+                //Implement mac
+            }
+
         }
     }
 }
