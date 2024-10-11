@@ -61,7 +61,10 @@ namespace EtoFE
             List<(string, TextAlignment)> HeaderEntries = new()
             {
                 ("Itemcode", TextAlignment.Right),
-                ("Name", TextAlignment.Left)
+                ("Name", TextAlignment.Left),
+                ("Split 1", TextAlignment.Right),
+                ("Split 2", TextAlignment.Center),
+                ("Split 3", TextAlignment.Right)
             };
             var SearchCatalogue = PR.Catalogue.Select(e => e.ToStringArray()).ToList();
             Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
