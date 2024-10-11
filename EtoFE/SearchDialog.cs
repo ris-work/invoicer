@@ -7,6 +7,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
 using SharpDX.Direct2D1;
+using System.Text.RegularExpressions;
 
 namespace EtoFE
 {
@@ -25,18 +26,29 @@ namespace EtoFE
             }
             else return A.Where(x => x.StartsWith(s));
         }
-        public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true)
+        public static string NormalizeSpelling(this string s) {
+            var o = Regex.Replace(s, "aeiou", "");
+            o = o.Replace("k", "c").Replace("i", "y");
+            return o;
+        }
+        public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true, bool normalizeSpelling = true)
         {
             string x = str;
+            string cs = s;
             if (CaseInsensitive == true)
             {
                 x = x.ToLowerInvariant();
+                cs = cs.ToLowerInvariant();
+            }
+            if (normalizeSpelling == true) {
+                x = x.NormalizeSpelling();
+                cs = cs.NormalizeSpelling();
             }
             if (Contains == true)
             {
-                return x.Contains(s);
+                return x.Contains(cs);
             }
-            else return x.StartsWith(s);
+            else return x.StartsWith(cs);
         }
     }
     public class SearchDialog: Dialog
@@ -57,18 +69,26 @@ namespace EtoFE
             RBLSearchPosition.Items.Add("StartsWith [F4]");
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
+            CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
+            bool NormalizeSpelling = false;
+
+            CBNormalizeSpelling.CheckedChanged += (e, a) => {
+                NormalizeSpelling = CBNormalizeSpelling.Checked ?? false;
+            };
 
 
             GroupBox SearchCriteria = new() { Text = "Search in...", Content = RBLSearchCriteria };
             GroupBox SearchCaseSensitivity = new() { Text = "Case sensitivity setting", Content = RBLSearchCaseSensitivity };
             GroupBox SearchCasePosition = new() { Text = "Search Position", Content = RBLSearchPosition };
+            GroupBox SearchSpellingNormalization = new() { Text = "Advanced...", Content = CBNormalizeSpelling };
 
             StackLayout SearchOptions = new StackLayout()
             {
                 Items = {
                     SearchCaseSensitivity,
                     SearchCasePosition,
-                    SearchCriteria
+                    SearchCriteria,
+                    SearchSpellingNormalization
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -149,6 +169,9 @@ namespace EtoFE
                         if (RBLSearchCriteria.Items.Count >= 7)
                             RBLSearchCriteria.SelectedIndex = 6;
                         break;
+                    case Keys.End:
+                        CBNormalizeSpelling.Checked = !(CBNormalizeSpelling.Checked ?? false);
+                        break;
                     default:
                         break;
                 }
@@ -176,6 +199,7 @@ namespace EtoFE
                 //MessageBox.Show(GI.Count().ToString());
                 Results.DataStore = GI;
                 Results.Invalidate(true);
+                Results.UpdateLayout();
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
             };
@@ -187,13 +211,14 @@ namespace EtoFE
                     var searchString = SearchBox.Text.ToLowerInvariant();
                     var SearchCaseSensitiveSetting = SearchCaseSensitive;
                     var SearchContainsSetting = SearchContains;
+                    var SearchNormalizeSpelling = NormalizeSpelling;
                     //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
                     searching = true;
                     (new Thread(() =>
                     {
                         if (SelectedArrayIndex > SC[0].Length - 1)
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting))).AsSequential();
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling))).AsSequential();
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;
@@ -202,7 +227,7 @@ namespace EtoFE
                         }
                         else
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting)).AsSequential();
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling)).AsSequential();
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;
@@ -213,13 +238,17 @@ namespace EtoFE
                 }
                 
             };
+            var ResultsContainer = new StackLayout() { Items = {Results}, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
             TL.Rows.Add(new TableRow(SearchBox));
             TL.Rows.Add(new TableRow(LabelResults));
-            TL.Rows.Add(new TableRow(Results, SearchOptions));
+            TL.Rows.Add(new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, SearchOptions) { ScaleHeight = true });
             Content = TL;
             RBLSearchCriteria.SelectedIndex = RBLSearchCriteria.Items.Count - 1;
             RBLSearchCaseSensitivity.SelectedIndex = 0;
             RBLSearchPosition.SelectedIndex = 0;
+            Title = "Search...";
+            Resizable = true;
+            Maximizable = true;
         }
     }
 }
