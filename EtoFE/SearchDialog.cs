@@ -48,9 +48,9 @@ namespace EtoFE
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             GridView Results = new GridView();
-            RadioButtonList RBLSearchCriteria = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical};
-            RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList() {Orientation = Eto.Forms.Orientation.Vertical };
-            RadioButtonList RBLSearchPosition = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical };
+            RadioButtonList RBLSearchCriteria = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical, Padding = 5};
+            RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList() {Orientation = Eto.Forms.Orientation.Vertical, Padding = 5 };
+            RadioButtonList RBLSearchPosition = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical , Padding = 5 };
             RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
             RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
             RBLSearchPosition.Items.Add("Contains [F3]");
@@ -66,10 +66,13 @@ namespace EtoFE
             StackLayout SearchOptions = new StackLayout()
             {
                 Items = {
-                    SearchCriteria,
-                    SearchCaseSensitivity
+                    SearchCaseSensitivity,
+                    SearchCasePosition,
+                    SearchCriteria
                 },
-                Orientation = Eto.Forms.Orientation.Vertical
+                Orientation = Eto.Forms.Orientation.Vertical,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = 5,
             };
 
             int SelectedSearchIndex = SC[0].Length;
@@ -82,22 +85,27 @@ namespace EtoFE
             RBLSearchPosition.SelectedIndexChanged += (e, a) => {
                 SearchContains = RBLSearchPosition.SelectedIndex == 0;
             };
+            TextAlignment[] Alignments = new TextAlignment[HeaderEntries.Count];
+            Alignments = HeaderEntries.Select((x) => x.Item2).ToArray();
             int ic = 0;
+            int fnKey = 0;
             foreach (var Header in HeaderEntries)
             {
-                Results.Columns.Add(new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic), HeaderTextAlignment = Header.Item2 });
+                Results.Columns.Add(new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true });
                 ic++;
-                RBLSearchCriteria.Items.Add(Header.Item1);
+                fnKey = 4 + ic;
+                RBLSearchCriteria.Items.Add(Header.Item1 + $" [F{fnKey}]");
             }
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
-            Results.Size = new Size(500, 500);
+            Results.Size = new Size(600, 600);
             Results.CellFormatting += (e, a) => {
                 if (a.Row % 2 == 0)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
                     a.ForegroundColor = Eto.Drawing.Colors.Black;
                 }
+                
             };
             this.KeyDown += (e, a) => {
                 switch (a.Key) {
@@ -145,7 +153,7 @@ namespace EtoFE
                         break;
                 }
             };
-            RBLSearchCriteria.Items.Add("Omnibox");
+            RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey+1}]");
             TextBox SearchBox = new TextBox();
             MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
@@ -171,7 +179,7 @@ namespace EtoFE
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
             };
-            SearchBox.KeyDown += (e, a) =>
+            SearchBox.KeyUp += (e, a) =>
             {
                 if (SearchBox.Text.Length > 0 && searching != true)
                 {
@@ -179,7 +187,7 @@ namespace EtoFE
                     var searchString = SearchBox.Text.ToLowerInvariant();
                     var SearchCaseSensitiveSetting = SearchCaseSensitive;
                     var SearchContainsSetting = SearchContains;
-                    MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
+                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
                     searching = true;
                     (new Thread(() =>
                     {
@@ -210,7 +218,8 @@ namespace EtoFE
             TL.Rows.Add(new TableRow(Results, SearchOptions));
             Content = TL;
             RBLSearchCriteria.SelectedIndex = RBLSearchCriteria.Items.Count - 1;
-            RBLSearchCaseSensitivity.SelectedIndex = RBLSearchCaseSensitivity.Items.Count - 1;
+            RBLSearchCaseSensitivity.SelectedIndex = 0;
+            RBLSearchPosition.SelectedIndex = 0;
         }
     }
 }
