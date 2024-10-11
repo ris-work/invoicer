@@ -57,9 +57,14 @@ namespace EtoFE
 
             PR = TPosDataResponse.Result;
             MessageBox.Show(PR.Catalogue.Count().ToString());
-            
-            
-            Barcode.KeyDown += (e, a) => { (new SearchDialog(PR.Catalogue)).ShowModal(); };
+
+            List<(string, TextAlignment)> HeaderEntries = new()
+            {
+                ("Itemcode", TextAlignment.Right),
+                ("Name", TextAlignment.Left)
+            };
+            var SearchCatalogue = PR.Catalogue.Select(e => e.ToStringArray()).ToList();
+            Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];

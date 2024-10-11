@@ -81,6 +81,10 @@ namespace RV.InvNew.Common
         [JsonInclude] public bool VatDependsOnUser;
         [JsonInclude] public bool ManualPrice;
         [JsonInclude] public bool EnforceAboveCost;
+        public string[] ToStringArray()
+        {
+            return new string[] { itemcode.ToString(), itemdesc };
+        }
     }
 
     [JsonSerializable(typeof(PosBatch))]
