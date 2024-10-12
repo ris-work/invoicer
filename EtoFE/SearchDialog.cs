@@ -27,8 +27,9 @@ namespace EtoFE
             else return A.Where(x => x.StartsWith(s));
         }
         public static string NormalizeSpelling(this string s) {
-            var o = Regex.Replace(s, "aeiou", "");
-            o = o.Replace("k", "c").Replace("i", "y");
+            var o = Regex.Replace(s, "[aeiouh]", ""); //English has 10+ vowels, mgiht as well remove all of them.
+            o = o.Replace("k", "c").Replace("i", "y"); //K is the C equivalent from Greek, Y is the I equivalent from Greek.
+            //Hope these are the last totally redundant letters...
             return o;
         }
         public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true, bool normalizeSpelling = true)
