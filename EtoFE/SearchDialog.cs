@@ -125,13 +125,12 @@ namespace EtoFE
                 var HI = new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true, MinWidth = 40 };
                 
                 Results.Columns.Add(HI);
-                Results.ColumnHeaderClick += (e, a) => {
-                    MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
-                };
+                
                 ic++;
                 fnKey = 4 + ic;
                 RBLSearchCriteria.Items.Add(Header.Item1 + $" [F{fnKey}]");
             }
+            
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
             Results.Size = new Size(600, 600);
@@ -230,7 +229,8 @@ namespace EtoFE
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
             };
-            SearchBox.KeyUp += (e, a) =>
+
+            var Search = () =>
             {
                 if (SearchBox.Text.Length > 0 && searching != true)
                 {
@@ -241,6 +241,7 @@ namespace EtoFE
                     var SearchNormalizeSpelling = NormalizeSpelling;
                     int SearchSortBy = SortBy;
                     bool SearchAnythingAnywhere = AnythingAnywhere;
+                    bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
                     //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
                     searching = true;
                     (new Thread(() =>
@@ -278,6 +279,13 @@ namespace EtoFE
             Title = "Search...";
             Resizable = true;
             Maximizable = true;
+            Results.ColumnHeaderClick += (e, a) => {
+                //MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
+                SortBy = a.Column.DisplayIndex;
+                Search();
+            };
+            SearchBox.KeyUp += (_, _) => Search();
+
         }
     }
 }
