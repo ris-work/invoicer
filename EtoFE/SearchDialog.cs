@@ -32,7 +32,7 @@ namespace EtoFE
             //Hope these are the last totally redundant letters...
             return o;
         }
-        public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true, bool normalizeSpelling = true)
+        public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true, bool normalizeSpelling = true, bool AnythingAnywhere = false)
         {
             string x = str;
             string cs = s;
@@ -45,6 +45,10 @@ namespace EtoFE
                 x = x.NormalizeSpelling();
                 cs = cs.NormalizeSpelling();
             }
+            if(AnythingAnywhere == true)
+            {
+                return cs.Split(" ").All(seg => x.Contains(seg));
+            }
             if (Contains == true)
             {
                 return x.Contains(cs);
@@ -55,7 +59,7 @@ namespace EtoFE
     public class SearchDialog: Dialog
     {
         
-        public SearchDialog(List<string[]> SC, List<(string, TextAlignment)> HeaderEntries)
+        public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
             TableLayout TL = new TableLayout();
             Label SL = new Label() { Text = "Search for: " };
@@ -71,6 +75,7 @@ namespace EtoFE
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
             CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
+            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
             bool NormalizeSpelling = false;
 
             CBNormalizeSpelling.CheckedChanged += (e, a) => {
@@ -81,7 +86,7 @@ namespace EtoFE
             GroupBox SearchCriteria = new() { Text = "Search in...", Content = RBLSearchCriteria };
             GroupBox SearchCaseSensitivity = new() { Text = "Case sensitivity setting", Content = RBLSearchCaseSensitivity };
             GroupBox SearchCasePosition = new() { Text = "Search Position", Content = RBLSearchPosition };
-            GroupBox SearchSpellingNormalization = new() { Text = "Advanced...", Content = CBNormalizeSpelling };
+            GroupBox SearchSpellingNormalization = new() { Text = "Advanced...", Content = new StackLayout( CBNormalizeSpelling, CBAnythingAnywhere){ Orientation = Eto.Forms.Orientation.Vertical } };
 
             StackLayout SearchOptions = new StackLayout()
             {
@@ -96,7 +101,7 @@ namespace EtoFE
                 Padding = 5,
             };
 
-            int SelectedSearchIndex = SC[0].Length;
+            int SelectedSearchIndex = SC[0].Item1.Length;
             RBLSearchCriteria.SelectedIndexChanged += (e, a) => {
                 SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
             };
@@ -110,9 +115,15 @@ namespace EtoFE
             Alignments = HeaderEntries.Select((x) => x.Item2).ToArray();
             int ic = 0;
             int fnKey = 0;
+            int SortBy = 0;
             foreach (var Header in HeaderEntries)
             {
-                Results.Columns.Add(new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true });
+                var HI = new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true };
+                
+                Results.Columns.Add(HI);
+                Results.ColumnHeaderClick += (e, a) => {
+                    MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
+                };
                 ic++;
                 fnKey = 4 + ic;
                 RBLSearchCriteria.Items.Add(Header.Item1 + $" [F{fnKey}]");
@@ -120,12 +131,17 @@ namespace EtoFE
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
             Results.Size = new Size(600, 600);
+            (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
             Results.CellFormatting += (e, a) => {
                 if (a.Row % 2 == 0)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
                     a.ForegroundColor = Eto.Drawing.Colors.Black;
                 }
+                if (Results.DataStore.Count() <= ColorMat.Length) {
+                    a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
+                    a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
+                };
                 
             };
             this.KeyDown += (e, a) => {
@@ -173,6 +189,9 @@ namespace EtoFE
                     case Keys.End:
                         CBNormalizeSpelling.Checked = !(CBNormalizeSpelling.Checked ?? false);
                         break;
+                    case Keys.Pause:
+                        CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
+                        break;
                     default:
                         break;
                 }
@@ -181,22 +200,25 @@ namespace EtoFE
             TextBox SearchBox = new TextBox();
             MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
-            List<string[]> Filtered = new List<string[]>();
-            List<string[]> FilteredTemp = new List<string[]>();
-            MessageBox.Show($"Last: {SC.Last()[0]} Desc: {SC.Last()[1]}");
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            
+            MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
             TL.Padding = 10;
             TL.Spacing = new Eto.Drawing.Size(10, 10);
             int FilteredCount = 0;
             Results.GridLines = GridLines.Both;
             var UpdateView = () => {
                 Filtered = FilteredTemp;
+                var ColorMatTemp = new List<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
                 List<GridItem> GI = new List<GridItem>();
                 Filtered = FilteredTemp;
-                GI.Add(new GridItem("Hello", "World"));
                 foreach (var item in Filtered)
                 {
-                    GI.Add(new GridItem(item));
+                    GI.Add(new GridItem(item.Item1));
+                    ColorMatTemp.Add((item.Item2, item.Item3));
                 }
+                ColorMat = ColorMatTemp.ToArray();
                 //MessageBox.Show(GI.Count().ToString());
                 Results.DataStore = GI;
                 Results.Invalidate(true);
@@ -213,13 +235,15 @@ namespace EtoFE
                     var SearchCaseSensitiveSetting = SearchCaseSensitive;
                     var SearchContainsSetting = SearchContains;
                     var SearchNormalizeSpelling = NormalizeSpelling;
+                    int SearchSortBy = SortBy;
+                    bool SearchAnythingAnywhere;
                     //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
                     searching = true;
                     (new Thread(() =>
                     {
-                        if (SelectedArrayIndex > SC[0].Length - 1)
+                        if (SelectedArrayIndex > SC[0].Item1.Length - 1)
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling))).AsSequential();
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling))).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;
@@ -228,7 +252,7 @@ namespace EtoFE
                         }
                         else
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling)).AsSequential();
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling)).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;

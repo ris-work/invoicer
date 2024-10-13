@@ -58,15 +58,15 @@ namespace EtoFE
             PR = TPosDataResponse.Result;
             MessageBox.Show(PR.Catalogue.Count().ToString());
 
-            List<(string, TextAlignment)> HeaderEntries = new()
+            List<(string, TextAlignment, bool)> HeaderEntries = new()
             {
-                ("Itemcode", TextAlignment.Right),
-                ("Name", TextAlignment.Left),
-                ("Split 1", TextAlignment.Right),
-                ("Split 2", TextAlignment.Center),
-                ("Split 3", TextAlignment.Right)
+                ("Itemcode", TextAlignment.Right, false),
+                ("Name", TextAlignment.Left, false),
+                ("Split 1", TextAlignment.Right, false),
+                ("Split 2", TextAlignment.Center, false),
+                ("Split 3", TextAlignment.Right, false)
             };
-            var SearchCatalogue = PR.Catalogue.Select(e => e.ToStringArray()).ToList();
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue.Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(e => { return (e.ToStringArray(), null, null); }).ToList();
             Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
