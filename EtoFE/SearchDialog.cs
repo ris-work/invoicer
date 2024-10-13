@@ -78,6 +78,7 @@ namespace EtoFE
             CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
+            bool ReverseSort = false;
 
             CBNormalizeSpelling.CheckedChanged += (e, a) => {
                 NormalizeSpelling = CBNormalizeSpelling.Checked ?? false;
@@ -133,7 +134,7 @@ namespace EtoFE
             
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
-            Results.Size = new Size(600, 600);
+            Results.Size = new Size(600, 700);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
             Results.CellFormatting += (e, a) => {
                 //Colour the column first
@@ -157,8 +158,8 @@ namespace EtoFE
                 if(a.Column.DisplayIndex == SortBy)
                 {
                     a.Column.AutoSize = true;
-                    a.BackgroundColor = Eto.Drawing.Colors.BlueViolet;
-                    a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
+                    a.BackgroundColor = ReverseSort? Eto.Drawing.Colors.LightGoldenrodYellow: Eto.Drawing.Colors.BlueViolet;
+                    a.ForegroundColor = ReverseSort?Eto.Drawing.Colors.BlueViolet:Eto.Drawing.Colors.LightGoldenrodYellow;
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
                 
@@ -267,14 +268,18 @@ namespace EtoFE
                         if (SelectedArrayIndex > SC[0].Item1.Length - 1)
                         {
                             var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere))).AsSequential();
-                            var FilteredBeforeCounting = SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]);
+                            var FilteredBeforeCounting = ReverseSort?
+                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])):
+                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
                             FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                         }
                         else
                         {
                             var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
-                            var FilteredBeforeCounting = SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]);
+                            var FilteredBeforeCounting = ReverseSort ? 
+                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])) :
+                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
                             FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                         }
@@ -299,6 +304,7 @@ namespace EtoFE
             Maximizable = true;
             Results.ColumnHeaderClick += (e, a) => {
                 //MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
+                if (SortBy == a.Column.DisplayIndex) ReverseSort = !ReverseSort;
                 SortBy = a.Column.DisplayIndex;
                 Search();
             };
