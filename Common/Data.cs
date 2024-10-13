@@ -83,7 +83,8 @@ namespace RV.InvNew.Common
         [JsonInclude] public bool EnforceAboveCost;
         public string[] ToStringArray()
         {
-            return new string[] { itemcode.ToString(), itemdesc, itemdesc.Split(" ")[0], itemdesc.Split(" ")[1], itemdesc.Split(" ")[2] };
+            var r = new Random();
+            return new string[] { itemcode.ToString(), itemdesc, itemdesc.Split(" ")[0], itemdesc.Split(" ")[1], itemdesc.Split(" ")[2], r.NextInt64().ToString() };
         }
     }
 

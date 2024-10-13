@@ -77,9 +77,13 @@ namespace EtoFE
             CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
             CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
             bool NormalizeSpelling = false;
+            bool AnythingAnywhere = false;
 
             CBNormalizeSpelling.CheckedChanged += (e, a) => {
                 NormalizeSpelling = CBNormalizeSpelling.Checked ?? false;
+            };
+            CBAnythingAnywhere.CheckedChanged += (e, a) => {
+                AnythingAnywhere = CBAnythingAnywhere.Checked ?? false;
             };
 
 
@@ -118,7 +122,7 @@ namespace EtoFE
             int SortBy = 0;
             foreach (var Header in HeaderEntries)
             {
-                var HI = new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true };
+                var HI = new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true, MinWidth = 40 };
                 
                 Results.Columns.Add(HI);
                 Results.ColumnHeaderClick += (e, a) => {
@@ -138,9 +142,9 @@ namespace EtoFE
                     a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
                     a.ForegroundColor = Eto.Drawing.Colors.Black;
                 }
-                if (Results.DataStore.Count() <= ColorMat.Length) {
-                    a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
-                    a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
+                if (ColorMat != null && Results.DataStore != null && Results.DataStore.Count() <= ColorMat.Length) {
+                    if (ColorMat[a.Row].Item1 != null) a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
+                    if (ColorMat[a.Row].Item2 != null) a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
                 };
                 
             };
@@ -236,14 +240,14 @@ namespace EtoFE
                     var SearchContainsSetting = SearchContains;
                     var SearchNormalizeSpelling = NormalizeSpelling;
                     int SearchSortBy = SortBy;
-                    bool SearchAnythingAnywhere;
+                    bool SearchAnythingAnywhere = AnythingAnywhere;
                     //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
                     searching = true;
                     (new Thread(() =>
                     {
                         if (SelectedArrayIndex > SC[0].Item1.Length - 1)
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling))).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere))).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;
@@ -252,7 +256,7 @@ namespace EtoFE
                         }
                         else
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling)).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
+                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
                             FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                             searching = false;

@@ -10,6 +10,25 @@ using Wiry.Base32;
 
 namespace EtoFE
 {
+    public static class Randomizers
+    {
+        public static Eto.Drawing.Color GetRandomBgColor()
+        {
+            var Rand = new Random();
+            ushort R = (ushort)(Rand.Next() % 128);
+            ushort G = (ushort)(Rand.Next() % 128);
+            ushort B = (ushort)(Rand.Next() % 128);
+            return new Eto.Drawing.Color(R, G, B);
+        }
+        public static Eto.Drawing.Color GetRandomFgColor()
+        {
+            var Rand = new Random();
+            ushort R = (ushort)(128 + Rand.Next() % 128);
+            ushort G = (ushort)(128 + Rand.Next() % 128);
+            ushort B = (ushort)(128 + Rand.Next() % 128);
+            return new Eto.Drawing.Color(R, G, B);
+        }
+    }
     public class PosTerminal : Form
     {
         public PosTerminal()
@@ -64,9 +83,11 @@ namespace EtoFE
                 ("Name", TextAlignment.Left, false),
                 ("Split 1", TextAlignment.Right, false),
                 ("Split 2", TextAlignment.Center, false),
-                ("Split 3", TextAlignment.Right, false)
+                ("Split 3", TextAlignment.Right, false),
+                ("Split 4", TextAlignment.Left, false)
             };
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue.Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(e => { return (e.ToStringArray(), null, null); }).ToList();
+
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue.Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(e => { return (e.ToStringArray(), Randomizers.GetRandomBgColor(), Randomizers.GetRandomFgColor()); }).ToList();
             Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
