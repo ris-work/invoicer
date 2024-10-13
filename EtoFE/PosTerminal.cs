@@ -79,15 +79,19 @@ namespace EtoFE
 
             List<(string, TextAlignment, bool)> HeaderEntries = new()
             {
-                ("Itemcode", TextAlignment.Right, false),
+                ("Itemcode", TextAlignment.Right, true),
                 ("Name", TextAlignment.Left, false),
                 ("Split 1", TextAlignment.Right, false),
                 ("Split 2", TextAlignment.Center, false),
                 ("Split 3", TextAlignment.Right, false),
-                ("Split 4", TextAlignment.Left, false)
+                ("Split 4", TextAlignment.Left, true)
             };
 
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue.Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(e => { return (e.ToStringArray(), Randomizers.GetRandomBgColor(), Randomizers.GetRandomFgColor()); }).ToList();
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue
+                .Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>
+                //(e => { return (e.ToStringArray(), Randomizers.GetRandomBgColor(), Randomizers.GetRandomFgColor()); })
+                (e => { return (e.ToStringArray(), null, null); })
+                .ToList();
             Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();

@@ -136,15 +136,31 @@ namespace EtoFE
             Results.Size = new Size(600, 600);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
             Results.CellFormatting += (e, a) => {
+                //Colour the column first
+                if (a.Column.DisplayIndex % 2 == 1)
+                {
+                    a.BackgroundColor = Eto.Drawing.Colors.LightGreen;
+                    a.ForegroundColor = Eto.Drawing.Colors.Black;
+                }
+                //Override with row colours
                 if (a.Row % 2 == 0)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
                     a.ForegroundColor = Eto.Drawing.Colors.Black;
                 }
+                //Use color matrix now!
                 if (ColorMat != null && Results.DataStore != null && Results.DataStore.Count() <= ColorMat.Length) {
                     if (ColorMat[a.Row].Item1 != null) a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
                     if (ColorMat[a.Row].Item2 != null) a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
                 };
+                //Override everything with the currently sorted column
+                if(a.Column.DisplayIndex == SortBy)
+                {
+                    a.Column.AutoSize = true;
+                    a.BackgroundColor = Eto.Drawing.Colors.BlueViolet;
+                    a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
+                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
+                }
                 
             };
             this.KeyDown += (e, a) => {
@@ -226,8 +242,10 @@ namespace EtoFE
                 Results.DataStore = GI;
                 Results.Invalidate(true);
                 Results.UpdateLayout();
+                
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
+                
             };
 
             var Search = () =>
@@ -248,21 +266,21 @@ namespace EtoFE
                     {
                         if (SelectedArrayIndex > SC[0].Item1.Length - 1)
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere))).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
-                            FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
+                            var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere))).AsSequential();
+                            var FilteredBeforeCounting = SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]);
+                            FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
-                            searching = false;
-                            Application.Instance.Invoke(UpdateView);
-                            //MessageBox.Show(FilteredCount.ToString());
                         }
                         else
                         {
-                            var FilteredBeforeCounting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential().OrderBy(x => x.Item1[SearchSortBy]);
-                            FilteredTemp = FilteredBeforeCounting.Take(1000).ToList();
+                            var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
+                            var FilteredBeforeCounting = SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]);
+                            FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
-                            searching = false;
-                            Application.Instance.Invoke(UpdateView);
                         }
+                        
+                        searching = false;
+                        Application.Instance.Invoke(UpdateView);
                     })).Start();
                     
                 }
