@@ -8,6 +8,7 @@ using Eto.Drawing;
 using RV.InvNew.Common;
 using SharpDX.Direct2D1;
 using System.Text.RegularExpressions;
+using CsvHelper;
 
 namespace EtoFE
 {
@@ -104,6 +105,23 @@ namespace EtoFE
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Padding = 5,
+            };
+
+            Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
+            Button ExportAllAsCsv = new Button() { Text = "Export Everything..." };
+            Button ExportShownAsCsv = new Button() { Text = "Export Displayed..." };
+
+            StackLayout ExportOptions = new StackLayout() { 
+                Items = { ExportAllAsCsv, ExportAllResultsAsCsv, ExportShownAsCsv },
+                Orientation = Eto.Forms.Orientation.Vertical,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = 5
+            };
+
+            GroupBox GBExportOptions = new GroupBox()
+            {
+                Text = "Export options...",
+                Content = ExportOptions
             };
 
             int SelectedSearchIndex = SC[0].Item1.Length;
@@ -221,6 +239,7 @@ namespace EtoFE
             MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredUnlim = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
             
             MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
@@ -271,6 +290,7 @@ namespace EtoFE
                             var FilteredBeforeCounting = ReverseSort?
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])):
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
+                            FilteredUnlim = FilteredBeforeCountingAndSorting;
                             FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                         }
@@ -280,6 +300,7 @@ namespace EtoFE
                             var FilteredBeforeCounting = ReverseSort ? 
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])) :
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
+                            FilteredUnlim = FilteredBeforeCountingAndSorting;
                             FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
                             FilteredCount = FilteredBeforeCounting.Count();
                         }
@@ -292,9 +313,10 @@ namespace EtoFE
                 
             };
             var ResultsContainer = new StackLayout() { Items = {Results}, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
+            var OthersContainer = new StackLayout() { Items = { SearchOptions, GBExportOptions }, Orientation = Eto.Forms.Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Stretch };
             TL.Rows.Add(new TableRow(SearchBox));
             TL.Rows.Add(new TableRow(LabelResults));
-            TL.Rows.Add(new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, SearchOptions) { ScaleHeight = true });
+            TL.Rows.Add(new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, OthersContainer) { ScaleHeight = true });
             Content = TL;
             RBLSearchCriteria.SelectedIndex = RBLSearchCriteria.Items.Count - 1;
             RBLSearchCaseSensitivity.SelectedIndex = 0;
@@ -309,7 +331,57 @@ namespace EtoFE
                 Search();
             };
             SearchBox.KeyUp += (_, _) => Search();
-
+            this.SizeChanged += (_, _) => { if (this.Height > 200) { Results.Height = (int)Math.Floor(this.Height * 0.85); } };
+            var WriteCsv = (List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries, List<(string, TextAlignment, bool)> Headers, string FileName) => {
+                using (StreamWriter SW = new StreamWriter(FileName))
+                {
+                    using (CsvWriter CSW = new CsvWriter(SW, System.Globalization.CultureInfo.InvariantCulture))
+                    {
+                        var HeaderLabels = (HeaderEntries.Select(x => x.Item1).ToArray());
+                        foreach (var HeaderLabel in HeaderLabels)
+                        {
+                            CSW.WriteField(HeaderLabel);
+                        }
+                        CSW.NextRecord();
+                        var ArrOut = Entries.Select(x => x.Item1).ToArray();
+                        foreach (var entry in ArrOut)
+                        {
+                            foreach (var EntryCell in entry)
+                            {
+                                CSW.WriteField(entry);
+                            }
+                            CSW.NextRecord();
+                        }
+                    }
+                }
+            };
+            ExportAllAsCsv.Click += (_, _) => {
+                var SFD = new SaveFileDialog() { Title = "Save as..." };
+                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.ShowDialog(Application.Instance.MainForm);
+                if(SFD.FileName != null)
+                {
+                    WriteCsv(SC, HeaderEntries, SFD.FileName);
+                }
+            };
+            ExportAllResultsAsCsv.Click += (_, _) => {
+                var SFD = new SaveFileDialog() { Title = "Save as..." };
+                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.ShowDialog(Application.Instance.MainForm);
+                if (SFD.FileName != null)
+                {
+                    WriteCsv(FilteredUnlim.ToList(), HeaderEntries, SFD.FileName);
+                }
+            };
+            ExportShownAsCsv.Click += (_, _) => {
+                var SFD = new SaveFileDialog() { Title = "Save as..." };
+                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.ShowDialog(Application.Instance.MainForm);
+                if (SFD.FileName != null)
+                {
+                    WriteCsv(FilteredTemp, HeaderEntries, SFD.FileName);
+                }
+            };
         }
     }
 }
