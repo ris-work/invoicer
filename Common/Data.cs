@@ -81,10 +81,11 @@ namespace RV.InvNew.Common
         [JsonInclude] public bool VatDependsOnUser;
         [JsonInclude] public bool ManualPrice;
         [JsonInclude] public bool EnforceAboveCost;
+        [JsonInclude] public long DefaultVatCategory;
         public string[] ToStringArray()
         {
             var r = new Random();
-            return new string[] { itemcode.ToString(), itemdesc, itemdesc.Split(" ")[0], itemdesc.Split(" ")[1], itemdesc.Split(" ")[2], r.NextInt64().ToString() };
+            return new string[] { itemcode.ToString(), itemdesc, DefaultVatCategory.ToString(), itemdesc.Split(" ")[0], itemdesc.Split(" ")[1], itemdesc.Split(" ")[2], r.NextInt64().ToString() };
         }
     }
 

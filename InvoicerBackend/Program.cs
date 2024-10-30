@@ -133,7 +133,9 @@ app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
                 itemdesc = e.DescriptionPos,
                 ManualPrice = e.PriceManual,
                 VatCategoryAdjustable = e.VatCategoryAdjustable,
-                VatDependsOnUser = e.VatDependsOnUser
+                VatDependsOnUser = e.VatDependsOnUser,
+                DefaultVatCategory = e.DefaultVatCategory
+                
             }).ToList();
             PB = ctx.Inventories.Select((e) => new PosBatch
             {

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+using Microsoft.WindowsAPICodePack.Shell;
 using RV.InvNew.Common;
 using Wiry.Base32;
 
@@ -52,6 +53,10 @@ namespace EtoFE
             Label CurrentVatRate = new Label();
             Label CurrentVatCategory = new Label();
             Label LabelInvoiceLocalKey = new Label();
+            Label CurrentTaxLabel = new Label();
+            Label CurrentTaxRate = new Label() { TextAlignment = TextAlignment.Right };
+            Label CurrentTotalLabel = new Label();
+            Label CurrentTotal = new Label() { TextAlignment = TextAlignment.Right };
             string InvoiceLocalKey;
             Padding = new Eto.Drawing.Padding(10, 10);
             
@@ -64,6 +69,8 @@ namespace EtoFE
             TL.Rows.Add(new TableRow(LabelPrice, Price));
             TL.Rows.Add(new TableRow(LabelQuantity, Quantity));
             TL.Rows.Add(new TableRow(LabelVatCategory, VatCategory, CurrentVatRate, CurrentVatCategory));
+            TL.Rows.Add(new TableRow(CurrentTaxLabel, CurrentTaxRate));
+            TL.Rows.Add(new TableRow(CurrentTotalLabel, CurrentTotal));
             PosData.Wait();
             var PosDataResponse = PosData.Result;
             PosDataResponse.EnsureSuccessStatusCode();
@@ -86,6 +93,12 @@ namespace EtoFE
                 ("Split 3", TextAlignment.Right, false),
                 ("Split 4", TextAlignment.Left, true)
             };
+            List<(string, TextAlignment, bool)> HeaderEntriesBatchSelect = new()
+            {
+                ("Name", TextAlignment.Right, false),
+                ("Batch Code", TextAlignment.Left, true),
+                ("Price", TextAlignment.Right, false),
+            };
 
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue
                 .Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>
@@ -96,6 +109,27 @@ namespace EtoFE
                 SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
                 SD.ShowModal();
                 MessageBox.Show(String.Concat(SD.Selected), "Selected", MessageBoxType.Information);
+                long SelectedItemcode = long.Parse(SD.Selected[0]);
+                var SelectedItem = PR.Catalogue.Where(x => x.itemcode == SelectedItemcode).First();
+                long BatchCount = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Count();
+                MessageBox.Show(BatchCount.ToString(), "Batch Count", MessageBoxType.Information);
+                long batchcode;
+                if (BatchCount > 1)
+                {
+                    List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> BatchSelectList = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Select<PosBatch, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(x => { return (new string[] { SD.Selected[1], x.batchcode.ToString(), x.marked.ToString() }, null, null); }).ToList();
+                    var BatchSelect = new SearchDialog(BatchSelectList, HeaderEntriesBatchSelect);
+                    BatchSelect.ShowModal();
+                    batchcode = long.Parse(BatchSelect.Selected[1]);
+                    VatCategory.Text = SelectedItem.DefaultVatCategory.ToString();
+                    VatCategory.Focus();
+                }
+                else if (BatchCount == 1)
+                {
+                    batchcode = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).First().batchcode;
+                    VatCategory.Text = SelectedItem.DefaultVatCategory.ToString();
+                    VatCategory.Focus();
+                }
+                else return;
             };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
