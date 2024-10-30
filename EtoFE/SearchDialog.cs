@@ -59,6 +59,7 @@ namespace EtoFE
     }
     public class SearchDialog: Dialog
     {
+        public string[] Selected = null;
         
         public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
@@ -229,6 +230,26 @@ namespace EtoFE
                         break;
                     case Keys.Pause:
                         CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
+                        break;
+                    case Keys.Enter:
+                        if (Results.SelectedItem != null)
+                        {
+                            this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                            this.Close();
+                        }
+                        else if(Results.DataStore != null &&  Results.DataStore.Count() != 0)
+                        {
+                            this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                        }
+                        
+                        break;
+                    case Keys.Escape:
+                        this.Close();
                         break;
                     default:
                         break;

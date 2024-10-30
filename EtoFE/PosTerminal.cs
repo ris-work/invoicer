@@ -92,7 +92,11 @@ namespace EtoFE
                 //(e => { return (e.ToStringArray(), Randomizers.GetRandomBgColor(), Randomizers.GetRandomFgColor()); })
                 (e => { return (e.ToStringArray(), null, null); })
                 .ToList();
-            Barcode.KeyDown += (e, a) => { (new SearchDialog(SearchCatalogue, HeaderEntries)).ShowModal(); };
+            Barcode.KeyDown += (e, a) => {
+                SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
+                SD.ShowModal();
+                MessageBox.Show(String.Concat(SD.Selected), "Selected", MessageBoxType.Information);
+            };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];
