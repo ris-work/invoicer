@@ -9,11 +9,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
-using SharpDX;
 using RV.InvNew.Common;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using EtoFE;
+using Microsoft.EntityFrameworkCore.Scaffolding;
+using System.Collections.Generic;
 
 public static class LoginTokens
 {
@@ -23,10 +24,13 @@ public static class LoginTokens
 public class Program
 {
     public static HttpClient client = new HttpClient();
+    public static Tomlyn.Model.TomlTable Config;
+    public static IReadOnlyDictionary<string, object?> ConfigDict;
     [STAThread] public static void Main()
     {
         var ConfigFile = System.IO.File.ReadAllText("config.toml");
-        var Config = Toml.ToModel(ConfigFile);
+        Config = Toml.ToModel(ConfigFile);
+        ConfigDict = Config.ToDictionary();
         Console.WriteLine("Hello, World!");
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();
@@ -99,9 +103,32 @@ public class MyForm : Form
         var layout = new TableLayout();
         TextBox UsernameBox, TerminalBox;
         PasswordBox PasswordBox;
+        
+        var ModelDict = Program.ConfigDict;
+        string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
+        string TermLogoPath = (string)ModelDict.GetValueOrDefault("TermLogo", "TermLogo.png");
+
+
+        Eto.Forms.ImageView Logo = new ImageView();
+        Eto.Forms.ImageView TermLogo = new ImageView();
+        if (File.Exists(LogoPath))
+        {
+            Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
+            System.Console.WriteLine(LogoUri.AbsoluteUri);
+            Logo.Image = new Eto.Drawing.Bitmap(LogoUri.AbsoluteUri);
+        }
+        if (File.Exists(TermLogoPath))
+        {
+            Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
+            System.Console.WriteLine(TermLogoUri.AbsoluteUri);
+            Logo.Image = new Eto.Drawing.Bitmap(TermLogoUri.AbsoluteUri);
+        }
+
+
         layout.Rows.Add(null);
         layout.Spacing = new Size(5,5);
         layout.Padding = new Padding(10, 10, 10, 10);
+        layout.Rows.Add(new TableRow(null, new TableCell(Logo), null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Username : ", Style="mono" }, UsernameBox = new TextBox() { PlaceholderText = "Username", Style = "mono" }, null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Password : ", Style="mono" }, PasswordBox = new PasswordBox() { Style = "mono"  }, null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Terminal : ", Style="mono" }, TerminalBox = new TextBox() { PlaceholderText = "1", Enabled = false, Text = "1", Style="mono", TextAlignment=TextAlignment.Right }, null));

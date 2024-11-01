@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
-using Microsoft.WindowsAPICodePack.Shell;
 using RV.InvNew.Common;
 using Wiry.Base32;
 

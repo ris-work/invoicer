@@ -142,7 +142,8 @@ app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
                 itemcode = e.Itemcode,
                 batchcode = e.Batchcode,
                 selling = e.SellingPrice,
-                marked = e.MarkedPrice
+                marked = e.MarkedPrice,
+                expireson = DateOnly.FromDateTime(e.ExpDate.GetValueOrDefault(DateTime.MaxValue))
             }).ToList();
             VC = ctx.VatCategories.ToList();
 

@@ -98,6 +98,7 @@ namespace RV.InvNew.Common
         [JsonInclude] public long batchcode;
         [JsonInclude] public double selling;
         [JsonInclude] public double marked;
+        [JsonInclude] public DateOnly expireson;
     }
 
     [JsonSerializable(typeof(List<PosBatch>))]

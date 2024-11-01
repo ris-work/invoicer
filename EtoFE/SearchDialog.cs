@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
-using SharpDX.Direct2D1;
 using System.Text.RegularExpressions;
 using CsvHelper;
 
@@ -60,6 +59,7 @@ namespace EtoFE
     public class SearchDialog: Dialog
     {
         public string[] Selected = null;
+        public int SelectedOrder = -1;
         
         public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
@@ -183,7 +183,9 @@ namespace EtoFE
                 }
                 
             };
-            this.KeyDown += (e, a) => {
+            
+            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) => {
+                KeyEventArgs a = (KeyEventArgs)ea;
                 switch (a.Key) {
                     case Keys.F1:
                         RBLSearchCaseSensitivity.SelectedIndex = 0;
@@ -255,6 +257,44 @@ namespace EtoFE
                         break;
                 }
             };
+            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) => {
+                if (Results.SelectedItem != null)
+                {
+                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this.Close();
+                }
+                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                {
+                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                }
+
+            };
+            var SendSelectedWithoutDefaults = () => {
+                if (Results.SelectedItem != null)
+                {
+                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this.Close();
+                }
+                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                {
+                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                }
+                return;
+
+            };
+            this.KeyDown += ProcessKeyDown;
+           
+
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey+1}]");
             TextBox SearchBox = new TextBox();
             MessageBox.Show($"PC: {SC.Count()}");
@@ -267,6 +307,7 @@ namespace EtoFE
             TL.Padding = 10;
             TL.Spacing = new Eto.Drawing.Size(10, 10);
             int FilteredCount = 0;
+            Results.Border = BorderType.None;
             Results.GridLines = GridLines.Both;
             var UpdateView = () => {
                 Filtered = FilteredTemp;
@@ -288,6 +329,7 @@ namespace EtoFE
                 this.Title = $"Found {FilteredCount} ";
                 
             };
+            Results.MouseDoubleClick += SendSelected;
 
             var Search = () =>
             {
@@ -352,6 +394,7 @@ namespace EtoFE
                 Search();
             };
             SearchBox.KeyUp += (_, _) => Search();
+            
             this.SizeChanged += (_, _) => { if (this.Height > 200) { Results.Height = (int)Math.Floor(this.Height * 0.85); } };
             var WriteCsv = (List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries, List<(string, TextAlignment, bool)> Headers, string FileName) => {
                 using (StreamWriter SW = new StreamWriter(FileName))
@@ -403,6 +446,8 @@ namespace EtoFE
                     WriteCsv(FilteredTemp, HeaderEntries, SFD.FileName);
                 }
             };
+            Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);
+           
         }
     }
 }
