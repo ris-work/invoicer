@@ -97,6 +97,7 @@ namespace EtoFE
                 ("Name", TextAlignment.Right, false),
                 ("Batch Code", TextAlignment.Left, true),
                 ("Price", TextAlignment.Right, false),
+                ("Exp Date", TextAlignment.Right, false),
             };
 
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue
@@ -115,7 +116,7 @@ namespace EtoFE
                 long batchcode;
                 if (BatchCount > 1)
                 {
-                    List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> BatchSelectList = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Select<PosBatch, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(x => { return (new string[] { SD.Selected[1], x.batchcode.ToString(), x.marked.ToString() }, null, null); }).ToList();
+                    List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> BatchSelectList = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Select<PosBatch, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(x => { return (new string[] { SD.Selected[1], x.batchcode.ToString(), x.marked.ToString(), x.expireson.ToString("o") }, null, null); }).ToList();
                     var BatchSelect = new SearchDialog(BatchSelectList, HeaderEntriesBatchSelect);
                     BatchSelect.ShowModal();
                     batchcode = long.Parse(BatchSelect.Selected[1]);
