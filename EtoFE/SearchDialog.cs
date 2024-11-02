@@ -60,6 +60,7 @@ namespace EtoFE
     {
         public string[] Selected = null;
         public int SelectedOrder = -1;
+        public bool ReverseSelection = false;
         
         public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
@@ -181,10 +182,20 @@ namespace EtoFE
                     a.ForegroundColor = ReverseSort?Eto.Drawing.Colors.BlueViolet:Eto.Drawing.Colors.LightGoldenrodYellow;
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
-                
+                if (a.Row == Results.SelectedRow)
+                {
+                    a.Column.AutoSize = true;
+                    a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
+                    a.ForegroundColor = Eto.Drawing.Colors.LightCoral;
+                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
+                }
+
+
             };
             
             EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
                 KeyEventArgs a = (KeyEventArgs)ea;
                 switch (a.Key) {
                     case Keys.F1:
@@ -258,6 +269,8 @@ namespace EtoFE
                 }
             };
             EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
                 if (Results.SelectedItem != null)
                 {
                     this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
@@ -275,6 +288,8 @@ namespace EtoFE
 
             };
             var SendSelectedWithoutDefaults = () => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
                 if (Results.SelectedItem != null)
                 {
                     this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
@@ -289,6 +304,7 @@ namespace EtoFE
                 {
                     MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
                 }
+                
                 return;
 
             };

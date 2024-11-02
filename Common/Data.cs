@@ -99,6 +99,7 @@ namespace RV.InvNew.Common
         [JsonInclude] public double selling;
         [JsonInclude] public double marked;
         [JsonInclude] public DateOnly expireson;
+        [JsonInclude] public double SIH;
     }
 
     [JsonSerializable(typeof(List<PosBatch>))]
