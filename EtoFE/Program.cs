@@ -106,7 +106,7 @@ public class MyForm : Form
         
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
-        string TermLogoPath = (string)ModelDict.GetValueOrDefault("TermLogo", "TermLogo.png");
+        string TermLogoPath = (string)ModelDict.GetValueOrDefault("TermLogo", "posprogram_export.png");
 
 
         Eto.Forms.ImageView Logo = new ImageView();
@@ -121,14 +121,14 @@ public class MyForm : Form
         {
             Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
             System.Console.WriteLine(TermLogoUri.AbsoluteUri);
-            Logo.Image = new Eto.Drawing.Bitmap(TermLogoUri.AbsoluteUri);
+            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.AbsoluteUri);
         }
 
 
         layout.Rows.Add(null);
         layout.Spacing = new Size(5,5);
         layout.Padding = new Padding(10, 10, 10, 10);
-        layout.Rows.Add(new TableRow(null, new TableCell(Logo), null));
+        layout.Rows.Add(new TableRow(null, new TableCell(Logo), TermLogo, null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Username : ", Style="mono" }, UsernameBox = new TextBox() { PlaceholderText = "Username", Style = "mono" }, null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Password : ", Style="mono" }, PasswordBox = new PasswordBox() { Style = "mono"  }, null));
         layout.Rows.Add(new TableRow(null, new Label() { Text = "Terminal : ", Style="mono" }, TerminalBox = new TextBox() { PlaceholderText = "1", Enabled = false, Text = "1", Style="mono", TextAlignment=TextAlignment.Right }, null));
