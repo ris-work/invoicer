@@ -7,6 +7,8 @@ using Eto.Drawing;
 using Eto.Forms;
 using RV.InvNew.Common;
 using Wiry.Base32;
+using System.Net.Http.Json;
+using System.Net.Http;
 
 namespace EtoFE
 {
@@ -97,6 +99,7 @@ namespace EtoFE
                 ("Name", TextAlignment.Right, false),
                 ("Batch Code", TextAlignment.Left, true),
                 ("Price", TextAlignment.Right, false),
+                ("SIH", TextAlignment.Right, false),
                 ("Exp Date", TextAlignment.Right, false),
             };
 
@@ -105,6 +108,7 @@ namespace EtoFE
                 //(e => { return (e.ToStringArray(), Randomizers.GetRandomBgColor(), Randomizers.GetRandomFgColor()); })
                 (e => { return (e.ToStringArray(), null, null); })
                 .ToList();
+            List<string[]> BatchSelectOutput = new List<string[]> { };
             Barcode.KeyDown += (e, a) => {
                 SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
                 SD.ShowModal();
@@ -116,20 +120,49 @@ namespace EtoFE
                 long batchcode;
                 if (BatchCount > 1)
                 {
-                    List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> BatchSelectList = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Select<PosBatch, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(x => { return (new string[] { SD.Selected[1], x.batchcode.ToString(), x.marked.ToString(), x.expireson.ToString("o") }, null, null); }).ToList();
+                    
+                    List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> BatchSelectList = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).Select<PosBatch, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>(x => { return (new string[] { SD.Selected[1], x.batchcode.ToString(), x.marked.ToString(), x.SIH.ToString(), x.expireson.ToString("o") }, null, null); }).ToList();
                     var BatchSelect = new SearchDialog(BatchSelectList, HeaderEntriesBatchSelect);
                     BatchSelect.ShowModal();
+                    BatchSelectOutput = BatchSelect.OutputList;
                     batchcode = long.Parse(BatchSelect.Selected[1]);
+                    Quantity.Focus();
                     VatCategory.Text = SelectedItem.DefaultVatCategory.ToString();
-                    VatCategory.Focus();
+                    //VatCategory.Focus();
                 }
                 else if (BatchCount == 1)
                 {
                     batchcode = PR.Batches.Where(x => x.itemcode == long.Parse(SD.Selected[0])).First().batchcode;
+                    Quantity.Focus();
                     VatCategory.Text = SelectedItem.DefaultVatCategory.ToString();
-                    VatCategory.Focus();
+                    //VatCategory.Focus();
                 }
                 else return;
+            };
+            Quantity.KeyDown += (e, a) => { 
+                if(a.Key == Keys.Enter)
+                {
+                    double SelectQuantity = double.Parse(Quantity.Text);
+                    List<(long, double)> SelectedBatches = new List<(long, double)> { };
+                    double CumulativeQuantity = 0;
+                    int index = 0;
+                    int MaxCount = BatchSelectOutput.Count;
+                    MessageBox.Show(MaxCount.ToString(), "Max count", MessageBoxType.Information);
+                    string TextDesc = "";
+                    while ((CumulativeQuantity <= SelectQuantity) && (MaxCount > index))
+                    {
+                        long CurrentSelectedBatch = long.Parse(((BatchSelectOutput.ElementAt(index))[1]));
+                        double CurrentSelectedBatchMaxQty = double.Parse(((BatchSelectOutput.ElementAt(index))[3]));
+                        
+                        double CurrentSelectQuantity = CurrentSelectedBatchMaxQty < (SelectQuantity - CumulativeQuantity) ? CurrentSelectedBatchMaxQty : (SelectQuantity - CumulativeQuantity);
+                        CumulativeQuantity += CurrentSelectQuantity;
+                        TextDesc += $"([Aggregator], {CumulativeQuantity}) + ({CurrentSelectedBatch}, {CurrentSelectQuantity}) <= {CurrentSelectedBatchMaxQty}\r\n";
+                        SelectedBatches.Add((CurrentSelectedBatch, CurrentSelectQuantity));
+                        if (CumulativeQuantity == SelectQuantity) break;
+                        index++;
+                    }
+                    MessageBox.Show(TextDesc, "Selected Batches", MessageBoxType.Information);
+                }
             };
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();

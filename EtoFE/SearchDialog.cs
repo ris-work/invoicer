@@ -8,6 +8,7 @@ using Eto.Drawing;
 using RV.InvNew.Common;
 using System.Text.RegularExpressions;
 using CsvHelper;
+using System.IO;
 
 namespace EtoFE
 {
@@ -61,6 +62,7 @@ namespace EtoFE
         public string[] Selected = null;
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
+        public List<string[]> OutputList = new List<string[]>() { };
         
         public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
@@ -193,122 +195,7 @@ namespace EtoFE
 
             };
             
-            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) => {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                KeyEventArgs a = (KeyEventArgs)ea;
-                switch (a.Key) {
-                    case Keys.F1:
-                        RBLSearchCaseSensitivity.SelectedIndex = 0;
-                        break;
-                    case Keys.F2:
-                        RBLSearchCaseSensitivity.SelectedIndex = 1;
-                        break;
-                    case Keys.F3:
-                        RBLSearchPosition.SelectedIndex = 0;
-                        break;
-                    case Keys.F4:
-                        RBLSearchPosition.SelectedIndex = 1;
-                        break;
-                    case Keys.F5:
-                        if(RBLSearchCriteria.Items.Count >= 1)
-                            RBLSearchCriteria.SelectedIndex = 0;
-                        break;
-                    case Keys.F6:
-                        if (RBLSearchCriteria.Items.Count >= 2)
-                            RBLSearchCriteria.SelectedIndex = 1;
-                        break;
-                    case Keys.F7:
-                        if (RBLSearchCriteria.Items.Count >= 3)
-                            RBLSearchCriteria.SelectedIndex = 2;
-                        break;
-                    case Keys.F8:
-                        if (RBLSearchCriteria.Items.Count >= 4)
-                            RBLSearchCriteria.SelectedIndex = 3;
-                        break;
-                    case Keys.F9:
-                        if (RBLSearchCriteria.Items.Count >= 5)
-                            RBLSearchCriteria.SelectedIndex = 4;
-                        break;
-                    case Keys.F10:
-                        if (RBLSearchCriteria.Items.Count >= 6)
-                            RBLSearchCriteria.SelectedIndex = 5;
-                        break;
-                    case Keys.F11:
-                        if (RBLSearchCriteria.Items.Count >= 7)
-                            RBLSearchCriteria.SelectedIndex = 6;
-                        break;
-                    case Keys.End:
-                        CBNormalizeSpelling.Checked = !(CBNormalizeSpelling.Checked ?? false);
-                        break;
-                    case Keys.Pause:
-                        CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
-                        break;
-                    case Keys.Enter:
-                        if (Results.SelectedItem != null)
-                        {
-                            this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                            this.Close();
-                        }
-                        else if(Results.DataStore != null &&  Results.DataStore.Count() != 0)
-                        {
-                            this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                            this.Close();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
-                        }
-                        
-                        break;
-                    case Keys.Escape:
-                        this.Close();
-                        break;
-                    default:
-                        break;
-                }
-            };
-            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) => {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                if (Results.SelectedItem != null)
-                {
-                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                    this.Close();
-                }
-                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                {
-                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                    this.Close();
-                }
-                else
-                {
-                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
-                }
-
-            };
-            var SendSelectedWithoutDefaults = () => {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                if (Results.SelectedItem != null)
-                {
-                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                    this.Close();
-                }
-                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                {
-                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                    this.Close();
-                }
-                else
-                {
-                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
-                }
-                
-                return;
-
-            };
-            this.KeyDown += ProcessKeyDown;
+            
            
 
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey+1}]");
@@ -344,6 +231,48 @@ namespace EtoFE
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
                 
+            };
+            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
+                OutputList = Filtered.Select(a => a.Item1).ToList();
+                if (Results.SelectedItem != null)
+                {
+                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this.Close();
+                }
+                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                {
+                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                }
+
+            };
+            var SendSelectedWithoutDefaults = () => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
+                OutputList = Filtered.Select(a => a.Item1).ToList();
+                if (Results.SelectedItem != null)
+                {
+                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this.Close();
+                }
+                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                {
+                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                }
+
+                return;
+
             };
             Results.MouseDoubleClick += SendSelected;
 
@@ -463,7 +392,87 @@ namespace EtoFE
                 }
             };
             Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);
-           
+            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) => {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
+                KeyEventArgs a = (KeyEventArgs)ea;
+                switch (a.Key)
+                {
+                    case Keys.F1:
+                        RBLSearchCaseSensitivity.SelectedIndex = 0;
+                        break;
+                    case Keys.F2:
+                        RBLSearchCaseSensitivity.SelectedIndex = 1;
+                        break;
+                    case Keys.F3:
+                        RBLSearchPosition.SelectedIndex = 0;
+                        break;
+                    case Keys.F4:
+                        RBLSearchPosition.SelectedIndex = 1;
+                        break;
+                    case Keys.F5:
+                        if (RBLSearchCriteria.Items.Count >= 1)
+                            RBLSearchCriteria.SelectedIndex = 0;
+                        break;
+                    case Keys.F6:
+                        if (RBLSearchCriteria.Items.Count >= 2)
+                            RBLSearchCriteria.SelectedIndex = 1;
+                        break;
+                    case Keys.F7:
+                        if (RBLSearchCriteria.Items.Count >= 3)
+                            RBLSearchCriteria.SelectedIndex = 2;
+                        break;
+                    case Keys.F8:
+                        if (RBLSearchCriteria.Items.Count >= 4)
+                            RBLSearchCriteria.SelectedIndex = 3;
+                        break;
+                    case Keys.F9:
+                        if (RBLSearchCriteria.Items.Count >= 5)
+                            RBLSearchCriteria.SelectedIndex = 4;
+                        break;
+                    case Keys.F10:
+                        if (RBLSearchCriteria.Items.Count >= 6)
+                            RBLSearchCriteria.SelectedIndex = 5;
+                        break;
+                    case Keys.F11:
+                        if (RBLSearchCriteria.Items.Count >= 7)
+                            RBLSearchCriteria.SelectedIndex = 6;
+                        break;
+                    case Keys.End:
+                        CBNormalizeSpelling.Checked = !(CBNormalizeSpelling.Checked ?? false);
+                        break;
+                    case Keys.Pause:
+                        CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
+                        break;
+                    case Keys.Enter:
+                        if (Results.SelectedItem != null)
+                        {
+                            this.OutputList = Filtered.Select(a => a.Item1).ToList();
+                            this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                            this.Close();
+                        }
+                        else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                        {
+                            this.OutputList = Filtered.Select(a => a.Item1).ToList();
+                            this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                        }
+
+                        break;
+                    case Keys.Escape:
+                        this.Close();
+                        break;
+                    default:
+                        break;
+                }
+            };
+
+            this.KeyDown += ProcessKeyDown;
+
         }
     }
 }

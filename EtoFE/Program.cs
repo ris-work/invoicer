@@ -15,6 +15,7 @@ using System.Text.Json;
 using EtoFE;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using System.Collections.Generic;
+using System.IO;
 
 public static class LoginTokens
 {
@@ -36,7 +37,7 @@ public class Program
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
-        new Application().Run(new MyForm());
+        new Application(Eto.Platforms.Wpf).Run(new MyForm());
     }
 }
 
@@ -111,13 +112,14 @@ public class MyForm : Form
 
         Eto.Forms.ImageView Logo = new ImageView();
         Eto.Forms.ImageView TermLogo = new ImageView();
-        if (File.Exists(LogoPath))
+        if (System.IO.File.Exists(LogoPath))
         {
             Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
             System.Console.WriteLine(LogoUri.AbsoluteUri);
             Logo.Image = new Eto.Drawing.Bitmap(LogoUri.AbsoluteUri);
         }
-        if (File.Exists(TermLogoPath))
+
+        if (System.IO.File.Exists(TermLogoPath))
         {
             Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
             System.Console.WriteLine(TermLogoUri.AbsoluteUri);
