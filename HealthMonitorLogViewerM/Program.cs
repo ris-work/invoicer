@@ -41,7 +41,7 @@ namespace HealthMonitor
         [STAThread]
         static void Main(string[] args)
         {
-            Config.Platform = Eto.Platform.Detect.ToString();
+            //Config.Platform = Eto.Platform.Detect.ToString();
             Config.PNGFilter.Extensions = new string[] { "*.png" };
             Config.PNGFilter.Name = "Portable Network Graphics (*.png)";
             Config.SVGFilter.Extensions = new string[] { "*.svg" };
@@ -55,7 +55,7 @@ namespace HealthMonitor
                 Config.Platform = args[1];
             }
             Console.WriteLine($"LogFile: {Config.LogFile}");
-            new Application(Eto.Platform.Detect).Run(new NavigableListForm());
+            new Application(Eto.Platforms.WinForms).Run(new NavigableListForm());
         }
     }
 }
@@ -63,7 +63,8 @@ namespace HealthMonitor
 public static class Config
 {
     public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
-    public static string Platform = Eto.Platform.Detect.ToString();
+    //public static string Platform = Eto.Platform.Detect.ToString();
+    public static string Platform = null;
     public static Eto.Forms.FileFilter PNGFilter = new Eto.Forms.FileFilter();
     public static Eto.Forms.FileFilter SVGFilter = new Eto.Forms.FileFilter();
 }
