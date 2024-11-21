@@ -44,11 +44,18 @@ namespace EtoFE
                 WpfGW.BorderBrush = System.Windows.Media.Brushes.Transparent;
                 WpfGW.HorizontalGridLinesBrush = System.Windows.Media.Brushes.Aqua;
                 WpfGW.VerticalGridLinesBrush = System.Windows.Media.Brushes.Transparent;
+                //WpfGW.BorderThickness = new System.Windows.Thickness(0);
                 WpfGW.BorderThickness = new System.Windows.Thickness(0);
-                WpfGW.BorderThickness = new System.Windows.Thickness(0.0004);
+                
+                //WpfGW.Row
                 WpfGW.GridLinesVisibility = DataGridGridLinesVisibility.None;
+                
+                WpfGW.CellStyle = null;
+                WpfGW.Columns.First().CellStyle = null;
+                Setter setter = new Setter( DataGridCell.BorderBrushProperty, System.Windows.Media.Brushes.Transparent);
+                WpfGW.Style = null;
                 //WpfGW.B
-                Eto.Forms.MessageBox.Show("WPF!");  
+                //Eto.Forms.MessageBox.Show("WPF!");  
 
             }
         }
