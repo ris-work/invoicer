@@ -35,7 +35,7 @@ namespace HealthMonitorLogViewer
                 Panels.Add(panel.Item1, panel.Item2);
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1  }).ToList();
-            Content = new StackLayout(new StackLayoutItem(LB), new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10 };
+            
             LB.GridLines = GridLines.None;
 
             IReadOnlyDictionary<string, object> ROD = Panels;
@@ -53,6 +53,40 @@ namespace HealthMonitorLogViewer
                 }
                 a.Font = new Eto.Drawing.Font("Segoe UI", 10, Eto.Drawing.FontStyle.Bold, Eto.Drawing.FontDecoration.None);
             };
+            List<Label> Buttons = new();
+            foreach ((string, object) LoadOncePanel in loadOncePanels)
+            {
+                Label B = new Label() { Text = LoadOncePanel.Item1 };
+                B.Font = new Eto.Drawing.Font("Segoe UI", 12);
+                B.TextColor = Eto.Drawing.Colors.White;
+                B.Enabled = true;
+                B.BackgroundColor = Eto.Drawing.Colors.Black;
+                //B.Click += (e, a) => { };
+                B.MouseEnter += (e, a) => {
+                    B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
+                    B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                };
+                B.MouseLeave += (e, a) => {
+                    B.TextColor = Eto.Drawing.Colors.White;
+                    B.BackgroundColor = Eto.Drawing.Colors.Black;
+                };
+                B.MouseDown += (e, a) => {
+                    Label ClickedLabel = ((Label)e);
+                    MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
+                    foreach(Label L in Buttons)
+                    {
+                        B.TextColor = Eto.Drawing.Colors.White;
+                        B.BackgroundColor = Eto.Drawing.Colors.Black;
+                    }
+                    ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
+                    ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                    CurrentPanel.Content = (Control)((ILoadOncePanel<object>)ROD.GetValueOrDefault<string, object?>((string)((string)ClickedLabel.Text), null)).GetInnerAsObject();
+                };
+                
+                
+                Buttons.Add(B);
+                
+            }
             LB.SelectedItemsChanged += (sender, e) => {
                 CurrentPanel.Content = (Control)((ILoadOncePanel<object>)ROD.GetValueOrDefault<string, object?>((string)((List<string>)LB.SelectedItem).First(), null)).GetInnerAsObject();
                 Title = $"{ (string)((List<string>)LB.SelectedItem).First()}";
@@ -64,6 +98,7 @@ namespace HealthMonitorLogViewer
             //LB.DisableGridViewEnterKey();
             BackgroundColor = Eto.Drawing.Colors.Black;
             Padding = 10;
+            Content = new StackLayout(new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray()) { HorizontalContentAlignment = HorizontalAlignment.Stretch, Spacing = 5 }, new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10 };
         }
     }
 }

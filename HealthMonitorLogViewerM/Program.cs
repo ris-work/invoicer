@@ -55,7 +55,7 @@ namespace HealthMonitor
                 Config.Platform = args[1];
             }
             Console.WriteLine($"LogFile: {Config.LogFile}");
-            new Application(Eto.Platform.Detect).Run(new NavigableListFormMinimal());
+            new Application(Eto.Platform.Detect).Run(new NavigableListForm());
         }
     }
 }
