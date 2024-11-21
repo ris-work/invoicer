@@ -29,11 +29,11 @@ namespace HealthMonitor
         public string Decaminute;
         public double? SuccessRate;
     }
-    public class NetworkPingStatsFormHourly: Form
+    public class NetworkPingStatsFormHourly: Panel
     {
         public NetworkPingStatsFormHourly() {
-            Title = $"HealthMonitor Plots: by Hour [{Config.LogFile}]";
-            Location = new Eto.Drawing.Point(50,50);
+            //Title = $"HealthMonitor Plots: by Hour [{Config.LogFile}]";
+            //Location = new Eto.Drawing.Point(50,50);
             ScottPlot.Eto.EtoPlot etoPlot = new() { Size = new Eto.Drawing.Size(1000, 300) };
             ScottPlot.Eto.EtoPlot etoPlotSuccessRates = new() { Size = new Eto.Drawing.Size(1000, 300) };
             etoPlot.Plot.Axes.Bottom.Label.FontSize = 18;
@@ -187,7 +187,7 @@ namespace HealthMonitor
                 Spacing = 20 
             };
             Content = VerticalStackLayout;
-            Resizable = false;
+            //Resizable = false;
 
         }
     }

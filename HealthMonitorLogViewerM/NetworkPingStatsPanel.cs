@@ -163,10 +163,14 @@ namespace HealthMonitor
             etoPlot.Plot.Legend.InterItemPadding = new ScottPlot.PixelPadding(1, 1, 1, 1);
             etoPlot.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlot.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
+            etoPlot.Plot.DataBackground.Color = ScottPlot.Colors.Black;
             etoPlot.Plot.Title("Ping stats");
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
             etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: double.PositiveInfinity);
+            etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: 105);
+            etoPlot.Plot.Axes.Color(ScottPlot.Colors.White);
+            etoPlot.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.ShowLegend();
@@ -176,10 +180,17 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Legend.InterItemPadding = new ScottPlot.PixelPadding(1, 1, 1, 1);
             etoPlotSuccessRates.Plot.Legend.Alignment = ScottPlot.Alignment.UpperLeft;
             etoPlotSuccessRates.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
+            etoPlotSuccessRates.Plot.DataBackground.Color = ScottPlot.Colors.Black;
             etoPlotSuccessRates.Plot.Title("Ping stats (non-corrupt replies)");
             etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
+            
             etoPlotSuccessRates.Plot.Axes.SetLimitsY(bottom: -5, top: 105);
+            etoPlotSuccessRates.Plot.Axes.Color(ScottPlot.Colors.White);
+            etoPlotSuccessRates.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
+            etoPlotSuccessRates.BackgroundColor = Eto.Drawing.Colors.Black;
+            etoPlotSuccessRates.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+            etoPlotSuccessRates.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
             etoPlotSuccessRates.Refresh();
 
 

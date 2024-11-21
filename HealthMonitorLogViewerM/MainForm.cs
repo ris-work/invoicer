@@ -18,7 +18,7 @@ namespace HealthMonitor
             var NetworkPingStatsButton = new Button() { Text = "🕸 Network Ping Stats (by decaminute (10 minutes)) 💾", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             NetworkPingStatsButton.Click += (e, a) => { (new NetworkPingStatsForm()).Show(); };
             var NetworkPingStatsButtonHourly = new Button() { Text = "⏱ Network Ping Stats (by hour)", MinimumSize = new Eto.Drawing.Size(-1, 40) };
-            NetworkPingStatsButtonHourly.Click += (e, a) => { (new NetworkPingStatsFormHourly()).Show(); };
+            //NetworkPingStatsButtonHourly.Click += (e, a) => { (new NetworkPingStatsFormHourly()).Show(); };
             var ProcessStatsButton = new Button() { Text = "📃 Process Stats", MinimumSize = new Eto.Drawing.Size(-1, 40) };
             ProcessStatsButton.Click += (e, a) => { 
                 MessageBox.Show("Beta version, expect crashes.", "Warning: Beta Version", MessageBoxType.Warning);
