@@ -101,7 +101,7 @@ namespace HealthMonitor
             FilterText.PlaceholderText = MainModuleProcessName;
             
             var FilterTextStack = new StackLayout() { 
-                Items = { null, new Eto.Forms.Label() { Text = "Filter text:" }, new Eto.Forms.Label() { Text = "[ESC] to cancel all" }, FilterText },
+                Items = { null, new Eto.Forms.Label() { Text = "Filter text:", TextColor = Eto.Drawing.Colors.White }, new Eto.Forms.Label() { Text = "[ESC] to cancel all", TextColor = Eto.Drawing.Colors.White }, FilterText },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Spacing = 5,
                 Size = new Eto.Drawing.Size(-1, -1),

@@ -98,11 +98,11 @@ namespace HealthMonitor
 
             var FilterCriteria = new List<string>(){ "Any", "Process name/path", "Window title" };
             var RadioProcessFilter = new RadioButtonList() { DataStore = FilterCriteria, Orientation = Eto.Forms.Orientation.Vertical, SelectedValue = FilterCriteria[0], BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
-            var FilterText = new TextBox();
+            var FilterText = new TextBox() { BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
             FilterText.PlaceholderText = MainModuleProcessName;
             
             var FilterTextStack = new StackLayout() { 
-                Items = { null, new Eto.Forms.Label() { Text = "Filter text:" }, new Eto.Forms.Label() { Text = "[ESC] to cancel all" }, FilterText },
+                Items = { null, new Eto.Forms.Label() { Text = "Filter text:", TextColor = Eto.Drawing.Colors.White }, new Eto.Forms.Label() { Text = "[ESC] to cancel all", TextColor=Eto.Drawing.Colors.White }, FilterText },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Spacing = 5,
                 Size = new Eto.Drawing.Size(-1, -1),
@@ -117,25 +117,26 @@ namespace HealthMonitor
             {
 
             };
-            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill, [SPACE] to count" };
+            var GridMatchedProcessNames = new GridView() { Size = new Eto.Drawing.Size(400, 90), GridLines = GridLines.Both, ShowHeader = true, ToolTip = "[DEL] to kill, [SPACE] to count", BackgroundColor=Eto.Drawing.Colors.Black };
             GridMatchedProcessNames.CellFormatting += (a, b) => {
-                b.Font = new Eto.Drawing.Font("Courier New", 7, Eto.Drawing.FontStyle.Bold);
+                b.Font = new Eto.Drawing.Font("Courier New", 7);
+                b.ForegroundColor = Eto.Drawing.Colors.White;
                 if (b.Row == GridMatchedProcessNames.SelectedRow)
                 {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(50,50,50,255);
-                    b.ForegroundColor = Eto.Drawing.Color.FromArgb(255, 255, 255, 255);
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255,255,255,255);
+                    b.ForegroundColor = Eto.Drawing.Color.FromArgb(0, 0 , 0, 255);
                 }
                 else if (b.Row % 2 == 0) 
                 { 
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 255, 200);
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(100, 100, 50);
                 } 
                 else if (b.Column.DisplayIndex % 2 == 0)
                 {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(255, 200, 255);
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(155, 100, 155);
                 }
                 else
                 {
-                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(240, 240, 240);
+                    b.BackgroundColor = Eto.Drawing.Color.FromArgb(15, 15, 15);
                 }
             };
             GridMatchedProcessNames.Columns.Add(new GridColumn { HeaderText = "Process Name/Path", DataCell = new TextBoxCell(0), Resizable = true, AutoSize = true });
@@ -419,16 +420,26 @@ namespace HealthMonitor
                 etoPlotCpu.Plot.Title($"CPU usage [{MainModuleProcessName}]");
                 etoPlotCpu.Plot.XLabel("Date/Time");
                 etoPlotCpu.Plot.YLabel("CPU-Hours %");
+                etoPlotCpu.BackgroundColor = Eto.Drawing.Colors.Black;
+                etoPlotCpu.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+                etoPlotCpu.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
+                etoPlotCpu.Plot.Axes.Color(ScottPlot.Colors.White);
+                etoPlotCpu.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
                 etoPlotCpu.Refresh();
 
                 etoPlotMem.Plot.Axes.SetLimitsY(bottom: 0, top: double.PositiveInfinity);
                 etoPlotMem.Plot.ShowLegend();
                 etoPlotMem.Plot.Legend.FontName = "Courier";
                 etoPlotMem.Plot.Legend.Alignment = Alignment.UpperLeft;
-                etoPlotMem.Plot.DataBackground = new BackgroundStyle();
+                etoPlotMem.Plot.DataBackground.Color = ScottPlot.Colors.Transparent;
                 etoPlotMem.Plot.Title($"Mem stats [{MainModuleProcessName}]");
                 etoPlotMem.Plot.XLabel("Date/Time");
                 etoPlotMem.Plot.YLabel("Memory (MiB)");
+                etoPlotMem.BackgroundColor = Eto.Drawing.Colors.Black;
+                etoPlotMem.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+                etoPlotMem.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
+                etoPlotMem.Plot.Axes.Color(ScottPlot.Colors.White);
+                etoPlotMem.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
                 etoPlotMem.Refresh();
             }
             catch (System.Exception E)

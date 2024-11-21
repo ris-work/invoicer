@@ -23,7 +23,7 @@ namespace HealthMonitorLogViewer
             //LB.TextColor = Eto.Drawing.Colors.White;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
             
-            Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1000, 700) };
+            Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100,700) };
             
             var loadOncePanels = (new List<(string, object)>() {
                 ($"🕸 Network Ping Stats 💾{Environment.NewLine}(by decaminute (10 minutes)) ", (new LoadOncePanel<NetworkPingStatsPanel>())),
@@ -121,7 +121,14 @@ namespace HealthMonitorLogViewer
             //LB.DisableGridViewEnterKey();
             BackgroundColor = Eto.Drawing.Colors.Black;
             Padding = 10;
-            Content = new StackLayout(new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray()) { HorizontalContentAlignment = HorizontalAlignment.Stretch, Spacing = 5 }, new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10, VerticalContentAlignment = VerticalAlignment.Stretch };
+            Button EnableAccessibilityButton = new Button() { Text = "Enable Accessibility... ♿👓", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            EnableAccessibilityButton.Click += (sender, e) => {
+                (new ListPanelOptionsAsButtons(loadOncePanels)).Show();
+            };
+            var Inner = new StackLayout(new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray()) { HorizontalContentAlignment = HorizontalAlignment.Stretch, Spacing = 5 }, new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10, VerticalContentAlignment = VerticalAlignment.Stretch };
+            var TopPanel = new StackLayout(EnableAccessibilityButton) { Spacing = 10 };
+            Content = new StackLayout(TopPanel, Inner);
+            //Position
         }
     }
 }

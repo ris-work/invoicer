@@ -168,9 +168,11 @@ namespace HealthMonitor
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
             etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: double.PositiveInfinity);
-            etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: 105);
             etoPlot.Plot.Axes.Color(ScottPlot.Colors.White);
             etoPlot.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
+            etoPlot.BackgroundColor = Eto.Drawing.Colors.Black;
+            etoPlot.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+            etoPlot.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.ShowLegend();

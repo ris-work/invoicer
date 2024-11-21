@@ -162,6 +162,8 @@ namespace HealthMonitor
             etoPlot.Plot.XLabel("Date/Time");
             etoPlot.Plot.YLabel("Ping [ms] (Response Time)");
             etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: double.PositiveInfinity);
+            etoPlot.Plot.Axes.Color(ScottPlot.Colors.White);
+            etoPlot.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.ShowLegend();
@@ -175,6 +177,11 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.XLabel("Date/Time");
             etoPlotSuccessRates.Plot.YLabel("Ping Success Rate [%]");
             etoPlotSuccessRates.Plot.Axes.SetLimitsY(bottom: -5, top: 105);
+            etoPlotSuccessRates.Plot.Axes.Color(ScottPlot.Colors.White);
+            etoPlotSuccessRates.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
+            etoPlotSuccessRates.BackgroundColor = Eto.Drawing.Colors.Black;
+            etoPlotSuccessRates.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+            etoPlotSuccessRates.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
             etoPlotSuccessRates.Refresh();
 
             var VerticalStackLayout = new StackLayout() { 
