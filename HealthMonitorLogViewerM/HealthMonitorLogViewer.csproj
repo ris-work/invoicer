@@ -20,6 +20,7 @@
 	  <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
 	  <WebPage>https://rishikeshan.com</WebPage>
 	  <TrimMode>partial</TrimMode>
+	  <UseWPF>true</UseWPF>
 	  
 
   </PropertyGroup>

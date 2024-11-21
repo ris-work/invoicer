@@ -26,10 +26,12 @@ namespace HealthMonitorLogViewer
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100,700) };
             
             var loadOncePanels = (new List<(string, object)>() {
-                ($"🕸 Network Ping Stats 💾{Environment.NewLine}(by decaminute (10 minutes)) ", (new LoadOncePanel<NetworkPingStatsPanel>())),
-                ("⏱ Network Ping Stats (by hour)", (new LoadOncePanel<NetworkPingStatsFormHourly>())),
-                ("📃 Process Stats", (new LoadOncePanel<ProcessStatsFormHourlyPanel>())),
-                ("⚙ Process Stats (Advanced)", (new LoadOncePanel<MainModuleProcessStatsFormHourlyPanel>()))
+                ($" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaminute (10 minutes)) ", (new LoadOncePanel<NetworkPingStatsPanel>())),
+                (" ⏱ Network Ping Stats (by hour) ", (new LoadOncePanel<NetworkPingStatsFormHourly>())),
+                (" 📃 Process Stats ", (new LoadOncePanel<ProcessStatsFormHourlyPanel>())),
+                (" ⚙ Process Stats (Advanced) ", (new LoadOncePanel<MainModuleProcessStatsFormHourlyPanel>())),
+                (" 🖥 Machine Stats ", (new LoadOncePanel<MachineStatsPanel>())),
+                (" 🎫 About ", (new LoadOncePanel<AboutPanel>()))
             }).ToArray();
             int SelectedButtonIndex = -1;
             Dictionary<string, object> Panels = new Dictionary<string, object>();
@@ -61,6 +63,7 @@ namespace HealthMonitorLogViewer
             {
                 Label B = new Label() { Text = LoadOncePanel.Item1 };
                 B.VerticalAlignment = VerticalAlignment.Center;
+                B.Height = 50;
                 
                 B.Font = new Eto.Drawing.Font("Gourier", 12) { };
                 B.TextColor = Eto.Drawing.Colors.White;
@@ -125,9 +128,10 @@ namespace HealthMonitorLogViewer
             EnableAccessibilityButton.Click += (sender, e) => {
                 (new ListPanelOptionsAsButtons(loadOncePanels)).Show();
             };
-            var Inner = new StackLayout(new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray()) { HorizontalContentAlignment = HorizontalAlignment.Stretch, Spacing = 5 }, new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10, VerticalContentAlignment = VerticalAlignment.Stretch };
+            var Inner = new StackLayout(new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray()) { HorizontalContentAlignment = HorizontalAlignment.Stretch, Spacing = 5 }, new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige }, new StackLayoutItem(CurrentPanel)) { Orientation = Orientation.Horizontal, Spacing = 10, VerticalContentAlignment = VerticalAlignment.Stretch };
             var TopPanel = new StackLayout(EnableAccessibilityButton) { Spacing = 10 };
             Content = new StackLayout(TopPanel, Inner);
+            Padding = 10;
             //Position
         }
     }

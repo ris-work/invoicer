@@ -20,6 +20,7 @@ namespace HealthMonitorLogViewer
             foreach (var panel in A)
             {
                 Button B = new Button() { Text = panel.Item1, BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+                B.MinimumSize = new Eto.Drawing.Size(30, 35);
                 B.Click += (_, _) => {
                     (new SinglePanelForm(
                         (
