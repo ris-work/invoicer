@@ -55,13 +55,22 @@ string ScriptSetup = $"""
     echo Extracting...
     Expand-Archive "{Path.Combine(root, "HealthMonitor.zip")}" -DestinationPath "{Path.Combine(root)}" -Force
     Copy "{Path.Combine(root, "new.logs.sqlite3.rvhealthmonitorlogfile")}" "{Path.Combine(root, "logs.sqlite3.rvhealthmonitorlogfile")}"
+    $Target = "{Path.Combine(root, "HealthMonitorLogViewerM.exe")}"
+    $Link = "{Path.Combine("C:\\Users\\Public\\Desktop\\Health Monitor Log Viewer.lnk")}"
+    $WSH = New-Object -ComObject WScript.Shell
+    $Shortcut = $WSH.CreateShortcut($Link)
+    $Shortcut.TargetPath = $Target
+    $Shortcut.Save()
     """;
 File.WriteAllText(Path.Combine(root, "inst.ps1"), ScriptSetup);
 System.Console.WriteLine("Done, starting installation script...");
 System.Diagnostics.Process.Start("powershell.exe", ["-ExecutionPolicy", "Bypass", "-File", $"{ Path.Combine(root, "inst.ps1")}"]).WaitForExit();
+System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["stop", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
 System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["uninstall", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
 System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["install", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
 System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["start", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
 //System.Diagnostics.Process.Start(Path.Combine(root, "ui.exe"));
 System.Console.WriteLine("Press any key to exit...");
 System.Console.ReadKey();
+System.Console.WriteLine("You can use the popped up notepad window to edit the configuration (or just quit it). Please make sure it's valid TOML.");
+System.Diagnostics.Process.Start("notepad.exe", [$"{Path.Combine(root, "HealthMonitor.toml")}"]).WaitForExit();
