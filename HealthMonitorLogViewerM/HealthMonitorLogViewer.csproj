@@ -26,6 +26,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="mininst\**" />
+    <EmbeddedResource Remove="mininst\**" />
+    <None Remove="mininst\**" />
+    <Page Remove="mininst\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="cd_file.ico" />
     <None Remove="res\cd_result.ico" />
     <None Remove="res\ListViewer.ico" />
