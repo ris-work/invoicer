@@ -42,7 +42,12 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Axes.Bottom.Label.FontSize = 18;
             etoPlotSuccessRates.Plot.Axes.Left.Label.FontSize = 18;
             etoPlotSuccessRates.Plot.Legend.FontSize = 10;
+            string AddressContainsFilter = "";
             //MovableByWindowBackground = true;
+            var ContainsFilterLabel = new Label() { Text = "Contains (case-insensitive) (Press [ENTER])", TextColor = Eto.Drawing.Colors.White };
+            var ContainsFilter = new TextBox() { TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Colors.Black, ShowBorder = true };
+            var ContainsFilterLayout = new StackLayout(ContainsFilterLabel, ContainsFilter) { Orientation = Orientation.Vertical, Spacing = 5, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+
 
 
             var SaveButton = new Button() { Text = "💾 Save As ..." };
@@ -103,7 +108,7 @@ namespace HealthMonitor
                 etoPlotSuccessRates.Refresh();
             };
 
-            var TopStackLayout = new StackLayout() { Items = { null, ResetButton, ReloadButton, SaveButton, null }, Orientation = Eto.Forms.Orientation.Horizontal, Spacing= 20 };
+            var TopStackLayout = new StackLayout() { Items = { null, ResetButton, ReloadButton, SaveButton, ContainsFilterLayout, null }, Orientation = Eto.Forms.Orientation.Horizontal, Spacing= 20 };
 
             
             List<String> series;
@@ -151,6 +156,47 @@ namespace HealthMonitor
                 pSuccessRates.LinePattern = LinePatternForItem;
 
             }
+            var RedrawWithFilter = () => {
+                etoPlot.Plot.Clear();
+                etoPlotSuccessRates.Plot.Clear();
+                foreach (var item in series)
+                {
+
+                    PlotData.Clear();
+                    PlotDataSuccessRates.Clear();
+                    if (item.ToLowerInvariant().Contains(AddressContainsFilter.ToLowerInvariant()))
+                    {
+                        List<PingAverageByHour> pingAveragesByHour = new List<PingAverageByHour>();
+                        List<PingSuccessRateByHour> pingSuccessRatesByHour = new List<PingSuccessRateByHour>();
+                        using (var logsContext = new LogsContext())
+                        {
+                            var GroupedByHour = logsContext.Pings.Where((x) => x.Dest == item).GroupBy((e) => e.TimeNow.Substring(0, 13)).ToList();
+                            Hours = GroupedByHour.Select((e) => e.Key).ToList();
+                            pingAveragesByHour = GroupedByHour.Select(e => new PingAverageByHour { Decaminute = e.Key, LatencyAverage = e.Average((x) => x.Latency) }).ToList();
+                            pingSuccessRatesByHour = GroupedByHour.Select(e => new PingSuccessRateByHour { Decaminute = e.Key, SuccessRate = e.Average((x) => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1 : 0) }).ToList();
+                        }
+                        PlotData.Add(item, pingAveragesByHour);
+                        PlotDataSuccessRates.Add(item, pingSuccessRatesByHour);
+                        var p = etoPlot.Plot.Add.Scatter(PlotData[item].Select(e => (DateTime.Parse(e.Decaminute + ":00:00").ToLocalTime().ToOADate())).ToArray(), PlotData[item].Select(e => e.LatencyAverage ?? 0).ToArray());
+                        var pSuccessRates = etoPlotSuccessRates.Plot.Add.Scatter(PlotDataSuccessRates[item].Select(e => (DateTime.Parse(e.Decaminute + ":00:00").ToLocalTime().ToOADate())).ToArray(), PlotDataSuccessRates[item].Select(e => e.SuccessRate * 100 ?? 0).ToArray());
+                        p.LegendText = item;
+                        p.MarkerSize = 8;
+                        p.MarkerLineWidth = 8;
+                        ScottPlot.MarkerShape MarkerShapeForItem = PlotUtils.GetRandomMarkerShape();
+                        ScottPlot.LinePattern LinePatternForItem = PlotUtils.GetRandomLinePattern();
+                        p.MarkerShape = MarkerShapeForItem;
+                        p.LinePattern = LinePatternForItem;
+                        pSuccessRates.LegendText = item;
+                        pSuccessRates.MarkerSize = 8;
+                        pSuccessRates.MarkerLineWidth = 8;
+                        pSuccessRates.MarkerShape = MarkerShapeForItem;
+                        pSuccessRates.LinePattern = LinePatternForItem;
+                        etoPlot.Refresh();
+                        etoPlotSuccessRates.Refresh();
+                    }
+
+                }
+            };
 
             etoPlot.Plot.ShowLegend();
             etoPlot.Plot.Legend.FontName = "Courier";
@@ -164,6 +210,8 @@ namespace HealthMonitor
             etoPlot.Plot.Axes.SetLimitsY(bottom: -5, top: double.PositiveInfinity);
             etoPlot.Plot.Axes.Color(ScottPlot.Colors.White);
             etoPlot.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
+            etoPlot.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
+            etoPlot.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
             etoPlot.Refresh();
 
             etoPlotSuccessRates.Plot.ShowLegend();
@@ -180,9 +228,19 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Axes.Color(ScottPlot.Colors.White);
             etoPlotSuccessRates.Plot.FigureBackground = new ScottPlot.BackgroundStyle() { Color = ScottPlot.Colors.Black };
             etoPlotSuccessRates.BackgroundColor = Eto.Drawing.Colors.Black;
-            etoPlotSuccessRates.Plot.Grid.MajorLineColor = ScottPlot.Colors.White;
-            etoPlotSuccessRates.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGoldenRod;
+            etoPlotSuccessRates.Plot.Grid.MajorLineColor = ScottPlot.Colors.DarkGray;
+            etoPlotSuccessRates.Plot.Grid.MinorLineColor = ScottPlot.Colors.DarkGray;
+            //etoPlotSuccessRates.Plot.Grid.MinorLineWidth = 0.5;
             etoPlotSuccessRates.Refresh();
+
+            ContainsFilter.KeyUp += (e, a) => {
+                if (ContainsFilter.Text.Length >= 3 || ContainsFilter.Text.Length == 0)
+                {
+                    AddressContainsFilter = ContainsFilter.Text;
+                    RedrawWithFilter();
+                }
+            };
+
 
             var VerticalStackLayout = new StackLayout() { 
                 Items = { 

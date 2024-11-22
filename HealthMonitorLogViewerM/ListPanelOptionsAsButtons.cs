@@ -19,8 +19,9 @@ namespace HealthMonitorLogViewer
             List<Button> ButtonsList = new List<Button>();
             foreach (var panel in A)
             {
-                Button B = new Button() { Text = panel.Item1, BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+                Button B = new Button() { Text = panel.Item1, BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.DarkGoldenrod };
                 B.MinimumSize = new Eto.Drawing.Size(30, 35);
+                
                 B.Click += (_, _) => {
                     (new SinglePanelForm(
                         (
@@ -36,6 +37,8 @@ namespace HealthMonitorLogViewer
             Content = ButtonsListLayout;
             BackgroundColor = Eto.Drawing.Colors.Black;
             Padding = 10;
+            Resizable = false;
+            BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;
             //(Control)((ILoadOncePanel<object>)ROD.GetValueOrDefault<string, object?>((string)((string)ClickedLabel.Text), null)).GetInnerAsObject();
         }
     }

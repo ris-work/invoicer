@@ -74,7 +74,7 @@ namespace HealthMonitorLogViewer
             {
                 MessageBox.Show(driveInfo, "Drive information", MessageBoxType.Information);
             }
-            Content = new Label() { Text = $"Please see the message boxes. \r\n{MachineInfo}\r\n{aggDriveInfo}", TextColor = Eto.Drawing.Colors.White, Font = new Eto.Drawing.Font("Gourier", 8) };
+            Content = new TextArea() { Text = $"Please see the message boxes. \r\n{MachineInfo}\r\n{aggDriveInfo}", TextColor = Eto.Drawing.Colors.White, Font = new Eto.Drawing.Font("Gourier", 8), BackgroundColor = Eto.Drawing.Colors.Black, Size = new Eto.Drawing.Size(1000, 600), ReadOnly = true, Border = BorderType.Line };
         }
     }
 }

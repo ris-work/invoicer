@@ -26,7 +26,7 @@ namespace HealthMonitorLogViewer
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100,700) };
             
             var loadOncePanels = (new List<(string, object)>() {
-                ($" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaminute (10 minutes)) ", (new LoadOncePanel<NetworkPingStatsPanel>())),
+                ($" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaseconds (10 sec)) ", (new LoadOncePanel<NetworkPingStatsPanel>())),
                 (" ⏱ Network Ping Stats (by hour) ", (new LoadOncePanel<NetworkPingStatsFormHourly>())),
                 (" 📃 Process Stats ", (new LoadOncePanel<ProcessStatsFormHourlyPanel>())),
                 (" ⚙ Process Stats (Advanced) ", (new LoadOncePanel<MainModuleProcessStatsFormHourlyPanel>())),
@@ -124,7 +124,7 @@ namespace HealthMonitorLogViewer
             //LB.DisableGridViewEnterKey();
             BackgroundColor = Eto.Drawing.Colors.Black;
             Padding = 10;
-            Button EnableAccessibilityButton = new Button() { Text = "Enable Accessibility... ♿👓", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button EnableAccessibilityButton = new Button() { Text = " Enable Accessibility... ♿👓 ", Font = new Eto.Drawing.Font("Gourier", 10), MinimumSize = new Eto.Drawing.Size(30, 30), BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
             EnableAccessibilityButton.Click += (sender, e) => {
                 (new ListPanelOptionsAsButtons(loadOncePanels)).Show();
             };
