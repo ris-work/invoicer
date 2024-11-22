@@ -21,10 +21,10 @@ catch (Exception E)
 }
 var HC = new HttpClient();
 List<(string, string)> FilesToGet = new() { 
-    ("HealthMonitor.zip", "https://vz.al/chromebook/webrtc-udp-tcp-forwarder/uv/HealthMonitor.zip"),
-    ("HealthMonitorLogViewer.exe", "https://vz.al/chromebook/webrtc-udp-tcp-forwarder/uv/HealthMonitorLogViewer.exe"),
-    ("HealthMonitorLogViewerM.exe", "https://vz.al/chromebook/webrtc-udp-tcp-forwarder/uv/HealthMonitorLogViewerM.exe"),
-    ("WinSW.exe", "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe"),
+    ("HealthMonitor.zip", "https://vz.al/chromebook/invnew/uv/HealthMonitor.zip"),
+    ("HealthMonitorLogViewer.exe", "https://vz.al/chromebook/invnew/uv/HealthMonitorLogViewer.exe"),
+    ("HealthMonitorLogViewerM.exe", "https://vz.al/chromebook/invnew/uv/HealthMonitorLogViewerM.exe"),
+    ("WinSW.exe", "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.10/WinSW-x64.exe"),
 };
 foreach ((string, string) FileToGet in FilesToGet) {
     try
@@ -46,17 +46,22 @@ string ServiceXML = $"""
     <id>rv-healthmonitor</id>
     <name>RV Health Monitor</name>
     <description>RV Health Monitor: Monitors CPU, RAM usage over time, along with network latency and ICMP echo request/reply success rates.</description>
-    <executable>{Path.Combine(root, "HealthMonitor", "HealthMonitor.exe")}</executable>
+    <executable>{Path.Combine(root, "HealthMonitor.exe")}</executable>
     <log mode="roll"></log>
     </service>
     """;
 File.WriteAllText(Path.Combine(root, "service.xml"), ServiceXML);
-string ScriptSetup = """
-    Expand-Archive "HealthMonitor.zip"
+string ScriptSetup = $"""
+    echo Extracting...
+    Expand-Archive "{Path.Combine(root, "HealthMonitor.zip")}" -DestinationPath "{Path.Combine(root)}" -Force
+    Copy "{Path.Combine(root, "new.logs.sqlite3.rvhealthmonitorlogfile")}" "{Path.Combine(root, "logs.sqlite3.rvhealthmonitorlogfile")}"
     """;
 File.WriteAllText(Path.Combine(root, "inst.ps1"), ScriptSetup);
 System.Console.WriteLine("Done, starting installation script...");
-System.Diagnostics.Process.Start("powershell", ["-ExecutionPolicy", "Bypass", Path.Combine(root, "inst.ps1")]);
-System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["install", Path.Combine(root, "service.xml")]);
-System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["start", Path.Combine(root, "service.xml")]);
+System.Diagnostics.Process.Start("powershell.exe", ["-ExecutionPolicy", "Bypass", "-File", $"{ Path.Combine(root, "inst.ps1")}"]).WaitForExit();
+System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["uninstall", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
+System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["install", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
+System.Diagnostics.Process.Start(Path.Combine(root, "winsw.exe"), ["start", $"{Path.Combine(root, "service.xml")}"]).WaitForExit();
 //System.Diagnostics.Process.Start(Path.Combine(root, "ui.exe"));
+System.Console.WriteLine("Press any key to exit...");
+System.Console.ReadKey();

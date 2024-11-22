@@ -5,7 +5,7 @@ VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HealthMonitorLogViewer", "HealthMonitorLogViewer.csproj", "{7923AFC0-DE9D-4C9C-86BF-7E726ED8F0B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mininst", "mininst\mininst.csproj", "{F2B28C68-1542-4DC5-930B-1BFE6811D8A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mininst_hmlv", "mininst\mininst_hmlv.csproj", "{F2B28C68-1542-4DC5-930B-1BFE6811D8A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
