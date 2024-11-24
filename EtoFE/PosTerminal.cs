@@ -116,6 +116,7 @@ namespace EtoFE
             Barcode.KeyDown += (e, a) => {
                 SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
                 SD.ShowModal();
+                Barcode.Text = SD.Selected[0];
                 MessageBox.Show(String.Concat(SD.Selected), "Selected", MessageBoxType.Information);
                 long SelectedItemcode = long.Parse(SD.Selected[0]);
                 var SelectedItem = PR.Catalogue.Where(x => x.itemcode == SelectedItemcode).First();
@@ -169,6 +170,14 @@ namespace EtoFE
                     MessageBox.Show(TextDesc, "Selected Batches", MessageBoxType.Information);
                 }
             };
+            var RenderPosEntries = () => {
+                CurrentPosEntriesInGrid = new List<string[]>();
+                foreach (PosSaleEntry entry in CurrentPosEntries)
+                {
+                    CurrentPosEntriesInGrid.Add([entry.state, entry.itemcode.ToString(), entry.batchcode.ToString(), PR.Catalogue.Where(e => e.itemcode == entry.itemcode).First().itemdesc, entry.quantity.ToString(), entry.umarked.ToString(), entry.uselling.ToString(), entry.VatPercent.ToString(), entry.VatAmount.ToString(), entry.Total.ToString()]);
+                }
+                CurrentPosEntriesGrid.DataStore = CurrentPosEntriesInGrid;
+            };
             VatCategory.KeyDown += (e, a) => { 
                 if(a.Key == Keys.Enter)
                 {
@@ -187,7 +196,9 @@ namespace EtoFE
                         });
 
                     }
+                    RenderPosEntries();
                 }
+                CurrentPosEntriesGrid.Invalidate(true);
             };
             var PosEntriesFields = new (string, TextAlignment?)[]{
                 ("S", TextAlignment.Right),
@@ -202,20 +213,16 @@ namespace EtoFE
                 ("Total", TextAlignment.Right)
             };
 
-            var RenderPosEntries = () => {
-                CurrentPosEntriesInGrid = new List<string[]>();
-                foreach(PosSaleEntry entry in CurrentPosEntries)
-                {
-                    CurrentPosEntriesInGrid.Add([entry.state, entry.itemcode.ToString(), entry.batchcode.ToString(), PR.Catalogue.Where(e => e.itemcode == entry.itemcode).First().itemdesc, entry.quantity.ToString(), entry.umarked.ToString(), entry.VatPercent.ToString(), entry.VatAmount.ToString(), entry.Total.ToString()]);
-                }
-            };
-            
+
+            int gridColCursor = 0;
             foreach((string, TextAlignment?) field in PosEntriesFields)
             {
-                CurrentPosEntriesGrid.Columns.Add(new GridColumn() { HeaderText = field.Item1, DataCell = new TextBoxCell() { TextAlignment = field.Item2 ?? TextAlignment.Left } });
+                
+                CurrentPosEntriesGrid.Columns.Add(new GridColumn() { HeaderText = field.Item1, DataCell = new TextBoxCell(gridColCursor) { TextAlignment = field.Item2 ?? TextAlignment.Left } });
+                gridColCursor++;
             }
 
-            Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
+            Content = new StackLayout(null, TL, CurrentPosEntriesGrid, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];
             Gen.NextBytes(IdempotencyPOS);
