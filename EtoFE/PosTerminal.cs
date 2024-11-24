@@ -103,6 +103,9 @@ namespace EtoFE
                 ("SIH", TextAlignment.Right, false),
                 ("Exp Date", TextAlignment.Right, false),
             };
+            var CurrentPosEntriesInGrid = new List<string[]>();
+            var CurrentPosEntries = new List<PosSaleEntry>();
+            var CurrentPosEntriesGrid = new GridView() { ShowHeader = true };
 
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue
                 .Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>
@@ -140,11 +143,12 @@ namespace EtoFE
                 }
                 else return;
             };
+            List<(long, double)> SelectedBatches = new List<(long, double)>();
             Quantity.KeyDown += (e, a) => { 
                 if(a.Key == Keys.Enter)
                 {
                     double SelectQuantity = double.Parse(Quantity.Text);
-                    List<(long, double)> SelectedBatches = new List<(long, double)> { };
+                    SelectedBatches = new List<(long, double)> { };
                     double CumulativeQuantity = 0;
                     int index = 0;
                     int MaxCount = BatchSelectOutput.Count;
@@ -165,6 +169,26 @@ namespace EtoFE
                     MessageBox.Show(TextDesc, "Selected Batches", MessageBoxType.Information);
                 }
             };
+            VatCategory.KeyDown += (e, a) => { 
+                if(a.Key == Keys.Enter)
+                {
+                    var SelectedItemCode = int.Parse(Barcode.Text);
+                    foreach((long, double) SelectedBatch in SelectedBatches) {
+                        var CurrentBatchToAdd = PR.Batches.Where(b => b.itemcode == SelectedItemCode && b.batchcode == SelectedBatch.Item1).First();
+                        CurrentPosEntries.Add(new PosSaleEntry() {
+                            itemcode = int.Parse(Barcode.Text),
+                            batchcode = int.Parse(Barcode.Text),
+                            state = "A",
+                            quantity = SelectedBatch.Item2,
+                            umarked = CurrentBatchToAdd.marked,
+                            uselling = CurrentBatchToAdd.selling,
+                            VatCategory = PR.Catalogue.Where(i => i.itemcode == SelectedItemCode).First().DefaultVatCategory,
+                            Total = CurrentBatchToAdd.selling * SelectedBatch.Item2,
+                        });
+
+                    }
+                }
+            };
             var PosEntriesFields = new (string, TextAlignment?)[]{
                 ("S", TextAlignment.Right),
                 ("Itemcode", TextAlignment.Right),
@@ -177,8 +201,15 @@ namespace EtoFE
                 ("Vat Amount", TextAlignment.Right),
                 ("Total", TextAlignment.Right)
             };
-            var CurrentPosEntries = new List<string[]>();
-            var CurrentPosEntriesGrid = new GridView() { ShowHeader = true };
+
+            var RenderPosEntries = () => {
+                CurrentPosEntriesInGrid = new List<string[]>();
+                foreach(PosSaleEntry entry in CurrentPosEntries)
+                {
+                    CurrentPosEntriesInGrid.Add([entry.state, entry.itemcode.ToString(), entry.batchcode.ToString(), PR.Catalogue.Where(e => e.itemcode == entry.itemcode).First().itemdesc, entry.quantity.ToString(), entry.umarked.ToString(), entry.VatPercent.ToString(), entry.VatAmount.ToString(), entry.Total.ToString()]);
+                }
+            };
+            
             foreach((string, TextAlignment?) field in PosEntriesFields)
             {
                 CurrentPosEntriesGrid.Columns.Add(new GridColumn() { HeaderText = field.Item1, DataCell = new TextBoxCell() { TextAlignment = field.Item2 ?? TextAlignment.Left } });
