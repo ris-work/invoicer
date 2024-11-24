@@ -102,6 +102,46 @@ namespace RV.InvNew.Common
         [JsonInclude] public double SIH;
     }
 
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public class PosSaleEntry
+    {
+        [JsonInclude] public string state;
+        [JsonInclude] public long itemcode;
+        [JsonInclude] public long batchcode;
+        [JsonInclude] public double uselling;
+        [JsonInclude] public double umarked;
+        [JsonInclude] public double quantity;
+        [JsonInclude] public double VatCategory;
+        [JsonInclude] public double VatPercent;
+        [JsonInclude] public double VatAmount;
+        [JsonInclude] public double Total;
+        public (bool, string) IsValid(List<PosCatalogue> PC, List<PosBatch> PB, List<VatCategory> VC)
+        {
+            if (PB.Where(e => e.itemcode == itemcode && e.batchcode == batchcode).First().SIH < quantity) return (false, "Qty > SIH");
+            return (true, "Is valid");
+        }
+    }
+
+    public class PosSaleEntryCollection
+    {
+        [JsonInclude] public List<PosSaleEntry> entries;
+        public (bool, string) IsValid(List<PosCatalogue> PC, List<PosBatch> PB, List<VatCategory> VC)
+        {
+            bool AggBool = false;
+            foreach(PosSaleEntry PE in entries)
+            {
+                (bool, string) EntryValidity = PE.IsValid(PC, PB, VC);
+                if (EntryValidity.Item1 == false) return EntryValidity;
+                AggBool = AggBool && EntryValidity.Item1; 
+            }
+            return (AggBool, "Validation successful!");
+        }
+    }
+
+    [JsonSerializable(typeof(List<PosSaleEntry>))]
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public partial class PosSaleEntryCollectionSerialize: JsonSerializerContext { }
+
     [JsonSerializable(typeof(List<PosBatch>))]
     [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
     public partial class PosBatchSerialize: JsonSerializerContext { }

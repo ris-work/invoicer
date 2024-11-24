@@ -17,6 +17,7 @@ using ABI.System.Collections.Generic;
 using System.Dynamic;
 using System.Diagnostics;
 using System.Globalization;
+using HealthMonitorLogViewer;
 
 namespace HealthMonitor
 {
@@ -200,7 +201,7 @@ namespace HealthMonitor
                     MessageBoxButtons.YesNo, 
                     MessageBoxType.Information
                     );
-                if (result == DialogResult.Yes) (new MainModuleProcessStatsFormHourly(SelectedProcessName)).Show();
+                if (result == DialogResult.Yes) (new SinglePanelFlyout(new MainModuleProcessStatsFormHourlyPanel(SelectedProcessName), $"Stats: {SelectedProcessName}")).Show();
             };
             GridMatchedProcessNames.KeyDown += (e, a) => {
                 try
@@ -225,7 +226,7 @@ namespace HealthMonitor
                             MessageBoxButtons.YesNo,
                             MessageBoxType.Information
                             );
-                        if (result == DialogResult.Yes) (new MainModuleProcessStatsFormHourly(SelectedProcessName)).Show();
+                        if (result == DialogResult.Yes) (new SinglePanelFlyout(new MainModuleProcessStatsFormHourlyPanel(SelectedProcessName), $"Stats: {SelectedProcessName}")).Show();
                     }
                 }
                 catch(System.Exception E)

@@ -17,6 +17,7 @@ using ABI.System.Collections.Generic;
 using System.Dynamic;
 using System.Diagnostics;
 using System.Globalization;
+using HealthMonitorLogViewer;
 
 namespace HealthMonitor
 {
@@ -199,7 +200,7 @@ namespace HealthMonitor
                         MessageBoxButtons.YesNo,
                         MessageBoxType.Information
                         );
-                    if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                    if (result == DialogResult.Yes) (new SinglePanelFlyout(new ProcessStatsFormHourlyPanel(SelectedProcessName), $"Stats: {SelectedProcessName}")).Show();
                 }
                 catch (System.Exception E) { }
             };
@@ -226,7 +227,7 @@ namespace HealthMonitor
                             MessageBoxButtons.YesNo,
                             MessageBoxType.Information
                             );
-                        if (result == DialogResult.Yes) (new ProcessStatsFormHourly(SelectedProcessName)).Show();
+                        if (result == DialogResult.Yes) (new SinglePanelFlyout(new ProcessStatsFormHourlyPanel(SelectedProcessName), $"Stats: {SelectedProcessName}")).Show();
                     }
                     else if (a.Key == Keys.Space)
                     {
@@ -452,7 +453,7 @@ namespace HealthMonitor
 
             ProcessList.KeyDown += (e, a) => { 
                 if(a.Key == Keys.Enter && ProcessList.SelectedKey != null && ProcessList.SelectedKey.Length > 1) 
-                    (new ProcessStatsFormHourly(ProcessList.SelectedKey)).Show();
+                    (new SinglePanelFlyout(new ProcessStatsFormHourlyPanel(ProcessList.SelectedKey), $"Stats: {ProcessList.SelectedKey}")).Show();
                 else if (a.Key == Keys.Escape)
                 {
                     ProcessList.DataStore = ProcessCandidates.Select(e => e.ProcessName).OrderBy(e => e.ToLowerInvariant()).ToList();

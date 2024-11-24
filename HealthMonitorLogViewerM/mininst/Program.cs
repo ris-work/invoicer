@@ -23,6 +23,7 @@ var HC = new HttpClient();
 List<(string, string)> FilesToGet = new() { 
     ("HealthMonitor.zip", "https://vz.al/chromebook/invnew/uv/HealthMonitor.zip"),
     ("HealthMonitorLogViewer.exe", "https://vz.al/chromebook/invnew/uv/HealthMonitorLogViewer.exe"),
+    ("HealthMonitorLogViewerIcons.zip", "https://vz.al/chromebook/invnew/uv/HealthMonitorLogViewerIcons.zip"),
     ("HealthMonitorLogViewerM.exe", "https://vz.al/chromebook/invnew/uv/HealthMonitorLogViewerM.exe"),
     ("WinSW.exe", "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.10/WinSW-x64.exe"),
 };
@@ -54,12 +55,15 @@ File.WriteAllText(Path.Combine(root, "service.xml"), ServiceXML);
 string ScriptSetup = $"""
     echo Extracting...
     Expand-Archive "{Path.Combine(root, "HealthMonitor.zip")}" -DestinationPath "{Path.Combine(root)}" -Force
+    Expand-Archive "{Path.Combine(root, "HealthMonitorLogViewerIcons.zip")}" -DestinationPath "{Path.Combine(root)}" -Force
     Copy "{Path.Combine(root, "new.logs.sqlite3.rvhealthmonitorlogfile")}" "{Path.Combine(root, "logs.sqlite3.rvhealthmonitorlogfile")}"
     $Target = "{Path.Combine(root, "HealthMonitorLogViewerM.exe")}"
     $Link = "{Path.Combine("C:\\Users\\Public\\Desktop\\Health Monitor Log Viewer.lnk")}"
+    $WD = "{Path.Combine(root)}"
     $WSH = New-Object -ComObject WScript.Shell
     $Shortcut = $WSH.CreateShortcut($Link)
     $Shortcut.TargetPath = $Target
+    $Shortcut.WorkingDirectory = $WD
     $Shortcut.Save()
     """;
 File.WriteAllText(Path.Combine(root, "inst.ps1"), ScriptSetup);

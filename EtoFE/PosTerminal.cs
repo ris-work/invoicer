@@ -9,6 +9,7 @@ using RV.InvNew.Common;
 using Wiry.Base32;
 using System.Net.Http.Json;
 using System.Net.Http;
+//using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace EtoFE
 {
@@ -164,6 +165,25 @@ namespace EtoFE
                     MessageBox.Show(TextDesc, "Selected Batches", MessageBoxType.Information);
                 }
             };
+            var PosEntriesFields = new (string, TextAlignment?)[]{
+                ("S", TextAlignment.Right),
+                ("Itemcode", TextAlignment.Right),
+                ("Batchcode", TextAlignment.Right),
+                ("Name", TextAlignment.Left),
+                ("Quantity", TextAlignment.Right),
+                ("Listed U Price", TextAlignment.Right),
+                ("U Price", TextAlignment.Right),
+                ("Vat %", TextAlignment.Right),
+                ("Vat Amount", TextAlignment.Right),
+                ("Total", TextAlignment.Right)
+            };
+            var CurrentPosEntries = new List<string[]>();
+            var CurrentPosEntriesGrid = new GridView() { ShowHeader = true };
+            foreach((string, TextAlignment?) field in PosEntriesFields)
+            {
+                CurrentPosEntriesGrid.Columns.Add(new GridColumn() { HeaderText = field.Item1, DataCell = new TextBoxCell() { TextAlignment = field.Item2 ?? TextAlignment.Left } });
+            }
+
             Content = new StackLayout(null, TL, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];
