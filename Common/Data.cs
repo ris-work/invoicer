@@ -111,7 +111,7 @@ namespace RV.InvNew.Common
         [JsonInclude] public double uselling;
         [JsonInclude] public double umarked;
         [JsonInclude] public double quantity;
-        [JsonInclude] public double VatCategory;
+        [JsonInclude] public long VatCategory;
         [JsonInclude] public double VatPercent;
         [JsonInclude] public double VatAmount;
         [JsonInclude] public double Total;

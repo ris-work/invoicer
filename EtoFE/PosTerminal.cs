@@ -105,7 +105,9 @@ namespace EtoFE
             };
             var CurrentPosEntriesInGrid = new List<string[]>();
             var CurrentPosEntries = new List<PosSaleEntry>();
-            var CurrentPosEntriesGrid = new GridView() { ShowHeader = true };
+            var CurrentPosEntriesGrid = new GridView() { ShowHeader = true, GridLines = GridLines.Both };
+            Label TotalPayable = new Label() { TextColor = Eto.Drawing.Colors.DarkCyan, Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.MonospaceFamilyName, 16, FontStyle.Bold) };
+            Label TotalPayableInd = new Label() { TextColor = Eto.Drawing.Colors.DarkCyan, Text = "Total Payable:", Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.MonospaceFamilyName, 16, FontStyle.Bold) };
 
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR.Catalogue
                 .Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>
@@ -168,6 +170,7 @@ namespace EtoFE
                         index++;
                     }
                     MessageBox.Show(TextDesc, "Selected Batches", MessageBoxType.Information);
+                    VatCategory.Focus();
                 }
             };
             var RenderPosEntries = () => {
@@ -177,6 +180,7 @@ namespace EtoFE
                     CurrentPosEntriesInGrid.Add([entry.state, entry.itemcode.ToString(), entry.batchcode.ToString(), PR.Catalogue.Where(e => e.itemcode == entry.itemcode).First().itemdesc, entry.quantity.ToString(), entry.umarked.ToString(), entry.uselling.ToString(), entry.VatPercent.ToString(), entry.VatAmount.ToString(), entry.Total.ToString()]);
                 }
                 CurrentPosEntriesGrid.DataStore = CurrentPosEntriesInGrid;
+                TotalPayable.Text = CurrentPosEntries.Sum((e) => e.Total).ToString("C");
             };
             VatCategory.KeyDown += (e, a) => { 
                 if(a.Key == Keys.Enter)
@@ -184,6 +188,7 @@ namespace EtoFE
                     var SelectedItemCode = int.Parse(Barcode.Text);
                     foreach((long, double) SelectedBatch in SelectedBatches) {
                         var CurrentBatchToAdd = PR.Batches.Where(b => b.itemcode == SelectedItemCode && b.batchcode == SelectedBatch.Item1).First();
+                        long CurrentVatCat = PR.VatCategories.Where(v => v.VatCategoryId == int.Parse(VatCategory.Text)).FirstOrDefault((PR.VatCategories.Where(v => v.VatCategoryId == PR.Catalogue.Where(i => i.itemcode == SelectedItemCode).First().DefaultVatCategory)).First()).VatCategoryId;
                         CurrentPosEntries.Add(new PosSaleEntry() {
                             itemcode = int.Parse(Barcode.Text),
                             batchcode = int.Parse(Barcode.Text),
@@ -191,8 +196,9 @@ namespace EtoFE
                             quantity = SelectedBatch.Item2,
                             umarked = CurrentBatchToAdd.marked,
                             uselling = CurrentBatchToAdd.selling,
-                            VatCategory = PR.Catalogue.Where(i => i.itemcode == SelectedItemCode).First().DefaultVatCategory,
-                            Total = CurrentBatchToAdd.selling * SelectedBatch.Item2,
+                            VatCategory = CurrentVatCat,
+                            VatPercent = PR.VatCategories.Where(v => v.VatCategoryId == CurrentVatCat).First().VatPercentage,
+                            Total = CurrentBatchToAdd.selling * (SelectedBatch.Item2) * (1 + PR.VatCategories.Where(v => v.VatCategoryId == int.Parse(VatCategory.Text)).First().VatPercentage/100),
                         });
 
                     }
@@ -222,7 +228,7 @@ namespace EtoFE
                 gridColCursor++;
             }
 
-            Content = new StackLayout(null, TL, CurrentPosEntriesGrid, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
+            Content = new StackLayout(null, TL, new StackLayout(CurrentPosEntriesGrid, TotalPayableInd, TotalPayable) { Spacing = 10, HorizontalContentAlignment = HorizontalAlignment.Right }, null) { Orientation = Orientation.Horizontal, Spacing = 5, Padding = 5 };
             var Gen = new Random();
             byte[] IdempotencyPOS = new byte[5];
             Gen.NextBytes(IdempotencyPOS);
