@@ -15,6 +15,16 @@ public partial class NewinvContext : DbContext
     {
     }
 
+    public virtual DbSet<AccountsBalance> AccountsBalances { get; set; }
+
+    public virtual DbSet<AccountsInformation> AccountsInformations { get; set; }
+
+    public virtual DbSet<AccountsJournalEntry> AccountsJournalEntries { get; set; }
+
+    public virtual DbSet<AccountsJournalInformation> AccountsJournalInformations { get; set; }
+
+    public virtual DbSet<AccountsType> AccountsTypes { get; set; }
+
     public virtual DbSet<ApiAuthorization> ApiAuthorizations { get; set; }
 
     public virtual DbSet<AuthorizedTerminal> AuthorizedTerminals { get; set; }
@@ -43,10 +53,82 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+         => optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AccountsBalance>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("accounts_balances", tb => tb.HasComment("Positive is debit"));
+
+            entity.Property(e => e.AccountNo).HasColumnName("account_no");
+            entity.Property(e => e.AccountType).HasColumnName("account_type");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.TimeTai)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("time_tai");
+        });
+
+        modelBuilder.Entity<AccountsInformation>(entity =>
+        {
+            entity.HasKey(e => new { e.AccountType, e.AccountNo }).HasName("accounts_information_pkey");
+
+            entity.ToTable("accounts_information");
+
+            entity.Property(e => e.AccountType).HasColumnName("account_type");
+            entity.Property(e => e.AccountNo).HasColumnName("account_no");
+            entity.Property(e => e.AccountI18nLabel).HasColumnName("account_i18n_label");
+            entity.Property(e => e.AccountName).HasColumnName("account_name");
+            entity.Property(e => e.AccountPii).HasColumnName("account_pii");
+        });
+
+        modelBuilder.Entity<AccountsJournalEntry>(entity =>
+        {
+            entity.HasKey(e => e.JournalUnivSeq).HasName("accounts_journal_entries_pkey");
+
+            entity.ToTable("accounts_journal_entries");
+
+            entity.Property(e => e.JournalUnivSeq).HasColumnName("journal_univ_seq");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.CreditAccountNo).HasColumnName("credit_account_no");
+            entity.Property(e => e.CreditAccountType).HasColumnName("credit_account_type");
+            entity.Property(e => e.DebitAccountNo).HasColumnName("debit_account_no");
+            entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.JournalNo).HasColumnName("journal_no");
+            entity.Property(e => e.RefNo).HasColumnName("ref_no");
+            entity.Property(e => e.TimeAsEntered).HasColumnName("time_as_entered");
+            entity.Property(e => e.TimeTai)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("time_tai");
+        });
+
+        modelBuilder.Entity<AccountsJournalInformation>(entity =>
+        {
+            entity.HasKey(e => e.JournalId).HasName("accounts_journal_information_pkey");
+
+            entity.ToTable("accounts_journal_information");
+
+            entity.Property(e => e.JournalId).HasColumnName("journal_id");
+            entity.Property(e => e.JournalI18nLabel).HasColumnName("journal_i18n_label");
+            entity.Property(e => e.JournalName).HasColumnName("journal_name");
+        });
+
+        modelBuilder.Entity<AccountsType>(entity =>
+        {
+            entity.HasKey(e => e.AccountType).HasName("accounts_types_pkey");
+
+            entity.ToTable("accounts_types", tb => tb.HasComment("Always these four _real_ accounts"));
+
+            entity.Property(e => e.AccountType)
+                .ValueGeneratedNever()
+                .HasColumnName("account_type");
+            entity.Property(e => e.AccountTypeI18nLabel).HasColumnName("account_type_i18n_label");
+            entity.Property(e => e.AccountTypeName).HasColumnName("account_type_name");
+        });
+
         modelBuilder.Entity<ApiAuthorization>(entity =>
         {
             entity.HasKey(e => new { e.Userid, e.Authorization }).HasName("api_authorization_pkey");
