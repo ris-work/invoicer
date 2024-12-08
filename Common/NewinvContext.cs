@@ -317,6 +317,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(true)
                 .HasColumnName("active");
             entity.Property(e => e.NotValidAfter).HasColumnName("not_valid_after");
+            entity.Property(e => e.Privileges)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("privileges");
             entity.Property(e => e.Tokensecret).HasColumnName("tokensecret");
             entity.Property(e => e.Tokenvalue).HasColumnName("tokenvalue");
             entity.Property(e => e.Userid).HasColumnName("userid");
@@ -339,9 +342,12 @@ public partial class NewinvContext : DbContext
         {
             entity
                 .HasNoKey()
-                .ToTable("user_authorization");
+                .ToTable("user_authorization", tb => tb.HasComment("user_cap: Comma-separated\nuser_default_cap: Comma-separated"));
 
             entity.Property(e => e.UserCap).HasColumnName("user_cap");
+            entity.Property(e => e.UserDefaultCap)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("user_default_cap");
             entity.Property(e => e.Userid)
                 .ValueGeneratedOnAdd()
                 .HasColumnName("userid");

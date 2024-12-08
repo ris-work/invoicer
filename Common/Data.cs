@@ -57,6 +57,27 @@ namespace RV.InvNew.Common
             }
             else return default(T);
         }
+        public T? Get(string PrivilegeLevel)
+        {
+            T? output;
+            bool auth_success;
+            using (var ctx = new NewinvContext())
+            {
+                if (this.Token.TokenID != null && this.Token != null)
+                    if (ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Tokenvalue == this.Token.Token && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Privileges.Split(',').Contains(PrivilegeLevel))
+                    {
+                        output = this.Request;
+                        auth_success = true;
+                    }
+                    else auth_success = false;
+                else auth_success = false;
+            }
+            if (auth_success)
+            {
+                return this.Request;
+            }
+            else return default(T);
+        }
     }
 
     [JsonSerializable(typeof(PosRefresh))]

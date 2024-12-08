@@ -16,4 +16,6 @@ public partial class Token
     public string Tokenid { get; set; } = null!;
 
     public bool Active { get; set; }
+
+    public string Privileges { get; set; } = null!;
 }

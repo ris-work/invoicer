@@ -75,6 +75,7 @@ app.MapPost("/Login", (LoginCredentials L) =>
         if (L.User != null)
         {
             var UserE = ctx.Credentials.Where(e => e.Active && e.Username == L.User).SingleOrDefault();
+            var UserA = ctx.UserAuthorizations.Where(e => e.Userid == UserE.Userid).SingleOrDefault();
             if (UserE != null)
             {
                 var Password = UserE.PasswordPbkdf2;
@@ -90,7 +91,7 @@ app.MapPost("/Login", (LoginCredentials L) =>
                     var Tid = Convert.ToBase64String(bTid);
                     var T = Convert.ToBase64String(bT);
                     var Ts = Convert.ToBase64String(bTs);
-                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T });
+                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T, Privileges = UserA.UserDefaultCap });
                     ctx.SaveChanges();
                     return new LoginToken(Tid, T, Ts, "");
 
@@ -190,10 +191,7 @@ app.MapPost("/NewJournalEntry", (AuthenticatedRequest<JournalEntry> AJE) =>
     {
         JournalEntry AccJE = AJE.Get();
         using var Transaction = ctx.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
-        ctx.AccountsJournalEntries.Add(new AccountsJournalEntry { Amount = AccJE.Amount, CreditAccountType = AccJE.CreditAccountType, CreditAccountNo = AccJE.CreditAccountNo, DebitAccountType = AccJE.DebitAccountType, DebitAccountNo = AccJE.DebitAccountNo, Description = AccJE.Description, TimeAsEntered = AccJE.TimeAsEntered });
-        ctx.AccountsBalances.Where(a => a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo).First().Amount -= AccJE.Amount;
-        ctx.AccountsBalances.Where(a => a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo).First().Amount += AccJE.Amount;
-
+        InvoicerBackend.JournalEntries.AddJournalEntry(ctx, AccJE);
         ctx.SaveChanges();
         Transaction.Commit();
     }
