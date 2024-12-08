@@ -137,6 +137,27 @@ namespace RV.InvNew.Common
             return (AggBool, "Validation successful!");
         }
     }
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public class Account
+    {
+        public int AccountType;
+        public int? AccountNo;
+        public string AccountName;
+    }
+
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public class JournalEntry
+    {
+        public int JournalNo { get; set; }
+        public string? RefNo { get; set; }
+        public double Amount { get; set; }
+        public int DebitAccountType { get; set; }
+        public long DebitAccountNo { get; set; }
+        public int CreditAccountType { get; set; }
+        public long CreditAccountNo { get; set; }
+        public string? Description { get; set; }
+        public DateTime TimeAsEntered { get; set; }
+    }
 
     [JsonSerializable(typeof(List<PosSaleEntry>))]
     [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]

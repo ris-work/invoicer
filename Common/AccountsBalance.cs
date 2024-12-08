@@ -15,4 +15,6 @@ public partial class AccountsBalance
     public double Amount { get; set; }
 
     public DateTime TimeTai { get; set; }
+
+    public DateTime TimeAsEntered { get; set; }
 }

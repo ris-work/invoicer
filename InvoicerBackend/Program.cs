@@ -170,6 +170,33 @@ app.MapPost("/AuthenticatedEcho", (AuthenticatedRequest<string> AS) =>
     .WithName("AuthenticatedEcho")
 .WithOpenApi();
 
+app.MapPost("/NewAccount", (AuthenticatedRequest<Account> AAcc) =>
+{
+    using (var ctx = new NewinvContext())
+    {
+        Account Acc = AAcc.Get();
+        ctx.AccountsInformations.Add(new AccountsInformation { AccountName = Acc.AccountName, AccountType = Acc.AccountType, AccountNo = ctx.AccountsInformations.Where(a => a.AccountType == Acc.AccountType).Select(a => a.AccountNo).Max() + 1 });
+        ctx.SaveChanges();
+    }
+})
+    .WithName("NewAccount")
+.WithOpenApi();
+
+app.MapPost("/NewJournalEntry", (AuthenticatedRequest<JournalEntry> AJE) =>
+{
+    using (var ctx = new NewinvContext())
+    {
+        JournalEntry AccJE = AJE.Get();
+        ctx.AccountsJournalEntries.Add(new AccountsJournalEntry { Amount = AccJE.Amount, CreditAccountType = AccJE.CreditAccountType, CreditAccountNo = AccJE.CreditAccountNo, DebitAccountType = AccJE.DebitAccountType, DebitAccountNo = AccJE.DebitAccountNo, Description = AccJE.Description, TimeAsEntered = AccJE.TimeAsEntered });
+        ctx.AccountsBalances.Where(a => a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo).First().Amount -= AccJE.Amount;
+        ctx.AccountsBalances.Where(a => a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo).First().Amount += AccJE.Amount;
+
+        ctx.SaveChanges();
+    }
+})
+    .WithName("NewJournalEntry")
+.WithOpenApi();
+
 app.Run();
 
 internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
