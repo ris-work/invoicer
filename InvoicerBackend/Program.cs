@@ -5,6 +5,7 @@ using System;
 using System.Security.Principal;
 using System.Security.AccessControl;
 using System.Text.Json;
+using System.Transactions;
 
 static bool IsTokenValid(LoginToken T, string AccessLevel)
 {
@@ -34,6 +35,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpLogging(o => {
     o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
 });
+builder.Services.AddHttpLogging();
 
 var app = builder.Build();
 
@@ -184,14 +186,16 @@ app.MapPost("/NewAccount", (AuthenticatedRequest<Account> AAcc) =>
 
 app.MapPost("/NewJournalEntry", (AuthenticatedRequest<JournalEntry> AJE) =>
 {
-    using (var ctx = new NewinvContext())
+    using (var ctx = new NewinvContext() { })
     {
         JournalEntry AccJE = AJE.Get();
+        using var Transaction = ctx.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
         ctx.AccountsJournalEntries.Add(new AccountsJournalEntry { Amount = AccJE.Amount, CreditAccountType = AccJE.CreditAccountType, CreditAccountNo = AccJE.CreditAccountNo, DebitAccountType = AccJE.DebitAccountType, DebitAccountNo = AccJE.DebitAccountNo, Description = AccJE.Description, TimeAsEntered = AccJE.TimeAsEntered });
         ctx.AccountsBalances.Where(a => a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo).First().Amount -= AccJE.Amount;
         ctx.AccountsBalances.Where(a => a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo).First().Amount += AccJE.Amount;
 
         ctx.SaveChanges();
+        Transaction.Commit();
     }
 })
     .WithName("NewJournalEntry")
