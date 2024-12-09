@@ -41,7 +41,7 @@ namespace RV.InvNew.AuthManager
 					foreach (var cell in row.Cells)
 					{
 						var cellCheckBox = (CheckBox)cell.Control;
-						if (cellCheckBox.Checked == true) CurrentPermissions.Add(cellCheckBox.Text);
+						if (cellCheckBox != null && cellCheckBox.Checked == true) CurrentPermissions.Add(cellCheckBox.Text);
 					}
 				}
 				string PermCS = String.Join(",", CurrentPermissions);
