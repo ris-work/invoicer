@@ -31,6 +31,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Catalogue> Catalogues { get; set; }
 
+    public virtual DbSet<CategoriesBitmask> CategoriesBitmasks { get; set; }
+
     public virtual DbSet<Credential> Credentials { get; set; }
 
     public virtual DbSet<DescriptionsOtherLanguage> DescriptionsOtherLanguages { get; set; }
@@ -61,7 +63,8 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+    { optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.LogTo(Console.WriteLine); }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -184,6 +187,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ActiveWeb)
                 .HasDefaultValue(false)
                 .HasColumnName("active_web");
+            entity.Property(e => e.CategoriesBitmask)
+                .HasDefaultValue(1L)
+                .HasColumnName("categories_bitmask");
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_on");
@@ -214,6 +220,19 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VatDependsOnUser)
                 .HasDefaultValue(false)
                 .HasColumnName("vat_depends_on_user");
+        });
+
+        modelBuilder.Entity<CategoriesBitmask>(entity =>
+        {
+            entity.HasKey(e => e.Bitmask).HasName("categories_bitmask_pkey");
+
+            entity.ToTable("categories_bitmask");
+
+            entity.Property(e => e.Bitmask)
+                .ValueGeneratedNever()
+                .HasColumnName("bitmask");
+            entity.Property(e => e.I18nLabel).HasColumnName("i18n_label");
+            entity.Property(e => e.Name).HasColumnName("name");
         });
 
         modelBuilder.Entity<Credential>(entity =>
@@ -320,7 +339,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Categories)
                 .HasDefaultValue(0L)
                 .HasColumnName("categories");
-            entity.Property(e => e.User).HasColumnName("user");
+            entity.Property(e => e.Userid).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Request>(entity =>
@@ -380,6 +399,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Active)
                 .HasDefaultValue(true)
                 .HasColumnName("active");
+            entity.Property(e => e.CategoriesBitmask)
+                .HasDefaultValue(0L)
+                .HasColumnName("categories_bitmask");
             entity.Property(e => e.NotValidAfter).HasColumnName("not_valid_after");
             entity.Property(e => e.Privileges)
                 .HasDefaultValueSql("''::text")

@@ -34,4 +34,6 @@ public partial class Catalogue
     public bool ExpiryTrackingEnabled { get; set; }
 
     public long PermissionsCategory { get; set; }
+
+    public long CategoriesBitmask { get; set; }
 }

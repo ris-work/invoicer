@@ -76,6 +76,7 @@ app.MapPost("/Login", (LoginCredentials L) =>
         {
             var UserE = ctx.Credentials.Where(e => e.Active && e.Username == L.User).SingleOrDefault();
             var UserA = ctx.UserAuthorizations.Where(e => e.Userid == UserE.Userid).SingleOrDefault();
+            var UserPC = ctx.PermissionsListUsersCategories.Where(e => e.Userid == UserE.Userid).SingleOrDefault();
             if (UserE != null)
             {
                 var Password = UserE.PasswordPbkdf2;
@@ -91,7 +92,7 @@ app.MapPost("/Login", (LoginCredentials L) =>
                     var Tid = Convert.ToBase64String(bTid);
                     var T = Convert.ToBase64String(bT);
                     var Ts = Convert.ToBase64String(bTs);
-                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T, Privileges = UserA.UserDefaultCap });
+                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T, Privileges = UserA.UserDefaultCap, CategoriesBitmask = UserPC.Categories });
                     ctx.SaveChanges();
                     return new LoginToken(Tid, T, Ts, "");
 
@@ -129,7 +130,9 @@ app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
         List<VatCategory> VC;
         using (var ctx = new NewinvContext())
         {
-            PC = ctx.Catalogues.Select(e => new PosCatalogue
+            //ctx.Database.lo
+            long TokenCategoriesBitmask = ctx.Tokens.Where(e => e.Tokenid == AS.Token.TokenID).Select(e => e.CategoriesBitmask).First();
+            PC = ctx.Catalogues.Where(e => (e.CategoriesBitmask & TokenCategoriesBitmask) > 0).Select(e => new PosCatalogue
             {
                 itemcode = e.Itemcode,
                 EnforceAboveCost = e.EnforceAboveCost,

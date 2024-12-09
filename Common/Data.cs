@@ -30,6 +30,7 @@ namespace RV.InvNew.Common
         public LoginToken Token;
         [JsonInclude]
         public T Request;
+        public string Principal;
 
         public AuthenticatedRequest(T Request, LoginToken Token)
         {

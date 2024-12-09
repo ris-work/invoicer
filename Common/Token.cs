@@ -18,4 +18,6 @@ public partial class Token
     public bool Active { get; set; }
 
     public string Privileges { get; set; } = null!;
+
+    public long CategoriesBitmask { get; set; }
 }
