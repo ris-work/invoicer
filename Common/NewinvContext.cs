@@ -404,17 +404,15 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<UserAuthorization>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("user_authorization", tb => tb.HasComment("user_cap: Comma-separated\nuser_default_cap: Comma-separated"));
+            entity.HasKey(e => e.Userid).HasName("user_authorization_pkey");
 
+            entity.ToTable("user_authorization", tb => tb.HasComment("user_cap: Comma-separated\nuser_default_cap: Comma-separated"));
+
+            entity.Property(e => e.Userid).HasColumnName("userid");
             entity.Property(e => e.UserCap).HasColumnName("user_cap");
             entity.Property(e => e.UserDefaultCap)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("user_default_cap");
-            entity.Property(e => e.Userid)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("userid");
         });
 
         modelBuilder.Entity<VatCategory>(entity =>

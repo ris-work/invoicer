@@ -8,6 +8,19 @@ using System.Collections.Generic;
 using RV.InvNew.Common;
 using Microsoft.EntityFrameworkCore;
 
+public static partial class ColorRandomizer
+{
+    static Random x2 = new Random();
+    public static Eto.Drawing.Color bg()
+    {
+        return Color.FromArgb(205 + Math.Abs(x2.Next() % 50), 205 + Math.Abs(x2.Next() % 50), 205 + Math.Abs(x2.Next() % 50), 255);
+    }
+    public static Eto.Drawing.Color fg()
+    {
+        return Color.FromArgb(50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 255);
+    }
+}
+
 namespace RV.InvNew.AuthManager
 {
     public partial class MainForm : Form
@@ -58,7 +71,7 @@ namespace RV.InvNew.AuthManager
                 
 
             
-            Title = "My Eto Form";
+            Title = "User Manager";
             Size = new Size(-1, -1);
             Resizable = false;
 
@@ -105,7 +118,12 @@ namespace RV.InvNew.AuthManager
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
                                 UserList.DataStore = this.GetAllUsersGrid();
                             }){ Text = "Activate User", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff) },
-
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) new ManagePermissions((long)Selected.GetValue(0)).ShowModal();
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Edit/Set Permissions", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff)  },
                         },
                        Orientation = Orientation.Horizontal,
                        Spacing = 4,
