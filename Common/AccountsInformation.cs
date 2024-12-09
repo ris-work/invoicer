@@ -14,4 +14,8 @@ public partial class AccountsInformation
     public long? AccountPii { get; set; }
 
     public long? AccountI18nLabel { get; set; }
+
+    public double AccountMin { get; set; }
+
+    public double AccountMax { get; set; }
 }

@@ -37,6 +37,14 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Inventory> Inventories { get; set; }
 
+    public virtual DbSet<PermissionsList> PermissionsLists { get; set; }
+
+    public virtual DbSet<PermissionsListCategoriesName> PermissionsListCategoriesNames { get; set; }
+
+    public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
+
+    public virtual DbSet<Request> Requests { get; set; }
+
     public virtual DbSet<Sih> Sihs { get; set; }
 
     public virtual DbSet<SihCurrent> SihCurrents { get; set; }
@@ -83,6 +91,12 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.AccountType).HasColumnName("account_type");
             entity.Property(e => e.AccountNo).HasColumnName("account_no");
             entity.Property(e => e.AccountI18nLabel).HasColumnName("account_i18n_label");
+            entity.Property(e => e.AccountMax)
+                .HasDefaultValueSql("1000000000")
+                .HasColumnName("account_max");
+            entity.Property(e => e.AccountMin)
+                .HasDefaultValueSql("'-1000000000'::integer")
+                .HasColumnName("account_min");
             entity.Property(e => e.AccountName).HasColumnName("account_name");
             entity.Property(e => e.AccountPii).HasColumnName("account_pii");
         });
@@ -188,6 +202,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ExpiryTrackingEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("expiry_tracking_enabled");
+            entity.Property(e => e.PermissionsCategory)
+                .HasDefaultValue(0L)
+                .HasColumnName("permissions_category");
             entity.Property(e => e.PriceManual)
                 .HasDefaultValue(false)
                 .HasColumnName("price_manual");
@@ -272,6 +289,53 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VolumeDiscounts)
                 .HasDefaultValue(false)
                 .HasColumnName("volume_discounts");
+        });
+
+        modelBuilder.Entity<PermissionsList>(entity =>
+        {
+            entity.HasKey(e => e.Permission).HasName("permissions_list_pkey");
+
+            entity.ToTable("permissions_list", tb => tb.HasComment("Comma-separated, no spaces"));
+        });
+
+        modelBuilder.Entity<PermissionsListCategoriesName>(entity =>
+        {
+            entity.HasKey(e => e.Category).HasName("permissions_list_categories_names_pkey");
+
+            entity.ToTable("permissions_list_categories_names");
+
+            entity.Property(e => e.Category)
+                .ValueGeneratedNever()
+                .HasColumnName("category");
+            entity.Property(e => e.CategoryName).HasColumnName("category_name");
+            entity.Property(e => e.LabelI18n).HasColumnName("label_i18n");
+        });
+
+        modelBuilder.Entity<PermissionsListUsersCategory>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("permissions_list_users_categories");
+
+            entity.Property(e => e.Categories)
+                .HasDefaultValue(0L)
+                .HasColumnName("categories");
+            entity.Property(e => e.User).HasColumnName("user");
+        });
+
+        modelBuilder.Entity<Request>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("requests");
+
+            entity.Property(e => e.Principal).HasColumnName("principal");
+            entity.Property(e => e.RequestBody).HasColumnName("request_body");
+            entity.Property(e => e.TimeTai)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("time_tai");
+            entity.Property(e => e.Token).HasColumnName("token");
         });
 
         modelBuilder.Entity<Sih>(entity =>

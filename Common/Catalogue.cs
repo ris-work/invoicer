@@ -32,4 +32,6 @@ public partial class Catalogue
     public bool ActiveWeb { get; set; }
 
     public bool ExpiryTrackingEnabled { get; set; }
+
+    public long PermissionsCategory { get; set; }
 }
