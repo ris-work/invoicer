@@ -22,17 +22,32 @@ namespace RV.InvNew.AuthManager
 				chunked = ctx.PermissionsLists.ToList().Chunk(6).ToList();
 			}
 			var ChunkedCheckBoxes = chunked;
-			foreach (var chunk in chunked) {
+			string CurrentPerms = "";
+            using (var ctx = new NewinvContext())
+            {
+                var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
+                if (currentList.Count() != 0)
+                {
+					CurrentPerms = currentList.First().UserCap;
+                }
+            }
+			Dictionary<string, bool> CurrentPermsLookup = new();
+			foreach (string Perm in CurrentPerms.Split(',')) {
+				CurrentPermsLookup.Add(Perm, true);
+			}
+			var CurrentPermsLookupRO = (IReadOnlyDictionary<string, bool>)CurrentPermsLookup;
+            foreach (var chunk in chunked) {
 				int w = 0;
 				var row = new TableRow() { };
 				foreach(var CheckBoxLabel in chunk)
 				{
 					w++;
-					row.Cells.Add(new CheckBox() { Text = CheckBoxLabel.Permission, BackgroundColor = ColorRandomizer.bg(), TextColor = ColorRandomizer.fg() }); 
+					row.Cells.Add(new CheckBox() { Text = CheckBoxLabel.Permission, BackgroundColor = ColorRandomizer.bg(), TextColor = ColorRandomizer.fg(), Checked = CurrentPermsLookupRO.GetValueOrDefault(CheckBoxLabel.Permission, false) }); 
 				}
 				TableCheckBoxes.Rows.Add(row);
 			}
-			var SaveButton = new Button((e, a) =>
+            
+            var SaveButton = new Button((e, a) =>
 			{
 				var rows = TableCheckBoxes.Rows;
 				List<string> CurrentPermissions = new List<string>();
