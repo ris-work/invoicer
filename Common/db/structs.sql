@@ -5,7 +5,7 @@
 -- Dumped from database version 16.3
 -- Dumped by pg_dump version 16.3
 
--- Started on 2024-12-09 16:15:13
+-- Started on 2024-12-23 15:35:17
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -29,7 +29,7 @@ CREATE SCHEMA imported_dummy;
 ALTER SCHEMA imported_dummy OWNER TO rishi;
 
 --
--- TOC entry 248 (class 1255 OID 59536)
+-- TOC entry 249 (class 1255 OID 59536)
 -- Name: accounts_balances_version_force(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -71,7 +71,7 @@ $$;
 ALTER FUNCTION public.accounts_balances_version_force() OWNER TO postgres;
 
 --
--- TOC entry 249 (class 1255 OID 59537)
+-- TOC entry 250 (class 1255 OID 59537)
 -- Name: no_deletes(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -141,7 +141,7 @@ CREATE TABLE public.accounts_balances (
 ALTER TABLE public.accounts_balances OWNER TO postgres;
 
 --
--- TOC entry 4956 (class 0 OID 0)
+-- TOC entry 4969 (class 0 OID 0)
 -- Dependencies: 242
 -- Name: TABLE accounts_balances; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -205,7 +205,7 @@ CREATE SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq
 ALTER SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq OWNER TO postgres;
 
 --
--- TOC entry 4958 (class 0 OID 0)
+-- TOC entry 4971 (class 0 OID 0)
 -- Dependencies: 238
 -- Name: accounts_journal_entries_journal_univ_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -243,7 +243,7 @@ CREATE SEQUENCE public.accounts_journal_information_journal_id_seq
 ALTER SEQUENCE public.accounts_journal_information_journal_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4959 (class 0 OID 0)
+-- TOC entry 4972 (class 0 OID 0)
 -- Dependencies: 240
 -- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -266,7 +266,7 @@ CREATE TABLE public.accounts_types (
 ALTER TABLE public.accounts_types OWNER TO postgres;
 
 --
--- TOC entry 4960 (class 0 OID 0)
+-- TOC entry 4973 (class 0 OID 0)
 -- Dependencies: 243
 -- Name: TABLE accounts_types; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -317,7 +317,7 @@ CREATE SEQUENCE public.authorized_terminals_terminalid_seq
 ALTER SEQUENCE public.authorized_terminals_terminalid_seq OWNER TO rishi;
 
 --
--- TOC entry 4961 (class 0 OID 0)
+-- TOC entry 4974 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -341,7 +341,7 @@ CREATE SEQUENCE public.authorized_terminals_userid_seq
 ALTER SEQUENCE public.authorized_terminals_userid_seq OWNER TO rishi;
 
 --
--- TOC entry 4962 (class 0 OID 0)
+-- TOC entry 4975 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: authorized_terminals_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -369,7 +369,11 @@ CREATE TABLE public.catalogue (
     enforce_above_cost boolean DEFAULT true NOT NULL,
     active_web boolean DEFAULT false NOT NULL,
     expiry_tracking_enabled boolean DEFAULT false NOT NULL,
-    permissions_category bigint DEFAULT 0 NOT NULL
+    permissions_category bigint DEFAULT 0 NOT NULL,
+    categories_bitmask bigint DEFAULT 1 NOT NULL,
+    white_hole boolean DEFAULT false NOT NULL,
+    black_hole boolean DEFAULT false NOT NULL,
+    never_discounted boolean DEFAULT false NOT NULL
 );
 
 
@@ -391,13 +395,27 @@ CREATE SEQUENCE public.catalogue_itemcode_seq
 ALTER SEQUENCE public.catalogue_itemcode_seq OWNER TO rishi;
 
 --
--- TOC entry 4963 (class 0 OID 0)
+-- TOC entry 4976 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: catalogue_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
 
 ALTER SEQUENCE public.catalogue_itemcode_seq OWNED BY public.catalogue.itemcode;
 
+
+--
+-- TOC entry 248 (class 1259 OID 59568)
+-- Name: categories_bitmask; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.categories_bitmask (
+    bitmask bigint NOT NULL,
+    name text NOT NULL,
+    i18n_label bigint
+);
+
+
+ALTER TABLE public.categories_bitmask OWNER TO postgres;
 
 --
 -- TOC entry 217 (class 1259 OID 26599)
@@ -434,7 +452,7 @@ CREATE SEQUENCE public.credentials_userid_seq
 ALTER SEQUENCE public.credentials_userid_seq OWNER TO rishi;
 
 --
--- TOC entry 4964 (class 0 OID 0)
+-- TOC entry 4977 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: credentials_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -484,7 +502,7 @@ CREATE TABLE public.inventory (
 ALTER TABLE public.inventory OWNER TO rishi;
 
 --
--- TOC entry 4965 (class 0 OID 0)
+-- TOC entry 4978 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: TABLE inventory; Type: COMMENT; Schema: public; Owner: rishi
 --
@@ -508,7 +526,7 @@ CREATE SEQUENCE public.inventory_itemcode_seq
 ALTER SEQUENCE public.inventory_itemcode_seq OWNER TO rishi;
 
 --
--- TOC entry 4966 (class 0 OID 0)
+-- TOC entry 4979 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: inventory_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -529,7 +547,7 @@ CREATE TABLE public.permissions_list (
 ALTER TABLE public.permissions_list OWNER TO postgres;
 
 --
--- TOC entry 4967 (class 0 OID 0)
+-- TOC entry 4980 (class 0 OID 0)
 -- Dependencies: 244
 -- Name: TABLE permissions_list; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -557,7 +575,7 @@ ALTER TABLE public.permissions_list_categories_names OWNER TO postgres;
 --
 
 CREATE TABLE public.permissions_list_users_categories (
-    "user" bigint,
+    userid bigint NOT NULL,
     categories bigint DEFAULT 0 NOT NULL
 );
 
@@ -591,7 +609,8 @@ CREATE TABLE public.tokens (
     not_valid_after timestamp with time zone NOT NULL,
     tokenid text DEFAULT (random())::text NOT NULL,
     active boolean DEFAULT true NOT NULL,
-    privileges text DEFAULT ''::text NOT NULL
+    privileges text DEFAULT ''::text NOT NULL,
+    categories_bitmask bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -612,7 +631,7 @@ CREATE TABLE public.user_authorization (
 ALTER TABLE public.user_authorization OWNER TO rishi;
 
 --
--- TOC entry 4971 (class 0 OID 0)
+-- TOC entry 4984 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: TABLE user_authorization; Type: COMMENT; Schema: public; Owner: rishi
 --
@@ -637,7 +656,7 @@ CREATE SEQUENCE public.user_authorization_userid_seq
 ALTER SEQUENCE public.user_authorization_userid_seq OWNER TO rishi;
 
 --
--- TOC entry 4972 (class 0 OID 0)
+-- TOC entry 4985 (class 0 OID 0)
 -- Dependencies: 225
 -- Name: user_authorization_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -677,7 +696,7 @@ CREATE SEQUENCE public.users_userid_seq
 ALTER SEQUENCE public.users_userid_seq OWNER TO rishi;
 
 --
--- TOC entry 4973 (class 0 OID 0)
+-- TOC entry 4986 (class 0 OID 0)
 -- Dependencies: 223
 -- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -716,7 +735,7 @@ CREATE SEQUENCE public.vat_categories_vat_category_id_seq
 ALTER SEQUENCE public.vat_categories_vat_category_id_seq OWNER TO rishi;
 
 --
--- TOC entry 4974 (class 0 OID 0)
+-- TOC entry 4987 (class 0 OID 0)
 -- Dependencies: 232
 -- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
 --
@@ -739,7 +758,7 @@ CREATE TABLE public.volume_discounts (
 ALTER TABLE public.volume_discounts OWNER TO rishi;
 
 --
--- TOC entry 4767 (class 2604 OID 59482)
+-- TOC entry 4776 (class 2604 OID 59482)
 -- Name: accounts_journal_entries journal_univ_seq; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -747,7 +766,7 @@ ALTER TABLE ONLY public.accounts_journal_entries ALTER COLUMN journal_univ_seq S
 
 
 --
--- TOC entry 4769 (class 2604 OID 59491)
+-- TOC entry 4778 (class 2604 OID 59491)
 -- Name: accounts_journal_information journal_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -755,7 +774,7 @@ ALTER TABLE ONLY public.accounts_journal_information ALTER COLUMN journal_id SET
 
 
 --
--- TOC entry 4733 (class 2604 OID 26612)
+-- TOC entry 4737 (class 2604 OID 26612)
 -- Name: authorized_terminals userid; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -763,7 +782,7 @@ ALTER TABLE ONLY public.authorized_terminals ALTER COLUMN userid SET DEFAULT nex
 
 
 --
--- TOC entry 4749 (class 2604 OID 34882)
+-- TOC entry 4754 (class 2604 OID 34882)
 -- Name: catalogue itemcode; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -771,7 +790,7 @@ ALTER TABLE ONLY public.catalogue ALTER COLUMN itemcode SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4730 (class 2604 OID 26602)
+-- TOC entry 4734 (class 2604 OID 26602)
 -- Name: credentials userid; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -779,7 +798,7 @@ ALTER TABLE ONLY public.credentials ALTER COLUMN userid SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4740 (class 2604 OID 34867)
+-- TOC entry 4745 (class 2604 OID 34867)
 -- Name: inventory itemcode; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -787,7 +806,7 @@ ALTER TABLE ONLY public.inventory ALTER COLUMN itemcode SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4738 (class 2604 OID 34836)
+-- TOC entry 4743 (class 2604 OID 34836)
 -- Name: user_authorization userid; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -795,7 +814,7 @@ ALTER TABLE ONLY public.user_authorization ALTER COLUMN userid SET DEFAULT nextv
 
 
 --
--- TOC entry 4737 (class 2604 OID 26635)
+-- TOC entry 4742 (class 2604 OID 26635)
 -- Name: users userid; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -803,7 +822,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN userid SET DEFAULT nextval('public.us
 
 
 --
--- TOC entry 4761 (class 2604 OID 43091)
+-- TOC entry 4770 (class 2604 OID 43091)
 -- Name: vat_categories vat_category_id; Type: DEFAULT; Schema: public; Owner: rishi
 --
 
@@ -811,7 +830,7 @@ ALTER TABLE ONLY public.vat_categories ALTER COLUMN vat_category_id SET DEFAULT 
 
 
 --
--- TOC entry 4793 (class 2606 OID 51295)
+-- TOC entry 4802 (class 2606 OID 51295)
 -- Name: sih_current sih_current_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: rishi
 --
 
@@ -820,7 +839,7 @@ ALTER TABLE ONLY imported_dummy.sih_current
 
 
 --
--- TOC entry 4795 (class 2606 OID 51305)
+-- TOC entry 4804 (class 2606 OID 51305)
 -- Name: sih sih_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: rishi
 --
 
@@ -829,7 +848,7 @@ ALTER TABLE ONLY imported_dummy.sih
 
 
 --
--- TOC entry 4797 (class 2606 OID 59477)
+-- TOC entry 4806 (class 2606 OID 59477)
 -- Name: accounts_information accounts_information_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -838,7 +857,7 @@ ALTER TABLE ONLY public.accounts_information
 
 
 --
--- TOC entry 4799 (class 2606 OID 59486)
+-- TOC entry 4808 (class 2606 OID 59486)
 -- Name: accounts_journal_entries accounts_journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -847,7 +866,7 @@ ALTER TABLE ONLY public.accounts_journal_entries
 
 
 --
--- TOC entry 4801 (class 2606 OID 59495)
+-- TOC entry 4810 (class 2606 OID 59495)
 -- Name: accounts_journal_information accounts_journal_information_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -856,7 +875,7 @@ ALTER TABLE ONLY public.accounts_journal_information
 
 
 --
--- TOC entry 4803 (class 2606 OID 59507)
+-- TOC entry 4812 (class 2606 OID 59507)
 -- Name: accounts_types accounts_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -865,7 +884,7 @@ ALTER TABLE ONLY public.accounts_types
 
 
 --
--- TOC entry 4779 (class 2606 OID 26620)
+-- TOC entry 4788 (class 2606 OID 26620)
 -- Name: api_authorization api_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -874,7 +893,7 @@ ALTER TABLE ONLY public.api_authorization
 
 
 --
--- TOC entry 4789 (class 2606 OID 34889)
+-- TOC entry 4798 (class 2606 OID 34889)
 -- Name: catalogue catalogue_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -883,7 +902,16 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 4775 (class 2606 OID 26606)
+-- TOC entry 4820 (class 2606 OID 59574)
+-- Name: categories_bitmask categories_bitmask_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories_bitmask
+    ADD CONSTRAINT categories_bitmask_pkey PRIMARY KEY (bitmask);
+
+
+--
+-- TOC entry 4784 (class 2606 OID 26606)
 -- Name: credentials credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -892,7 +920,7 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 4787 (class 2606 OID 34877)
+-- TOC entry 4796 (class 2606 OID 34877)
 -- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -901,7 +929,7 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 4807 (class 2606 OID 59561)
+-- TOC entry 4816 (class 2606 OID 59561)
 -- Name: permissions_list_categories_names permissions_list_categories_names_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -910,7 +938,7 @@ ALTER TABLE ONLY public.permissions_list_categories_names
 
 
 --
--- TOC entry 4805 (class 2606 OID 59545)
+-- TOC entry 4814 (class 2606 OID 59545)
 -- Name: permissions_list permissions_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -919,7 +947,16 @@ ALTER TABLE ONLY public.permissions_list
 
 
 --
--- TOC entry 4781 (class 2606 OID 34852)
+-- TOC entry 4818 (class 2606 OID 59578)
+-- Name: permissions_list_users_categories permissions_list_users_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.permissions_list_users_categories
+    ADD CONSTRAINT permissions_list_users_categories_pkey PRIMARY KEY (userid);
+
+
+--
+-- TOC entry 4790 (class 2606 OID 34852)
 -- Name: tokens tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -928,7 +965,7 @@ ALTER TABLE ONLY public.tokens
 
 
 --
--- TOC entry 4791 (class 2606 OID 51298)
+-- TOC entry 4800 (class 2606 OID 51298)
 -- Name: catalogue unique_desc; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -937,7 +974,7 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 4785 (class 2606 OID 59567)
+-- TOC entry 4794 (class 2606 OID 59567)
 -- Name: user_authorization user_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -946,7 +983,7 @@ ALTER TABLE ONLY public.user_authorization
 
 
 --
--- TOC entry 4777 (class 2606 OID 34910)
+-- TOC entry 4786 (class 2606 OID 34910)
 -- Name: credentials username_unique; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -955,7 +992,7 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 4783 (class 2606 OID 26639)
+-- TOC entry 4792 (class 2606 OID 26639)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
 --
 
@@ -964,7 +1001,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4957 (class 0 OID 0)
+-- TOC entry 4970 (class 0 OID 0)
 -- Dependencies: 242
 -- Name: TABLE accounts_balances; Type: ACL; Schema: public; Owner: postgres
 --
@@ -973,7 +1010,7 @@ GRANT ALL ON TABLE public.accounts_balances TO rishi;
 
 
 --
--- TOC entry 4968 (class 0 OID 0)
+-- TOC entry 4981 (class 0 OID 0)
 -- Dependencies: 244
 -- Name: TABLE permissions_list; Type: ACL; Schema: public; Owner: postgres
 --
@@ -982,7 +1019,7 @@ GRANT ALL ON TABLE public.permissions_list TO rishi;
 
 
 --
--- TOC entry 4969 (class 0 OID 0)
+-- TOC entry 4982 (class 0 OID 0)
 -- Dependencies: 246
 -- Name: TABLE permissions_list_categories_names; Type: ACL; Schema: public; Owner: postgres
 --
@@ -991,7 +1028,7 @@ GRANT ALL ON TABLE public.permissions_list_categories_names TO rishi;
 
 
 --
--- TOC entry 4970 (class 0 OID 0)
+-- TOC entry 4983 (class 0 OID 0)
 -- Dependencies: 247
 -- Name: TABLE permissions_list_users_categories; Type: ACL; Schema: public; Owner: postgres
 --
@@ -999,7 +1036,7 @@ GRANT ALL ON TABLE public.permissions_list_categories_names TO rishi;
 GRANT ALL ON TABLE public.permissions_list_users_categories TO rishi;
 
 
--- Completed on 2024-12-09 16:15:13
+-- Completed on 2024-12-23 15:35:17
 
 --
 -- PostgreSQL database dump complete

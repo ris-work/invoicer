@@ -36,8 +36,10 @@ builder.Services.AddHttpLogging(o => {
     o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
 });
 builder.Services.AddHttpLogging();
+builder.Services.AddResponseCompression(o => { o.EnableForHttps = true; });
 
 var app = builder.Build();
+app.UseResponseCompression();
 
 
 // Configure the HTTP request pipeline.
@@ -67,6 +69,8 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+
 
 app.MapPost("/Login", (LoginCredentials L) =>
 {
