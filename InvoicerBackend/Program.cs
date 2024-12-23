@@ -6,6 +6,8 @@ using System.Security.Principal;
 using System.Security.AccessControl;
 using System.Text.Json;
 using System.Transactions;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 static bool IsTokenValid(LoginToken T, string AccessLevel)
 {
@@ -30,16 +32,26 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddResponseCompression(o => { o.EnableForHttps = true; o.Providers.Add<BrotliCompressionProvider>(); o.Providers.Add<GzipCompressionProvider>(); });
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.SmallestSize;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.SmallestSize;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpLogging(o => {
     o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
 });
 builder.Services.AddHttpLogging();
-builder.Services.AddResponseCompression(o => { o.EnableForHttps = true; });
 
 var app = builder.Build();
 app.UseResponseCompression();
+
 
 
 // Configure the HTTP request pipeline.

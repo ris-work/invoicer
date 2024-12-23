@@ -134,7 +134,7 @@ namespace EtoFE
             int SelectedSearchIndex = SC[0].Item1.Length;
             RBLSearchCriteria.SelectedIndexChanged += (e, a) => {
                 SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
-                MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
+                //MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
             };
             RBLSearchCaseSensitivity.SelectedIndexChanged += (e, a) => {
                 SearchCaseSensitive = RBLSearchCaseSensitivity.SelectedIndex == 1;
@@ -292,13 +292,13 @@ namespace EtoFE
                     int SearchSortBy = SortBy;
                     bool SearchAnythingAnywhere = AnythingAnywhere;
                     bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
-                    MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
+                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
                     searching = true;
                     (new Thread(() =>
                     {
                         if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
                         {
-                            MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
+                            //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
                             var FilteredBeforeCountingAndSorting = OptimizedCatalogue.AsParallel().Where((x) => x.Item1.Last().FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
                             var FilteredBeforeCounting = ReverseSort?
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])):

@@ -24,11 +24,14 @@ public static class LoginTokens
 
 public class Program
 {
-    public static HttpClient client = new HttpClient();
+    public static HttpClient client;// = new HttpClient();
     public static Tomlyn.Model.TomlTable Config;
     public static IReadOnlyDictionary<string, object?> ConfigDict;
     [STAThread] public static void Main()
     {
+        var CH = new HttpClientHandler();
+        CH.AutomaticDecompression = DecompressionMethods.All;
+        client = new HttpClient(CH);
         var ConfigFile = System.IO.File.ReadAllText("config.toml");
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
