@@ -9,6 +9,7 @@ using RV.InvNew.Common;
 using System.Text.RegularExpressions;
 using CsvHelper;
 using System.IO;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace EtoFE
 {
@@ -66,6 +67,8 @@ namespace EtoFE
         
         public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
         {
+            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
+            OptimizedCatalogue = SC.Select(e => (e.Item1.ToList().Concat(new List<string>{String.Join(",", e.Item1)}).ToArray(), e.Item2, e.Item3)).ToArray();
             TableLayout TL = new TableLayout();
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
@@ -131,6 +134,7 @@ namespace EtoFE
             int SelectedSearchIndex = SC[0].Item1.Length;
             RBLSearchCriteria.SelectedIndexChanged += (e, a) => {
                 SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
+                MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
             };
             RBLSearchCaseSensitivity.SelectedIndexChanged += (e, a) => {
                 SearchCaseSensitive = RBLSearchCaseSensitivity.SelectedIndex == 1;
@@ -288,13 +292,14 @@ namespace EtoFE
                     int SearchSortBy = SortBy;
                     bool SearchAnythingAnywhere = AnythingAnywhere;
                     bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
-                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Length}");
+                    MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
                     searching = true;
                     (new Thread(() =>
                     {
-                        if (SelectedArrayIndex > SC[0].Item1.Length - 1)
+                        if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
                         {
-                            var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1.Any((e) => e.FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere))).AsSequential();
+                            MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
+                            var FilteredBeforeCountingAndSorting = OptimizedCatalogue.AsParallel().Where((x) => x.Item1.Last().FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
                             var FilteredBeforeCounting = ReverseSort?
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])):
                             (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
@@ -469,6 +474,7 @@ namespace EtoFE
                     default:
                         break;
                 }
+                //MessageBox.Show($"{RBLSearchCriteria.SelectedIndex.ToString()}", "SelectedIndex");
             };
 
             this.KeyDown += ProcessKeyDown;
