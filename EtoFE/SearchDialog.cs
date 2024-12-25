@@ -343,7 +343,9 @@ namespace EtoFE
                 SortBy = a.Column.DisplayIndex;
                 Search();
             };
-            SearchBox.KeyUp += (_, _) => Search();
+            SearchBox.TextChanged += (_, _) => Search();
+            SearchBox.KeyDown += (_, e) => { if (e.Key == Keys.Down) { Results.Focus(); } };
+            SearchBox.DisableTextBoxDownArrow(() => { if(Results.DataStore.Count() > Results.SelectedRow + 1) Results.SelectedRow++; });
             
             this.SizeChanged += (_, _) => { if (this.Height > 200) { Results.Height = (int)Math.Floor(this.Height * 0.85); } };
             var WriteCsv = (List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries, List<(string, TextAlignment, bool)> Headers, string FileName) => {
@@ -450,21 +452,24 @@ namespace EtoFE
                         CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
                         break;
                     case Keys.Enter:
-                        if (Results.SelectedItem != null)
+                        if (!searching)
                         {
-                            this.OutputList = Filtered.Select(a => a.Item1).ToList();
-                            this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                            this.Close();
-                        }
-                        else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                        {
-                            this.OutputList = Filtered.Select(a => a.Item1).ToList();
-                            this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                            this.Close();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                            if (Results.SelectedItem != null)
+                            {
+                                this.OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                                this.Close();
+                            }
+                            else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                            {
+                                this.OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                                this.Close();
+                            }
+                            else
+                            {
+                                MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                            }
                         }
 
                         break;
