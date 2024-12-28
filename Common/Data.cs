@@ -92,7 +92,8 @@ namespace RV.InvNew.Common
     [JsonSerializable(typeof(List<PosBatch>))]
     [JsonSerializable(typeof(List<PosCatalogue>))]
     [JsonSerializable(typeof(List<VatCategory>))]
-    [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
+    [JsonSourceGenerationOptions(IncludeFields = true)]
+    //[JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosRefresh{
         [JsonInclude] public List<PosCatalogue> Catalogue;
         [JsonInclude] public List<PosBatch> Batches;
@@ -101,7 +102,8 @@ namespace RV.InvNew.Common
 
     
     [JsonSerializable(typeof(PosCatalogue))]
-    [JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
+    [JsonSourceGenerationOptions(IncludeFields = true)]
+    //[JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosCatalogue
     {
         [JsonInclude] public long itemcode;

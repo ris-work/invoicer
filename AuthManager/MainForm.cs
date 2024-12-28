@@ -7,6 +7,7 @@ using Tomlyn;
 using System.Collections.Generic;
 using RV.InvNew.Common;
 using Microsoft.EntityFrameworkCore;
+using AuthManager;
 
 public static partial class ColorRandomizer
 {
@@ -124,6 +125,12 @@ namespace RV.InvNew.AuthManager
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
                                 UserList.DataStore = this.GetAllUsersGrid();
                             }){ Text = "Edit/Set Permissions", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff)  },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) new ManageBillables((long)Selected.GetValue(0)).ShowModal();
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Edit/Set Billables", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff)  },
                         },
                        Orientation = Orientation.Horizontal,
                        Spacing = 4,

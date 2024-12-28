@@ -63,8 +63,7 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    { optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
-        optionsBuilder.LogTo(Console.WriteLine); }
+        { optionsBuilder.UseNpgsql((String) Config.model["ConnString"]); optionsBuilder.LogTo(Console.WriteLine); }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,6 +90,8 @@ public partial class NewinvContext : DbContext
 
             entity.ToTable("accounts_information");
 
+            entity.HasIndex(e => e.HumanFriendlyId, "human_friendly_id").IsUnique();
+
             entity.Property(e => e.AccountType).HasColumnName("account_type");
             entity.Property(e => e.AccountNo).HasColumnName("account_no");
             entity.Property(e => e.AccountI18nLabel).HasColumnName("account_i18n_label");
@@ -102,6 +103,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("account_min");
             entity.Property(e => e.AccountName).HasColumnName("account_name");
             entity.Property(e => e.AccountPii).HasColumnName("account_pii");
+            entity.Property(e => e.HumanFriendlyId).HasColumnName("human_friendly_id");
         });
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
@@ -118,6 +120,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.JournalNo).HasColumnName("journal_no");
+            entity.Property(e => e.Ref).HasColumnName("ref");
             entity.Property(e => e.RefNo).HasColumnName("ref_no");
             entity.Property(e => e.TimeAsEntered).HasColumnName("time_as_entered");
             entity.Property(e => e.TimeTai)
@@ -332,14 +335,16 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<PermissionsListUsersCategory>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("permissions_list_users_categories");
+            entity.HasKey(e => e.Userid).HasName("permissions_list_users_categories_pkey");
 
+            entity.ToTable("permissions_list_users_categories");
+
+            entity.Property(e => e.Userid)
+                .ValueGeneratedNever()
+                .HasColumnName("userid");
             entity.Property(e => e.Categories)
                 .HasDefaultValue(0L)
                 .HasColumnName("categories");
-            entity.Property(e => e.Userid).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Request>(entity =>

@@ -18,4 +18,6 @@ public partial class AccountsInformation
     public double AccountMin { get; set; }
 
     public double AccountMax { get; set; }
+
+    public string? HumanFriendlyId { get; set; }
 }

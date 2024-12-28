@@ -26,4 +26,6 @@ public partial class AccountsJournalEntry
     public DateTime TimeTai { get; set; }
 
     public DateTime TimeAsEntered { get; set; }
+
+    public string? Ref { get; set; }
 }

@@ -12,7 +12,7 @@ namespace RV.InvNew.AuthManager
 {
 	public partial class ManagePermissions : Dialog
 	{
-		public ManagePermissions(long UserID)
+		public ManagePermissions(long UserID, bool Elevated = false)
 		{
 			Title = "Manage Permissions";
 			MinimumSize = new Eto.Drawing.Size(200, 200);
@@ -28,7 +28,7 @@ namespace RV.InvNew.AuthManager
                 var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
                 if (currentList.Count() != 0)
                 {
-					CurrentPerms = currentList.First().UserCap;
+					CurrentPerms = Elevated ? currentList.First().UserDefaultCap: currentList.First().UserCap;
                 }
             }
 			Dictionary<string, bool> CurrentPermsLookup = new();
@@ -65,8 +65,15 @@ namespace RV.InvNew.AuthManager
 					var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
 					if (currentList.Count() != 0)
 					{
-						currentList.First().UserCap = PermCS;
-						ctx.SaveChanges();
+						if (Elevated)
+						{
+							currentList.First().UserCap = PermCS;
+						}
+						else
+						{
+                            currentList.First().UserDefaultCap = PermCS;
+                        }
+							ctx.SaveChanges();
 					}
 					else
 					{

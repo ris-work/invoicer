@@ -45,7 +45,7 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpLogging(o => {
-    o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+    //o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
 });
 builder.Services.AddHttpLogging();
 
