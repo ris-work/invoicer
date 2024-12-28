@@ -17,90 +17,91 @@ using RV.InvNew.Common;
 namespace RV.InvNew.AuthManager
 {
 
-	public class NewUserForm: Dialog
-	{
-		public NewUserForm(long? UserID)
-		{
-			Title = "Hello";
-			Size = new Eto.Drawing.Size(-1, -1); ;
-			using (var ctx = new NewinvContext())
-			{
-				Credential ToUpdate;
-				if (UserID != null) { ToUpdate = ctx.Credentials.Where(c => c.Userid == UserID).First(); }
-				else {ToUpdate = null;}
-				string ExistingUsername = "";
-				if (UserID != null) {
-					ExistingUsername = ToUpdate.Username;
-				}
+    public class NewUserForm : Dialog
+    {
+        public NewUserForm(long? UserID)
+        {
+            Title = "Hello";
+            Size = new Eto.Drawing.Size(-1, -1); ;
+            using (var ctx = new NewinvContext())
+            {
+                Credential ToUpdate;
+                if (UserID != null) { ToUpdate = ctx.Credentials.Where(c => c.Userid == UserID).First(); }
+                else { ToUpdate = null; }
+                string ExistingUsername = "";
+                if (UserID != null)
+                {
+                    ExistingUsername = ToUpdate.Username;
+                }
 
-				var LabelUsername = new Label() { Text = "Username" };
-				var LabelPassword = new Label() { Text = "Password" };
+                var LabelUsername = new Label() { Text = "Username" };
+                var LabelPassword = new Label() { Text = "Password" };
                 var LabelPasswordConfirm = new Label() { Text = "Password (Confirm)" };
                 var TextUsername = new TextBox() { PlaceholderText = "Username", Text = ExistingUsername };
-				var TextPassword = new PasswordBox() { };
+                var TextPassword = new PasswordBox() { };
                 var TextPasswordConfirm = new PasswordBox() { };
                 var Save = new Button((e, a) =>
-				{
-					if (TextPassword.Text != TextPasswordConfirm.Text) { MessageBox.Show("Password confirmation does not match with the entered password!", MessageBoxType.Error); return; }
+                {
+                    if (TextPassword.Text != TextPasswordConfirm.Text) { MessageBox.Show("Password confirmation does not match with the entered password!", MessageBoxType.Error); return; }
 
-					// derive a 256-bit subkey (use HMACSHA256 with 100,000 iterations)
-					string hashed = Utils.DoPBKDF2(TextPassword.Text);
+                    // derive a 256-bit subkey (use HMACSHA256 with 100,000 iterations)
+                    string hashed = Utils.DoPBKDF2(TextPassword.Text);
 
-					Console.WriteLine($"Hashed: {hashed}");
+                    Console.WriteLine($"Hashed: {hashed}");
 
-					var now = DateTime.UtcNow;
-					using (var ctx = new NewinvContext())
-					{
-						if (UserID == null)
-						{
-							ctx.Credentials.Add(new Credential { Username = TextUsername.Text, PasswordPbkdf2 = hashed, Modified = now, CreatedTime = now, ValidUntil = now });
-						}
-						else
-						{
-							ToUpdate.Username = TextUsername.Text;
-							if (TextPassword.Text != "") { ToUpdate.PasswordPbkdf2 = hashed; }
-							ToUpdate.Modified = now;
-							ToUpdate.ValidUntil = now;
-							ctx.Attach(ToUpdate);
-							ctx.Update(ToUpdate);
-						}
+                    var now = DateTime.UtcNow;
+                    using (var ctx = new NewinvContext())
+                    {
+                        if (UserID == null)
+                        {
+                            ctx.Credentials.Add(new Credential { Username = TextUsername.Text, PasswordPbkdf2 = hashed, Modified = now, CreatedTime = now, ValidUntil = now });
+                        }
+                        else
+                        {
+                            ToUpdate.Username = TextUsername.Text;
+                            if (TextPassword.Text != "") { ToUpdate.PasswordPbkdf2 = hashed; }
+                            ToUpdate.Modified = now;
+                            ToUpdate.ValidUntil = now;
+                            ctx.Attach(ToUpdate);
+                            ctx.Update(ToUpdate);
+                        }
 
-						ctx.SaveChanges();
-						this.Close();
-					}
-
-
-				})
-				{ Text = "Save" };
-				var Cancel = new Button((e, a) => { this.Close(); }) { Text = "Cancel" };
+                        ctx.SaveChanges();
+                        this.Close();
+                    }
 
 
-				Content =
-					new TableLayout([
-							null,
-						new Eto.Forms.TableRow(
+                })
+                { Text = "Save" };
+                var Cancel = new Button((e, a) => { this.Close(); }) { Text = "Cancel" };
 
-							[null, LabelUsername, TextUsername, null]
-						),
-						new Eto.Forms.TableRow(
 
-							[null, LabelPassword, TextPassword, null]
-						),
+                Content =
+                    new TableLayout([
+                            null,
+                        new Eto.Forms.TableRow(
+
+                            [null, LabelUsername, TextUsername, null]
+                        ),
+                        new Eto.Forms.TableRow(
+
+                            [null, LabelPassword, TextPassword, null]
+                        ),
                         new Eto.Forms.TableRow(
 
                             [null, LabelPasswordConfirm, TextPasswordConfirm, null]
                         ),
                         new Eto.Forms.TableRow(
 
-							[null, Save, Cancel, null]
-						),
-						null
+                            [null, Save, Cancel, null]
+                        ),
+                        null
 
-					])
-					{ Spacing = new Eto.Drawing.Size(10, 10) };
-				Topmost = true;
-			}
-		}
-		
-	}
+                    ])
+                    { Spacing = new Eto.Drawing.Size(10, 10) };
+                Topmost = true;
+            }
+        }
+
+    }
 }

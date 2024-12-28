@@ -8,7 +8,7 @@ using RV.InvNew.Common;
 
 namespace RV.InvNew.AuthManager
 {
-    
+
 
     public class Program
     {
@@ -21,5 +21,5 @@ namespace RV.InvNew.AuthManager
         }
     }
 
-   
+
 }

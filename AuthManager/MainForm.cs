@@ -28,7 +28,7 @@ namespace RV.InvNew.AuthManager
     {
         public MainForm()
         {
-            Eto.Style.Add<TextBoxCell>("AlternatingColumn",tbc =>
+            Eto.Style.Add<TextBoxCell>("AlternatingColumn", tbc =>
                 { }//tbc.BackgroundColor = Color.FromArgb(240, 240, 255, 255); }
             );
             var UserList = new GridView();
@@ -36,42 +36,44 @@ namespace RV.InvNew.AuthManager
             UserList.Size = new Size(-1, 300);
             GridColumn A;
             Random x2 = new Random();
-            UserList.CellFormatting += (e, a) => { 
-                a.BackgroundColor = Color.FromArgb(205 + Math.Abs(x2.Next()%50), 205 + Math.Abs(x2.Next()%50), 205 + Math.Abs(x2.Next()%50), 255);
+            UserList.CellFormatting += (e, a) =>
+            {
+                a.BackgroundColor = Color.FromArgb(205 + Math.Abs(x2.Next() % 50), 205 + Math.Abs(x2.Next() % 50), 205 + Math.Abs(x2.Next() % 50), 255);
                 a.ForegroundColor = Color.FromArgb(50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 50 + Math.Abs(x2.Next() % 50), 255);
                 if (UserList.Columns.IndexOf(a.Column) == 3 || UserList.Columns.IndexOf(a.Column) == 2)
                 {
                     a.Font = Fonts.Monospace(10, FontStyle.None, FontDecoration.None);
-                    
+
                 }
             };
-            
-            UserList.Columns.Add( A = new GridColumn() { HeaderText = "UserID", DataCell = new TextBoxCell(0) { TextAlignment = TextAlignment.Right },   });
+
+            UserList.Columns.Add(A = new GridColumn() { HeaderText = "UserID", DataCell = new TextBoxCell(0) { TextAlignment = TextAlignment.Right }, });
             ((Control)UserList).BackgroundColor = Color.FromArgb(255, 255, 0, 255);
-            UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1)  });
-            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) {TextAlignment=TextAlignment.Right} });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Username", DataCell = new TextBoxCell(1) });
+            UserList.Columns.Add(new GridColumn { HeaderText = "Modified", DataCell = new TextBoxCell(2) { TextAlignment = TextAlignment.Right } });
             UserList.Columns.Add(new GridColumn { HeaderText = "Created", DataCell = new TextBoxCell(3) { TextAlignment = TextAlignment.Right } });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active", DataCell = new CheckBoxCell(4) });
             UserList.Columns.Add(new GridColumn { HeaderText = "Active tokens", DataCell = new TextBoxCell(5) { TextAlignment = TextAlignment.Right } });
-            UserList.MouseDoubleClick += (e, a) => { 
-                MessageBox.Show(((GridItem)UserList.SelectedItem).GetValue(0).ToString()); 
+            UserList.MouseDoubleClick += (e, a) =>
+            {
+                MessageBox.Show(((GridItem)UserList.SelectedItem).GetValue(0).ToString());
                 (new NewUserForm((long)((GridItem)UserList.SelectedItem).GetValue(0))).ShowModal();
                 using (var ctx = new NewinvContext())
                 {
-                    
+
                     UserList.DataStore = this.GetAllUsersGrid();
                     UserList.Invalidate();
 
                 }
                 UserList.Invalidate();
             };
-            
-            string x="";
-            
-                UserList.DataStore = this.GetAllUsersGrid();
-                
 
-            
+            string x = "";
+
+            UserList.DataStore = this.GetAllUsersGrid();
+
+
+
             Title = "User Manager";
             Size = new Size(-1, -1);
             Resizable = false;
@@ -99,7 +101,7 @@ namespace RV.InvNew.AuthManager
                                         ctx.SaveChanges();
                                 }
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
-                                UserList.DataStore = this.GetAllUsersGrid(); 
+                                UserList.DataStore = this.GetAllUsersGrid();
                             }){ Text = "Deactivate User", BackgroundColor = Color.FromArgb(0xff, 0xaa, 0xaa, 0xff) },
                             new Button((e, a) => {
                                 var Selected = (GridItem)UserList.SelectedItem;
@@ -146,7 +148,7 @@ namespace RV.InvNew.AuthManager
             };
             KeyUp += ((e, a) => MessageBox.Show(a.Key.ToString()));
 
-            
+
         }
         public List<GridItem> GetAllUsersGrid()
         {

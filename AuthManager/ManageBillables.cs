@@ -8,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace AuthManager
 {
-    internal class ManageBillables : Eto.Forms.Dialog 
+    internal class ManageBillables : Eto.Forms.Dialog
     {
-        public ManageBillables(long UserId) {
+        public ManageBillables(long UserId)
+        {
             Title = "Manage Permissions";
             MinimumSize = new Eto.Drawing.Size(200, 200);
             var TableCheckBoxes = new TableLayout() { Padding = 10, Spacing = new Eto.Drawing.Size(10, 10) };
@@ -21,13 +22,13 @@ namespace AuthManager
                 ExistingList = ctx.PermissionsListCategoriesNames.ToList();
             }
             List<CheckBox> CheckBoxes = new();
-            for(ushort i = 0; i<63; i++)
+            for (ushort i = 0; i < 63; i++)
             {
-                CheckBoxes.Add(new CheckBox { Text = ExistingList.FirstOrDefault(e => e.Category == (long)1 << i,  new PermissionsListCategoriesName{ Category = 1 << i, CategoryName = "Unspecified" }).CategoryName });
+                CheckBoxes.Add(new CheckBox { Text = ExistingList.FirstOrDefault(e => e.Category == (long)1 << i, new PermissionsListCategoriesName { Category = 1 << i, CategoryName = "Unspecified" }).CategoryName });
             }
             List<CheckBox[]> ChunkedCB = CheckBoxes.Chunk(8).ToList();
-            
-            foreach(var chunk in ChunkedCB)
+
+            foreach (var chunk in ChunkedCB)
             {
                 var row = new TableRow();
                 foreach (var checkbox in chunk)
@@ -36,11 +37,12 @@ namespace AuthManager
                 }
                 TableCheckBoxes.Rows.Add(row);
             }
-            CalculateButton.Click += (e, a)  => {
+            CalculateButton.Click += (e, a) =>
+            {
                 var CBA = CheckBoxes.ToArray();
                 string bitsAsString = "";
                 long bitsAsLong = 0;
-                for(ushort i = 0; i<CBA.Length; i++)
+                for (ushort i = 0; i < CBA.Length; i++)
                 {
                     bitsAsString += (CBA[i].Checked ?? false) ? "1" : "0";
                     if ((CBA[i].Checked ?? false) == true)

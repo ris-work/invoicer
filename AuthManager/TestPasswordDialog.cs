@@ -9,7 +9,7 @@ using RV.InvNew.Common;
 
 namespace RV.InvNew.AuthManager
 {
-    internal class TestPasswordDialog: Dialog
+    internal class TestPasswordDialog : Dialog
     {
         public TestPasswordDialog(long UserID)
         {
@@ -33,14 +33,14 @@ namespace RV.InvNew.AuthManager
             })
             { Text = "Test" };
 
-            Button Cancel = new Button((e, a) => this.Close()) { Text = "Cancel"};
+            Button Cancel = new Button((e, a) => this.Close()) { Text = "Cancel" };
             Content = new TableLayout([
                 null,
                 new TableRow([null, new Label() { Text = "Password: "}, Password, null]),
                 new TableRow([null, Test, Cancel, null]),
                 null
             ])
-            { Spacing = new Eto.Drawing.Size(20, 20)};
+            { Spacing = new Eto.Drawing.Size(20, 20) };
         }
     }
 }
