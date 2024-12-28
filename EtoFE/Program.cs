@@ -20,6 +20,7 @@ using System.IO;
 public static class LoginTokens
 {
     public static LoginToken token;
+    public static LoginToken ElevatedLoginToken;
 }
 
 public class Program

@@ -15,6 +15,13 @@ namespace RV.InvNew.Common
         string? Error
     );
 
+    public record LoginTokenElevated(
+        string? TokenID,
+        string? Token,
+        string? SecretToken,
+        string? Error
+    );
+
     public record LoginCredentials(
         string User,
         string Password,
