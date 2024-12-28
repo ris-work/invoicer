@@ -125,6 +125,47 @@ app.MapPost("/Login", (LoginCredentials L) =>
 }).WithName("Login")
 .WithOpenApi();
 
+app.MapPost("/ElevatedLogin", (LoginCredentials L) =>
+{
+    using (var ctx = new NewinvContext())
+    {
+        if (L.User != null)
+        {
+            var UserE = ctx.Credentials.Where(e => e.Active && e.Username == L.User).SingleOrDefault();
+            var UserA = ctx.UserAuthorizations.Where(e => e.Userid == UserE.Userid).SingleOrDefault();
+            var UserPC = ctx.PermissionsListUsersCategories.Where(e => e.Userid == UserE.Userid).SingleOrDefault();
+            if (UserE != null)
+            {
+                var Password = UserE.PasswordPbkdf2;
+                if (Password != null && Utils.DoPBKDF2(L.Password) == Password)
+                {
+                    Random rnd = new Random();
+                    Byte[] bTid = new byte[8];
+                    Byte[] bT = new byte[8];
+                    Byte[] bTs = new byte[8];
+                    rnd.NextBytes(bTid);
+                    rnd.NextBytes(bT);
+                    rnd.NextBytes(bTs);
+                    var Tid = Convert.ToBase64String(bTid);
+                    var T = Convert.ToBase64String(bT);
+                    var Ts = Convert.ToBase64String(bTs);
+                    ctx.Tokens.Add(new Token() { Tokenid = Tid, Tokensecret = Ts, Tokenvalue = T, Privileges = UserA.UserCap, CategoriesBitmask = UserPC.Categories });
+                    ctx.SaveChanges();
+                    return new LoginToken(Tid, T, Ts, "");
+
+                }
+                else
+                {
+                    return new LoginToken("", "", "", "Error: Wrong username, password or inactive user");
+                }
+            }
+            else return new LoginToken("", "", "", "Error: Wrong username, password or inactive user");
+        }
+        else { Console.WriteLine(L); return new LoginToken("", "", "", "User null"); }
+    }
+}).WithName("ElevatedLogin")
+.WithOpenApi();
+
 app.MapPost("/GetItemsUnrestricted", (LoginToken L) =>
 {
     if (!IsTokenValid(L, "ALL")){
@@ -137,9 +178,11 @@ app.MapPost("/GetItemsUnrestricted", (LoginToken L) =>
 }).WithName("GetItemsUnrestricted")
 .WithOpenApi();
 
+app.MapPost("/PermTimeTest", (AuthenticatedRequest<string> AS) => { if (AS.Get("View_Server_Time") != null) return new SingleValueString { response = DateTime.UtcNow.ToString("O") }; else throw new UnauthorizedAccessException(); }).WithName("PermTimeTest");
+
 app.MapPost("/PosRefresh", (AuthenticatedRequest<string> AS) =>
 {
-    if (AS.Get() != null)
+    if (AS.Get("Refresh") != null)
     {
         List<PosCatalogue> PC;
         List<PosBatch> PB;

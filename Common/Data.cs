@@ -69,10 +69,12 @@ namespace RV.InvNew.Common
         {
             T? output;
             bool auth_success;
+            string ExistingPrivilegeList = "";
             using (var ctx = new NewinvContext())
             {
+                ExistingPrivilegeList = ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Privileges.ToLowerInvariant();
                 if (this.Token.TokenID != null && this.Token != null)
-                    if (ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Tokenvalue == this.Token.Token && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Privileges.Split(',').Contains(PrivilegeLevel))
+                    if (ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Tokenvalue == this.Token.Token && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Privileges.ToLowerInvariant().Split(',').Contains(PrivilegeLevel.ToLowerInvariant()))
                     {
                         output = this.Request;
                         auth_success = true;
@@ -84,7 +86,11 @@ namespace RV.InvNew.Common
             {
                 return this.Request;
             }
-            else return default(T);
+            else {
+                Console.Error.WriteLine($"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}");
+                return default(T); 
+            }
+
         }
     }
 
@@ -190,9 +196,19 @@ namespace RV.InvNew.Common
         public DateTime TimeAsEntered { get; set; }
     }
 
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public class SingleValueString
+    {
+        public string response { get; set; }
+    }
+
     [JsonSerializable(typeof(List<PosSaleEntry>))]
     [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
     public partial class PosSaleEntryCollectionSerialize: JsonSerializerContext { }
+
+    [JsonSerializable(typeof(SingleValueString))]
+    [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
+    public partial class SingleValueStringContext : JsonSerializerContext { }
 
     [JsonSerializable(typeof(List<PosBatch>))]
     [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]

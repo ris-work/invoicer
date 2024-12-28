@@ -59,6 +59,7 @@ namespace EtoFE
             Label CurrentTaxRate = new Label() { TextAlignment = TextAlignment.Right };
             Label CurrentTotalLabel = new Label();
             Label CurrentTotal = new Label() { TextAlignment = TextAlignment.Right };
+            Button CheckTimeButton = new Button() { Text = "Check Server Time" };
             string InvoiceLocalKey;
             Padding = new Eto.Drawing.Padding(10, 10);
             
@@ -73,6 +74,7 @@ namespace EtoFE
             TL.Rows.Add(new TableRow(LabelVatCategory, VatCategory, CurrentVatRate, CurrentVatCategory));
             TL.Rows.Add(new TableRow(CurrentTaxLabel, CurrentTaxRate));
             TL.Rows.Add(new TableRow(CurrentTotalLabel, CurrentTotal));
+            TL.Rows.Add(new TableRow(CheckTimeButton));
             PosData.Wait();
             var PosDataResponse = PosData.Result;
             PosDataResponse.EnsureSuccessStatusCode();
@@ -102,6 +104,18 @@ namespace EtoFE
                 ("Price", TextAlignment.Right, false),
                 ("SIH", TextAlignment.Right, false),
                 ("Exp Date", TextAlignment.Right, false),
+            };
+            CheckTimeButton.Click += (e, a) => {
+                while (true)
+                {
+                    var req = (new AuthenticationForm<string, SingleValueString>("/PermTimeTest", "Time"));
+                    req.ShowModal();
+                    if (req.Error == false)
+                    {
+                        MessageBox.Show(req.Response.response, "Time", MessageBoxType.Information);
+                        break;
+                    }
+                }
             };
             var CurrentPosEntriesInGrid = new List<string[]>();
             var CurrentPosEntries = new List<PosSaleEntry>();

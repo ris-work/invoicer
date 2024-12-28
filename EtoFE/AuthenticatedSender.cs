@@ -25,12 +25,12 @@ namespace EtoFE
             
             this.Endpoint = Endpoint;
         }
-        public void Send(string Username, string Password, bool Elevated = false) {
+        public void Send(string Username, string Password, bool Elevated = false, bool RetryOnFailure = true) {
             LoginToken logint = null;
-            string Terminal = (string)Config.modelDict.GetValueOrDefault("Terminal", "Default Terminal");
+            string Terminal = (string)Program.ConfigDict.GetValueOrDefault("Terminal", "Default Terminal");
             string AuthURL = Elevated ? "/ElevatedLogin" : "/Login";
             LoginCredentials l = new(Username, Password, Terminal, null);
-            var responseA = Program.client.PostAsJsonAsync("/Login", l);
+            var responseA = Program.client.PostAsJsonAsync(AuthURL, l);
             var resultA = responseA.GetAwaiter().GetResult();
             resultA.EnsureSuccessStatusCode();
             var logint_w = resultA.Content.ReadAsAsync<LoginToken>();
@@ -41,9 +41,8 @@ namespace EtoFE
             MessageBox.Show(logint.Error);
             if (logint.Error != "") { Error = true; }
             bool IsSuccessful = false;
-            AR = new AuthenticatedRequest<Ti>(Message, LoginTokens.token);
+            AR = new AuthenticatedRequest<Ti>(Message, token);
             
-            while (!IsSuccessful) {
                 var responseT = Program.client.PostAsJsonAsync(Endpoint, AR);
                 var response = responseT.GetAwaiter().GetResult();
                 if (response.IsSuccessStatusCode)
@@ -55,7 +54,11 @@ namespace EtoFE
                 {
                     Error = true;
                 }
+            else
+            {
+                Error = true;
             }
+
         }
     }
     class AuthenticationForm<Ti, To>: Dialog
@@ -67,26 +70,27 @@ namespace EtoFE
         public To Response;
         public bool Error = false;
         public AuthenticationForm(string Endpoint, Ti Request) {
-            var LU = new Label();
-            var LP = new Label();
+            var LU = new Label() { Text = "Username" };
+            var LP = new Label() { Text = "Password" };
             var TU = new TextBox();
             var TP = new TextBox();
             var TEndpoint = new TextArea() { ReadOnly = true, Size = new Eto.Drawing.Size(400, 100) };
             var TRequest = new TextArea() { ReadOnly = true, Size = new Eto.Drawing.Size(400, 200) };
             var ElevatedLoginButton = new Button() { Text = "⬆ Elevated Login" };
             var LoginButton = new Button() { Text = "📩 Login" };
-            var Cancel = new Button() { Text = "✖ Cancel" };
-            StackLayout U = new StackLayout(LU, TU) { Orientation = Orientation.Horizontal };
-            StackLayout P = new StackLayout(LP, TP) { Orientation = Orientation.Horizontal };
-            StackLayout RequestInfo = new StackLayout(TEndpoint, TRequest) { Orientation = Orientation.Vertical };
-            StackLayout Actions = new StackLayout(ElevatedLoginButton, LoginButton) { Orientation = Orientation.Horizontal };
-            Content = new StackLayout(U, P, RequestInfo, Actions);
+            var CancelButton = new Button() { Text = "✖ Cancel" };
+            TableRow U = new TableRow(LU, TU) {};
+            TableRow P = new TableRow(LP, TP) {};
+            StackLayout RequestInfo = new StackLayout(TEndpoint, TRequest) { Orientation = Orientation.Vertical, Padding = 10, Spacing = 10 };
+            StackLayout Actions = new StackLayout(ElevatedLoginButton, LoginButton, CancelButton) { Orientation = Orientation.Horizontal, Padding = 10, Spacing = 10 };
+            Content = new StackLayout(new TableLayout(U, P) { Padding = 10 }, RequestInfo, Actions) { Padding = 10, Spacing = 10 };
             this.Request = Request;
             LoginButton.Click += (e, a) => {
                 InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request);
                 Sender.Send(TU.Text, TP.Text, false);
                 Response = Sender.Result;
                 Error = Sender.Error;
+                this.Close();
             };
             ElevatedLoginButton.Click += (e, a) => {
                 InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request);
@@ -94,6 +98,7 @@ namespace EtoFE
                 Response = Sender.Result;
                 Elevated = true;
                 Error = Sender.Error;
+                this.Close();
             };
         }
     }

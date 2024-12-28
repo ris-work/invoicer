@@ -16,7 +16,7 @@ namespace AuthManager
             MinimumSize = new Eto.Drawing.Size(200, 200);
             var TableCheckBoxes = new TableLayout() { Padding = 10, Spacing = new Eto.Drawing.Size(10, 10) };
             List<PermissionsListCategoriesName> ExistingList;
-            Button CalculateButton = new Button();
+            Button CalculateButton = new Button() { Text = "Calculate" };
             using (var ctx = new NewinvContext())
             {
                 ExistingList = ctx.PermissionsListCategoriesNames.ToList();

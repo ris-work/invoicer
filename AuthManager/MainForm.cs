@@ -129,6 +129,12 @@ namespace RV.InvNew.AuthManager
                             }){ Text = "Edit/Set Permissions", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff)  },
                             new Button((e, a) => {
                                 var Selected = (GridItem)UserList.SelectedItem;
+                                if (Selected!= null) new ManagePermissions((long)Selected.GetValue(0), true).ShowModal();
+                                else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
+                                UserList.DataStore = this.GetAllUsersGrid();
+                            }){ Text = "Edit/Set Elevated Permissions", BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff)  },
+                            new Button((e, a) => {
+                                var Selected = (GridItem)UserList.SelectedItem;
                                 if (Selected!= null) new ManageBillables((long)Selected.GetValue(0)).ShowModal();
                                 else MessageBox.Show("Please select ONE user", MessageBoxType.Error);
                                 UserList.DataStore = this.GetAllUsersGrid();
