@@ -1,10 +1,10 @@
-﻿using Eto.Forms;
-using RV.InvNew.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace AuthManager
 {
@@ -14,7 +14,11 @@ namespace AuthManager
         {
             Title = "Manage Permissions";
             MinimumSize = new Eto.Drawing.Size(200, 200);
-            var TableCheckBoxes = new TableLayout() { Padding = 10, Spacing = new Eto.Drawing.Size(10, 10) };
+            var TableCheckBoxes = new TableLayout()
+            {
+                Padding = 10,
+                Spacing = new Eto.Drawing.Size(10, 10),
+            };
             List<PermissionsListCategoriesName> ExistingList;
             Button CalculateButton = new Button() { Text = "Calculate" };
             using (var ctx = new NewinvContext())
@@ -24,7 +28,21 @@ namespace AuthManager
             List<CheckBox> CheckBoxes = new();
             for (ushort i = 0; i < 63; i++)
             {
-                CheckBoxes.Add(new CheckBox { Text = ExistingList.FirstOrDefault(e => e.Category == (long)1 << i, new PermissionsListCategoriesName { Category = 1 << i, CategoryName = "Unspecified" }).CategoryName });
+                CheckBoxes.Add(
+                    new CheckBox
+                    {
+                        Text = ExistingList
+                            .FirstOrDefault(
+                                e => e.Category == (long)1 << i,
+                                new PermissionsListCategoriesName
+                                {
+                                    Category = 1 << i,
+                                    CategoryName = "Unspecified",
+                                }
+                            )
+                            .CategoryName,
+                    }
+                );
             }
             List<CheckBox[]> ChunkedCB = CheckBoxes.Chunk(8).ToList();
 
@@ -50,7 +68,11 @@ namespace AuthManager
                         bitsAsLong |= (long)1 << i;
                     }
                 }
-                MessageBox.Show($"Reverse bits (bitmask in reverse): {bitsAsString}{Environment.NewLine}{bitsAsLong}", "Information re: Bits Set", MessageBoxType.Information);
+                MessageBox.Show(
+                    $"Reverse bits (bitmask in reverse): {bitsAsString}{Environment.NewLine}{bitsAsLong}",
+                    "Information re: Bits Set",
+                    MessageBoxType.Information
+                );
             };
             Content = new StackLayout(TableCheckBoxes, CalculateButton) { };
         }

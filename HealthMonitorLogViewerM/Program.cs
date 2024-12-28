@@ -1,32 +1,37 @@
-﻿using Eto.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using Eto.Drawing;
 using Eto.Forms;
 using HealthMonitorLogViewer;
 using ScottPlot;
-using System;
-using System.Collections.Generic;
 
 namespace HealthMonitor
 {
     public static class PlotUtils
     {
-        public static readonly MarkerShape[] AllMarkers = new MarkerShape[] { 
-            MarkerShape.Asterisk, 
-            MarkerShape.FilledCircle, 
-            MarkerShape.FilledTriangleUp, 
+        public static readonly MarkerShape[] AllMarkers = new MarkerShape[]
+        {
+            MarkerShape.Asterisk,
+            MarkerShape.FilledCircle,
+            MarkerShape.FilledTriangleUp,
             MarkerShape.Cross,
-            MarkerShape.FilledTriangleDown
+            MarkerShape.FilledTriangleDown,
         };
+
         public static MarkerShape GetRandomMarkerShape()
         {
             Random random = new Random();
             int MarkerIndex = random.Next(AllMarkers.Length);
             return AllMarkers[MarkerIndex];
         }
-        public static readonly LinePattern[] AllLinePatterns = new LinePattern[] {
+
+        public static readonly LinePattern[] AllLinePatterns = new LinePattern[]
+        {
             LinePattern.Solid,
             LinePattern.Dashed,
             LinePattern.DenselyDashed,
         };
+
         public static LinePattern GetRandomLinePattern()
         {
             Random random = new Random();
@@ -34,10 +39,9 @@ namespace HealthMonitor
             return AllLinePatterns[LinePatternIndex];
         }
     }
+
     internal class Program
     {
-        
-
         [STAThread]
         static void Main(string[] args)
         {
@@ -64,6 +68,7 @@ public static class Config
 {
     public static string LogFile = "logs.sqlite3.rvhealthmonitorlogfile";
     public static string Platform = Eto.Platform.Detect.ToString();
+
     //public static string Platform = null;
     public static Eto.Forms.FileFilter PNGFilter = new Eto.Forms.FileFilter();
     public static Eto.Forms.FileFilter SVGFilter = new Eto.Forms.FileFilter();

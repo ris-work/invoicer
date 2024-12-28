@@ -7,9 +7,10 @@ using Eto.Forms;
 
 namespace HealthMonitorLogViewer
 {
-    class SinglePanelForm: Form
+    class SinglePanelForm : Form
     {
-        public SinglePanelForm((string, object) TupleIn) {
+        public SinglePanelForm((string, object) TupleIn)
+        {
             Title = TupleIn.Item1;
             Content = (Control)(((ILoadOncePanel<object>)TupleIn.Item2).GetInnerAsObject());
             BackgroundColor = Eto.Drawing.Colors.Black;

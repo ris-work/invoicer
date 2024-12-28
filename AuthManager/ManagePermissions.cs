@@ -1,11 +1,11 @@
 using System;
-using Eto.Forms;
-using Eto.Drawing;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eto.Drawing;
+using Eto.Forms;
 using RV.InvNew.Common;
 
 namespace RV.InvNew.AuthManager
@@ -16,7 +16,11 @@ namespace RV.InvNew.AuthManager
         {
             Title = "Manage Permissions";
             MinimumSize = new Eto.Drawing.Size(200, 200);
-            var TableCheckBoxes = new TableLayout() { Padding = 10, Spacing = new Eto.Drawing.Size(10, 10) };
+            var TableCheckBoxes = new TableLayout()
+            {
+                Padding = 10,
+                Spacing = new Eto.Drawing.Size(10, 10),
+            };
             List<PermissionsList[]> chunked;
             using (var ctx = new NewinvContext())
             {
@@ -29,7 +33,9 @@ namespace RV.InvNew.AuthManager
                 var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
                 if (currentList.Count() != 0)
                 {
-                    CurrentPerms = Elevated ? currentList.First().UserDefaultCap : currentList.First().UserCap;
+                    CurrentPerms = Elevated
+                        ? currentList.First().UserDefaultCap
+                        : currentList.First().UserCap;
                 }
             }
             Dictionary<string, bool> CurrentPermsLookup = new();
@@ -45,49 +51,80 @@ namespace RV.InvNew.AuthManager
                 foreach (var CheckBoxLabel in chunk)
                 {
                     w++;
-                    row.Cells.Add(new CheckBox() { Text = CheckBoxLabel.Permission, BackgroundColor = ColorRandomizer.bg(), TextColor = ColorRandomizer.fg(), Checked = CurrentPermsLookupRO.GetValueOrDefault(CheckBoxLabel.Permission, false) });
+                    row.Cells.Add(
+                        new CheckBox()
+                        {
+                            Text = CheckBoxLabel.Permission,
+                            BackgroundColor = ColorRandomizer.bg(),
+                            TextColor = ColorRandomizer.fg(),
+                            Checked = CurrentPermsLookupRO.GetValueOrDefault(
+                                CheckBoxLabel.Permission,
+                                false
+                            ),
+                        }
+                    );
                 }
                 TableCheckBoxes.Rows.Add(row);
             }
 
-            var SaveButton = new Button((e, a) =>
-            {
-                var rows = TableCheckBoxes.Rows;
-                List<string> CurrentPermissions = new List<string>();
-                foreach (var row in rows)
+            var SaveButton = new Button(
+                (e, a) =>
                 {
-                    foreach (var cell in row.Cells)
+                    var rows = TableCheckBoxes.Rows;
+                    List<string> CurrentPermissions = new List<string>();
+                    foreach (var row in rows)
                     {
-                        var cellCheckBox = (CheckBox)cell.Control;
-                        if (cellCheckBox != null && cellCheckBox.Checked == true) CurrentPermissions.Add(cellCheckBox.Text);
-                    }
-                }
-                string PermCS = String.Join(",", CurrentPermissions);
-                MessageBox.Show(PermCS, "Selected Permissions", MessageBoxType.Information);
-                using (var ctx = new NewinvContext())
-                {
-                    var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
-                    if (currentList.Count() != 0)
-                    {
-                        if (Elevated)
+                        foreach (var cell in row.Cells)
                         {
-                            currentList.First().UserCap = PermCS;
+                            var cellCheckBox = (CheckBox)cell.Control;
+                            if (cellCheckBox != null && cellCheckBox.Checked == true)
+                                CurrentPermissions.Add(cellCheckBox.Text);
+                        }
+                    }
+                    string PermCS = String.Join(",", CurrentPermissions);
+                    MessageBox.Show(PermCS, "Selected Permissions", MessageBoxType.Information);
+                    using (var ctx = new NewinvContext())
+                    {
+                        var currentList = ctx.UserAuthorizations.Where((e) => e.Userid == UserID);
+                        if (currentList.Count() != 0)
+                        {
+                            if (Elevated)
+                            {
+                                currentList.First().UserCap = PermCS;
+                            }
+                            else
+                            {
+                                currentList.First().UserDefaultCap = PermCS;
+                            }
+                            ctx.SaveChanges();
                         }
                         else
                         {
-                            currentList.First().UserDefaultCap = PermCS;
+                            ctx.UserAuthorizations.Add(
+                                new UserAuthorization
+                                {
+                                    Userid = UserID,
+                                    UserCap = PermCS,
+                                    UserDefaultCap = PermCS,
+                                }
+                            );
+                            ctx.SaveChanges();
                         }
-                        ctx.SaveChanges();
-                    }
-                    else
-                    {
-                        ctx.UserAuthorizations.Add(new UserAuthorization { Userid = UserID, UserCap = PermCS, UserDefaultCap = PermCS });
-                        ctx.SaveChanges();
                     }
                 }
-            })
-            { Text = "Save" };
-            var CancelButton = new Button((e, a) => { this.Close(); }) { Text = "Cancel" };
+            )
+            {
+                Text = "Save",
+            };
+            var CancelButton = new Button(
+                (e, a) =>
+                {
+                    this.Close();
+                }
+            )
+            {
+                Text = "Cancel",
+            };
 
             Content = new StackLayout
             {
@@ -96,11 +133,14 @@ namespace RV.InvNew.AuthManager
                 {
                     "Hello World!",
                     TableCheckBoxes,
-                    new StackLayout(SaveButton, CancelButton){Orientation = Orientation.Horizontal, Spacing = 10}
-					// add more controls here
-				}
+                    new StackLayout(SaveButton, CancelButton)
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 10,
+                    },
+                    // add more controls here
+                },
             };
-
         }
     }
 }

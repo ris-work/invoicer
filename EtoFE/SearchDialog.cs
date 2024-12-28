@@ -1,21 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Eto.Forms;
-using Eto.Drawing;
-using RV.InvNew.Common;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using CsvHelper;
-using System.IO;
+using Eto.Drawing;
+using Eto.Forms;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using RV.InvNew.Common;
 
 namespace EtoFE
 {
     public static class Extensions
     {
-        public static IEnumerable<string> FilterWithOptions<T>(ref T Input, string s, bool CaseInsensitive = true, bool Contains = false) where T : IEnumerable<string>
+        public static IEnumerable<string> FilterWithOptions<T>(
+            ref T Input,
+            string s,
+            bool CaseInsensitive = true,
+            bool Contains = false
+        )
+            where T : IEnumerable<string>
         {
             IEnumerable<string> A = Input;
             if (CaseInsensitive == true)
@@ -26,15 +32,26 @@ namespace EtoFE
             {
                 return A.Where(x => x.Contains(s));
             }
-            else return A.Where(x => x.StartsWith(s));
+            else
+                return A.Where(x => x.StartsWith(s));
         }
-        public static string NormalizeSpelling(this string s) {
+
+        public static string NormalizeSpelling(this string s)
+        {
             var o = Regex.Replace(s, "[aeiouh]", ""); //English has 10+ vowels, mgiht as well remove all of them.
             o = o.Replace("k", "c").Replace("i", "y"); //K is the C equivalent from Greek, Y is the I equivalent from Greek.
             //Hope these are the last totally redundant letters...
             return o;
         }
-        public static bool FilterAccordingly(this string str, string s, bool CaseInsensitive = true, bool Contains = true, bool normalizeSpelling = true, bool AnythingAnywhere = false)
+
+        public static bool FilterAccordingly(
+            this string str,
+            string s,
+            bool CaseInsensitive = true,
+            bool Contains = true,
+            bool normalizeSpelling = true,
+            bool AnythingAnywhere = false
+        )
         {
             string x = str;
             string cs = s;
@@ -43,11 +60,12 @@ namespace EtoFE
                 x = x.ToLowerInvariant();
                 cs = cs.ToLowerInvariant();
             }
-            if (normalizeSpelling == true) {
+            if (normalizeSpelling == true)
+            {
                 x = x.NormalizeSpelling();
                 cs = cs.NormalizeSpelling();
             }
-            if(AnythingAnywhere == true)
+            if (AnythingAnywhere == true)
             {
                 return cs.Split(" ").All(seg => x.Contains(seg));
             }
@@ -55,27 +73,53 @@ namespace EtoFE
             {
                 return x.Contains(cs);
             }
-            else return x.StartsWith(cs);
+            else
+                return x.StartsWith(cs);
         }
     }
-    public class SearchDialog: Dialog
+
+    public class SearchDialog : Dialog
     {
         public string[] Selected = null;
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
         public List<string[]> OutputList = new List<string[]>() { };
-        
-        public SearchDialog(List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC, List<(string, TextAlignment, bool)> HeaderEntries)
+
+        public SearchDialog(
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
+            List<(string, TextAlignment, bool)> HeaderEntries
+        )
         {
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
-            OptimizedCatalogue = SC.Select(e => (e.Item1.ToList().Concat(new List<string>{String.Join(",", e.Item1)}).ToArray(), e.Item2, e.Item3)).ToArray();
+            OptimizedCatalogue = SC.Select(e =>
+                    (
+                        e.Item1.ToList()
+                            .Concat(new List<string> { String.Join(",", e.Item1) })
+                            .ToArray(),
+                        e.Item2,
+                        e.Item3
+                    )
+                )
+                .ToArray();
             TableLayout TL = new TableLayout();
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             GridView Results = new GridView();
-            RadioButtonList RBLSearchCriteria = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical, Padding = 5};
-            RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList() {Orientation = Eto.Forms.Orientation.Vertical, Padding = 5 };
-            RadioButtonList RBLSearchPosition = new RadioButtonList() { Orientation = Eto.Forms.Orientation.Vertical , Padding = 5 };
+            RadioButtonList RBLSearchCriteria = new RadioButtonList()
+            {
+                Orientation = Eto.Forms.Orientation.Vertical,
+                Padding = 5,
+            };
+            RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
+            {
+                Orientation = Eto.Forms.Orientation.Vertical,
+                Padding = 5,
+            };
+            RadioButtonList RBLSearchPosition = new RadioButtonList()
+            {
+                Orientation = Eto.Forms.Orientation.Vertical,
+                Padding = 5,
+            };
             RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
             RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
             RBLSearchPosition.Items.Add("Contains [F3]");
@@ -88,26 +132,43 @@ namespace EtoFE
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
 
-            CBNormalizeSpelling.CheckedChanged += (e, a) => {
+            CBNormalizeSpelling.CheckedChanged += (e, a) =>
+            {
                 NormalizeSpelling = CBNormalizeSpelling.Checked ?? false;
             };
-            CBAnythingAnywhere.CheckedChanged += (e, a) => {
+            CBAnythingAnywhere.CheckedChanged += (e, a) =>
+            {
                 AnythingAnywhere = CBAnythingAnywhere.Checked ?? false;
             };
 
-
             GroupBox SearchCriteria = new() { Text = "Search in...", Content = RBLSearchCriteria };
-            GroupBox SearchCaseSensitivity = new() { Text = "Case sensitivity setting", Content = RBLSearchCaseSensitivity };
-            GroupBox SearchCasePosition = new() { Text = "Search Position", Content = RBLSearchPosition };
-            GroupBox SearchSpellingNormalization = new() { Text = "Advanced...", Content = new StackLayout( CBNormalizeSpelling, CBAnythingAnywhere){ Orientation = Eto.Forms.Orientation.Vertical } };
+            GroupBox SearchCaseSensitivity = new()
+            {
+                Text = "Case sensitivity setting",
+                Content = RBLSearchCaseSensitivity,
+            };
+            GroupBox SearchCasePosition = new()
+            {
+                Text = "Search Position",
+                Content = RBLSearchPosition,
+            };
+            GroupBox SearchSpellingNormalization = new()
+            {
+                Text = "Advanced...",
+                Content = new StackLayout(CBNormalizeSpelling, CBAnythingAnywhere)
+                {
+                    Orientation = Eto.Forms.Orientation.Vertical,
+                },
+            };
 
             StackLayout SearchOptions = new StackLayout()
             {
-                Items = {
+                Items =
+                {
                     SearchCaseSensitivity,
                     SearchCasePosition,
                     SearchCriteria,
-                    SearchSpellingNormalization
+                    SearchSpellingNormalization,
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -118,28 +179,32 @@ namespace EtoFE
             Button ExportAllAsCsv = new Button() { Text = "Export Everything..." };
             Button ExportShownAsCsv = new Button() { Text = "Export Displayed..." };
 
-            StackLayout ExportOptions = new StackLayout() { 
+            StackLayout ExportOptions = new StackLayout()
+            {
                 Items = { ExportAllAsCsv, ExportAllResultsAsCsv, ExportShownAsCsv },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Padding = 5
+                Padding = 5,
             };
 
             GroupBox GBExportOptions = new GroupBox()
             {
                 Text = "Export options...",
-                Content = ExportOptions
+                Content = ExportOptions,
             };
 
             int SelectedSearchIndex = SC[0].Item1.Length;
-            RBLSearchCriteria.SelectedIndexChanged += (e, a) => {
+            RBLSearchCriteria.SelectedIndexChanged += (e, a) =>
+            {
                 SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
                 //MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
             };
-            RBLSearchCaseSensitivity.SelectedIndexChanged += (e, a) => {
+            RBLSearchCaseSensitivity.SelectedIndexChanged += (e, a) =>
+            {
                 SearchCaseSensitive = RBLSearchCaseSensitivity.SelectedIndex == 1;
             };
-            RBLSearchPosition.SelectedIndexChanged += (e, a) => {
+            RBLSearchPosition.SelectedIndexChanged += (e, a) =>
+            {
                 SearchContains = RBLSearchPosition.SelectedIndex == 0;
             };
             TextAlignment[] Alignments = new TextAlignment[HeaderEntries.Count];
@@ -149,20 +214,31 @@ namespace EtoFE
             int SortBy = 0;
             foreach (var Header in HeaderEntries)
             {
-                var HI = new GridColumn { HeaderText = Header.Item1, DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 }, HeaderTextAlignment = Header.Item2, Sortable = true, MinWidth = 40 };
-                
+                var HI = new GridColumn
+                {
+                    HeaderText = Header.Item1,
+                    DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 },
+                    HeaderTextAlignment = Header.Item2,
+                    Sortable = true,
+                    MinWidth = 40,
+                };
+
                 Results.Columns.Add(HI);
-                
+
                 ic++;
                 fnKey = 4 + ic;
                 RBLSearchCriteria.Items.Add(Header.Item1 + $" [F{fnKey}]");
             }
-            
+
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
             Results.Size = new Size(600, 700);
-            (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            Results.CellFormatting += (e, a) => {
+            (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
+                Eto.Drawing.Color?,
+                Eto.Drawing.Color?
+            )>();
+            Results.CellFormatting += (e, a) =>
+            {
                 //Colour the column first
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
@@ -176,16 +252,28 @@ namespace EtoFE
                     a.ForegroundColor = Eto.Drawing.Colors.Black;
                 }
                 //Use color matrix now!
-                if (ColorMat != null && Results.DataStore != null && Results.DataStore.Count() <= ColorMat.Length) {
-                    if (ColorMat[a.Row].Item1 != null) a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
-                    if (ColorMat[a.Row].Item2 != null) a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
-                };
+                if (
+                    ColorMat != null
+                    && Results.DataStore != null
+                    && Results.DataStore.Count() <= ColorMat.Length
+                )
+                {
+                    if (ColorMat[a.Row].Item1 != null)
+                        a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
+                    if (ColorMat[a.Row].Item2 != null)
+                        a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
+                }
+                ;
                 //Override everything with the currently sorted column
-                if(a.Column.DisplayIndex == SortBy)
+                if (a.Column.DisplayIndex == SortBy)
                 {
                     a.Column.AutoSize = true;
-                    a.BackgroundColor = ReverseSort? Eto.Drawing.Colors.LightGoldenrodYellow: Eto.Drawing.Colors.BlueViolet;
-                    a.ForegroundColor = ReverseSort?Eto.Drawing.Colors.BlueViolet:Eto.Drawing.Colors.LightGoldenrodYellow;
+                    a.BackgroundColor = ReverseSort
+                        ? Eto.Drawing.Colors.LightGoldenrodYellow
+                        : Eto.Drawing.Colors.BlueViolet;
+                    a.ForegroundColor = ReverseSort
+                        ? Eto.Drawing.Colors.BlueViolet
+                        : Eto.Drawing.Colors.LightGoldenrodYellow;
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
                 if (a.Row == Results.SelectedRow)
@@ -195,28 +283,27 @@ namespace EtoFE
                     a.ForegroundColor = Eto.Drawing.Colors.LightCoral;
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
-
-
             };
-            
-            
-           
 
-            RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey+1}]");
+            RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
             TextBox SearchBox = new TextBox();
             MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredUnlim = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp = new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredUnlim =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+
             MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
             TL.Padding = 10;
             TL.Spacing = new Eto.Drawing.Size(10, 10);
             int FilteredCount = 0;
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.Both;
-            var UpdateView = () => {
+            var UpdateView = () =>
+            {
                 Filtered = FilteredTemp;
                 var ColorMatTemp = new List<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
                 List<GridItem> GI = new List<GridItem>();
@@ -231,12 +318,12 @@ namespace EtoFE
                 Results.DataStore = GI;
                 Results.Invalidate(true);
                 Results.UpdateLayout();
-                
+
                 this.Invalidate();
                 this.Title = $"Found {FilteredCount} ";
-                
             };
-            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) => {
+            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) =>
+            {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
                 OutputList = Filtered.Select(a => a.Item1).ToList();
@@ -252,11 +339,15 @@ namespace EtoFE
                 }
                 else
                 {
-                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                    MessageBox.Show(
+                        "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
+                        "Error",
+                        MessageBoxType.Warning
+                    );
                 }
-
             };
-            var SendSelectedWithoutDefaults = () => {
+            var SendSelectedWithoutDefaults = () =>
+            {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
                 OutputList = Filtered.Select(a => a.Item1).ToList();
@@ -272,11 +363,14 @@ namespace EtoFE
                 }
                 else
                 {
-                    MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                    MessageBox.Show(
+                        "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
+                        "Error",
+                        MessageBoxType.Warning
+                    );
                 }
 
                 return;
-
             };
             Results.MouseDoubleClick += SendSelected;
 
@@ -294,42 +388,115 @@ namespace EtoFE
                     bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
                     //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
                     searching = true;
-                    (new Thread(() =>
-                    {
-                        if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
+                    (
+                        new Thread(() =>
                         {
-                            //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
-                            var FilteredBeforeCountingAndSorting = OptimizedCatalogue.AsParallel().Where((x) => x.Item1.Last().FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
-                            var FilteredBeforeCounting = ReverseSort?
-                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])): FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])):
-                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
-                            FilteredUnlim = FilteredBeforeCountingAndSorting;
-                            FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                            FilteredCount = FilteredBeforeCounting.Count();
-                        }
-                        else
-                        {
-                            var FilteredBeforeCountingAndSorting = SC.AsParallel().Where((x) => x.Item1[SelectedSearchIndex].FilterAccordingly(searchString, !SearchCaseSensitiveSetting, SearchContainsSetting, SearchNormalizeSpelling, SearchAnythingAnywhere)).AsSequential();
-                            var FilteredBeforeCounting = ReverseSort ? 
-                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderByDescending(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderByDescending(x => x.Item1[SearchSortBy])) :
-                            (SortingIsNumeric ? FilteredBeforeCountingAndSorting.OrderBy(x => long.Parse(x.Item1[SearchSortBy])) : FilteredBeforeCountingAndSorting.OrderBy(x => x.Item1[SearchSortBy]));
-                            FilteredUnlim = FilteredBeforeCountingAndSorting;
-                            FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                            FilteredCount = FilteredBeforeCounting.Count();
-                        }
-                        
-                        searching = false;
-                        Application.Instance.Invoke(UpdateView);
-                    })).Start();
-                    
+                            if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
+                            {
+                                //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
+                                var FilteredBeforeCountingAndSorting = OptimizedCatalogue
+                                    .AsParallel()
+                                    .Where(
+                                        (x) =>
+                                            x
+                                                .Item1.Last()
+                                                .FilterAccordingly(
+                                                    searchString,
+                                                    !SearchCaseSensitiveSetting,
+                                                    SearchContainsSetting,
+                                                    SearchNormalizeSpelling,
+                                                    SearchAnythingAnywhere
+                                                )
+                                    )
+                                    .AsSequential();
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy]
+                                            )
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy]
+                                            )
+                                    );
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+                            else
+                            {
+                                var FilteredBeforeCountingAndSorting = SC.AsParallel()
+                                    .Where(
+                                        (x) =>
+                                            x.Item1[SelectedSearchIndex]
+                                                .FilterAccordingly(
+                                                    searchString,
+                                                    !SearchCaseSensitiveSetting,
+                                                    SearchContainsSetting,
+                                                    SearchNormalizeSpelling,
+                                                    SearchAnythingAnywhere
+                                                )
+                                    )
+                                    .AsSequential();
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy]
+                                            )
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy]
+                                            )
+                                    );
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+
+                            searching = false;
+                            Application.Instance.Invoke(UpdateView);
+                        })
+                    ).Start();
                 }
-                
             };
-            var ResultsContainer = new StackLayout() { Items = {Results}, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
-            var OthersContainer = new StackLayout() { Items = { SearchOptions, GBExportOptions }, Orientation = Eto.Forms.Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+            var ResultsContainer = new StackLayout()
+            {
+                Items = { Results },
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                VerticalContentAlignment = VerticalAlignment.Stretch,
+            };
+            var OthersContainer = new StackLayout()
+            {
+                Items = { SearchOptions, GBExportOptions },
+                Orientation = Eto.Forms.Orientation.Vertical,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            };
             TL.Rows.Add(new TableRow(SearchBox));
             TL.Rows.Add(new TableRow(LabelResults));
-            TL.Rows.Add(new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, OthersContainer) { ScaleHeight = true });
+            TL.Rows.Add(
+                new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, OthersContainer)
+                {
+                    ScaleHeight = true,
+                }
+            );
             Content = TL;
             RBLSearchCriteria.SelectedIndex = RBLSearchCriteria.Items.Count - 1;
             RBLSearchCaseSensitivity.SelectedIndex = 0;
@@ -337,21 +504,49 @@ namespace EtoFE
             Title = "Search...";
             Resizable = true;
             Maximizable = true;
-            Results.ColumnHeaderClick += (e, a) => {
+            Results.ColumnHeaderClick += (e, a) =>
+            {
                 //MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
-                if (SortBy == a.Column.DisplayIndex) ReverseSort = !ReverseSort;
+                if (SortBy == a.Column.DisplayIndex)
+                    ReverseSort = !ReverseSort;
                 SortBy = a.Column.DisplayIndex;
                 Search();
             };
             SearchBox.TextChanged += (_, _) => Search();
-            SearchBox.KeyDown += (_, e) => { if (e.Key == Keys.Down) { Results.Focus(); } };
-            SearchBox.DisableTextBoxDownArrow(() => { if(Results.DataStore.Count() > Results.SelectedRow + 1) Results.SelectedRow++; });
-            
-            this.SizeChanged += (_, _) => { if (this.Height > 200) { Results.Height = (int)Math.Floor(this.Height * 0.85); } };
-            var WriteCsv = (List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries, List<(string, TextAlignment, bool)> Headers, string FileName) => {
+            SearchBox.KeyDown += (_, e) =>
+            {
+                if (e.Key == Keys.Down)
+                {
+                    Results.Focus();
+                }
+            };
+            SearchBox.DisableTextBoxDownArrow(() =>
+            {
+                if (Results.DataStore.Count() > Results.SelectedRow + 1)
+                    Results.SelectedRow++;
+            });
+
+            this.SizeChanged += (_, _) =>
+            {
+                if (this.Height > 200)
+                {
+                    Results.Height = (int)Math.Floor(this.Height * 0.85);
+                }
+            };
+            var WriteCsv = (
+                List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries,
+                List<(string, TextAlignment, bool)> Headers,
+                string FileName
+            ) =>
+            {
                 using (StreamWriter SW = new StreamWriter(FileName))
                 {
-                    using (CsvWriter CSW = new CsvWriter(SW, System.Globalization.CultureInfo.InvariantCulture))
+                    using (
+                        CsvWriter CSW = new CsvWriter(
+                            SW,
+                            System.Globalization.CultureInfo.InvariantCulture
+                        )
+                    )
                     {
                         var HeaderLabels = (HeaderEntries.Select(x => x.Item1).ToArray());
                         foreach (var HeaderLabel in HeaderLabels)
@@ -371,27 +566,36 @@ namespace EtoFE
                     }
                 }
             };
-            ExportAllAsCsv.Click += (_, _) => {
+            ExportAllAsCsv.Click += (_, _) =>
+            {
                 var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.Filters.Add(
+                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
+                );
                 SFD.ShowDialog(Application.Instance.MainForm);
-                if(SFD.FileName != null)
+                if (SFD.FileName != null)
                 {
                     WriteCsv(SC, HeaderEntries, SFD.FileName);
                 }
             };
-            ExportAllResultsAsCsv.Click += (_, _) => {
+            ExportAllResultsAsCsv.Click += (_, _) =>
+            {
                 var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.Filters.Add(
+                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
+                );
                 SFD.ShowDialog(Application.Instance.MainForm);
                 if (SFD.FileName != null)
                 {
                     WriteCsv(FilteredUnlim.ToList(), HeaderEntries, SFD.FileName);
                 }
             };
-            ExportShownAsCsv.Click += (_, _) => {
+            ExportShownAsCsv.Click += (_, _) =>
+            {
                 var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" });
+                SFD.Filters.Add(
+                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
+                );
                 SFD.ShowDialog(Application.Instance.MainForm);
                 if (SFD.FileName != null)
                 {
@@ -399,7 +603,8 @@ namespace EtoFE
                 }
             };
             Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);
-            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) => {
+            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) =>
+            {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
                 KeyEventArgs a = (KeyEventArgs)ea;
@@ -463,12 +668,17 @@ namespace EtoFE
                             else if (Results.DataStore != null && Results.DataStore.Count() != 0)
                             {
                                 this.OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                                this.Selected = (string[])
+                                    ((GridItem)Results.DataStore.First()).Values;
                                 this.Close();
                             }
                             else
                             {
-                                MessageBox.Show("Nothing displayed, nothing selected; [Esc] to exit the search dialog", "Error", MessageBoxType.Warning);
+                                MessageBox.Show(
+                                    "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
+                                    "Error",
+                                    MessageBoxType.Warning
+                                );
                             }
                         }
 
@@ -483,7 +693,6 @@ namespace EtoFE
             };
 
             this.KeyDown += ProcessKeyDown;
-
         }
     }
 }
