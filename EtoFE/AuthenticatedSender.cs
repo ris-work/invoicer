@@ -88,7 +88,7 @@ namespace EtoFE
             var LU = new Label() { Text = "Username" };
             var LP = new Label() { Text = "Password" };
             var TU = new TextBox();
-            var TP = new TextBox();
+            var TP = new PasswordBox();
             var TEndpoint = new TextArea()
             {
                 ReadOnly = true,
@@ -102,8 +102,8 @@ namespace EtoFE
             var ElevatedLoginButton = new Button() { Text = "⬆ Elevated Login" };
             var LoginButton = new Button() { Text = "📩 Login" };
             var CancelButton = new Button() { Text = "✖ Cancel" };
-            TableRow U = new TableRow(LU, TU) { };
-            TableRow P = new TableRow(LP, TP) { };
+            TableRow U = new TableRow(LU, null, TU) { };
+            TableRow P = new TableRow(LP, null, TP) { };
             StackLayout RequestInfo = new StackLayout(TEndpoint, TRequest)
             {
                 Orientation = Orientation.Vertical,

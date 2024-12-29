@@ -165,6 +165,8 @@ namespace EtoFE
             {
                 SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
                 SD.ShowModal();
+                
+                if (SD.Selected == null) return;
                 Barcode.Text = SD.Selected[0];
                 MessageBox.Show(String.Concat(SD.Selected), "Selected", MessageBoxType.Information);
                 long SelectedItemcode = long.Parse(SD.Selected[0]);
