@@ -2,14 +2,15 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.3
--- Dumped by pg_dump version 16.3
+-- Dumped from database version 17.2
+-- Dumped by pg_dump version 17.2
 
--- Started on 2024-12-23 15:35:17
+-- Started on 2025-01-27 01:15:48
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -19,18 +20,16 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 6 (class 2615 OID 51288)
--- Name: imported_dummy; Type: SCHEMA; Schema: -; Owner: rishi
+-- TOC entry 5 (class 2615 OID 16782)
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA imported_dummy;
+CREATE SCHEMA public;
 
-
-ALTER SCHEMA imported_dummy OWNER TO rishi;
 
 --
--- TOC entry 249 (class 1255 OID 59536)
--- Name: accounts_balances_version_force(); Type: FUNCTION; Schema: public; Owner: postgres
+-- TOC entry 268 (class 1255 OID 16784)
+-- Name: accounts_balances_version_force(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.accounts_balances_version_force() RETURNS trigger
@@ -68,11 +67,9 @@ END;
 $$;
 
 
-ALTER FUNCTION public.accounts_balances_version_force() OWNER TO postgres;
-
 --
--- TOC entry 250 (class 1255 OID 59537)
--- Name: no_deletes(); Type: FUNCTION; Schema: public; Owner: postgres
+-- TOC entry 269 (class 1255 OID 16785)
+-- Name: no_deletes(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.no_deletes() RETURNS trigger
@@ -86,47 +83,9 @@ END;
 $$;
 
 
-ALTER FUNCTION public.no_deletes() OWNER TO postgres;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
 --
--- TOC entry 236 (class 1259 OID 51299)
--- Name: sih; Type: TABLE; Schema: imported_dummy; Owner: rishi
---
-
-CREATE TABLE imported_dummy.sih (
-    itemcode bigint NOT NULL,
-    "desc" text NOT NULL,
-    sih real NOT NULL,
-    cost real NOT NULL,
-    sell real NOT NULL
-);
-
-
-ALTER TABLE imported_dummy.sih OWNER TO rishi;
-
---
--- TOC entry 235 (class 1259 OID 51289)
--- Name: sih_current; Type: TABLE; Schema: imported_dummy; Owner: rishi
---
-
-CREATE TABLE imported_dummy.sih_current (
-    itemcode integer NOT NULL,
-    "desc" text,
-    sih real,
-    cost real,
-    sell real
-);
-
-
-ALTER TABLE imported_dummy.sih_current OWNER TO rishi;
-
---
--- TOC entry 242 (class 1259 OID 59497)
--- Name: accounts_balances; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 220 (class 1259 OID 16796)
+-- Name: accounts_balances; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.accounts_balances (
@@ -134,24 +93,23 @@ CREATE TABLE public.accounts_balances (
     account_no bigint NOT NULL,
     amount double precision NOT NULL,
     time_tai timestamp with time zone DEFAULT now() NOT NULL,
-    time_as_entered timestamp with time zone DEFAULT now() NOT NULL
+    time_as_entered timestamp with time zone DEFAULT now() NOT NULL,
+    done_with boolean DEFAULT false NOT NULL
 );
 
 
-ALTER TABLE public.accounts_balances OWNER TO postgres;
-
 --
--- TOC entry 4969 (class 0 OID 0)
--- Dependencies: 242
--- Name: TABLE accounts_balances; Type: COMMENT; Schema: public; Owner: postgres
+-- TOC entry 4999 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: TABLE accounts_balances; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.accounts_balances IS 'Positive is debit';
 
 
 --
--- TOC entry 237 (class 1259 OID 59471)
--- Name: accounts_information; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 221 (class 1259 OID 16801)
+-- Name: accounts_information; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.accounts_information (
@@ -161,15 +119,14 @@ CREATE TABLE public.accounts_information (
     account_pii bigint,
     account_i18n_label bigint,
     account_min double precision DEFAULT '-1000000000'::integer NOT NULL,
-    account_max double precision DEFAULT 1000000000 NOT NULL
+    account_max double precision DEFAULT 1000000000 NOT NULL,
+    human_friendly_id text
 );
 
 
-ALTER TABLE public.accounts_information OWNER TO postgres;
-
 --
--- TOC entry 239 (class 1259 OID 59479)
--- Name: accounts_journal_entries; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 222 (class 1259 OID 16808)
+-- Name: accounts_journal_entries; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.accounts_journal_entries (
@@ -183,15 +140,14 @@ CREATE TABLE public.accounts_journal_entries (
     credit_account_no bigint NOT NULL,
     description text,
     time_tai timestamp with time zone DEFAULT now() NOT NULL,
-    time_as_entered timestamp with time zone NOT NULL
+    time_as_entered timestamp with time zone NOT NULL,
+    ref text
 );
 
 
-ALTER TABLE public.accounts_journal_entries OWNER TO postgres;
-
 --
--- TOC entry 238 (class 1259 OID 59478)
--- Name: accounts_journal_entries_journal_univ_seq_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- TOC entry 223 (class 1259 OID 16814)
+-- Name: accounts_journal_entries_journal_univ_seq_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq
@@ -202,20 +158,18 @@ CREATE SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq OWNER TO postgres;
-
 --
--- TOC entry 4971 (class 0 OID 0)
--- Dependencies: 238
--- Name: accounts_journal_entries_journal_univ_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- TOC entry 5000 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: accounts_journal_entries_journal_univ_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.accounts_journal_entries_journal_univ_seq_seq OWNED BY public.accounts_journal_entries.journal_univ_seq;
 
 
 --
--- TOC entry 241 (class 1259 OID 59488)
--- Name: accounts_journal_information; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 224 (class 1259 OID 16815)
+-- Name: accounts_journal_information; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.accounts_journal_information (
@@ -225,11 +179,9 @@ CREATE TABLE public.accounts_journal_information (
 );
 
 
-ALTER TABLE public.accounts_journal_information OWNER TO postgres;
-
 --
--- TOC entry 240 (class 1259 OID 59487)
--- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- TOC entry 225 (class 1259 OID 16820)
+-- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.accounts_journal_information_journal_id_seq
@@ -240,20 +192,18 @@ CREATE SEQUENCE public.accounts_journal_information_journal_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.accounts_journal_information_journal_id_seq OWNER TO postgres;
-
 --
--- TOC entry 4972 (class 0 OID 0)
--- Dependencies: 240
--- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- TOC entry 5001 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.accounts_journal_information_journal_id_seq OWNED BY public.accounts_journal_information.journal_id;
 
 
 --
--- TOC entry 243 (class 1259 OID 59501)
--- Name: accounts_types; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 226 (class 1259 OID 16821)
+-- Name: accounts_types; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.accounts_types (
@@ -263,20 +213,18 @@ CREATE TABLE public.accounts_types (
 );
 
 
-ALTER TABLE public.accounts_types OWNER TO postgres;
-
 --
--- TOC entry 4973 (class 0 OID 0)
--- Dependencies: 243
--- Name: TABLE accounts_types; Type: COMMENT; Schema: public; Owner: postgres
+-- TOC entry 5002 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: TABLE accounts_types; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.accounts_types IS 'Always these four _real_ accounts';
 
 
 --
--- TOC entry 221 (class 1259 OID 26614)
--- Name: api_authorization; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 227 (class 1259 OID 16826)
+-- Name: api_authorization; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.api_authorization (
@@ -286,11 +234,9 @@ CREATE TABLE public.api_authorization (
 );
 
 
-ALTER TABLE public.api_authorization OWNER TO rishi;
-
 --
--- TOC entry 220 (class 1259 OID 26609)
--- Name: authorized_terminals; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 228 (class 1259 OID 16831)
+-- Name: authorized_terminals; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.authorized_terminals (
@@ -299,11 +245,9 @@ CREATE TABLE public.authorized_terminals (
 );
 
 
-ALTER TABLE public.authorized_terminals OWNER TO rishi;
-
 --
--- TOC entry 219 (class 1259 OID 26608)
--- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 229 (class 1259 OID 16834)
+-- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.authorized_terminals_terminalid_seq
@@ -314,20 +258,18 @@ CREATE SEQUENCE public.authorized_terminals_terminalid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.authorized_terminals_terminalid_seq OWNER TO rishi;
-
 --
--- TOC entry 4974 (class 0 OID 0)
--- Dependencies: 219
--- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5003 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.authorized_terminals_terminalid_seq OWNED BY public.authorized_terminals.terminalid;
 
 
 --
--- TOC entry 218 (class 1259 OID 26607)
--- Name: authorized_terminals_userid_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 230 (class 1259 OID 16835)
+-- Name: authorized_terminals_userid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.authorized_terminals_userid_seq
@@ -338,20 +280,18 @@ CREATE SEQUENCE public.authorized_terminals_userid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.authorized_terminals_userid_seq OWNER TO rishi;
-
 --
--- TOC entry 4975 (class 0 OID 0)
--- Dependencies: 218
--- Name: authorized_terminals_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5004 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: authorized_terminals_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.authorized_terminals_userid_seq OWNED BY public.authorized_terminals.userid;
 
 
 --
--- TOC entry 230 (class 1259 OID 34879)
--- Name: catalogue; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 231 (class 1259 OID 16836)
+-- Name: catalogue; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.catalogue (
@@ -370,18 +310,13 @@ CREATE TABLE public.catalogue (
     active_web boolean DEFAULT false NOT NULL,
     expiry_tracking_enabled boolean DEFAULT false NOT NULL,
     permissions_category bigint DEFAULT 0 NOT NULL,
-    categories_bitmask bigint DEFAULT 1 NOT NULL,
-    white_hole boolean DEFAULT false NOT NULL,
-    black_hole boolean DEFAULT false NOT NULL,
-    never_discounted boolean DEFAULT false NOT NULL
+    categories_bitmask bigint DEFAULT 1 NOT NULL
 );
 
 
-ALTER TABLE public.catalogue OWNER TO rishi;
-
 --
--- TOC entry 229 (class 1259 OID 34878)
--- Name: catalogue_itemcode_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 232 (class 1259 OID 16853)
+-- Name: catalogue_itemcode_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.catalogue_itemcode_seq
@@ -392,20 +327,18 @@ CREATE SEQUENCE public.catalogue_itemcode_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.catalogue_itemcode_seq OWNER TO rishi;
-
 --
--- TOC entry 4976 (class 0 OID 0)
--- Dependencies: 229
--- Name: catalogue_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5005 (class 0 OID 0)
+-- Dependencies: 232
+-- Name: catalogue_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.catalogue_itemcode_seq OWNED BY public.catalogue.itemcode;
 
 
 --
--- TOC entry 248 (class 1259 OID 59568)
--- Name: categories_bitmask; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 233 (class 1259 OID 16854)
+-- Name: categories_bitmask; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.categories_bitmask (
@@ -415,11 +348,9 @@ CREATE TABLE public.categories_bitmask (
 );
 
 
-ALTER TABLE public.categories_bitmask OWNER TO postgres;
-
 --
--- TOC entry 217 (class 1259 OID 26599)
--- Name: credentials; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 234 (class 1259 OID 16859)
+-- Name: credentials; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.credentials (
@@ -434,11 +365,9 @@ CREATE TABLE public.credentials (
 );
 
 
-ALTER TABLE public.credentials OWNER TO rishi;
-
 --
--- TOC entry 216 (class 1259 OID 26598)
--- Name: credentials_userid_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 235 (class 1259 OID 16866)
+-- Name: credentials_userid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.credentials_userid_seq
@@ -449,20 +378,18 @@ CREATE SEQUENCE public.credentials_userid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.credentials_userid_seq OWNER TO rishi;
-
 --
--- TOC entry 4977 (class 0 OID 0)
--- Dependencies: 216
--- Name: credentials_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5006 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: credentials_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.credentials_userid_seq OWNED BY public.credentials.userid;
 
 
 --
--- TOC entry 231 (class 1259 OID 34890)
--- Name: descriptions_other_languages; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 236 (class 1259 OID 16867)
+-- Name: descriptions_other_languages; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.descriptions_other_languages (
@@ -474,11 +401,9 @@ CREATE TABLE public.descriptions_other_languages (
 );
 
 
-ALTER TABLE public.descriptions_other_languages OWNER TO rishi;
-
 --
--- TOC entry 228 (class 1259 OID 34864)
--- Name: inventory; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 237 (class 1259 OID 16872)
+-- Name: inventory; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.inventory (
@@ -499,20 +424,18 @@ CREATE TABLE public.inventory (
 );
 
 
-ALTER TABLE public.inventory OWNER TO rishi;
-
 --
--- TOC entry 4978 (class 0 OID 0)
--- Dependencies: 228
--- Name: TABLE inventory; Type: COMMENT; Schema: public; Owner: rishi
+-- TOC entry 5007 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: TABLE inventory; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.inventory IS 'Internal inventory management functions';
 
 
 --
--- TOC entry 227 (class 1259 OID 34863)
--- Name: inventory_itemcode_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 238 (class 1259 OID 16885)
+-- Name: inventory_itemcode_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.inventory_itemcode_seq
@@ -523,20 +446,125 @@ CREATE SEQUENCE public.inventory_itemcode_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.inventory_itemcode_seq OWNER TO rishi;
-
 --
--- TOC entry 4979 (class 0 OID 0)
--- Dependencies: 227
--- Name: inventory_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5008 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: inventory_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.inventory_itemcode_seq OWNED BY public.inventory.itemcode;
 
 
 --
--- TOC entry 244 (class 1259 OID 59539)
--- Name: permissions_list; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 256 (class 1259 OID 17013)
+-- Name: notification_servicer_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification_servicer_types (
+    notification_servicer_type_id bigint NOT NULL,
+    notification_servicer_name text
+);
+
+
+--
+-- TOC entry 255 (class 1259 OID 17012)
+-- Name: notification_servicer_types_notification_servicer_type_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notification_servicer_types_notification_servicer_type_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- TOC entry 5009 (class 0 OID 0)
+-- Dependencies: 255
+-- Name: notification_servicer_types_notification_servicer_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notification_servicer_types_notification_servicer_type_id_seq OWNED BY public.notification_servicer_types.notification_servicer_type_id;
+
+
+--
+-- TOC entry 254 (class 1259 OID 17003)
+-- Name: notification_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification_types (
+    notification_type_id bigint NOT NULL,
+    notification_type_name text NOT NULL,
+    notification_servicer_type integer NOT NULL,
+    notification_service text NOT NULL,
+    notification_service_other_args text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- TOC entry 253 (class 1259 OID 17002)
+-- Name: notification_types_notification_type_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notification_types_notification_type_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- TOC entry 5010 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: notification_types_notification_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notification_types_notification_type_id_seq OWNED BY public.notification_types.notification_type_id;
+
+
+--
+-- TOC entry 252 (class 1259 OID 16991)
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    notif_id bigint NOT NULL,
+    notif_type text DEFAULT 'INTERNAL'::text NOT NULL,
+    notif_other_status text NOT NULL,
+    notif_is_done boolean DEFAULT false NOT NULL,
+    notif_target text NOT NULL,
+    time_tai timestamp with time zone NOT NULL,
+    time_expires_tai timestamp with time zone
+);
+
+
+--
+-- TOC entry 251 (class 1259 OID 16990)
+-- Name: notifications_notif_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notifications_notif_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- TOC entry 5011 (class 0 OID 0)
+-- Dependencies: 251
+-- Name: notifications_notif_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notifications_notif_id_seq OWNED BY public.notifications.notif_id;
+
+
+--
+-- TOC entry 239 (class 1259 OID 16886)
+-- Name: permissions_list; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.permissions_list (
@@ -544,20 +572,18 @@ CREATE TABLE public.permissions_list (
 );
 
 
-ALTER TABLE public.permissions_list OWNER TO postgres;
-
 --
--- TOC entry 4980 (class 0 OID 0)
--- Dependencies: 244
--- Name: TABLE permissions_list; Type: COMMENT; Schema: public; Owner: postgres
+-- TOC entry 5012 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: TABLE permissions_list; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.permissions_list IS 'Comma-separated, no spaces';
 
 
 --
--- TOC entry 246 (class 1259 OID 59555)
--- Name: permissions_list_categories_names; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 240 (class 1259 OID 16891)
+-- Name: permissions_list_categories_names; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.permissions_list_categories_names (
@@ -567,11 +593,9 @@ CREATE TABLE public.permissions_list_categories_names (
 );
 
 
-ALTER TABLE public.permissions_list_categories_names OWNER TO postgres;
-
 --
--- TOC entry 247 (class 1259 OID 59562)
--- Name: permissions_list_users_categories; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 241 (class 1259 OID 16896)
+-- Name: permissions_list_users_categories; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.permissions_list_users_categories (
@@ -580,11 +604,9 @@ CREATE TABLE public.permissions_list_users_categories (
 );
 
 
-ALTER TABLE public.permissions_list_users_categories OWNER TO postgres;
-
 --
--- TOC entry 245 (class 1259 OID 59548)
--- Name: requests; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 242 (class 1259 OID 16900)
+-- Name: requests; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.requests (
@@ -595,11 +617,9 @@ CREATE TABLE public.requests (
 );
 
 
-ALTER TABLE public.requests OWNER TO postgres;
-
 --
--- TOC entry 222 (class 1259 OID 26621)
--- Name: tokens; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 243 (class 1259 OID 16906)
+-- Name: tokens; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.tokens (
@@ -614,11 +634,9 @@ CREATE TABLE public.tokens (
 );
 
 
-ALTER TABLE public.tokens OWNER TO rishi;
-
 --
--- TOC entry 226 (class 1259 OID 34833)
--- Name: user_authorization; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 244 (class 1259 OID 16915)
+-- Name: user_authorization; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_authorization (
@@ -628,12 +646,10 @@ CREATE TABLE public.user_authorization (
 );
 
 
-ALTER TABLE public.user_authorization OWNER TO rishi;
-
 --
--- TOC entry 4984 (class 0 OID 0)
--- Dependencies: 226
--- Name: TABLE user_authorization; Type: COMMENT; Schema: public; Owner: rishi
+-- TOC entry 5013 (class 0 OID 0)
+-- Dependencies: 244
+-- Name: TABLE user_authorization; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.user_authorization IS 'user_cap: Comma-separated
@@ -641,8 +657,8 @@ user_default_cap: Comma-separated';
 
 
 --
--- TOC entry 225 (class 1259 OID 34832)
--- Name: user_authorization_userid_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 245 (class 1259 OID 16921)
+-- Name: user_authorization_userid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.user_authorization_userid_seq
@@ -653,20 +669,18 @@ CREATE SEQUENCE public.user_authorization_userid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.user_authorization_userid_seq OWNER TO rishi;
-
 --
--- TOC entry 4985 (class 0 OID 0)
--- Dependencies: 225
--- Name: user_authorization_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5014 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: user_authorization_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.user_authorization_userid_seq OWNED BY public.user_authorization.userid;
 
 
 --
--- TOC entry 224 (class 1259 OID 26632)
--- Name: users; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 246 (class 1259 OID 16922)
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -678,11 +692,9 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO rishi;
-
 --
--- TOC entry 223 (class 1259 OID 26631)
--- Name: users_userid_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 247 (class 1259 OID 16927)
+-- Name: users_userid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.users_userid_seq
@@ -693,20 +705,18 @@ CREATE SEQUENCE public.users_userid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.users_userid_seq OWNER TO rishi;
-
 --
--- TOC entry 4986 (class 0 OID 0)
--- Dependencies: 223
--- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5015 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.users_userid_seq OWNED BY public.users.userid;
 
 
 --
--- TOC entry 233 (class 1259 OID 43088)
--- Name: vat_categories; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 248 (class 1259 OID 16928)
+-- Name: vat_categories; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.vat_categories (
@@ -717,11 +727,9 @@ CREATE TABLE public.vat_categories (
 );
 
 
-ALTER TABLE public.vat_categories OWNER TO rishi;
-
 --
--- TOC entry 232 (class 1259 OID 43087)
--- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE; Schema: public; Owner: rishi
+-- TOC entry 249 (class 1259 OID 16934)
+-- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.vat_categories_vat_category_id_seq
@@ -732,20 +740,18 @@ CREATE SEQUENCE public.vat_categories_vat_category_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.vat_categories_vat_category_id_seq OWNER TO rishi;
-
 --
--- TOC entry 4987 (class 0 OID 0)
--- Dependencies: 232
--- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rishi
+-- TOC entry 5016 (class 0 OID 0)
+-- Dependencies: 249
+-- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.vat_categories_vat_category_id_seq OWNED BY public.vat_categories.vat_category_id;
 
 
 --
--- TOC entry 234 (class 1259 OID 43099)
--- Name: volume_discounts; Type: TABLE; Schema: public; Owner: rishi
+-- TOC entry 250 (class 1259 OID 16935)
+-- Name: volume_discounts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.volume_discounts (
@@ -755,101 +761,105 @@ CREATE TABLE public.volume_discounts (
 );
 
 
-ALTER TABLE public.volume_discounts OWNER TO rishi;
-
 --
--- TOC entry 4776 (class 2604 OID 59482)
--- Name: accounts_journal_entries journal_univ_seq; Type: DEFAULT; Schema: public; Owner: postgres
+-- TOC entry 4759 (class 2604 OID 16940)
+-- Name: accounts_journal_entries journal_univ_seq; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_journal_entries ALTER COLUMN journal_univ_seq SET DEFAULT nextval('public.accounts_journal_entries_journal_univ_seq_seq'::regclass);
 
 
 --
--- TOC entry 4778 (class 2604 OID 59491)
--- Name: accounts_journal_information journal_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- TOC entry 4761 (class 2604 OID 16941)
+-- Name: accounts_journal_information journal_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_journal_information ALTER COLUMN journal_id SET DEFAULT nextval('public.accounts_journal_information_journal_id_seq'::regclass);
 
 
 --
--- TOC entry 4737 (class 2604 OID 26612)
--- Name: authorized_terminals userid; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4762 (class 2604 OID 16942)
+-- Name: authorized_terminals userid; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.authorized_terminals ALTER COLUMN userid SET DEFAULT nextval('public.authorized_terminals_userid_seq'::regclass);
 
 
 --
--- TOC entry 4754 (class 2604 OID 34882)
--- Name: catalogue itemcode; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4763 (class 2604 OID 16943)
+-- Name: catalogue itemcode; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.catalogue ALTER COLUMN itemcode SET DEFAULT nextval('public.catalogue_itemcode_seq'::regclass);
 
 
 --
--- TOC entry 4734 (class 2604 OID 26602)
--- Name: credentials userid; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4776 (class 2604 OID 16944)
+-- Name: credentials userid; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.credentials ALTER COLUMN userid SET DEFAULT nextval('public.credentials_userid_seq'::regclass);
 
 
 --
--- TOC entry 4745 (class 2604 OID 34867)
--- Name: inventory itemcode; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4779 (class 2604 OID 16945)
+-- Name: inventory itemcode; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.inventory ALTER COLUMN itemcode SET DEFAULT nextval('public.inventory_itemcode_seq'::regclass);
 
 
 --
--- TOC entry 4743 (class 2604 OID 34836)
--- Name: user_authorization userid; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4806 (class 2604 OID 17016)
+-- Name: notification_servicer_types notification_servicer_type_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_servicer_types ALTER COLUMN notification_servicer_type_id SET DEFAULT nextval('public.notification_servicer_types_notification_servicer_type_id_seq'::regclass);
+
+
+--
+-- TOC entry 4804 (class 2604 OID 17006)
+-- Name: notification_types notification_type_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_types ALTER COLUMN notification_type_id SET DEFAULT nextval('public.notification_types_notification_type_id_seq'::regclass);
+
+
+--
+-- TOC entry 4801 (class 2604 OID 16994)
+-- Name: notifications notif_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications ALTER COLUMN notif_id SET DEFAULT nextval('public.notifications_notif_id_seq'::regclass);
+
+
+--
+-- TOC entry 4794 (class 2604 OID 16946)
+-- Name: user_authorization userid; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_authorization ALTER COLUMN userid SET DEFAULT nextval('public.user_authorization_userid_seq'::regclass);
 
 
 --
--- TOC entry 4742 (class 2604 OID 26635)
--- Name: users userid; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4796 (class 2604 OID 16947)
+-- Name: users userid; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN userid SET DEFAULT nextval('public.users_userid_seq'::regclass);
 
 
 --
--- TOC entry 4770 (class 2604 OID 43091)
--- Name: vat_categories vat_category_id; Type: DEFAULT; Schema: public; Owner: rishi
+-- TOC entry 4797 (class 2604 OID 16948)
+-- Name: vat_categories vat_category_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vat_categories ALTER COLUMN vat_category_id SET DEFAULT nextval('public.vat_categories_vat_category_id_seq'::regclass);
 
 
 --
--- TOC entry 4802 (class 2606 OID 51295)
--- Name: sih_current sih_current_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: rishi
---
-
-ALTER TABLE ONLY imported_dummy.sih_current
-    ADD CONSTRAINT sih_current_pkey PRIMARY KEY (itemcode);
-
-
---
--- TOC entry 4804 (class 2606 OID 51305)
--- Name: sih sih_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: rishi
---
-
-ALTER TABLE ONLY imported_dummy.sih
-    ADD CONSTRAINT sih_pkey PRIMARY KEY (itemcode);
-
-
---
--- TOC entry 4806 (class 2606 OID 59477)
--- Name: accounts_information accounts_information_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4808 (class 2606 OID 16954)
+-- Name: accounts_information accounts_information_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_information
@@ -857,8 +867,8 @@ ALTER TABLE ONLY public.accounts_information
 
 
 --
--- TOC entry 4808 (class 2606 OID 59486)
--- Name: accounts_journal_entries accounts_journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4812 (class 2606 OID 16956)
+-- Name: accounts_journal_entries accounts_journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_journal_entries
@@ -866,8 +876,8 @@ ALTER TABLE ONLY public.accounts_journal_entries
 
 
 --
--- TOC entry 4810 (class 2606 OID 59495)
--- Name: accounts_journal_information accounts_journal_information_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4814 (class 2606 OID 16958)
+-- Name: accounts_journal_information accounts_journal_information_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_journal_information
@@ -875,8 +885,8 @@ ALTER TABLE ONLY public.accounts_journal_information
 
 
 --
--- TOC entry 4812 (class 2606 OID 59507)
--- Name: accounts_types accounts_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4816 (class 2606 OID 16960)
+-- Name: accounts_types accounts_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.accounts_types
@@ -884,8 +894,8 @@ ALTER TABLE ONLY public.accounts_types
 
 
 --
--- TOC entry 4788 (class 2606 OID 26620)
--- Name: api_authorization api_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4818 (class 2606 OID 16962)
+-- Name: api_authorization api_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_authorization
@@ -893,8 +903,8 @@ ALTER TABLE ONLY public.api_authorization
 
 
 --
--- TOC entry 4798 (class 2606 OID 34889)
--- Name: catalogue catalogue_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4820 (class 2606 OID 16964)
+-- Name: catalogue catalogue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.catalogue
@@ -902,8 +912,8 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 4820 (class 2606 OID 59574)
--- Name: categories_bitmask categories_bitmask_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4824 (class 2606 OID 16966)
+-- Name: categories_bitmask categories_bitmask_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categories_bitmask
@@ -911,8 +921,8 @@ ALTER TABLE ONLY public.categories_bitmask
 
 
 --
--- TOC entry 4784 (class 2606 OID 26606)
--- Name: credentials credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4826 (class 2606 OID 16968)
+-- Name: credentials credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.credentials
@@ -920,8 +930,17 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 4796 (class 2606 OID 34877)
--- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4810 (class 2606 OID 16989)
+-- Name: accounts_information human_friendly_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.accounts_information
+    ADD CONSTRAINT human_friendly_id UNIQUE (human_friendly_id);
+
+
+--
+-- TOC entry 4830 (class 2606 OID 16970)
+-- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.inventory
@@ -929,8 +948,35 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 4816 (class 2606 OID 59561)
--- Name: permissions_list_categories_names permissions_list_categories_names_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4848 (class 2606 OID 17020)
+-- Name: notification_servicer_types notification_servicer_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_servicer_types
+    ADD CONSTRAINT notification_servicer_types_pkey PRIMARY KEY (notification_servicer_type_id);
+
+
+--
+-- TOC entry 4846 (class 2606 OID 17011)
+-- Name: notification_types notification_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_types
+    ADD CONSTRAINT notification_types_pkey PRIMARY KEY (notification_type_id);
+
+
+--
+-- TOC entry 4844 (class 2606 OID 17000)
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (notif_id);
+
+
+--
+-- TOC entry 4834 (class 2606 OID 16972)
+-- Name: permissions_list_categories_names permissions_list_categories_names_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions_list_categories_names
@@ -938,8 +984,8 @@ ALTER TABLE ONLY public.permissions_list_categories_names
 
 
 --
--- TOC entry 4814 (class 2606 OID 59545)
--- Name: permissions_list permissions_list_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4832 (class 2606 OID 16974)
+-- Name: permissions_list permissions_list_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions_list
@@ -947,8 +993,8 @@ ALTER TABLE ONLY public.permissions_list
 
 
 --
--- TOC entry 4818 (class 2606 OID 59578)
--- Name: permissions_list_users_categories permissions_list_users_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4836 (class 2606 OID 16976)
+-- Name: permissions_list_users_categories permissions_list_users_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.permissions_list_users_categories
@@ -956,8 +1002,8 @@ ALTER TABLE ONLY public.permissions_list_users_categories
 
 
 --
--- TOC entry 4790 (class 2606 OID 34852)
--- Name: tokens tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4838 (class 2606 OID 16978)
+-- Name: tokens tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tokens
@@ -965,8 +1011,8 @@ ALTER TABLE ONLY public.tokens
 
 
 --
--- TOC entry 4800 (class 2606 OID 51298)
--- Name: catalogue unique_desc; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4822 (class 2606 OID 16980)
+-- Name: catalogue unique_desc; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.catalogue
@@ -974,8 +1020,8 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 4794 (class 2606 OID 59567)
--- Name: user_authorization user_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4840 (class 2606 OID 16982)
+-- Name: user_authorization user_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_authorization
@@ -983,8 +1029,8 @@ ALTER TABLE ONLY public.user_authorization
 
 
 --
--- TOC entry 4786 (class 2606 OID 34910)
--- Name: credentials username_unique; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4828 (class 2606 OID 16984)
+-- Name: credentials username_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.credentials
@@ -992,51 +1038,15 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 4792 (class 2606 OID 26639)
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: rishi
+-- TOC entry 4842 (class 2606 OID 16986)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
 
 
---
--- TOC entry 4970 (class 0 OID 0)
--- Dependencies: 242
--- Name: TABLE accounts_balances; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.accounts_balances TO rishi;
-
-
---
--- TOC entry 4981 (class 0 OID 0)
--- Dependencies: 244
--- Name: TABLE permissions_list; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.permissions_list TO rishi;
-
-
---
--- TOC entry 4982 (class 0 OID 0)
--- Dependencies: 246
--- Name: TABLE permissions_list_categories_names; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.permissions_list_categories_names TO rishi;
-
-
---
--- TOC entry 4983 (class 0 OID 0)
--- Dependencies: 247
--- Name: TABLE permissions_list_users_categories; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.permissions_list_users_categories TO rishi;
-
-
--- Completed on 2024-12-23 15:35:17
+-- Completed on 2025-01-27 01:15:48
 
 --
 -- PostgreSQL database dump complete

@@ -17,4 +17,6 @@ public partial class AccountsBalance
     public DateTime TimeTai { get; set; }
 
     public DateTime TimeAsEntered { get; set; }
+
+    public bool DoneWith { get; set; }
 }
