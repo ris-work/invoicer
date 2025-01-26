@@ -84,6 +84,9 @@ namespace EtoFE
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
         public List<string[]> OutputList = new List<string[]>() { };
+        public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
+        public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
+        public string ReportSelectedButtonText = "Report Selected";
 
         public SearchDialog(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
@@ -178,10 +181,11 @@ namespace EtoFE
             Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
             Button ExportAllAsCsv = new Button() { Text = "Export Everything..." };
             Button ExportShownAsCsv = new Button() { Text = "Export Displayed..." };
+            Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText };
 
             StackLayout ExportOptions = new StackLayout()
             {
-                Items = { ExportAllAsCsv, ExportAllResultsAsCsv, ExportShownAsCsv },
+                Items = { ExportAllAsCsv, ExportAllResultsAsCsv, ExportShownAsCsv, ReportSelectedAndSearch },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Padding = 5,
@@ -602,6 +606,19 @@ namespace EtoFE
                     WriteCsv(FilteredTemp, HeaderEntries, SFD.FileName);
                 }
             };
+            if (ReportSelectedAndSearch != null)
+            {
+                ReportSelectedAndSearch.Click += (_, _) =>
+                {
+                    string[] SelectedList = new string[0];
+                    if (Results.SelectedItem != null)
+                    {
+                        SelectedList = (string[])((GridItem)Results.SelectedItem).Values;
+                    }
+                    string SearchBoxText = SearchBox.Text;
+                    if(CallbackWhenReportButtonIsClicked != null) CallbackWhenReportButtonIsClicked(SearchBoxText, SelectedList);
+                };
+            }
             Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);
             EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) =>
             {

@@ -46,7 +46,7 @@ namespace RV.InvNew.AuthManager
             );
             var UserList = new GridView();
             UserList.Enabled = true;
-            UserList.Size = new Size(-1, 300);
+            UserList.Size = new Size(1000, 300);
             GridColumn A;
             Random x2 = new Random();
             UserList.CellFormatting += (e, a) =>
@@ -307,6 +307,12 @@ namespace RV.InvNew.AuthManager
                                 Text = "Edit/Set Billables",
                                 BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff),
                             },
+                            new Button((e, a) => {
+                                (new NotificationsViewer()).ShowModal();
+                            })
+                            {
+                                Text = "View notifications ⚠"
+                            }
                         },
                         Orientation = Orientation.Horizontal,
                         Spacing = 4,

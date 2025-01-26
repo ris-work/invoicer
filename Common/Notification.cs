@@ -18,4 +18,12 @@ public partial class Notification
     public DateTime TimeTai { get; set; }
 
     public DateTime? TimeExpiresTai { get; set; }
+
+    public string NotifContents { get; set; } = null!;
+
+    public int? NotifPriority { get; set; }
+
+    public string NotifFrom { get; set; } = null!;
+
+    public string NotifSource { get; set; } = null!;
 }

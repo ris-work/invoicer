@@ -308,4 +308,19 @@ namespace RV.InvNew.Common
     [JsonSerializable(typeof(List<VatCategory>))]
     [JsonSourceGenerationOptions(WriteIndented = true, IncludeFields = true)]
     public partial class VatCategoriesSerialize : JsonSerializerContext { }
+
+    [JsonSerializable(typeof(List<NotificationTransfer>))]
+    public class NotificationTransfer
+    {
+        public long NotifId { get; set; }
+
+        public string NotifTarget { get; set; }
+        public DateTime TimeTai { get; set; }
+
+        public DateTime? TimeExpiresTai { get; set; }
+
+        public string NotifContents { get; set; } = null!;
+
+        public int? NotifPriority { get; set; }
+    }
 }

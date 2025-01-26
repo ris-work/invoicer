@@ -41,6 +41,9 @@ namespace EtoFE
         {
             var R = new AuthenticatedRequest<string>("Hey", LoginTokens.token);
             var PosData = Program.client.PostAsJsonAsync("/PosRefresh", R);
+            var NotificationsGetAR = new AuthenticatedRequest<string>("Hey", LoginTokens.token);
+            var Notifications = Program.client.PostAsJsonAsync("/GetNotifications", NotificationsGetAR);
+            MessageBox.Show(Notifications.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult());
             TableLayout TL = new TableLayout();
             Label LabelPendingInvoices = new Label() { Text = "Pending invoices:" };
             ListBox PendingInvoices = new ListBox();
@@ -164,6 +167,11 @@ namespace EtoFE
             Barcode.KeyDown += (e, a) =>
             {
                 SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
+                SD.CallbackWhenReportButtonIsClicked = (string searched, string[] selected) => {
+                    NotificationTransfer NT = new NotificationTransfer() { NotifContents = $"{searched}, {String.Join(',', selected)}", NotifTarget = "Everyone", NotifPriority = 0 };
+                    AuthenticatedRequest<NotificationTransfer> N = new AuthenticatedRequest<NotificationTransfer>(NT, LoginTokens.token);
+                    Program.client.PostAsJsonAsync("/SendNotification", N).GetAwaiter().GetResult();
+                };
                 SD.ShowModal();
                 
                 if (SD.Selected == null) return;

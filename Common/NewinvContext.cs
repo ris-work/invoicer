@@ -70,9 +70,9 @@ public partial class NewinvContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
-        optionsBuilder.LogTo(Console.WriteLine);
-     }
+       optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
+       optionsBuilder.LogTo(Console.WriteLine);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -332,10 +332,20 @@ public partial class NewinvContext : DbContext
             entity.ToTable("notifications");
 
             entity.Property(e => e.NotifId).HasColumnName("notif_id");
+            entity.Property(e => e.NotifContents)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("notif_contents");
+            entity.Property(e => e.NotifFrom)
+                .HasDefaultValueSql("'InvoicerBackend'::text")
+                .HasColumnName("notif_from");
             entity.Property(e => e.NotifIsDone)
                 .HasDefaultValue(false)
                 .HasColumnName("notif_is_done");
             entity.Property(e => e.NotifOtherStatus).HasColumnName("notif_other_status");
+            entity.Property(e => e.NotifPriority).HasColumnName("notif_priority");
+            entity.Property(e => e.NotifSource)
+                .HasDefaultValueSql("'InvoicerBackend'::text")
+                .HasColumnName("notif_source");
             entity.Property(e => e.NotifTarget).HasColumnName("notif_target");
             entity.Property(e => e.NotifType)
                 .HasDefaultValueSql("'INTERNAL'::text")
