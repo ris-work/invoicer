@@ -49,6 +49,7 @@ namespace RV.InvNew.Common
                     {
                         output = this.Request;
                         auth_success = true;
+                        Principal = ctx.Credentials.Where(e => e.Userid == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Userid).First().Username;
                     }
                     else
                         auth_success = false;
@@ -87,6 +88,7 @@ namespace RV.InvNew.Common
                     {
                         output = this.Request;
                         auth_success = true;
+                        Principal = ctx.Credentials.Where(e => e.Userid == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Userid).First().Username;
                     }
                     else
                         auth_success = false;

@@ -43,7 +43,9 @@ namespace EtoFE
             var PosData = Program.client.PostAsJsonAsync("/PosRefresh", R);
             var NotificationsGetAR = new AuthenticatedRequest<string>("Hey", LoginTokens.token);
             var Notifications = Program.client.PostAsJsonAsync("/GetNotifications", NotificationsGetAR);
-            MessageBox.Show(Notifications.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult());
+            var NotifDes = Notifications.Result.Content.ReadAsAsync<List<NotificationTransfer>>().GetAwaiter().GetResult();
+            (new NotificationsViewer(NotifDes)).ShowModal();
+            //MessageBox.Show(Notifications.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult());
             TableLayout TL = new TableLayout();
             Label LabelPendingInvoices = new Label() { Text = "Pending invoices:" };
             ListBox PendingInvoices = new ListBox();

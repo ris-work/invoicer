@@ -128,6 +128,30 @@ app.MapPost("/GetNotifications", (AuthenticatedRequest<string> ANR) => {
         throw new UnauthorizedAccessException();
 }).WithName("GetNotifications").WithOpenApi();
 
+app.MapPost("/MarkNotificationsAsDone", (AuthenticatedRequest<List<NotificationTransfer>> ALNT) => {
+    if (ALNT.Get() != null)
+    {
+        var N = ALNT.Get();
+        System.Console.WriteLine(JsonSerializer.Serialize(N));
+        //TODO: Use transactions
+        using (var ctx = new NewinvContext())
+        {
+            foreach (var notif in N)
+            {
+
+                try
+                {
+                    ctx.Notifications.Where(e => e.NotifTarget == ALNT.Principal && e.NotifId == notif.NotifId).First().NotifIsDone = true;
+                    ctx.SaveChanges();
+                }
+                catch (Exception E) { }
+            }
+        }
+    }
+    else
+        throw new UnauthorizedAccessException();
+}).WithName("MarkNotificationsAsRead").WithOpenApi();
+
 app.MapPost(
         "/Login",
         (LoginCredentials L) =>
@@ -168,6 +192,7 @@ app.MapPost(
                                     Tokenvalue = T,
                                     Privileges = UserA.UserDefaultCap,
                                     CategoriesBitmask = UserPC.Categories,
+                                    Userid = UserE.Userid,
                                 }
                             );
                             ctx.SaveChanges();
