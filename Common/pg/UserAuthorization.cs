@@ -14,4 +14,6 @@ public partial class UserAuthorization
     public string UserCap { get; set; } = null!;
 
     public string? UserDefaultCap { get; set; }
+
+    public bool CheckExtendedAuthorization { get; set; }
 }

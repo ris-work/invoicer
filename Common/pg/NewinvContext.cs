@@ -37,6 +37,10 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<DescriptionsOtherLanguage> DescriptionsOtherLanguages { get; set; }
 
+    public virtual DbSet<I18nLabel> I18nLabels { get; set; }
+
+    public virtual DbSet<Idempotency> Idempotencies { get; set; }
+
     public virtual DbSet<Inventory> Inventories { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
@@ -45,6 +49,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<NotificationType> NotificationTypes { get; set; }
 
+    public virtual DbSet<PermissionsExtendedApiCall> PermissionsExtendedApiCalls { get; set; }
+
     public virtual DbSet<PermissionsList> PermissionsLists { get; set; }
 
     public virtual DbSet<PermissionsListCategoriesName> PermissionsListCategoriesNames { get; set; }
@@ -52,6 +58,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
+
+    public virtual DbSet<RequestsBad> RequestsBads { get; set; }
 
     public virtual DbSet<Sih> Sihs { get; set; }
 
@@ -70,8 +78,8 @@ public partial class NewinvContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
-       optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
-       optionsBuilder.LogTo(Console.WriteLine);
+        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.LogTo(Console.WriteLine);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -287,6 +295,31 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("language");
         });
 
+        modelBuilder.Entity<I18nLabel>(entity =>
+        {
+            entity.HasKey(e => new { e.Id, e.Lang }).HasName("i18n_labels_pkey");
+
+            entity.ToTable("i18n_labels");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Lang).HasColumnName("lang");
+            entity.Property(e => e.Value).HasColumnName("value");
+        });
+
+        modelBuilder.Entity<Idempotency>(entity =>
+        {
+            entity.HasKey(e => e.Key).HasName("idempotency_pkey");
+
+            entity.ToTable("idempotency");
+
+            entity.Property(e => e.Key).HasColumnName("key");
+            entity.Property(e => e.Request).HasColumnName("request");
+            entity.Property(e => e.TimeTai)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("time_tai");
+        });
+
         modelBuilder.Entity<Inventory>(entity =>
         {
             entity.HasKey(e => new { e.Itemcode, e.Batchcode }).HasName("inventory_pkey");
@@ -379,6 +412,17 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.NotificationTypeName).HasColumnName("notification_type_name");
         });
 
+        modelBuilder.Entity<PermissionsExtendedApiCall>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.ApiCall }).HasName("permissions_extended_api_call_pkey");
+
+            entity.ToTable("permissions_extended_api_call");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.ApiCall).HasColumnName("api_call");
+            entity.Property(e => e.AllowedAttributes).HasColumnName("allowed_attributes");
+        });
+
         modelBuilder.Entity<PermissionsList>(entity =>
         {
             entity.HasKey(e => e.Permission).HasName("permissions_list_pkey");
@@ -424,6 +468,20 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.TimeTai)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("time with time zone")
+                .HasColumnName("time_tai");
+            entity.Property(e => e.Token).HasColumnName("token");
+        });
+
+        modelBuilder.Entity<RequestsBad>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("requests_bad");
+
+            entity.Property(e => e.Principal).HasColumnName("principal");
+            entity.Property(e => e.RequestBody).HasColumnName("request_body");
+            entity.Property(e => e.TimeTai)
+                .HasDefaultValueSql("now()")
                 .HasColumnName("time_tai");
             entity.Property(e => e.Token).HasColumnName("token");
         });
@@ -502,6 +560,9 @@ public partial class NewinvContext : DbContext
             entity.ToTable("user_authorization", tb => tb.HasComment("user_cap: Comma-separated\nuser_default_cap: Comma-separated"));
 
             entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.CheckExtendedAuthorization)
+                .HasDefaultValue(false)
+                .HasColumnName("check_extended_authorization");
             entity.Property(e => e.UserCap).HasColumnName("user_cap");
             entity.Property(e => e.UserDefaultCap)
                 .HasDefaultValueSql("''::text")
