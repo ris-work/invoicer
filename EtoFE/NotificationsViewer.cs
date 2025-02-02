@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace EtoFE
 {
@@ -58,7 +60,7 @@ namespace EtoFE
                 var NotificationsToMark = LN.Select(e => new NotificationTransfer() { NotifId = e.NotifId }).ToList();
                 MessageBox.Show(NotificationsToMark.Count.ToString());
                 var NotificationsMarkAR = new AuthenticatedRequest<List<NotificationTransfer>>(NotificationsToMark, LoginTokens.token);
-                var NotificationsMark = Program.client.PostAsJsonAsync("/MarkNotificationsAsDone", NotificationsMarkAR).GetAwaiter().GetResult();
+                var NotificationsMark = Program.client.PostAsJsonAsync<object>("/MarkNotificationsAsDone", NotificationsMarkAR).GetAwaiter().GetResult();
             };
         }
     }
