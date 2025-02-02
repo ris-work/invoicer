@@ -37,14 +37,27 @@ namespace RV.InvNew.Common
             {
                 if (WasItBad)
                 {
-                    //ctx.RequestsBads.Add(new RequestsBad { Principal = this.PrincipalUserId, RequestBody = JsonSerializer.Serialize<T>(Request), Token = JsonSerializer.Serialize<LoginToken>(Token) });
+                    ctx.RequestsBads.Add(
+                        new RequestsBad
+                        {
+                            Principal = this.PrincipalUserId,
+                            RequestBody = JsonSerializer.Serialize<T>(Request),
+                            Token = JsonSerializer.Serialize<LoginToken>(Token),
+                        }
+                    );
                 }
                 else
                 {
-                    //ctx.Requests.Add(new RequestsBad { Principal = this.PrincipalUserId, RequestBody = JsonSerializer.Serialize<T>(Request), Token = JsonSerializer.Serialize<LoginToken>(Token) });
+                    ctx.Requests.Add(
+                        new Request
+                        {
+                            Principal = this.PrincipalUserId ?? -1,
+                            RequestBody = JsonSerializer.Serialize<T>(Request),
+                            Token = JsonSerializer.Serialize<LoginToken>(Token),
+                        }
+                    );
                 }
             }
-
         }
 
         public AuthenticatedRequest(T Request, LoginToken Token)
@@ -67,7 +80,14 @@ namespace RV.InvNew.Common
                     {
                         output = this.Request;
                         auth_success = true;
-                        var PrincipalEntry = ctx.Credentials.Where(e => e.Userid == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Userid).First();
+                        var PrincipalEntry = ctx
+                            .Credentials.Where(e =>
+                                e.Userid
+                                == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                    .First()
+                                    .Userid
+                            )
+                            .First();
                         Principal = PrincipalEntry.Username;
                         PrincipalUserId = PrincipalEntry.Userid;
                     }
@@ -78,7 +98,6 @@ namespace RV.InvNew.Common
             }
             if (auth_success)
             {
-
                 return this.Request;
             }
             else
@@ -109,7 +128,15 @@ namespace RV.InvNew.Common
                     {
                         output = this.Request;
                         auth_success = true;
-                        Principal = ctx.Credentials.Where(e => e.Userid == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Userid).First().Username;
+                        Principal = ctx
+                            .Credentials.Where(e =>
+                                e.Userid
+                                == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                    .First()
+                                    .Userid
+                            )
+                            .First()
+                            .Username;
                     }
                     else
                         auth_success = false;

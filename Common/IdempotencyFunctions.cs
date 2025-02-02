@@ -12,8 +12,12 @@ namespace RV.InvNew.Common
     [JsonSerializable(typeof(Idempotent<AuthenticatedRequest<string>>))]
     public partial class Idempotent<T>
     {
-        [JsonInclude] public string IdempotencyKey;
-        [JsonInclude] public T RequestBody;
+        [JsonInclude]
+        public string IdempotencyKey;
+
+        [JsonInclude]
+        public T RequestBody;
+
         public T GetValueIfNew()
         {
             using (var ctx = new NewinvContext())
@@ -22,16 +26,23 @@ namespace RV.InvNew.Common
                 {
                     return RequestBody;
                 }
-                else return default(T);
+                else
+                    return default(T);
             }
         }
+
         public void Done()
         {
             using (var ctx = new NewinvContext())
             {
-                ctx.Idempotencies.Add(new Idempotency { Key = IdempotencyKey, Request = JsonSerializer.Serialize<T>(RequestBody) });
+                ctx.Idempotencies.Add(
+                    new Idempotency
+                    {
+                        Key = IdempotencyKey,
+                        Request = JsonSerializer.Serialize<T>(RequestBody),
+                    }
+                );
             }
-
         }
     }
 }

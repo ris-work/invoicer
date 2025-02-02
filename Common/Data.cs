@@ -7,10 +7,6 @@ using System.Threading.Tasks;
 
 namespace RV.InvNew.Common
 {
-
-
-
-
     [JsonSerializable(typeof(PosRefresh))]
     [JsonSerializable(typeof(List<PosBatch>))]
     [JsonSerializable(typeof(List<PosCatalogue>))]
