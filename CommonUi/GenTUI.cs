@@ -13,10 +13,13 @@ namespace CommonUi
     {
         
         public GenTopLevel(IReadOnlyDictionary<string, (string, object, string?)> Inputs, SaveHandler SaveNewHandler, SaveHandler SaveExistingHandler, IReadOnlyDictionary<string, ShowAndGetValue> InputHandler){
-            this.Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler));
+            //Add(new Button() { Text = "Hello" });
+            //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
+            Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler));
+            
         }
     }
-    public class GenTUI: Terminal.Gui.FrameView
+    public class GenTUI: Terminal.Gui.View
     {
         public IReadOnlyDictionary<string, object> Values { get => _Values; }
         private Dictionary<string, object> _Values = new();
@@ -74,9 +77,12 @@ namespace CommonUi
             _Inputs = Inputs;
 
             var E = Inputs.AsEnumerable();
+            KeyValuePair<string, (string, object, string?)> oldkv;
             foreach (var kv in E)
             {
                 View EControl;
+                var ELabel = new Label() { Text = kv.Value.Item1, Width = Dim.Auto(), Height = Dim.Auto() };
+                if (EControls.Count > 0) ELabel.Y = Pos.Bottom(EControls.Last())+1;
                 Terminal.Gui.View EInput;
                 if (kv.Value.Item2.GetType() == typeof(long) || kv.Value.Item2.GetType() == typeof(int))
                 {
@@ -103,16 +109,21 @@ namespace CommonUi
                 {
                     EInput = new TextField() { Text = ((string)kv.Value.Item2).ToString() };
                 }
-                EControl = (new View()).Add(new Label() { Text = kv.Value.Item1 }).Add(EInput);
+                
+                EControl = (new View() { Width = Dim.Auto(), Height = Dim.Auto() }).Add(ELabel);
+                EInput.Width = Dim.Fill();
+                EInput.X = Pos.Right(ELabel);
+                EControl.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
                 EControls.Add(EControl);
+                oldkv = kv;
             }
             _EControls = EControls;
 
             Button NewButton = new Button() { Text = "New" };
-            Button SaveButton = new Button() { Text = "Save", };
-            Button ViewButton = new Button() { Text = "View" };
-            Button CancelButton = new Button() { Text = "Cancel" };
+            Button SaveButton = new Button() { Text = "Save", X = Pos.Right(NewButton) };
+            Button ViewButton = new Button() { Text = "View", X = Pos.Right(SaveButton) };
+            Button CancelButton = new Button() { Text = "Cancel", X = Pos.Right(ViewButton) };
             NewButton.MouseClick += (_, _) => {
                 ConvertInputs();
             };
@@ -123,14 +134,18 @@ namespace CommonUi
                 ConvertInputs();
                 MessageBox.Query($"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}", "Serialized", "Ok");
             };
-            View ActionButtons = (new View());
+            View ActionButtons = new View(){ Width = Dim.Auto(), Height = Dim.Auto() };
             ActionButtons.Add(NewButton, SaveButton, ViewButton, CancelButton);
-            var GeneratedControls = new View();
-            /*foreach(var c in _EControls)
+            var GeneratedControls = new View() { Width = Dim.Auto(), Height = Dim.Auto(), X = 0, Y = Pos.Bottom(ActionButtons)+1 };
+            //GeneratedControls.Add(_EControls.First());
+            foreach(var c in _EControls)
             {
                 GeneratedControls.Add(c);
-            }*/
-            this.Add(GeneratedControls, ActionButtons);
+            }
+            Add(ActionButtons, GeneratedControls);
+            //Add(new Button() { Text = "Hello" });
+            Width = Dim.Auto();
+            Height = Dim.Auto();
             //Content = new StackLayout(ActionButtons, GeneratedControls) { Orientation = Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Center };
         }
 
