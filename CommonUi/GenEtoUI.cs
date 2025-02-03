@@ -13,7 +13,7 @@ namespace CommonUi
     {
         public long Value { get; }
     }
-    public class GenEtoUI : Eto.Forms.Control
+    public class GenEtoUI : Eto.Forms.Panel
     {
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
         public IReadOnlyDictionary<string, object> Values { get => _Values; }
@@ -22,7 +22,7 @@ namespace CommonUi
         private bool _new = false;
         private SaveHandler _SaveNewHandler;
         private SaveHandler _SaveExistingHandler;
-        List<Eto.Forms.Control> _EControls = new();
+        List<Eto.Forms.TableRow> _EControls = new();
         Dictionary<string, Eto.Forms.Control> _Einputs = new();
         Dictionary<string, object> ConvertedInputs = new();
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
@@ -30,6 +30,7 @@ namespace CommonUi
         //public delegate long SaveExistingHandler(IReadOnlyDictionary<string, object> UserInput);
         public void ConvertInputs()
         {
+            ConvertedInputs = new();
             foreach(var e in _Inputs)
             {
                 Type T = e.Value.Item2.GetType();
@@ -42,39 +43,67 @@ namespace CommonUi
                         ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
                     }
                 }
+                else if (T == typeof(int))
+                {
+                    if (e.Value.Item3 == null)
+                    {
+                        ConvertedInputs.Add(e.Key, int.Parse(((TextBox)_Einputs[e.Key]).Text));
+                    }
+                    else
+                    {
+                        ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
+                    }
+                }
+                else if (T == typeof(string))
+                {
+                    ConvertedInputs.Add(e.Key, ((TextBox)_Einputs[e.Key]).Text);
+                }
+                else if (T == typeof(bool))
+                {
+                    ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked);
+                }
             }
         }
         public GenEtoUI(IReadOnlyDictionary<string, (string, object, string?)> Inputs, SaveHandler SaveNewHandler, SaveHandler SaveExistingHandler, IReadOnlyDictionary<string, ShowAndGetValue> InputHandler)
         {
-            List<Eto.Forms.Control> EControls = new();
+            List<Eto.Forms.TableRow> EControls = new();
             _Inputs = Inputs;
             
             var E = Inputs.AsEnumerable();
             foreach(var kv in E)
             {
-                Eto.Forms.Control EControl;
+                Eto.Forms.TableRow EControl;
                 Eto.Forms.Control EInput;
-                if (kv.Value.Item2.GetType() == typeof (long) || kv.Value.Item2.GetType() == typeof(int)) { 
-                    if(kv.Value.Item3 == null)
+                if (kv.Value.Item2.GetType() == typeof(long) || kv.Value.Item2.GetType() == typeof(int))
+                {
+                    if (kv.Value.Item3 == null)
                     {
                         EInput = new TextBox() { Text = ((long)kv.Value.Item2).ToString() };
 
                     }
-                    else {
+                    else
+                    {
                         EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
-                        ((Button)EInput).Click += (_,_) => {
+                        ((Button)EInput).Click += (_, _) =>
+                        {
                             long? IHS = InputHandler[kv.Value.Item3]();
                             if (IHS != null) ((Button)EInput).Text = IHS.ToString();
                         };
                     }
                 }
+                else if (kv.Value.Item2.GetType() == typeof(bool))
+                {
+                    EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
+                }
                 else
                 {
-                    EInput = new Button() { Text = ((string)kv.Value.Item2).ToString() };
+                    EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                 }
-                EControl = new StackLayout(new Label() { Text = kv.Value.Item1 }, EInput) { Padding = 10, Spacing = 10, Orientation = Orientation.Horizontal, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput) { };
                 _Einputs.Add(kv.Key, EInput);
+                EControls.Add(EControl);
             }
+            _EControls = EControls;
 
             Button NewButton = new Button() { Text = "New" };
             Button SaveButton = new Button() { Text = "Save",  };
@@ -90,6 +119,9 @@ namespace CommonUi
                 ConvertInputs();
                 MessageBox.Show($"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}", "Serialized", MessageBoxType.Information);
             };
+            var ActionButtons = new StackLayout(NewButton, SaveButton, ViewButton, CancelButton) { Orientation = Orientation.Horizontal };
+            var GeneratedControls = new TableLayout(_EControls.ToArray()) { Padding = 10, Spacing = new Eto.Drawing.Size(3, 3) };
+            Content = new StackLayout(ActionButtons, GeneratedControls) { Orientation = Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Center };
         }
 
         public long Save()
