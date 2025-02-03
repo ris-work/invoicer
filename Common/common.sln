@@ -5,6 +5,11 @@ VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common.csproj", "{56799BAD-3885-4F17-A344-12C3205B4D0A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonUi", "..\CommonUi\CommonUi.csproj", "{67C18D76-74AF-423E-BAB5-E1CB3F2813C7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{56799BAD-3885-4F17-A344-12C3205B4D0A} = {56799BAD-3885-4F17-A344-12C3205B4D0A}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{56799BAD-3885-4F17-A344-12C3205B4D0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56799BAD-3885-4F17-A344-12C3205B4D0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56799BAD-3885-4F17-A344-12C3205B4D0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67C18D76-74AF-423E-BAB5-E1CB3F2813C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67C18D76-74AF-423E-BAB5-E1CB3F2813C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67C18D76-74AF-423E-BAB5-E1CB3F2813C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67C18D76-74AF-423E-BAB5-E1CB3F2813C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

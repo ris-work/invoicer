@@ -223,4 +223,79 @@ namespace RV.InvNew.Common
 
         public int? NotifPriority { get; set; }
     }
+
+
+    [JsonSerializable(typeof(List<CatalogueTransfer>))]
+    public partial class CatalogueTransfer
+    {
+        public long Itemcode { get; set; }
+
+        public string Description { get; set; } = null!;
+
+        public bool Active { get; set; }
+
+        public DateTime CreatedOn { get; set; }
+
+        public string DescriptionPos { get; set; } = null!;
+
+        public string DescriptionWeb { get; set; } = null!;
+
+        public long? DescriptionsOtherLanguages { get; set; }
+
+        public long DefaultVatCategory { get; set; }
+
+        public bool VatDependsOnUser { get; set; }
+
+        public bool VatCategoryAdjustable { get; set; }
+
+        public bool PriceManual { get; set; }
+
+        public bool EnforceAboveCost { get; set; }
+
+        public bool ActiveWeb { get; set; }
+
+        public bool ExpiryTrackingEnabled { get; set; }
+
+        public long PermissionsCategory { get; set; }
+
+        //public long CategoriesBitmask { get; set; }
+        public Dictionary<string, (string, object, string?)> ToDict()
+        {
+            return new Dictionary<string, (string, object, string?)>() {
+                { "Itemcode", ("Item code", this.Itemcode, null) },
+                { "Description", ("Description", this.Description, null) },
+                { "Active", ("Active", this.Active, null) },
+                { "DecriptionPOS", ("Description POS", this.DescriptionPos, null) },
+                { "DecriptionWeb", ("Description Web", this.DescriptionWeb, null) },
+                { "DescriptionOtherLanguages", ("Description (Other Languages)", this.DescriptionsOtherLanguages, "LangChooser") },
+                { "DefaultVatCategory", ("Default VAT/GST Category", this.DefaultVatCategory, "VatChooser") },
+                { "VatDependsOnUser", ("VAT/GST is user-dependent", this.VatDependsOnUser, null) },
+                { "VatCategoryAdjustable", ("VAT/GST category is adjustable", this.VatCategoryAdjustable, null) },
+                { "ManualPrice", ("Allow Manual Price", this.PriceManual, null) },
+                { "EnforceAboveCost", ("Enforce Above Cost", this.EnforceAboveCost, null) },
+                { "ActiveWeb", ("Active (Web)", this.ActiveWeb, null) },
+            };
+        }
+
+        public static CatalogueTransfer FromDictionary(Dictionary<string, (string, object)> DIn)
+        {
+            return new CatalogueTransfer
+            {
+                Itemcode = (long)DIn["Itemcode"].Item2,
+                Description = (string)DIn["Description"].Item2,
+                Active = (bool)DIn["Active"].Item2,
+                DescriptionPos = (string)DIn["DescriptionPOS"].Item2,
+                DescriptionWeb = (string)DIn["DescriptionWeb"].Item2,
+                DescriptionsOtherLanguages = (long)DIn["DescriptionOtherLanguages"].Item2,
+                DefaultVatCategory = (long)DIn["DefaultVatCategory"].Item2,
+                VatDependsOnUser = (bool)DIn["VatDependsOnUser"].Item2,
+                VatCategoryAdjustable = (bool)DIn["VatCategoryAdjustable"].Item2,
+                PriceManual = (bool)DIn["ManualPrice"].Item2,
+                EnforceAboveCost = (bool)DIn["EnforceAboveCost"].Item2,
+                ActiveWeb = (bool)DIn["ActiveWeb"].Item2,
+            };
+
+        }
+    }
+
 }

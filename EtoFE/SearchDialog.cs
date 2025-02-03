@@ -78,12 +78,14 @@ namespace EtoFE
         }
     }
 
-    public class SearchDialog : Dialog
+    public class SearchDialog : Dialog, RV.InvNew.CommonUi.IButtonChooserInput
     {
-        public string[] Selected = null;
+        private string[] _Selected = null;
+        private List<string[]> _OutputList = new List<string[]>() { };
+        public string[] Selected { get => _Selected; }
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
-        public List<string[]> OutputList = new List<string[]>() { };
+        public List<string[]> OutputList { get => _OutputList; }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
         public string ReportSelectedButtonText = "Report Selected";
@@ -330,15 +332,15 @@ namespace EtoFE
             {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
-                OutputList = Filtered.Select(a => a.Item1).ToList();
+                _OutputList = Filtered.Select(a => a.Item1).ToList();
                 if (Results.SelectedItem != null)
                 {
-                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
                     this.Close();
                 }
                 else if (Results.DataStore != null && Results.DataStore.Count() != 0)
                 {
-                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this._Selected = (string[])((GridItem)Results.DataStore.First()).Values;
                     this.Close();
                 }
                 else
@@ -354,15 +356,15 @@ namespace EtoFE
             {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
-                OutputList = Filtered.Select(a => a.Item1).ToList();
+                _OutputList = Filtered.Select(a => a.Item1).ToList();
                 if (Results.SelectedItem != null)
                 {
-                    this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
                     this.Close();
                 }
                 else if (Results.DataStore != null && Results.DataStore.Count() != 0)
                 {
-                    this.Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    this._Selected = (string[])((GridItem)Results.DataStore.First()).Values;
                     this.Close();
                 }
                 else
@@ -678,14 +680,14 @@ namespace EtoFE
                         {
                             if (Results.SelectedItem != null)
                             {
-                                this.OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this.Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
                                 this.Close();
                             }
                             else if (Results.DataStore != null && Results.DataStore.Count() != 0)
                             {
-                                this.OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this.Selected = (string[])
+                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this._Selected = (string[])
                                     ((GridItem)Results.DataStore.First()).Values;
                                 this.Close();
                             }

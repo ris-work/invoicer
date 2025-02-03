@@ -128,15 +128,16 @@ namespace RV.InvNew.Common
                     {
                         output = this.Request;
                         auth_success = true;
-                        Principal = ctx
+                        var PrincipalEntry = ctx
                             .Credentials.Where(e =>
                                 e.Userid
                                 == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
                                     .First()
                                     .Userid
                             )
-                            .First()
-                            .Username;
+                            .First();
+                        Principal = PrincipalEntry.Username;
+                        PrincipalUserId = PrincipalEntry.Userid;
                     }
                     else
                         auth_success = false;

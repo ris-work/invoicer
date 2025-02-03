@@ -40,6 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common\common.csproj" />
+    <ProjectReference Include="..\commonui\CommonUi.csproj" />
   </ItemGroup>
 
 </Project>
