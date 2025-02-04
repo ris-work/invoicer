@@ -82,8 +82,9 @@ namespace CommonUi
             {
                 View EControl;
                 var ELabel = new Label() { Text = kv.Value.Item1, Width = Dim.Auto(), Height = Dim.Auto() };
-                if (EControls.Count > 0) ELabel.Y = Pos.Bottom(EControls.Last())+1;
+                //if (EControls.Count > 0) ELabel.Y = Pos.Bottom(EControls.Last());
                 Terminal.Gui.View EInput;
+                
                 if (kv.Value.Item2.GetType() == typeof(long) || kv.Value.Item2.GetType() == typeof(int))
                 {
                     if (kv.Value.Item3 == null)
@@ -109,13 +110,21 @@ namespace CommonUi
                 {
                     EInput = new TextField() { Text = ((string)kv.Value.Item2).ToString() };
                 }
-                
-                EControl = (new View() { Width = Dim.Auto(), Height = Dim.Auto() }).Add(ELabel);
+
+                EControl = (new View() { Width = Dim.Fill(), Height = Dim.Auto() });
+                EControl.Add(ELabel);
+
+                //EInput.Width = Dim.Fill();
+                //if (EControls.Count > 0) EInput.Y = Pos.Bottom(EControls.Last()) + 1;
+                //else EInput.Y = 0;
+                ELabel.Width = Dim.Auto();
+                ELabel.Height = Dim.Auto();
+                EInput.X = Pos.Right(ELabel)+3;
                 EInput.Width = Dim.Fill();
-                EInput.X = Pos.Right(ELabel);
                 EControl.Add(EInput);
-                _Einputs.Add(kv.Key, EInput);
+                //_Einputs.Add(kv.Key, EInput);
                 EControls.Add(EControl);
+                //EControl.Add(ELabel);
                 oldkv = kv;
             }
             _EControls = EControls;
@@ -138,11 +147,23 @@ namespace CommonUi
             ActionButtons.Add(NewButton, SaveButton, ViewButton, CancelButton);
             var GeneratedControls = new View() { Width = Dim.Auto(), Height = Dim.Auto(), X = 0, Y = Pos.Bottom(ActionButtons)+1 };
             //GeneratedControls.Add(_EControls.First());
-            foreach(var c in _EControls)
+            int i = 0;
+            Add(ActionButtons);
+            View Contents = new View() { Y = Pos.Bottom(ActionButtons), Width = Dim.Auto(), Height = Dim.Auto(),};
+            View prev = null;
+            foreach (var c in EControls)
             {
-                GeneratedControls.Add(c);
+                i++;
+                //MessageBox.Query("Attempt", $"{i}", "Dismiss");
+                if (prev != null) c.Y = Pos.Bottom(prev);
+                prev = c;
+                Contents.Add(c);
+                //if (i == 10) break;
             }
-            Add(ActionButtons, GeneratedControls);
+            Contents.Width = Dim.Fill();
+            Contents.Height = Dim.Auto();
+            Add(Contents);
+            //Add(GeneratedControls);
             //Add(new Button() { Text = "Hello" });
             Width = Dim.Auto();
             Height = Dim.Auto();
