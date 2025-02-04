@@ -89,7 +89,7 @@ namespace CommonUi
                 {
                     if (kv.Value.Item3 == null)
                     {
-                        EInput = new TextField() { Text = ((long)kv.Value.Item2).ToString() };
+                        EInput = new TextField() { Text = ((long)kv.Value.Item2).ToString(), ReadOnly = false, };
 
                     }
                     else
@@ -104,11 +104,11 @@ namespace CommonUi
                 }
                 else if (kv.Value.Item2.GetType() == typeof(bool))
                 {
-                    EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
+                    EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString(), Enabled = true, };
                 }
                 else
                 {
-                    EInput = new TextField() { Text = ((string)kv.Value.Item2).ToString() };
+                    EInput = new TextField() { Text = ((string)kv.Value.Item2).ToString(), ReadOnly = false, };
                 }
 
                 EControl = (new View() { Width = Dim.Fill(), Height = Dim.Auto() });
@@ -119,8 +119,9 @@ namespace CommonUi
                 //else EInput.Y = 0;
                 ELabel.Width = Dim.Auto();
                 ELabel.Height = Dim.Auto();
-                EInput.X = Pos.Right(ELabel)+3;
-                EInput.Width = Dim.Fill();
+                EInput.X = Pos.AnchorEnd();
+                EInput.Width = 20;
+                EInput.Enabled = true;
                 EControl.Add(EInput);
                 //_Einputs.Add(kv.Key, EInput);
                 EControls.Add(EControl);
@@ -130,9 +131,9 @@ namespace CommonUi
             _EControls = EControls;
 
             Button NewButton = new Button() { Text = "New" };
-            Button SaveButton = new Button() { Text = "Save", X = Pos.Right(NewButton) };
-            Button ViewButton = new Button() { Text = "View", X = Pos.Right(SaveButton) };
-            Button CancelButton = new Button() { Text = "Cancel", X = Pos.Right(ViewButton) };
+            Button SaveButton = new Button() { Text = "Save", X = Pos.Right(NewButton) + 4 };
+            Button ViewButton = new Button() { Text = "View", X = Pos.Right(SaveButton) + 4 };
+            Button CancelButton = new Button() { Text = "Cancel", X = Pos.Right(ViewButton) + 4 };
             NewButton.MouseClick += (_, _) => {
                 ConvertInputs();
             };
@@ -145,11 +146,12 @@ namespace CommonUi
             };
             View ActionButtons = new View(){ Width = Dim.Auto(), Height = Dim.Auto() };
             ActionButtons.Add(NewButton, SaveButton, ViewButton, CancelButton);
-            var GeneratedControls = new View() { Width = Dim.Auto(), Height = Dim.Auto(), X = 0, Y = Pos.Bottom(ActionButtons)+1 };
+            ActionButtons.Width = 50;
+            //var GeneratedControls = new View() { Width = Dim.Auto(), Height = Dim.Auto(), X = 0, Y = Pos.Bottom(ActionButtons)+1 };
             //GeneratedControls.Add(_EControls.First());
             int i = 0;
             Add(ActionButtons);
-            View Contents = new View() { Y = Pos.Bottom(ActionButtons), Width = Dim.Auto(), Height = Dim.Auto(),};
+            View Contents = new View() { Y = Pos.Bottom(ActionButtons), Width = Dim.Fill(), Height = Dim.Auto(), Enabled = true,};
             View prev = null;
             foreach (var c in EControls)
             {
@@ -167,6 +169,7 @@ namespace CommonUi
             //Add(new Button() { Text = "Hello" });
             Width = Dim.Auto();
             Height = Dim.Auto();
+            Enabled = true;
             //Content = new StackLayout(ActionButtons, GeneratedControls) { Orientation = Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Center };
         }
 
