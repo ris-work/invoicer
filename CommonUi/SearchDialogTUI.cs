@@ -2,12 +2,17 @@
 //using Eto.Forms;
 //using Eto.Forms;
 //using Eto.Forms;
+//using Eto.Forms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Terminal.Gui;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using EtoFE;
+using System.Drawing.Imaging;
 //using Eto.Forms;
 
 namespace CommonUi
@@ -48,7 +53,8 @@ namespace CommonUi
             View TL = new View() { Width = 80, Height = 24 };
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
-            TableView Results = new TableView();
+            TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults) };
+            TableView Results = new TableView() { FullRowSelect = true, Width = Dim.Fill(), Height = Dim.Fill(), Y = Pos.Bottom(SearchBox)+1  };
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
                 Orientation = Orientation.Vertical,
@@ -93,6 +99,52 @@ namespace CommonUi
             };
 
             FrameView SearchCriteria = new() { Text = "Search in..."};
+
+            var ResultsDT = new DataTable();
+            
+            Eto.Forms.TextAlignment[] Alignments = new Eto.Forms.TextAlignment[HeaderEntries.Count];
+            List<string> RBLSearchCriteriaList = new List<string>();
+            Alignments = HeaderEntries.Select((x) => x.Item2).ToArray();
+            int ic = 0;
+            int fnKey = 0;
+            int SortBy = 0;
+            foreach (var Header in HeaderEntries)
+            {
+                /*var HI = new GridColumn
+                {
+                    HeaderText = Header.Item1,
+                    DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 },
+                    HeaderTextAlignment = Header.Item2,
+                    Sortable = true,
+                    MinWidth = 40,
+                };*/
+
+                //Results.Columns.Add(HI);
+                ResultsDT.Columns.Add(new DataColumn() {  ColumnName = Header.Item1});
+
+                ic++;
+                fnKey = 4 + ic;
+                RBLSearchCriteriaList.Add(Header.Item1 + $" [F{fnKey}]");
+            }
+            RBLSearchCriteriaList.Add($"Omnibox [F{fnKey + 1}]");
+            Results.Table = new DataTableSource(ResultsDT);
+            RBLSearchCriteria.RadioLabels = RBLSearchCriteriaList.ToArray();
+
+            int SelectedSearchIndex = SC[0].Item1.Length;
+            RBLSearchCriteria.SelectedItemChanged += (e, a) =>
+            {
+                SelectedSearchIndex = RBLSearchCriteria.SelectedItem;
+                //MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
+            };
+            RBLSearchCaseSensitivity.SelectedItemChanged += (e, a) =>
+            {
+                SearchCaseSensitive = RBLSearchCaseSensitivity.SelectedItem == 1;
+            };
+            RBLSearchPosition.SelectedItemChanged += (e, a) =>
+            {
+                SearchContains = RBLSearchPosition.SelectedItem == 0;
+            };
+
             FrameView SearchCaseSensitivity = new()
             {
                 Text = "Case sensitivity setting",
@@ -116,6 +168,157 @@ namespace CommonUi
             SearchSpellingNormalization.Height = Dim.Auto();
 
 
+            bool searching = false;
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredUnlim =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp =
+                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+            int FilteredCount = 0;
+
+            var UpdateView = () =>
+            {
+                var ResultsDTU = new DataTable();
+                foreach (var Header in HeaderEntries)
+                {
+                    /*var HI = new GridColumn
+                    {
+                        HeaderText = Header.Item1,
+                        DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 },
+                        HeaderTextAlignment = Header.Item2,
+                        Sortable = true,
+                        MinWidth = 40,
+                    };*/
+
+                    //Results.Columns.Add(HI);
+                    ResultsDTU.Columns.Add(new DataColumn() { ColumnName = Header.Item1 });
+                }
+                Filtered = FilteredTemp;
+                var ColorMatTemp = new List<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
+                //List<GridItem> GI = new List<GridItem>();
+                Filtered = FilteredTemp;
+                foreach (var item in Filtered)
+                {
+                    ResultsDTU.Rows.Add(item.Item1);
+                    ColorMatTemp.Add((item.Item2, item.Item3));
+                }
+                //ColorMat = ColorMatTemp.ToArray();
+                //MessageBox.Show(GI.Count().ToString());
+                //Results.DataStore = GI;
+                //Results.Invalidate(true);
+                //Results.UpdateLayout();
+
+                //this.Invalidate();
+                this.Title = $"Found {FilteredCount} ";
+                Results.Table = new DataTableSource(ResultsDTU);
+            };
+            var Search = () =>
+            {
+                if (SearchBox.Text.Length > 0 && searching != true)
+                {
+                    var SelectedArrayIndex = SelectedSearchIndex;
+                    var searchString = SearchBox.Text.ToLowerInvariant();
+                    var SearchCaseSensitiveSetting = SearchCaseSensitive;
+                    var SearchContainsSetting = SearchContains;
+                    var SearchNormalizeSpelling = NormalizeSpelling;
+                    int SearchSortBy = SortBy;
+                    bool SearchAnythingAnywhere = AnythingAnywhere;
+                    bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
+                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
+                    searching = true;
+                    (
+                        new Thread(() =>
+                        {
+                            if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
+                            {
+                                //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
+                                var FilteredBeforeCountingAndSorting = OptimizedCatalogue
+                                    .AsParallel()
+                                    .Where(
+                                        (x) =>
+                                            x
+                                                .Item1.Last()
+                                                .FilterAccordingly(
+                                                    searchString,
+                                                    !SearchCaseSensitiveSetting,
+                                                    SearchContainsSetting,
+                                                    SearchNormalizeSpelling,
+                                                    SearchAnythingAnywhere
+                                                )
+                                    )
+                                    .AsSequential();
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy]
+                                            )
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy]
+                                            )
+                                    );
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+                            else
+                            {
+                                var FilteredBeforeCountingAndSorting = SC.AsParallel()
+                                    .Where(
+                                        (x) =>
+                                            x.Item1[SelectedSearchIndex]
+                                                .FilterAccordingly(
+                                                    searchString,
+                                                    !SearchCaseSensitiveSetting,
+                                                    SearchContainsSetting,
+                                                    SearchNormalizeSpelling,
+                                                    SearchAnythingAnywhere
+                                                )
+                                    )
+                                    .AsSequential();
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy]
+                                            )
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.Parse(x.Item1[SearchSortBy])
+                                            )
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy]
+                                            )
+                                    );
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+
+                            searching = false;
+                            UpdateView();
+                        })
+                    ).Start();
+                }
+            };
+            SearchBox.TextChanged += (_, _) => Search();
+
+
             FrameView SearchOptions = new FrameView()
             {
             };
@@ -137,7 +340,7 @@ namespace CommonUi
                     SearchSpellingNormalization);
 
             SearchOptions.Y = 0;
-            SearchOptions.X = 20;
+            SearchOptions.X = Pos.AnchorEnd();
             SearchOptions.Width = Dim.Auto();
             SearchOptions.Height = Dim.Auto();
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
@@ -159,7 +362,10 @@ namespace CommonUi
             ExportOptions.Add(ExportAllResultsAsCsv, ExportAllAsCsv, ExportShownAsCsv, ReportSelectedAndSearch);
             SearchOptions.Add(ExportOptions);
 
+            
+
             Add(new Label() { Text = "Hello, world!", Width = Dim.Auto(), Height = Dim.Auto() });
+            Add(LabelResults, SearchBox, Results);
             Add(SearchOptions);
             Width = Dim.Fill();
             Height = Dim.Fill();
