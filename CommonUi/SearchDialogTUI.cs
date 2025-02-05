@@ -1,5 +1,6 @@
 ﻿//using Eto.Forms;
 //using Eto.Forms;
+//using Eto.Forms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using Terminal.Gui;
 
 namespace CommonUi
 {
-    public class SearchDialogTUI {
+    public class SearchDialogTUI: Terminal.Gui.Toplevel {
         private string[] _Selected = null;
         private List<string[]> _OutputList = new List<string[]>() { };
         public string[] Selected
@@ -49,15 +50,21 @@ namespace CommonUi
             TableView Results = new TableView();
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
+                Width = Dim.Auto(),
+                Height = Dim.Auto()
             };
             RadioGroup RBLSearchCaseSensitivity = new RadioGroup()
             {
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
+                Width = Dim.Auto(),
+                Height = Dim.Auto()
             };
             RadioGroup RBLSearchPosition = new RadioGroup()
             {
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
+                Width = Dim.Auto(),
+                Height = Dim.Auto()
             };
             var RBLSearchCaseSensitivityLabels = new List<string>();
             RBLSearchCaseSensitivityLabels.Add("Case-insensitive [F1]");
@@ -105,6 +112,29 @@ namespace CommonUi
             SearchSpellingNormalization.Add(CBNormalizeSpelling);
             SearchSpellingNormalization.Add(CBAnythingAnywhere);
             SearchSpellingNormalization.Width = Dim.Auto();
+            SearchSpellingNormalization.Height = Dim.Auto();
+
+
+            FrameView SearchOptions = new FrameView()
+            {
+            };
+            SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity)+1;
+            SearchCriteria.Y = Pos.Bottom(SearchCasePosition)+1;
+            SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria)+1;
+            SearchOptions.Add(
+                SearchCaseSensitivity,
+                    SearchCasePosition,
+                    SearchCriteria,
+                    SearchSpellingNormalization);
+
+            SearchOptions.Y = 0;
+            SearchOptions.X = 20;
+            SearchOptions.Width = Dim.Auto();
+            SearchOptions.Height = Dim.Auto();
+            Add(SearchOptions);
+            Add(new Label() { Text = "Hello, world!", Width = Dim.Auto(), Height = Dim.Auto() });
+            Width = Dim.Fill();
+            Height = Dim.Fill();
 
         }
         }

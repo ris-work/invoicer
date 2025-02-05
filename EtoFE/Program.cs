@@ -17,6 +17,11 @@ using RV.InvNew.Common;
 using Tomlyn;
 using Tomlyn.Model;
 
+public static class Mock
+{
+    public static List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue;
+    public static List<(string, TextAlignment, bool)> HeaderEntries;
+}
 public static class LoginTokens
 {
     public static LoginToken token;
@@ -45,6 +50,8 @@ public class Program
             new MediaTypeWithQualityHeaderValue("application/json")
         );
         new Application(Eto.Platforms.Wpf).Run(new MyForm());
+        Terminal.Gui.Application.Init();
+        Terminal.Gui.Application.Run(new CommonUi.SearchDialogTUI(Mock.SearchCatalogue, Mock.HeaderEntries));
     }
 }
 

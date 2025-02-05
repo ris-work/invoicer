@@ -27,6 +27,7 @@
     <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
     <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
     <PackageReference Include="Tomlyn" Version="0.18.0" />
     <PackageReference Include="Wiry.Base32" Version="1.1.1" />
   </ItemGroup>

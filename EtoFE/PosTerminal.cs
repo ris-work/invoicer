@@ -169,6 +169,8 @@ namespace EtoFE
             Barcode.KeyDown += (e, a) =>
             {
                 SearchDialogEto SD = new SearchDialogEto(SearchCatalogue, HeaderEntries);
+                Mock.SearchCatalogue = SearchCatalogue;
+                Mock.HeaderEntries = HeaderEntries;
                 SD.CallbackWhenReportButtonIsClicked = (string searched, string[] selected) => {
                     NotificationTransfer NT = new NotificationTransfer() { NotifContents = $"{searched}, {String.Join(',', selected)}", NotifTarget = "Everyone", NotifPriority = 0 };
                     AuthenticatedRequest<NotificationTransfer> N = new AuthenticatedRequest<NotificationTransfer>(NT, LoginTokens.token);
