@@ -9,6 +9,6 @@ namespace RV.InvNew.CommonUi
     public interface IButtonChooserInput
     {
         public List<string[]> OutputList { get; }
-        public string[] Selected { get;}
+        public string[] Selected { get; }
     }
 }

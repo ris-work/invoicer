@@ -6,8 +6,5 @@ using System.Threading.Tasks;
 
 namespace CommonUi
 {
-    public interface IUiGen
-    {
-
-    }
+    public interface IUiGen { }
 }

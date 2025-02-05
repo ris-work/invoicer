@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SearchDialog.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="icons\pos_exe.ico" />
   </ItemGroup>
 

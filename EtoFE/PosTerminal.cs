@@ -168,7 +168,7 @@ namespace EtoFE
             List<string[]> BatchSelectOutput = new List<string[]> { };
             Barcode.KeyDown += (e, a) =>
             {
-                SearchDialog SD = new SearchDialog(SearchCatalogue, HeaderEntries);
+                SearchDialogEto SD = new SearchDialogEto(SearchCatalogue, HeaderEntries);
                 SD.CallbackWhenReportButtonIsClicked = (string searched, string[] selected) => {
                     NotificationTransfer NT = new NotificationTransfer() { NotifContents = $"{searched}, {String.Join(',', selected)}", NotifTarget = "Everyone", NotifPriority = 0 };
                     AuthenticatedRequest<NotificationTransfer> N = new AuthenticatedRequest<NotificationTransfer>(NT, LoginTokens.token);
@@ -206,7 +206,7 @@ namespace EtoFE
                             );
                         })
                         .ToList();
-                    var BatchSelect = new SearchDialog(BatchSelectList, HeaderEntriesBatchSelect);
+                    var BatchSelect = new SearchDialogEto(BatchSelectList, HeaderEntriesBatchSelect);
                     BatchSelect.ShowModal();
                     BatchSelectOutput = BatchSelect.OutputList;
                     batchcode = long.Parse(BatchSelect.Selected[1]);

@@ -2,26 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Terminal.Gui;
-using System.Text.Json;
 
 namespace CommonUi
 {
     public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
+
     public class GenTopLevel : Toplevel
     {
-        
-        public GenTopLevel(IReadOnlyDictionary<string, (string, object, string?)> Inputs, SaveHandler SaveNewHandler, SaveHandler SaveExistingHandler, IReadOnlyDictionary<string, ShowAndGetValue> InputHandler){
+        public GenTopLevel(
+            IReadOnlyDictionary<string, (string, object, string?)> Inputs,
+            SaveHandler SaveNewHandler,
+            SaveHandler SaveExistingHandler,
+            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler
+        )
+        {
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
             Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler));
-            
         }
     }
-    public class GenTUI: Terminal.Gui.View
+
+    public class GenTUI : Terminal.Gui.View
     {
-        public IReadOnlyDictionary<string, object> Values { get => _Values; }
+        public IReadOnlyDictionary<string, object> Values
+        {
+            get => _Values;
+        }
         private Dictionary<string, object> _Values = new();
         private Dictionary<string, Terminal.Gui.View> _Controls = new();
         private bool _new = false;
@@ -71,7 +80,13 @@ namespace CommonUi
                 }
             }
         }
-        public GenTUI(IReadOnlyDictionary<string, (string, object, string?)> Inputs, SaveHandler SaveNewHandler, SaveHandler SaveExistingHandler, IReadOnlyDictionary<string, ShowAndGetValue> InputHandler)
+
+        public GenTUI(
+            IReadOnlyDictionary<string, (string, object, string?)> Inputs,
+            SaveHandler SaveNewHandler,
+            SaveHandler SaveExistingHandler,
+            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler
+        )
         {
             List<View> EControls = new();
             _Inputs = Inputs;
@@ -81,34 +96,54 @@ namespace CommonUi
             foreach (var kv in E)
             {
                 View EControl;
-                var ELabel = new Label() { Text = kv.Value.Item1, Width = Dim.Auto(), Height = Dim.Auto() };
+                var ELabel = new Label()
+                {
+                    Text = kv.Value.Item1,
+                    Width = Dim.Auto(),
+                    Height = Dim.Auto(),
+                };
                 //if (EControls.Count > 0) ELabel.Y = Pos.Bottom(EControls.Last());
                 Terminal.Gui.View EInput;
-                
-                if (kv.Value.Item2.GetType() == typeof(long) || kv.Value.Item2.GetType() == typeof(int))
+
+                if (
+                    kv.Value.Item2.GetType() == typeof(long)
+                    || kv.Value.Item2.GetType() == typeof(int)
+                )
                 {
                     if (kv.Value.Item3 == null)
                     {
-                        EInput = new TextField() { Text = ((long)kv.Value.Item2).ToString(), ReadOnly = false, };
-
+                        EInput = new TextField()
+                        {
+                            Text = ((long)kv.Value.Item2).ToString(),
+                            ReadOnly = false,
+                        };
                     }
                     else
                     {
                         EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
                         ((Button)EInput).MouseClick += (_, _) =>
                         {
-                            long? IHS = InputHandler[kv.Value.Item3]();
-                            if (IHS != null) ((Button)EInput).Text = IHS.ToString();
+                            long? IHS = InputHandler[kv.Value.Item3].Item1();
+                            if (IHS != null)
+                                ((Button)EInput).Text = IHS.ToString();
                         };
                     }
                 }
                 else if (kv.Value.Item2.GetType() == typeof(bool))
                 {
-                    EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString(), Enabled = true, };
+                    EInput = new CheckBox()
+                    {
+                        Text = ((bool)kv.Value.Item2).ToString(),
+                        Enabled = true,
+                    };
                 }
                 else
                 {
-                    EInput = new TextField() { Text = ((string)kv.Value.Item2).ToString(), ReadOnly = false, };
+                    EInput = new TextField()
+                    {
+                        Text = ((string)kv.Value.Item2).ToString(),
+                        ReadOnly = false,
+                    };
                 }
 
                 EControl = (new View() { Width = Dim.Fill(), Height = Dim.Auto() });
@@ -123,7 +158,7 @@ namespace CommonUi
                 EInput.Width = 20;
                 EInput.Enabled = true;
                 EControl.Add(EInput);
-                //_Einputs.Add(kv.Key, EInput);
+                _Einputs.Add(kv.Key, EInput);
                 EControls.Add(EControl);
                 //EControl.Add(ELabel);
                 oldkv = kv;
@@ -134,30 +169,44 @@ namespace CommonUi
             Button SaveButton = new Button() { Text = "Save", X = Pos.Right(NewButton) + 4 };
             Button ViewButton = new Button() { Text = "View", X = Pos.Right(SaveButton) + 4 };
             Button CancelButton = new Button() { Text = "Cancel", X = Pos.Right(ViewButton) + 4 };
-            NewButton.MouseClick += (_, _) => {
+            NewButton.MouseClick += (_, _) =>
+            {
                 ConvertInputs();
             };
-            SaveButton.MouseClick += (_, _) => {
+            SaveButton.MouseClick += (_, _) =>
+            {
                 ConvertInputs();
             };
-            ViewButton.MouseClick += (_, _) => {
+            ViewButton.MouseClick += (_, _) =>
+            {
                 ConvertInputs();
-                MessageBox.Query($"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}", "Serialized", "Ok");
+                MessageBox.Query(
+                    "Serialized",
+                    $"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}",
+                    "Ok"
+                );
             };
-            View ActionButtons = new View(){ Width = Dim.Auto(), Height = Dim.Auto() };
+            View ActionButtons = new View() { Width = Dim.Auto(), Height = Dim.Auto() };
             ActionButtons.Add(NewButton, SaveButton, ViewButton, CancelButton);
             ActionButtons.Width = 50;
             //var GeneratedControls = new View() { Width = Dim.Auto(), Height = Dim.Auto(), X = 0, Y = Pos.Bottom(ActionButtons)+1 };
             //GeneratedControls.Add(_EControls.First());
             int i = 0;
             Add(ActionButtons);
-            View Contents = new View() { Y = Pos.Bottom(ActionButtons), Width = Dim.Fill(), Height = Dim.Auto(), Enabled = true,};
+            View Contents = new View()
+            {
+                Y = Pos.Bottom(ActionButtons),
+                Width = Dim.Fill(),
+                Height = Dim.Auto(),
+                Enabled = true,
+            };
             View prev = null;
             foreach (var c in EControls)
             {
                 i++;
                 //MessageBox.Query("Attempt", $"{i}", "Dismiss");
-                if (prev != null) c.Y = Pos.Bottom(prev);
+                if (prev != null)
+                    c.Y = Pos.Bottom(prev);
                 prev = c;
                 Contents.Add(c);
                 //if (i == 10) break;
@@ -175,8 +224,10 @@ namespace CommonUi
 
         public long Save()
         {
-            if (_new) return _SaveNewHandler(ConvertedInputs);
-            else return _SaveExistingHandler(ConvertedInputs);
+            if (_new)
+                return _SaveNewHandler(ConvertedInputs);
+            else
+                return _SaveExistingHandler(ConvertedInputs);
         }
     }
 }
