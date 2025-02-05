@@ -1,6 +1,4 @@
 ﻿namespace InvoicerBackend
 {
-    public static class FilterEdits
-    {
-    }
+    public static class FilterEdits { }
 }

@@ -307,12 +307,15 @@ namespace RV.InvNew.AuthManager
                                 Text = "Edit/Set Billables",
                                 BackgroundColor = Color.FromArgb(0xff, 0xff, 0xaa, 0xff),
                             },
-                            new Button((e, a) => {
-                                (new NotificationsViewer()).ShowModal();
-                            })
+                            new Button(
+                                (e, a) =>
+                                {
+                                    (new NotificationsViewer()).ShowModal();
+                                }
+                            )
                             {
-                                Text = "View notifications ⚠"
-                            }
+                                Text = "View notifications ⚠",
+                            },
                         },
                         Orientation = Orientation.Horizontal,
                         Spacing = 4,

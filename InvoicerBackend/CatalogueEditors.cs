@@ -6,7 +6,9 @@ namespace InvoicerBackend
     {
         public static WebApplication AddCatalogueEditorHandlers(this WebApplication app)
         {
-            app.MapPost("/CreateCatalogueItem", (AuthenticatedRequest<object> o) => { }).WithName("CreateCatalogueItem").WithOpenApi();
+            app.MapPost("/CreateCatalogueItem", (AuthenticatedRequest<object> o) => { })
+                .WithName("CreateCatalogueItem")
+                .WithOpenApi();
             return app;
         }
     }

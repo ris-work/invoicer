@@ -224,7 +224,6 @@ namespace RV.InvNew.Common
         public int? NotifPriority { get; set; }
     }
 
-
     [JsonSerializable(typeof(List<CatalogueTransfer>))]
     public partial class CatalogueTransfer
     {
@@ -261,16 +260,30 @@ namespace RV.InvNew.Common
         //public long CategoriesBitmask { get; set; }
         public Dictionary<string, (string, object, string?)> ToDict()
         {
-            return new Dictionary<string, (string, object, string?)>() {
+            return new Dictionary<string, (string, object, string?)>()
+            {
                 { "Itemcode", ("Item code", this.Itemcode, null) },
                 { "Description", ("Description", this.Description, null) },
                 { "Active", ("Active", this.Active, null) },
                 { "DecriptionPOS", ("Description POS", this.DescriptionPos, null) },
                 { "DecriptionWeb", ("Description Web", this.DescriptionWeb, null) },
-                { "DescriptionOtherLanguages", ("Description (Other Languages)", this.DescriptionsOtherLanguages, "LangChooser") },
-                { "DefaultVatCategory", ("Default VAT/GST Category", this.DefaultVatCategory, "VatChooser") },
+                {
+                    "DescriptionOtherLanguages",
+                    (
+                        "Description (Other Languages)",
+                        this.DescriptionsOtherLanguages,
+                        "LangChooser"
+                    )
+                },
+                {
+                    "DefaultVatCategory",
+                    ("Default VAT/GST Category", this.DefaultVatCategory, "VatChooser")
+                },
                 { "VatDependsOnUser", ("VAT/GST is user-dependent", this.VatDependsOnUser, null) },
-                { "VatCategoryAdjustable", ("VAT/GST category is adjustable", this.VatCategoryAdjustable, null) },
+                {
+                    "VatCategoryAdjustable",
+                    ("VAT/GST category is adjustable", this.VatCategoryAdjustable, null)
+                },
                 { "ManualPrice", ("Allow Manual Price", this.PriceManual, null) },
                 { "EnforceAboveCost", ("Enforce Above Cost", this.EnforceAboveCost, null) },
                 { "ActiveWeb", ("Active (Web)", this.ActiveWeb, null) },
@@ -294,8 +307,6 @@ namespace RV.InvNew.Common
                 EnforceAboveCost = (bool)DIn["EnforceAboveCost"].Item2,
                 ActiveWeb = (bool)DIn["ActiveWeb"].Item2,
             };
-
         }
     }
-
 }

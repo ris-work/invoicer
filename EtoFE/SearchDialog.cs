@@ -82,10 +82,16 @@ namespace EtoFE
     {
         private string[] _Selected = null;
         private List<string[]> _OutputList = new List<string[]>() { };
-        public string[] Selected { get => _Selected; }
+        public string[] Selected
+        {
+            get => _Selected;
+        }
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
-        public List<string[]> OutputList { get => _OutputList; }
+        public List<string[]> OutputList
+        {
+            get => _OutputList;
+        }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
         public string ReportSelectedButtonText = "Report Selected";
@@ -187,7 +193,13 @@ namespace EtoFE
 
             StackLayout ExportOptions = new StackLayout()
             {
-                Items = { ExportAllAsCsv, ExportAllResultsAsCsv, ExportShownAsCsv, ReportSelectedAndSearch },
+                Items =
+                {
+                    ExportAllAsCsv,
+                    ExportAllResultsAsCsv,
+                    ExportShownAsCsv,
+                    ReportSelectedAndSearch,
+                },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Padding = 5,
@@ -618,7 +630,8 @@ namespace EtoFE
                         SelectedList = (string[])((GridItem)Results.SelectedItem).Values;
                     }
                     string SearchBoxText = SearchBox.Text;
-                    if(CallbackWhenReportButtonIsClicked != null) CallbackWhenReportButtonIsClicked(SearchBoxText, SelectedList);
+                    if (CallbackWhenReportButtonIsClicked != null)
+                        CallbackWhenReportButtonIsClicked(SearchBoxText, SelectedList);
                 };
             }
             Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);

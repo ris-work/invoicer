@@ -5,19 +5,21 @@
 //using Eto.Forms;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Terminal.Gui;
-using Microsoft.EntityFrameworkCore;
-using System.Data;
 using EtoFE;
-using System.Drawing.Imaging;
+using Microsoft.EntityFrameworkCore;
+using Terminal.Gui;
+
 //using Eto.Forms;
 
 namespace CommonUi
 {
-    public class SearchDialogTUI: Terminal.Gui.Toplevel {
+    public class SearchDialogTUI : Terminal.Gui.Toplevel
+    {
         private string[] _Selected = null;
         private List<string[]> _OutputList = new List<string[]>() { };
         public string[] Selected
@@ -54,24 +56,30 @@ namespace CommonUi
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults) };
-            TableView Results = new TableView() { FullRowSelect = true, Width = Dim.Fill(), Height = Dim.Fill(), Y = Pos.Bottom(SearchBox)+1,   };
+            TableView Results = new TableView()
+            {
+                FullRowSelect = true,
+                Width = Dim.Fill(),
+                Height = Dim.Fill(),
+                Y = Pos.Bottom(SearchBox) + 1,
+            };
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
                 Orientation = Orientation.Vertical,
                 Width = Dim.Auto(),
-                Height = Dim.Auto()
+                Height = Dim.Auto(),
             };
             RadioGroup RBLSearchCaseSensitivity = new RadioGroup()
             {
                 Orientation = Orientation.Vertical,
                 Width = Dim.Auto(),
-                Height = Dim.Auto()
+                Height = Dim.Auto(),
             };
             RadioGroup RBLSearchPosition = new RadioGroup()
             {
                 Orientation = Orientation.Vertical,
                 Width = Dim.Auto(),
-                Height = Dim.Auto()
+                Height = Dim.Auto(),
             };
             var RBLSearchCaseSensitivityLabels = new List<string>();
             RBLSearchCaseSensitivityLabels.Add("Case-insensitive [F1]");
@@ -84,24 +92,30 @@ namespace CommonUi
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
             CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
-            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]", Y = Pos.Bottom(CBNormalizeSpelling) };
+            CheckBox CBAnythingAnywhere = new CheckBox()
+            {
+                Text = "Anything Anywhere [BRK]",
+                Y = Pos.Bottom(CBNormalizeSpelling),
+            };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
 
             CBNormalizeSpelling.CheckedStateChanging += (e, a) =>
             {
-                NormalizeSpelling = CBNormalizeSpelling.CheckedState == CheckState.Checked ? false : true;
+                NormalizeSpelling =
+                    CBNormalizeSpelling.CheckedState == CheckState.Checked ? false : true;
             };
             CBAnythingAnywhere.CheckedStateChanging += (e, a) =>
             {
-                AnythingAnywhere = CBAnythingAnywhere.CheckedState == CheckState.Checked ? false : true;
+                AnythingAnywhere =
+                    CBAnythingAnywhere.CheckedState == CheckState.Checked ? false : true;
             };
 
-            FrameView SearchCriteria = new() { Text = "Search in..."};
+            FrameView SearchCriteria = new() { Text = "Search in..." };
 
             var ResultsDT = new DataTable();
-            
+
             Eto.Forms.TextAlignment[] Alignments = new Eto.Forms.TextAlignment[HeaderEntries.Count];
             List<string> RBLSearchCriteriaList = new List<string>();
             Alignments = HeaderEntries.Select((x) => x.Item2).ToArray();
@@ -120,7 +134,7 @@ namespace CommonUi
                 };*/
 
                 //Results.Columns.Add(HI);
-                ResultsDT.Columns.Add(new DataColumn() {  ColumnName = Header.Item1});
+                ResultsDT.Columns.Add(new DataColumn() { ColumnName = Header.Item1 });
 
                 ic++;
                 fnKey = 4 + ic;
@@ -147,28 +161,17 @@ namespace CommonUi
                 SearchContains = RBLSearchPosition.SelectedItem == 0;
             };
             SearchCriteria.Add(RBLSearchCriteria);
-            FrameView SearchCaseSensitivity = new()
-            {
-                Text = "Case sensitivity setting",
-            };
+            FrameView SearchCaseSensitivity = new() { Text = "Case sensitivity setting" };
             SearchCaseSensitivity.Add(RBLSearchCaseSensitivity);
             SearchCaseSensitivity.Width = Dim.Auto();
-            FrameView SearchCasePosition = new()
-            {
-                Text = "Search Position",
-            };
+            FrameView SearchCasePosition = new() { Text = "Search Position" };
             SearchCasePosition.Add(RBLSearchPosition);
             SearchCasePosition.Width = Dim.Auto();
-            FrameView SearchSpellingNormalization = new()
-            {
-                Text = "Advanced...",
-
-            };
+            FrameView SearchSpellingNormalization = new() { Text = "Advanced..." };
             SearchSpellingNormalization.Add(CBNormalizeSpelling);
             SearchSpellingNormalization.Add(CBAnythingAnywhere);
             SearchSpellingNormalization.Width = Dim.Auto();
             SearchSpellingNormalization.Height = Dim.Auto();
-
 
             bool searching = false;
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
@@ -320,13 +323,10 @@ namespace CommonUi
             };
             SearchBox.TextChanged += (_, _) => Search();
 
-
-            FrameView SearchOptions = new FrameView()
-            {
-            };
-            SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity)+1;
-            SearchCriteria.Y = Pos.Bottom(SearchCasePosition)+1;
-            SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria)+1;
+            FrameView SearchOptions = new FrameView() { };
+            SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
+            SearchCriteria.Y = Pos.Bottom(SearchCasePosition) + 1;
+            SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria) + 1;
             SearchCaseSensitivity.Width = Dim.Auto();
             SearchCaseSensitivity.Height = Dim.Auto();
             SearchCasePosition.Width = Dim.Auto();
@@ -337,9 +337,10 @@ namespace CommonUi
             SearchSpellingNormalization.Height = Dim.Auto();
             SearchOptions.Add(
                 SearchCaseSensitivity,
-                    SearchCasePosition,
-                    SearchCriteria,
-                    SearchSpellingNormalization);
+                SearchCasePosition,
+                SearchCriteria,
+                SearchSpellingNormalization
+            );
 
             SearchOptions.Y = Pos.AnchorEnd();
             SearchOptions.X = Pos.AnchorEnd();
@@ -348,30 +349,50 @@ namespace CommonUi
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
             SearchCriteria.Y = Pos.Bottom(SearchCasePosition) + 1;
             SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria) + 1;
-            
 
             Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
-            Button ExportAllAsCsv = new Button() { Text = "Export Everything...", Y = Pos.Bottom(ExportAllResultsAsCsv) };
-            Button ExportShownAsCsv = new Button() { Text = "Export Displayed...", Y = Pos.Bottom(ExportAllAsCsv) };
-            Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText, Y = Pos.Bottom(ExportShownAsCsv)+1 };
+            Button ExportAllAsCsv = new Button()
+            {
+                Text = "Export Everything...",
+                Y = Pos.Bottom(ExportAllResultsAsCsv),
+            };
+            Button ExportShownAsCsv = new Button()
+            {
+                Text = "Export Displayed...",
+                Y = Pos.Bottom(ExportAllAsCsv),
+            };
+            Button ReportSelectedAndSearch = new Button()
+            {
+                Text = ReportSelectedButtonText,
+                Y = Pos.Bottom(ExportShownAsCsv) + 1,
+            };
 
             View ExportOptions = new View()
             {
                 Height = Dim.Auto(),
                 Width = Dim.Auto(),
-                Y = Pos.Bottom(SearchSpellingNormalization)+1,
+                Y = Pos.Bottom(SearchSpellingNormalization) + 1,
             };
-            ExportOptions.Add(ExportAllResultsAsCsv, ExportAllAsCsv, ExportShownAsCsv, ReportSelectedAndSearch);
+            ExportOptions.Add(
+                ExportAllResultsAsCsv,
+                ExportAllAsCsv,
+                ExportShownAsCsv,
+                ReportSelectedAndSearch
+            );
             SearchOptions.Add(ExportOptions);
 
-            
-
-            Add(new Label() { Text = "Hello, world!", Width = Dim.Auto(), Height = Dim.Auto() });
+            Add(
+                new Label()
+                {
+                    Text = "Hello, world!",
+                    Width = Dim.Auto(),
+                    Height = Dim.Auto(),
+                }
+            );
             Add(LabelResults, SearchBox, Results);
             Add(SearchOptions);
             Width = Dim.Fill();
             Height = Dim.Fill();
-
         }
-        }
+    }
 }

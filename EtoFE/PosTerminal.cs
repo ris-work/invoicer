@@ -42,8 +42,14 @@ namespace EtoFE
             var R = new AuthenticatedRequest<string>("Hey", LoginTokens.token);
             var PosData = Program.client.PostAsJsonAsync("/PosRefresh", R);
             var NotificationsGetAR = new AuthenticatedRequest<string>("Hey", LoginTokens.token);
-            var Notifications = Program.client.PostAsJsonAsync("/GetNotifications", NotificationsGetAR);
-            var NotifDes = Notifications.Result.Content.ReadAsAsync<List<NotificationTransfer>>().GetAwaiter().GetResult();
+            var Notifications = Program.client.PostAsJsonAsync(
+                "/GetNotifications",
+                NotificationsGetAR
+            );
+            var NotifDes = Notifications
+                .Result.Content.ReadAsAsync<List<NotificationTransfer>>()
+                .GetAwaiter()
+                .GetResult();
             (new NotificationsViewer(NotifDes)).ShowModal();
             //MessageBox.Show(Notifications.GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult());
             TableLayout TL = new TableLayout();
@@ -171,14 +177,22 @@ namespace EtoFE
                 SearchDialogEto SD = new SearchDialogEto(SearchCatalogue, HeaderEntries);
                 Mock.SearchCatalogue = SearchCatalogue;
                 Mock.HeaderEntries = HeaderEntries;
-                SD.CallbackWhenReportButtonIsClicked = (string searched, string[] selected) => {
-                    NotificationTransfer NT = new NotificationTransfer() { NotifContents = $"{searched}, {String.Join(',', selected)}", NotifTarget = "Everyone", NotifPriority = 0 };
-                    AuthenticatedRequest<NotificationTransfer> N = new AuthenticatedRequest<NotificationTransfer>(NT, LoginTokens.token);
+                SD.CallbackWhenReportButtonIsClicked = (string searched, string[] selected) =>
+                {
+                    NotificationTransfer NT = new NotificationTransfer()
+                    {
+                        NotifContents = $"{searched}, {String.Join(',', selected)}",
+                        NotifTarget = "Everyone",
+                        NotifPriority = 0,
+                    };
+                    AuthenticatedRequest<NotificationTransfer> N =
+                        new AuthenticatedRequest<NotificationTransfer>(NT, LoginTokens.token);
                     Program.client.PostAsJsonAsync("/SendNotification", N).GetAwaiter().GetResult();
                 };
                 SD.ShowModal();
-                
-                if (SD.Selected == null) return;
+
+                if (SD.Selected == null)
+                    return;
                 Barcode.Text = SD.Selected[0];
                 MessageBox.Show(String.Concat(SD.Selected), "Selected", MessageBoxType.Information);
                 long SelectedItemcode = long.Parse(SD.Selected[0]);
@@ -208,7 +222,10 @@ namespace EtoFE
                             );
                         })
                         .ToList();
-                    var BatchSelect = new SearchDialogEto(BatchSelectList, HeaderEntriesBatchSelect);
+                    var BatchSelect = new SearchDialogEto(
+                        BatchSelectList,
+                        HeaderEntriesBatchSelect
+                    );
                     BatchSelect.ShowModal();
                     BatchSelectOutput = BatchSelect.OutputList;
                     batchcode = long.Parse(BatchSelect.Selected[1]);

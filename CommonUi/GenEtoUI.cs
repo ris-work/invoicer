@@ -109,7 +109,8 @@ namespace CommonUi
                             if (IHS != null)
                             {
                                 ((Button)EInput).Text = IHS.ToString();
-                                ((Label)ELegend).Text = InputHandler[kv.Value.Item3].Item2(IHS.GetValueOrDefault(0));
+                                ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
+                                    .Item2(IHS.GetValueOrDefault(0));
                             }
                         };
                     }
@@ -122,7 +123,7 @@ namespace CommonUi
                 {
                     EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                 }
-                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) {  };
+                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
                 _ELegends.Add(kv.Key, ELegend);
                 EControls.Add(EControl);

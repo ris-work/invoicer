@@ -28,72 +28,53 @@ var CT = new CatalogueTransfer
     VatDependsOnUser = false,
 };
 var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
+{
+    {
+        "one",
+        (
+            () =>
             {
-                {
-                    "one",
-                    (() =>
-                    {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return 100;
-                    },
-                    (x) => {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return "Hello";
-                    }
-                    )
-                },
-                {
-                    "VatChooser",
-                    (() =>
-                    {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return 101;
-                    },
-                    (x) => {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return "Default VAT";
-                    }
-                    )
-                },
-                {
-                    "LangChooser",
-                    (() =>
-                    {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return 102;
-                    },
-                    (x) => {
-                        Eto.Forms.MessageBox.Show(
-                            "one",
-                            "InputHandler",
-                            MessageBoxType.Information
-                        );
-                        return "Default Language (editor to launch)";
-                    }
-                    
-                    )
-                },
-            };
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return 100;
+            },
+            (x) =>
+            {
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return "Hello";
+            }
+        )
+    },
+    {
+        "VatChooser",
+        (
+            () =>
+            {
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return 101;
+            },
+            (x) =>
+            {
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return "Default VAT";
+            }
+        )
+    },
+    {
+        "LangChooser",
+        (
+            () =>
+            {
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return 102;
+            },
+            (x) =>
+            {
+                Eto.Forms.MessageBox.Show("one", "InputHandler", MessageBoxType.Information);
+                return "Default Language (editor to launch)";
+            }
+        )
+    },
+};
 new Eto.Forms.Application().Run(
     new Form()
     {
@@ -118,7 +99,6 @@ new Eto.Forms.Application().Run(
                 return 100;
             },
             ActionsMap
-            
         ),
     }
 );
