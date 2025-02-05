@@ -1,4 +1,4 @@
-﻿/*using CommonUi;
+﻿using CommonUi;
 using Eto.Forms;
 using RV.InvNew.Common;
 using Terminal.Gui;
@@ -120,4 +120,3 @@ Terminal.Gui.Application.Run(
         ActionsMap
     )
 );
-*/

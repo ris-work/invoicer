@@ -9,6 +9,7 @@
 	  <TrimMode>partial</TrimMode>
     <InvariantGlobalization>false</InvariantGlobalization>
     <ApplicationIcon>icons\pos_exe.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -45,8 +46,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Common\common.csproj" />
-    <ProjectReference Include="..\commonui\CommonUi.csproj" />
+    <ProjectReference Include="..\commonui\CommonUi.csproj">
+      <Private>True</Private>
+      <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

@@ -1,23 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Eto.Forms" Version="2.9.0" />
     <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3079-prerelease" />
     <PackageReference Include="Terminal.Gui" Version="2.0.0-v2-develop.2329" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Common\common.csproj" />
+    <ProjectReference Include="..\Commonui\CommonUi.csproj" />
   </ItemGroup>
 
 </Project>
