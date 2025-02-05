@@ -1,6 +1,7 @@
 ﻿//using Eto.Forms;
 //using Eto.Forms;
 //using Eto.Forms;
+//using Eto.Forms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,7 +78,7 @@ namespace CommonUi
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
             CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
-            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
+            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]", Y = Pos.Bottom(CBNormalizeSpelling) };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
@@ -121,6 +122,14 @@ namespace CommonUi
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity)+1;
             SearchCriteria.Y = Pos.Bottom(SearchCasePosition)+1;
             SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria)+1;
+            SearchCaseSensitivity.Width = Dim.Auto();
+            SearchCaseSensitivity.Height = Dim.Auto();
+            SearchCasePosition.Width = Dim.Auto();
+            SearchCasePosition.Height = Dim.Auto();
+            SearchCriteria.Width = Dim.Auto();
+            SearchCriteria.Height = Dim.Auto();
+            SearchSpellingNormalization.Width = Dim.Auto();
+            SearchSpellingNormalization.Height = Dim.Auto();
             SearchOptions.Add(
                 SearchCaseSensitivity,
                     SearchCasePosition,
@@ -131,8 +140,27 @@ namespace CommonUi
             SearchOptions.X = 20;
             SearchOptions.Width = Dim.Auto();
             SearchOptions.Height = Dim.Auto();
-            Add(SearchOptions);
+            SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
+            SearchCriteria.Y = Pos.Bottom(SearchCasePosition) + 1;
+            SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria) + 1;
+            
+
+            Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
+            Button ExportAllAsCsv = new Button() { Text = "Export Everything...", Y = Pos.Bottom(ExportAllResultsAsCsv) };
+            Button ExportShownAsCsv = new Button() { Text = "Export Displayed...", Y = Pos.Bottom(ExportAllAsCsv) };
+            Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText, Y = Pos.Bottom(ExportShownAsCsv)+1 };
+
+            View ExportOptions = new View()
+            {
+                Height = Dim.Auto(),
+                Width = Dim.Auto(),
+                Y = Pos.Bottom(SearchSpellingNormalization)+1,
+            };
+            ExportOptions.Add(ExportAllResultsAsCsv, ExportAllAsCsv, ExportShownAsCsv, ReportSelectedAndSearch);
+            SearchOptions.Add(ExportOptions);
+
             Add(new Label() { Text = "Hello, world!", Width = Dim.Auto(), Height = Dim.Auto() });
+            Add(SearchOptions);
             Width = Dim.Fill();
             Height = Dim.Fill();
 
