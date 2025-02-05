@@ -30,6 +30,7 @@ namespace CommonUi
         private SaveHandler _SaveExistingHandler;
         List<Eto.Forms.TableRow> _EControls = new();
         Dictionary<string, Eto.Forms.Control> _Einputs = new();
+        Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, object> ConvertedInputs = new();
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
 
@@ -87,6 +88,7 @@ namespace CommonUi
             foreach (var kv in E)
             {
                 Eto.Forms.TableRow EControl;
+                Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput;
                 if (
                     kv.Value.Item2.GetType() == typeof(long)
@@ -100,11 +102,15 @@ namespace CommonUi
                     else
                     {
                         EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
+                        ELegend = new Label() { };
                         ((Button)EInput).Click += (_, _) =>
                         {
                             long? IHS = InputHandler[kv.Value.Item3].Item1();
                             if (IHS != null)
+                            {
                                 ((Button)EInput).Text = IHS.ToString();
+                                ((Label)ELegend).Text = InputHandler[kv.Value.Item3].Item2(IHS.GetValueOrDefault(0));
+                            }
                         };
                     }
                 }
@@ -116,8 +122,9 @@ namespace CommonUi
                 {
                     EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                 }
-                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput) { };
+                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) {  };
                 _Einputs.Add(kv.Key, EInput);
+                _ELegends.Add(kv.Key, ELegend);
                 EControls.Add(EControl);
             }
             _EControls = EControls;
@@ -150,7 +157,7 @@ namespace CommonUi
             var GeneratedControls = new TableLayout(_EControls.ToArray())
             {
                 Padding = 10,
-                Spacing = new Eto.Drawing.Size(3, 3),
+                Spacing = new Eto.Drawing.Size(10, 3),
             };
             Content = new StackLayout(ActionButtons, GeneratedControls)
             {

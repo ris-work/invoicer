@@ -67,7 +67,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
                             "InputHandler",
                             MessageBoxType.Information
                         );
-                        return "Hello";
+                        return "Default VAT";
                     }
                     )
                 },
@@ -88,7 +88,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
                             "InputHandler",
                             MessageBoxType.Information
                         );
-                        return "Hello";
+                        return "Default Language (editor to launch)";
                     }
                     
                     )

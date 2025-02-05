@@ -129,6 +129,8 @@ namespace CommonUi
             RBLSearchCriteriaList.Add($"Omnibox [F{fnKey + 1}]");
             Results.Table = new DataTableSource(ResultsDT);
             RBLSearchCriteria.RadioLabels = RBLSearchCriteriaList.ToArray();
+            RBLSearchCriteria.Width = Dim.Auto();
+            RBLSearchCriteria.Height = Dim.Auto();
 
             int SelectedSearchIndex = SC[0].Item1.Length;
             RBLSearchCriteria.SelectedItemChanged += (e, a) =>
@@ -144,7 +146,7 @@ namespace CommonUi
             {
                 SearchContains = RBLSearchPosition.SelectedItem == 0;
             };
-
+            SearchCriteria.Add(RBLSearchCriteria);
             FrameView SearchCaseSensitivity = new()
             {
                 Text = "Case sensitivity setting",
@@ -339,7 +341,7 @@ namespace CommonUi
                     SearchCriteria,
                     SearchSpellingNormalization);
 
-            SearchOptions.Y = 0;
+            SearchOptions.Y = Pos.AnchorEnd();
             SearchOptions.X = Pos.AnchorEnd();
             SearchOptions.Width = Dim.Auto();
             SearchOptions.Height = Dim.Auto();
