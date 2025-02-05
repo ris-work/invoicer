@@ -54,7 +54,7 @@ namespace CommonUi
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults) };
-            TableView Results = new TableView() { FullRowSelect = true, Width = Dim.Fill(), Height = Dim.Fill(), Y = Pos.Bottom(SearchBox)+1  };
+            TableView Results = new TableView() { FullRowSelect = true, Width = Dim.Fill(), Height = Dim.Fill(), Y = Pos.Bottom(SearchBox)+1,   };
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
                 Orientation = Orientation.Vertical,
@@ -200,7 +200,7 @@ namespace CommonUi
                 Filtered = FilteredTemp;
                 foreach (var item in Filtered)
                 {
-                    ResultsDTU.Rows.Add(item.Item1);
+                    ResultsDTU.Rows.Add(item.Item1.Take(ResultsDTU.Columns.Count).ToArray());
                     ColorMatTemp.Add((item.Item2, item.Item3));
                 }
                 //ColorMat = ColorMatTemp.ToArray();
