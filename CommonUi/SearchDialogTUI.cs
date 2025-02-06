@@ -56,8 +56,8 @@ namespace CommonUi
             View TL = new View() { Width = 80, Height = 24 };
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
-            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
-            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
+            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
+            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
             TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults), ColorScheme = new ColorScheme(TextFieldColors, TextFieldSelected, TextFieldColors, TextFieldColors, TextFieldSelected) };
             Terminal.Gui.Attribute TableColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Black);
             Terminal.Gui.Attribute TableColorSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);

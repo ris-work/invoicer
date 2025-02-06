@@ -76,7 +76,7 @@ namespace CommonUi
                 }
                 else if (T == typeof(bool))
                 {
-                    ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).CheckedState);
+                    ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).CheckedState == CheckState.Checked);
                 }
             }
         }
@@ -93,6 +93,18 @@ namespace CommonUi
 
             var E = Inputs.AsEnumerable();
             KeyValuePair<string, (string, object, string?)> oldkv;
+            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
+            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
+            var ColorSchemeTF = new ColorScheme(TextFieldColors, TextFieldSelected, TextFieldColors, TextFieldColors, TextFieldSelected);
+            Terminal.Gui.Attribute CheckBoxColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightBlue);
+            Terminal.Gui.Attribute CheckBoxSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Black);
+            var ColorSchemeCB = new ColorScheme(CheckBoxColors, CheckBoxSelected, CheckBoxColors, CheckBoxColors, CheckBoxSelected);
+            Terminal.Gui.Attribute ButtonColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightYellow);
+            Terminal.Gui.Attribute ButtonSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightYellow, Terminal.Gui.Color.Black);
+            var ColorSchemeBTN = new ColorScheme(ButtonColors, ButtonSelected, ButtonColors, ButtonColors, ButtonSelected);
+            Terminal.Gui.Attribute LabelColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Gray, Terminal.Gui.Color.Black); 
+            Terminal.Gui.Attribute LabelSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.Gray);
+            var ColorSchemeLabel = new ColorScheme(LabelColors, LabelSelected, LabelColors, LabelColors, LabelSelected);
             foreach (var kv in E)
             {
                 View EControl;
@@ -116,11 +128,12 @@ namespace CommonUi
                         {
                             Text = ((long)kv.Value.Item2).ToString(),
                             ReadOnly = false,
+                            ColorScheme = ColorSchemeTF,
                         };
                     }
                     else
                     {
-                        EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
+                        EInput = new Button() { Text = ((long)kv.Value.Item2).ToString(), ColorScheme = ColorSchemeBTN };
                         ((Button)EInput).MouseClick += (_, _) =>
                         {
                             long? IHS = InputHandler[kv.Value.Item3].Item1();
@@ -135,6 +148,7 @@ namespace CommonUi
                     {
                         Text = ((bool)kv.Value.Item2).ToString(),
                         Enabled = true,
+                        ColorScheme = ColorSchemeCB,
                     };
                 }
                 else
@@ -143,6 +157,7 @@ namespace CommonUi
                     {
                         Text = ((string)kv.Value.Item2).ToString(),
                         ReadOnly = false,
+                        ColorScheme = ColorSchemeTF,
                     };
                 }
 
@@ -152,10 +167,11 @@ namespace CommonUi
                 //EInput.Width = Dim.Fill();
                 //if (EControls.Count > 0) EInput.Y = Pos.Bottom(EControls.Last()) + 1;
                 //else EInput.Y = 0;
+                ELabel.ColorScheme = ColorSchemeLabel;
                 ELabel.Width = Dim.Auto();
                 ELabel.Height = Dim.Auto();
                 EInput.X = Pos.AnchorEnd();
-                EInput.Width = 20;
+                EInput.Width = 40;
                 EInput.Enabled = true;
                 EControl.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
@@ -216,8 +232,8 @@ namespace CommonUi
             Add(Contents);
             //Add(GeneratedControls);
             //Add(new Button() { Text = "Hello" });
-            Width = Dim.Auto();
-            Height = Dim.Auto();
+            Width = Dim.Fill();
+            Height = Dim.Fill();
             Enabled = true;
             //Content = new StackLayout(ActionButtons, GeneratedControls) { Orientation = Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Center };
         }
