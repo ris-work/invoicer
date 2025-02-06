@@ -193,7 +193,7 @@ namespace CommonUi
             //GeneratedControls.Add(_EControls.First());
             int i = 0;
             Add(ActionButtons);
-            View Contents = new View()
+            View Contents = new FrameView()
             {
                 Y = Pos.Bottom(ActionButtons),
                 Width = Dim.Fill(),

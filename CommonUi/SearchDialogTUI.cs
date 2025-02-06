@@ -10,6 +10,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+//using Eto.Forms;
 using EtoFE;
 using Microsoft.EntityFrameworkCore;
 using Terminal.Gui;
@@ -55,13 +56,21 @@ namespace CommonUi
             View TL = new View() { Width = 80, Height = 24 };
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
-            TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults) };
+            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
+            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
+            TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults), ColorScheme = new ColorScheme(TextFieldColors, TextFieldSelected, TextFieldColors, TextFieldColors, TextFieldSelected) };
+            Terminal.Gui.Attribute TableColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Black);
+            Terminal.Gui.Attribute TableColorSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
+            Terminal.Gui.Attribute SearchOptionsColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightMagenta, Terminal.Gui.Color.Black);
+            Terminal.Gui.Attribute SearchOptionSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightYellow);
             TableView Results = new TableView()
             {
                 FullRowSelect = true,
                 Width = Dim.Fill(),
                 Height = Dim.Fill(),
                 Y = Pos.Bottom(SearchBox) + 1,
+                ColorScheme = new ColorScheme(TableColors, TableColorSelected, TableColors, TableColors, TableColorSelected),
+                TextAlignment = Alignment.End
             };
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
@@ -323,7 +332,9 @@ namespace CommonUi
             };
             SearchBox.TextChanged += (_, _) => Search();
 
-            FrameView SearchOptions = new FrameView() { };
+            FrameView SearchOptions = new FrameView() {
+                ColorScheme = new ColorScheme(SearchOptionsColors, SearchOptionSelected, SearchOptionsColors, SearchOptionsColors, SearchOptionSelected)
+            };
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
             SearchCriteria.Y = Pos.Bottom(SearchCasePosition) + 1;
             SearchSpellingNormalization.Y = Pos.Bottom(SearchCriteria) + 1;
@@ -342,8 +353,8 @@ namespace CommonUi
                 SearchSpellingNormalization
             );
 
-            SearchOptions.Y = Pos.AnchorEnd();
-            SearchOptions.X = Pos.AnchorEnd();
+            SearchOptions.Y = Pos.AnchorEnd() - 1;
+            SearchOptions.X = Pos.AnchorEnd() - 1;
             SearchOptions.Width = Dim.Auto();
             SearchOptions.Height = Dim.Auto();
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
@@ -393,6 +404,92 @@ namespace CommonUi
             Add(SearchOptions);
             Width = Dim.Fill();
             Height = Dim.Fill();
+
+            KeyDown += (e, a) =>
+            {
+                switch (a.KeyCode)
+                {
+                    case KeyCode.F1:
+                        RBLSearchCaseSensitivity.SelectedItem = 0;
+                        break;
+                    case KeyCode.F2:
+                        RBLSearchCaseSensitivity.SelectedItem = 1;
+                        break;
+                    case KeyCode.F3:
+                        RBLSearchPosition.SelectedItem = 0;
+                        break;
+                    case KeyCode.F4:
+                        RBLSearchPosition.SelectedItem = 1;
+                        break;
+                    case KeyCode.F5:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 1)
+                            RBLSearchCriteria.SelectedItem = 0;
+                        break;
+                    case KeyCode.F6:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 2)
+                            RBLSearchCriteria.SelectedItem = 1;
+                        break;
+                    case KeyCode.F7:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 3)
+                            RBLSearchCriteria.SelectedItem = 2;
+                        break;
+                    case KeyCode.F8:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 4)
+                            RBLSearchCriteria.SelectedItem = 3;
+                        break;
+                    case KeyCode.F9:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 5)
+                            RBLSearchCriteria.SelectedItem = 4;
+                        break;
+                    case KeyCode.F10:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 6)
+                            RBLSearchCriteria.SelectedItem = 5;
+                        break;
+                    case KeyCode.F11:
+                        if (RBLSearchCriteria.RadioLabels.Count() >= 7)
+                            RBLSearchCriteria.SelectedItem = 6;
+                        break;
+                    case KeyCode.End:
+                        CBNormalizeSpelling.CheckedState = CBNormalizeSpelling.CheckedState == CheckState.UnChecked ? CheckState.Checked : CheckState.UnChecked;
+                        break;
+                    case KeyCode.Insert:
+                        CBAnythingAnywhere.CheckedState = CBAnythingAnywhere.CheckedState == CheckState.UnChecked ? CheckState.Checked : CheckState.UnChecked;
+                        break;
+                    case KeyCode.Enter:
+                        if (!searching)
+                        {
+                            if (Results.SelectedRow != null)
+                            {
+                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this._Selected = (string[])((ResultsDT.Rows[Results.SelectedRow])[0]);
+                                //this.Close();
+                            }
+                            else if (ResultsDT.Rows != null && ResultsDT.Rows.Count != 0)
+                            {
+                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
+                                this._Selected = (string[])
+                                    (ResultsDT.Rows[0])[0];
+                                //this.Close();
+                            }
+                            else
+                            {
+                                MessageBox.Query(
+                                    "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
+                                    "Error",
+                                    "Ok"
+                                );
+                            }
+                        }
+
+                        break;
+                    //case Keys.Escape:
+                    //this.Close();
+                    //break;
+                    default:
+                        break;
+                };
+            };
+
         }
     }
 }
