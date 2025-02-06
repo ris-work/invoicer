@@ -56,21 +56,56 @@ namespace CommonUi
             View TL = new View() { Width = 80, Height = 24 };
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
-            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
-            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
-            TextField SearchBox = new TextField() { Width = 30, Y = Pos.Bottom(LabelResults), ColorScheme = new ColorScheme(TextFieldColors, TextFieldSelected, TextFieldColors, TextFieldColors, TextFieldSelected) };
-            Terminal.Gui.Attribute TableColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Black);
-            Terminal.Gui.Attribute TableColorSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
-            Terminal.Gui.Attribute SearchOptionsColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightMagenta, Terminal.Gui.Color.Black);
-            Terminal.Gui.Attribute SearchOptionSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightYellow);
+            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightGreen,
+                Terminal.Gui.Color.Black
+            );
+            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightGreen
+            );
+            TextField SearchBox = new TextField()
+            {
+                Width = 30,
+                Y = Pos.Bottom(LabelResults),
+                ColorScheme = new ColorScheme(
+                    TextFieldColors,
+                    TextFieldSelected,
+                    TextFieldColors,
+                    TextFieldColors,
+                    TextFieldSelected
+                ),
+            };
+            Terminal.Gui.Attribute TableColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightBlue,
+                Terminal.Gui.Color.Black
+            );
+            Terminal.Gui.Attribute TableColorSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightGreen
+            );
+            Terminal.Gui.Attribute SearchOptionsColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightMagenta,
+                Terminal.Gui.Color.Black
+            );
+            Terminal.Gui.Attribute SearchOptionSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightYellow
+            );
             TableView Results = new TableView()
             {
                 FullRowSelect = true,
                 Width = Dim.Fill(),
                 Height = Dim.Fill(),
                 Y = Pos.Bottom(SearchBox) + 1,
-                ColorScheme = new ColorScheme(TableColors, TableColorSelected, TableColors, TableColors, TableColorSelected),
-                TextAlignment = Alignment.End
+                ColorScheme = new ColorScheme(
+                    TableColors,
+                    TableColorSelected,
+                    TableColors,
+                    TableColors,
+                    TableColorSelected
+                ),
+                TextAlignment = Alignment.End,
             };
             RadioGroup RBLSearchCriteria = new RadioGroup()
             {
@@ -332,8 +367,15 @@ namespace CommonUi
             };
             SearchBox.TextChanged += (_, _) => Search();
 
-            FrameView SearchOptions = new FrameView() {
-                ColorScheme = new ColorScheme(SearchOptionsColors, SearchOptionSelected, SearchOptionsColors, SearchOptionsColors, SearchOptionSelected)
+            FrameView SearchOptions = new FrameView()
+            {
+                ColorScheme = new ColorScheme(
+                    SearchOptionsColors,
+                    SearchOptionSelected,
+                    SearchOptionsColors,
+                    SearchOptionsColors,
+                    SearchOptionSelected
+                ),
             };
             SearchCasePosition.Y = Pos.Bottom(SearchCaseSensitivity) + 1;
             SearchCriteria.Y = Pos.Bottom(SearchCasePosition) + 1;
@@ -450,10 +492,16 @@ namespace CommonUi
                             RBLSearchCriteria.SelectedItem = 6;
                         break;
                     case KeyCode.End:
-                        CBNormalizeSpelling.CheckedState = CBNormalizeSpelling.CheckedState == CheckState.UnChecked ? CheckState.Checked : CheckState.UnChecked;
+                        CBNormalizeSpelling.CheckedState =
+                            CBNormalizeSpelling.CheckedState == CheckState.UnChecked
+                                ? CheckState.Checked
+                                : CheckState.UnChecked;
                         break;
                     case KeyCode.Insert:
-                        CBAnythingAnywhere.CheckedState = CBAnythingAnywhere.CheckedState == CheckState.UnChecked ? CheckState.Checked : CheckState.UnChecked;
+                        CBAnythingAnywhere.CheckedState =
+                            CBAnythingAnywhere.CheckedState == CheckState.UnChecked
+                                ? CheckState.Checked
+                                : CheckState.UnChecked;
                         break;
                     case KeyCode.Enter:
                         if (!searching)
@@ -461,14 +509,15 @@ namespace CommonUi
                             if (Results.SelectedRow != null)
                             {
                                 this._OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this._Selected = (string[])((ResultsDT.Rows[Results.SelectedRow])[0]);
+                                this._Selected = (string[])(
+                                    (ResultsDT.Rows[Results.SelectedRow])[0]
+                                );
                                 //this.Close();
                             }
                             else if (ResultsDT.Rows != null && ResultsDT.Rows.Count != 0)
                             {
                                 this._OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this._Selected = (string[])
-                                    (ResultsDT.Rows[0])[0];
+                                this._Selected = (string[])(ResultsDT.Rows[0])[0];
                                 //this.Close();
                             }
                             else
@@ -487,9 +536,9 @@ namespace CommonUi
                     //break;
                     default:
                         break;
-                };
+                }
+                ;
             };
-
         }
     }
 }

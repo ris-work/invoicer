@@ -76,7 +76,10 @@ namespace CommonUi
                 }
                 else if (T == typeof(bool))
                 {
-                    ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).CheckedState == CheckState.Checked);
+                    ConvertedInputs.Add(
+                        e.Key,
+                        ((CheckBox)_Einputs[e.Key]).CheckedState == CheckState.Checked
+                    );
                 }
             }
         }
@@ -93,18 +96,66 @@ namespace CommonUi
 
             var E = Inputs.AsEnumerable();
             KeyValuePair<string, (string, object, string?)> oldkv;
-            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightGreen);
-            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightGreen, Terminal.Gui.Color.Black);
-            var ColorSchemeTF = new ColorScheme(TextFieldColors, TextFieldSelected, TextFieldColors, TextFieldColors, TextFieldSelected);
-            Terminal.Gui.Attribute CheckBoxColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightBlue);
-            Terminal.Gui.Attribute CheckBoxSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Black);
-            var ColorSchemeCB = new ColorScheme(CheckBoxColors, CheckBoxSelected, CheckBoxColors, CheckBoxColors, CheckBoxSelected);
-            Terminal.Gui.Attribute ButtonColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.BrightYellow);
-            Terminal.Gui.Attribute ButtonSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightYellow, Terminal.Gui.Color.Black);
-            var ColorSchemeBTN = new ColorScheme(ButtonColors, ButtonSelected, ButtonColors, ButtonColors, ButtonSelected);
-            Terminal.Gui.Attribute LabelColors = new Terminal.Gui.Attribute(Terminal.Gui.Color.Gray, Terminal.Gui.Color.Black); 
-            Terminal.Gui.Attribute LabelSelected = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.Gray);
-            var ColorSchemeLabel = new ColorScheme(LabelColors, LabelSelected, LabelColors, LabelColors, LabelSelected);
+            Terminal.Gui.Attribute TextFieldColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightGreen
+            );
+            Terminal.Gui.Attribute TextFieldSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightGreen,
+                Terminal.Gui.Color.Black
+            );
+            var ColorSchemeTF = new ColorScheme(
+                TextFieldColors,
+                TextFieldSelected,
+                TextFieldColors,
+                TextFieldColors,
+                TextFieldSelected
+            );
+            Terminal.Gui.Attribute CheckBoxColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightBlue
+            );
+            Terminal.Gui.Attribute CheckBoxSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightBlue,
+                Terminal.Gui.Color.Black
+            );
+            var ColorSchemeCB = new ColorScheme(
+                CheckBoxColors,
+                CheckBoxSelected,
+                CheckBoxColors,
+                CheckBoxColors,
+                CheckBoxSelected
+            );
+            Terminal.Gui.Attribute ButtonColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.BrightYellow
+            );
+            Terminal.Gui.Attribute ButtonSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.BrightYellow,
+                Terminal.Gui.Color.Black
+            );
+            var ColorSchemeBTN = new ColorScheme(
+                ButtonColors,
+                ButtonSelected,
+                ButtonColors,
+                ButtonColors,
+                ButtonSelected
+            );
+            Terminal.Gui.Attribute LabelColors = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Gray,
+                Terminal.Gui.Color.Black
+            );
+            Terminal.Gui.Attribute LabelSelected = new Terminal.Gui.Attribute(
+                Terminal.Gui.Color.Black,
+                Terminal.Gui.Color.Gray
+            );
+            var ColorSchemeLabel = new ColorScheme(
+                LabelColors,
+                LabelSelected,
+                LabelColors,
+                LabelColors,
+                LabelSelected
+            );
             foreach (var kv in E)
             {
                 View EControl;
@@ -133,7 +184,11 @@ namespace CommonUi
                     }
                     else
                     {
-                        EInput = new Button() { Text = ((long)kv.Value.Item2).ToString(), ColorScheme = ColorSchemeBTN };
+                        EInput = new Button()
+                        {
+                            Text = ((long)kv.Value.Item2).ToString(),
+                            ColorScheme = ColorSchemeBTN,
+                        };
                         ((Button)EInput).MouseClick += (_, _) =>
                         {
                             long? IHS = InputHandler[kv.Value.Item3].Item1();
