@@ -22,7 +22,15 @@ namespace CommonUi
         {
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
-            Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler, IdentityColumn));
+            Add(
+                new GenTUI(
+                    Inputs,
+                    SaveNewHandler,
+                    SaveExistingHandler,
+                    InputHandler,
+                    IdentityColumn
+                )
+            );
         }
     }
 
@@ -263,7 +271,6 @@ namespace CommonUi
                         };
                     }
                 }
-                
                 else
                 {
                     EInput = new TextField()

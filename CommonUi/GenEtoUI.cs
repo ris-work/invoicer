@@ -159,7 +159,6 @@ namespace CommonUi
                         EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                     }
                 }
-                
                 else
                 {
                     EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };

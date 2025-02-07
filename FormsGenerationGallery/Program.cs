@@ -76,7 +76,8 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
     },
 };
 
-var SampleJson = @"{""name"": ""name"",""localName"": ""பெயர்"",""float"": 1.2,""location"": ""ஊர் பெயர்""}";
+var SampleJson =
+    @"{""name"": ""name"",""localName"": ""பெயர்"",""float"": 1.2,""location"": ""ஊர் பெயர்""}";
 
 /*
 new Eto.Forms.Application().Run(
@@ -109,16 +110,27 @@ new Eto.Forms.Application().Run(
 );
 */
 
-new Eto.Forms.Application().Run(new Form()
-{
-    Content =
-    new GenEtoUI(SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson), (_) => { return 100; }, (_) => { return 100; }, ActionsMap, null)
-}
-    );
-
-
+new Eto.Forms.Application().Run(
+    new Form()
+    {
+        Content = new GenEtoUI(
+            SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+            (_) =>
+            {
+                return 100;
+            },
+            (_) =>
+            {
+                return 100;
+            },
+            ActionsMap,
+            null
+        ),
+    }
+);
 
 Terminal.Gui.Application.Init();
+
 /*
 Terminal.Gui.Application.Run(
     new GenTopLevel(
@@ -140,5 +152,17 @@ Terminal.Gui.Application.Run(
 */
 
 Terminal.Gui.Application.Run(
-    new GenTopLevel(SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson), (_) => { return 100; }, (_) => { return 100;  }, ActionsMap, null)
-    );
+    new GenTopLevel(
+        SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+        (_) =>
+        {
+            return 100;
+        },
+        (_) =>
+        {
+            return 100;
+        },
+        ActionsMap,
+        null
+    )
+);
