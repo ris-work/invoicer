@@ -77,7 +77,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 };
 
 var SampleJson =
-    @"{""name"": ""name"",""localName"": ""பெயர்"",""float"": 1.2,""location"": ""ஊர் பெயர்""}";
+    @"{""name"": ""name"",""localName"": ""பெயர்"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை""}";
 
 /*
 new Eto.Forms.Application().Run(
