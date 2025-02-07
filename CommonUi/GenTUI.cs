@@ -16,12 +16,13 @@ namespace CommonUi
             IReadOnlyDictionary<string, (string, object, string?)> Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
-            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler
+            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
+            string? IdentityColumn
         )
         {
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
-            Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler));
+            Add(new GenTUI(Inputs, SaveNewHandler, SaveExistingHandler, InputHandler, IdentityColumn));
         }
     }
 
@@ -110,7 +111,8 @@ namespace CommonUi
             IReadOnlyDictionary<string, (string, object, string?)> Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
-            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler
+            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
+            string? IdentityColumn
         )
         {
             List<View> EControls = new();
@@ -188,7 +190,7 @@ namespace CommonUi
                     Height = Dim.Auto(),
                 };
                 //if (EControls.Count > 0) ELabel.Y = Pos.Bottom(EControls.Last());
-                Terminal.Gui.View EInput;
+                Terminal.Gui.View EInput = new Label();
 
                 if (
                     kv.Value.Item2.GetType() == typeof(long)
@@ -197,49 +199,71 @@ namespace CommonUi
                     || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
-                    if (kv.Value.Item3 == null)
+                    if (kv.Value.Item2.GetType() == typeof(long))
+                    {
+                        if (kv.Value.Item3 == null)
+                        {
+                            EInput = new TextField()
+                            {
+                                Text = ((long)kv.Value.Item2).ToString(),
+                                ReadOnly = false,
+                                ColorScheme = ColorSchemeTF,
+                                TextAlignment = Alignment.End,
+                            };
+                        }
+                        else
+                        {
+                            EInput = new Button()
+                            {
+                                Text = ((long)kv.Value.Item2).ToString(),
+                                ColorScheme = ColorSchemeBTN,
+                            };
+                            ((Button)EInput).MouseClick += (_, _) =>
+                            {
+                                long? IHS = InputHandler[kv.Value.Item3].Item1();
+                                if (IHS != null)
+                                    ((Button)EInput).Text = IHS.ToString();
+                            };
+                        }
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(bool))
+                    {
+                        EInput = new CheckBox()
+                        {
+                            Text = ((bool)kv.Value.Item2).ToString(),
+                            Enabled = true,
+                            ColorScheme = ColorSchemeCB,
+                        };
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(double))
                     {
                         EInput = new TextField()
                         {
-                            Text = ((long)kv.Value.Item2).ToString(),
+                            Text = ((double)kv.Value.Item2).ToString(),
                             ReadOnly = false,
                             ColorScheme = ColorSchemeTF,
-                            TextAlignment = Alignment.End,
                         };
                     }
-                    else
+                    else if (kv.Value.Item2.GetType() == typeof(float))
                     {
-                        EInput = new Button()
+                        EInput = new TextField()
                         {
-                            Text = ((long)kv.Value.Item2).ToString(),
-                            ColorScheme = ColorSchemeBTN,
+                            Text = ((float)kv.Value.Item2).ToString(),
+                            ReadOnly = false,
+                            ColorScheme = ColorSchemeTF,
                         };
-                        ((Button)EInput).MouseClick += (_, _) =>
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(string))
+                    {
+                        EInput = new TextField()
                         {
-                            long? IHS = InputHandler[kv.Value.Item3].Item1();
-                            if (IHS != null)
-                                ((Button)EInput).Text = IHS.ToString();
+                            Text = ((string)kv.Value.Item2).ToString(),
+                            ReadOnly = false,
+                            ColorScheme = ColorSchemeTF,
                         };
                     }
                 }
-                else if (kv.Value.Item2.GetType() == typeof(bool))
-                {
-                    EInput = new CheckBox()
-                    {
-                        Text = ((bool)kv.Value.Item2).ToString(),
-                        Enabled = true,
-                        ColorScheme = ColorSchemeCB,
-                    };
-                }
-                else if (kv.Value.Item2.GetType() == typeof(string))
-                {
-                    EInput = new TextField()
-                    {
-                        Text = ((string)kv.Value.Item2).ToString(),
-                        ReadOnly = false,
-                        ColorScheme = ColorSchemeTF,
-                    };
-                }
+                
                 else
                 {
                     EInput = new TextField()

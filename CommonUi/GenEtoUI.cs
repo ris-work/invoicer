@@ -100,7 +100,8 @@ namespace CommonUi
             IReadOnlyDictionary<string, (string, object, string?)> Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
-            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler
+            IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
+            string? IdentityColumn
         )
         {
             List<Eto.Forms.TableRow> EControls = new();
@@ -111,7 +112,7 @@ namespace CommonUi
             {
                 Eto.Forms.TableRow EControl;
                 Eto.Forms.Label? ELegend = null;
-                Eto.Forms.Control EInput;
+                Eto.Forms.Control EInput = new Label();
                 if (
                     kv.Value.Item2.GetType() == typeof(long)
                     || kv.Value.Item2.GetType() == typeof(int)
@@ -119,38 +120,46 @@ namespace CommonUi
                     || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
-                    if (kv.Value.Item3 == null)
+                    if (kv.Value.Item2.GetType() == typeof(long))
                     {
-                        EInput = new TextBox()
+                        if (kv.Value.Item3 == null)
                         {
-                            Text = ((long)kv.Value.Item2).ToString(),
-                            TextAlignment = TextAlignment.Right,
-                        };
-                    }
-                    else
-                    {
-                        EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
-                        ELegend = new Label() { };
-                        ((Button)EInput).Click += (_, _) =>
-                        {
-                            long? IHS = InputHandler[kv.Value.Item3].Item1();
-                            if (IHS != null)
+                            EInput = new TextBox()
                             {
-                                ((Button)EInput).Text = IHS.ToString();
-                                ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
-                                    .Item2(IHS.GetValueOrDefault(0));
-                            }
-                        };
+                                Text = ((string)kv.Value.Item2).ToString(),
+                                TextAlignment = TextAlignment.Right,
+                            };
+                        }
+                        else
+                        {
+                            EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
+                            ELegend = new Label() { };
+                            ((Button)EInput).Click += (_, _) =>
+                            {
+                                long? IHS = InputHandler[kv.Value.Item3].Item1();
+                                if (IHS != null)
+                                {
+                                    ((Button)EInput).Text = IHS.ToString();
+                                    ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
+                                        .Item2(IHS.GetValueOrDefault(0));
+                                }
+                            };
+                        }
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(double))
+                    {
+                        EInput = new TextBox() { Text = ((double)kv.Value.Item2).ToString() };
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(bool))
+                    {
+                        EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
+                    }
+                    else if (kv.Value.Item2.GetType() == typeof(string))
+                    {
+                        EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                     }
                 }
-                else if (kv.Value.Item2.GetType() == typeof(bool))
-                {
-                    EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
-                }
-                else if (kv.Value.Item2.GetType() == typeof(string))
-                {
-                    EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
-                }
+                
                 else
                 {
                     EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
