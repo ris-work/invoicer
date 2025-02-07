@@ -70,6 +70,28 @@ namespace CommonUi
                         ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
                     }
                 }
+                else if (T == typeof(float))
+                {
+                    if (e.Value.Item3 == null)
+                    {
+                        ConvertedInputs.Add(e.Key, float.Parse(((TextField)_Einputs[e.Key]).Text));
+                    }
+                    else
+                    {
+                        ConvertedInputs.Add(e.Key, float.Parse(((Button)_Einputs[e.Key]).Text));
+                    }
+                }
+                else if (T == typeof(double))
+                {
+                    if (e.Value.Item3 == null)
+                    {
+                        ConvertedInputs.Add(e.Key, double.Parse(((TextField)_Einputs[e.Key]).Text));
+                    }
+                    else
+                    {
+                        ConvertedInputs.Add(e.Key, double.Parse(((Button)_Einputs[e.Key]).Text));
+                    }
+                }
                 else if (T == typeof(string))
                 {
                     ConvertedInputs.Add(e.Key, ((TextField)_Einputs[e.Key]).Text);
@@ -171,6 +193,8 @@ namespace CommonUi
                 if (
                     kv.Value.Item2.GetType() == typeof(long)
                     || kv.Value.Item2.GetType() == typeof(int)
+                    || kv.Value.Item2.GetType() == typeof(double)
+                    || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
                     if (kv.Value.Item3 == null)
@@ -180,6 +204,7 @@ namespace CommonUi
                             Text = ((long)kv.Value.Item2).ToString(),
                             ReadOnly = false,
                             ColorScheme = ColorSchemeTF,
+                            TextAlignment = Alignment.End,
                         };
                     }
                     else
@@ -204,6 +229,15 @@ namespace CommonUi
                         Text = ((bool)kv.Value.Item2).ToString(),
                         Enabled = true,
                         ColorScheme = ColorSchemeCB,
+                    };
+                }
+                else if (kv.Value.Item2.GetType() == typeof(string))
+                {
+                    EInput = new TextField()
+                    {
+                        Text = ((string)kv.Value.Item2).ToString(),
+                        ReadOnly = false,
+                        ColorScheme = ColorSchemeTF,
                     };
                 }
                 else
