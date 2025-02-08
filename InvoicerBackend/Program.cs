@@ -282,7 +282,7 @@ app.MapPost(
         "/PosRefresh",
         (AuthenticatedRequest<string> AS) =>
         {
-            if (AS.Get("Refresh") != null)
+            if (AS.Get("Refresh", "/PosRefresh") != null)
             {
                 List<PosCatalogue> PC;
                 List<PosBatch> PB;

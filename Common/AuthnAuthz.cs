@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,14 +34,14 @@ namespace RV.InvNew.Common
         public string Principal;
         public long? PrincipalUserId;
 
-        public void AddToRequestLog(T Request, bool WasItBad, string? RequestedPrivilegeLevel)
+        public void AddToRequestLog(T Request, bool WasItBad, string? RequestedPrivilegeLevel, string? Endpoint = null)
         {
             using (var ctx = new NewinvContext())
             {
                 if (WasItBad)
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.GetType()}, {RequestedPrivilegeLevel})"
+                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint})"
                     );
                     /*ctx.RequestsBads.Add(
                         new RequestsBad
@@ -54,7 +55,7 @@ namespace RV.InvNew.Common
                 else
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.GetType()}, {RequestedPrivilegeLevel})"
+                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint})"
                     );
                     /*ctx.Requests.Add(
                         new Request
@@ -115,17 +116,17 @@ namespace RV.InvNew.Common
             }
             if (auth_success)
             {
-                AddToRequestLog(Request, false);
+                AddToRequestLog(Request, false, null);
                 return this.Request;
             }
             else
             {
-                AddToRequestLog(Request, true);
+                AddToRequestLog(Request, true, null);
                 return default(T);
             }
         }
 
-        public T? Get(string PrivilegeLevel)
+        public T? Get(string PrivilegeLevel, string? Endpoint = null)
         {
             T? output;
             bool auth_success;
@@ -177,7 +178,7 @@ namespace RV.InvNew.Common
 
             if (auth_success)
             {
-                AddToRequestLog(Request, false);
+                AddToRequestLog(Request, false, PrivilegeLevel, Endpoint);
                 return this.Request;
             }
             else
@@ -185,7 +186,7 @@ namespace RV.InvNew.Common
                 Console.Error.WriteLine(
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
-                AddToRequestLog(Request, true);
+                AddToRequestLog(Request, true, PrivilegeLevel, Endpoint);
                 return default(T);
             }
         }

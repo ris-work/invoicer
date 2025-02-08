@@ -5,7 +5,7 @@
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 17.2
 
--- Started on 2025-02-06 19:05:17
+-- Started on 2025-02-08 13:48:01
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -84,8 +84,6 @@ $$;
 
 
 SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- TOC entry 220 (class 1259 OID 16796)
@@ -658,7 +656,11 @@ CREATE TABLE public.requests (
     time_tai time with time zone DEFAULT now() NOT NULL,
     principal bigint NOT NULL,
     token text NOT NULL,
-    request_body text NOT NULL
+    request_body text NOT NULL,
+    type text,
+    requested_action text,
+    requested_privilege_level text,
+    endpoint text
 );
 
 
@@ -671,7 +673,11 @@ CREATE TABLE public.requests_bad (
     time_tai timestamp with time zone DEFAULT now() NOT NULL,
     principal bigint,
     token text NOT NULL,
-    request_body text
+    request_body text,
+    type text,
+    requested_action text,
+    requested_privilege_level text,
+    endpoint text
 );
 
 
@@ -1132,7 +1138,7 @@ ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
 
 
--- Completed on 2025-02-06 19:05:17
+-- Completed on 2025-02-08 13:48:01
 
 --
 -- PostgreSQL database dump complete
