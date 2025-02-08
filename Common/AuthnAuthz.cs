@@ -33,6 +33,7 @@ namespace RV.InvNew.Common
         public T Request;
         public string Principal;
         public long? PrincipalUserId;
+        private string? ExistingPrivilegeList = null;
 
         public void AddToRequestLog(T Request, bool WasItBad, string? RequestedPrivilegeLevel, string? Endpoint = null)
         {
@@ -41,7 +42,7 @@ namespace RV.InvNew.Common
                 if (WasItBad)
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint})"
+                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {JsonSerializer.Serialize<T>(Request)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
                     );
                     /*ctx.RequestsBads.Add(
                         new RequestsBad
@@ -55,7 +56,7 @@ namespace RV.InvNew.Common
                 else
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint})"
+                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {JsonSerializer.Serialize<T>(Request)}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
                     );
                     /*ctx.Requests.Add(
                         new Request
@@ -130,7 +131,7 @@ namespace RV.InvNew.Common
         {
             T? output;
             bool auth_success;
-            string ExistingPrivilegeList = "";
+            //string ExistingPrivilegeList = "";
             Console.WriteLine($"Requested {PrivilegeLevel}");
             using (var ctx = new NewinvContext())
             {
@@ -145,9 +146,7 @@ namespace RV.InvNew.Common
                             ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
                                 .First()
                                 .Tokenvalue == this.Token.Token
-                            && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
-                                .First()
-                                .Privileges.ToLowerInvariant()
+                            && ExistingPrivilegeList
                                 .Split(',')
                                 .Contains(PrivilegeLevel.ToLowerInvariant())
                         )
@@ -178,7 +177,7 @@ namespace RV.InvNew.Common
 
             if (auth_success)
             {
-                AddToRequestLog(Request, false, PrivilegeLevel, Endpoint);
+                AddToRequestLog(Request, false, PrivilegeLevel.ToLowerInvariant(), Endpoint);
                 return this.Request;
             }
             else
@@ -186,7 +185,7 @@ namespace RV.InvNew.Common
                 Console.Error.WriteLine(
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
-                AddToRequestLog(Request, true, PrivilegeLevel, Endpoint);
+                AddToRequestLog(Request, true, PrivilegeLevel.ToLowerInvariant(), Endpoint);
                 return default(T);
             }
         }
