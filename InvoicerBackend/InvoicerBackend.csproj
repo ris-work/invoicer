@@ -25,13 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\common\common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="InvoicerBackend.http">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\common.csproj" />
   </ItemGroup>
 
 </Project>

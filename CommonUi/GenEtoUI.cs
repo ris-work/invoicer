@@ -120,13 +120,16 @@ namespace CommonUi
                     || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
-                    if (kv.Value.Item2.GetType() == typeof(long))
+                    if (
+                        kv.Value.Item2.GetType() == typeof(long)
+                        || kv.Value.Item2.GetType() == typeof(Int64)
+                    )
                     {
                         if (kv.Value.Item3 == null)
                         {
                             EInput = new TextBox()
                             {
-                                Text = ((string)kv.Value.Item2).ToString(),
+                                Text = (kv.Value.Item2).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
                         }
@@ -148,7 +151,11 @@ namespace CommonUi
                     }
                     else if (kv.Value.Item2.GetType() == typeof(double))
                     {
-                        EInput = new TextBox() { Text = ((double)kv.Value.Item2).ToString() };
+                        EInput = new TextBox()
+                        {
+                            Text = ((double)kv.Value.Item2).ToString(),
+                            TextAlignment = TextAlignment.Right,
+                        };
                     }
                     else if (kv.Value.Item2.GetType() == typeof(bool))
                     {
@@ -163,6 +170,7 @@ namespace CommonUi
                 {
                     EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
                 }
+                EInput.Width = 300;
                 EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
                 _ELegends.Add(kv.Key, ELegend);

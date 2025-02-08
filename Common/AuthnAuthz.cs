@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace RV.InvNew.Common
 {
@@ -31,32 +33,39 @@ namespace RV.InvNew.Common
         public string Principal;
         public long? PrincipalUserId;
 
-        public void AddToRequestLog(T Request, bool WasItBad)
+        public void AddToRequestLog(T Request, bool WasItBad, string? RequestedPrivilegeLevel)
         {
             using (var ctx = new NewinvContext())
             {
                 if (WasItBad)
                 {
-                    ctx.RequestsBads.Add(
+                    ctx.Database.ExecuteSql(
+                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.GetType()}, {RequestedPrivilegeLevel})"
+                    );
+                    /*ctx.RequestsBads.Add(
                         new RequestsBad
                         {
                             Principal = this.PrincipalUserId,
                             RequestBody = JsonSerializer.Serialize<T>(Request),
                             Token = JsonSerializer.Serialize<LoginToken>(Token),
                         }
-                    );
+                    );*/
                 }
                 else
                 {
-                    ctx.Requests.Add(
+                    ctx.Database.ExecuteSql(
+                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level) VALUES ({this.PrincipalUserId}, {JsonSerializer.Serialize<T>(Request)}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.GetType()}, {RequestedPrivilegeLevel})"
+                    );
+                    /*ctx.Requests.Add(
                         new Request
                         {
                             Principal = this.PrincipalUserId ?? -1,
                             RequestBody = JsonSerializer.Serialize<T>(Request),
                             Token = JsonSerializer.Serialize<LoginToken>(Token),
                         }
-                    );
+                    );*/
                 }
+                //ctx.SaveChanges();
             }
         }
 
@@ -73,35 +82,47 @@ namespace RV.InvNew.Common
             using (var ctx = new NewinvContext())
             {
                 if (this.Token.TokenID != null && this.Token != null)
-                    if (
-                        ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Tokenvalue
-                        == this.Token.Token
-                    )
+                    try
                     {
-                        output = this.Request;
-                        auth_success = true;
-                        var PrincipalEntry = ctx
-                            .Credentials.Where(e =>
-                                e.Userid
-                                == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
-                                    .First()
-                                    .Userid
-                            )
-                            .First();
-                        Principal = PrincipalEntry.Username;
-                        PrincipalUserId = PrincipalEntry.Userid;
+                        if (
+                            ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                .First()
+                                .Tokenvalue == this.Token.Token
+                        )
+                        {
+                            output = this.Request;
+                            auth_success = true;
+                            var PrincipalEntry = ctx
+                                .Credentials.Where(e =>
+                                    e.Userid
+                                    == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                        .First()
+                                        .Userid
+                                )
+                                .First();
+                            Principal = PrincipalEntry.Username;
+                            PrincipalUserId = PrincipalEntry.Userid;
+                        }
+                        else
+                            auth_success = false;
                     }
-                    else
+                    catch (Exception _)
+                    {
                         auth_success = false;
+                    }
                 else
                     auth_success = false;
             }
             if (auth_success)
             {
+                AddToRequestLog(Request, false);
                 return this.Request;
             }
             else
+            {
+                AddToRequestLog(Request, true);
                 return default(T);
+            }
         }
 
         public T? Get(string PrivilegeLevel)
@@ -109,43 +130,54 @@ namespace RV.InvNew.Common
             T? output;
             bool auth_success;
             string ExistingPrivilegeList = "";
+            Console.WriteLine($"Requested {PrivilegeLevel}");
             using (var ctx = new NewinvContext())
             {
-                ExistingPrivilegeList = ctx
-                    .Tokens.Where(t => t.Tokenid == this.Token.TokenID)
-                    .First()
-                    .Privileges.ToLowerInvariant();
-                if (this.Token.TokenID != null && this.Token != null)
-                    if (
-                        ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID).First().Tokenvalue
-                            == this.Token.Token
-                        && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
-                            .First()
-                            .Privileges.ToLowerInvariant()
-                            .Split(',')
-                            .Contains(PrivilegeLevel.ToLowerInvariant())
-                    )
-                    {
-                        output = this.Request;
-                        auth_success = true;
-                        var PrincipalEntry = ctx
-                            .Credentials.Where(e =>
-                                e.Userid
-                                == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
-                                    .First()
-                                    .Userid
-                            )
-                            .First();
-                        Principal = PrincipalEntry.Username;
-                        PrincipalUserId = PrincipalEntry.Userid;
-                    }
+                try
+                {
+                    ExistingPrivilegeList = ctx
+                        .Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                        .First()
+                        .Privileges.ToLowerInvariant();
+                    if (this.Token.TokenID != null && this.Token != null)
+                        if (
+                            ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                .First()
+                                .Tokenvalue == this.Token.Token
+                            && ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                .First()
+                                .Privileges.ToLowerInvariant()
+                                .Split(',')
+                                .Contains(PrivilegeLevel.ToLowerInvariant())
+                        )
+                        {
+                            output = this.Request;
+                            auth_success = true;
+                            var PrincipalEntry = ctx
+                                .Credentials.Where(e =>
+                                    e.Userid
+                                    == ctx.Tokens.Where(t => t.Tokenid == this.Token.TokenID)
+                                        .First()
+                                        .Userid
+                                )
+                                .First();
+                            Principal = PrincipalEntry.Username;
+                            PrincipalUserId = PrincipalEntry.Userid;
+                        }
+                        else
+                            auth_success = false;
                     else
                         auth_success = false;
-                else
+                }
+                catch (Exception E)
+                {
                     auth_success = false;
+                }
             }
+
             if (auth_success)
             {
+                AddToRequestLog(Request, false);
                 return this.Request;
             }
             else
@@ -153,6 +185,7 @@ namespace RV.InvNew.Common
                 Console.Error.WriteLine(
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
+                AddToRequestLog(Request, true);
                 return default(T);
             }
         }

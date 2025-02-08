@@ -22,6 +22,7 @@ namespace CommonUi
         {
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
+            Enabled = true;
             Add(
                 new GenTUI(
                     Inputs,
@@ -31,6 +32,7 @@ namespace CommonUi
                     IdentityColumn
                 )
             );
+            LayoutSubviews();
         }
     }
 
@@ -58,6 +60,17 @@ namespace CommonUi
             {
                 Type T = e.Value.Item2.GetType();
                 if (T == typeof(long))
+                {
+                    if (e.Value.Item3 == null)
+                    {
+                        ConvertedInputs.Add(e.Key, long.Parse(((TextField)_Einputs[e.Key]).Text));
+                    }
+                    else
+                    {
+                        ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
+                    }
+                }
+                else if (T == typeof(UInt64))
                 {
                     if (e.Value.Item3 == null)
                     {
@@ -207,16 +220,24 @@ namespace CommonUi
                     || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
-                    if (kv.Value.Item2.GetType() == typeof(long))
+                    if (
+                        kv.Value.Item2.GetType() == typeof(long)
+                        || kv.Value.Item2.GetType() == typeof(Int64)
+                    )
                     {
                         if (kv.Value.Item3 == null)
                         {
                             EInput = new TextField()
                             {
-                                Text = ((long)kv.Value.Item2).ToString(),
+                                Text = (kv.Value.Item2).ToString(),
+                                TextFormatter = new TextFormatter()
+                                {
+                                    Text = (kv.Value.Item2).ToString(),
+                                    Alignment = Alignment.End,
+                                },
                                 ReadOnly = false,
                                 ColorScheme = ColorSchemeTF,
-                                TextAlignment = Alignment.End,
+                                TextAlignment = Alignment.Start,
                             };
                         }
                         else
@@ -290,7 +311,7 @@ namespace CommonUi
                 ELabel.ColorScheme = ColorSchemeLabel;
                 ELabel.Width = Dim.Auto();
                 ELabel.Height = Dim.Auto();
-                EInput.X = Pos.AnchorEnd();
+                EInput.X = 42;
                 EInput.Width = 40;
                 EInput.Enabled = true;
                 EControl.Add(EInput);
@@ -333,7 +354,7 @@ namespace CommonUi
             {
                 Y = Pos.Bottom(ActionButtons),
                 Width = Dim.Fill(),
-                Height = Dim.Auto(),
+                Height = Dim.Fill(),
                 Enabled = true,
             };
             View prev = null;
@@ -342,7 +363,7 @@ namespace CommonUi
                 i++;
                 //MessageBox.Query("Attempt", $"{i}", "Dismiss");
                 if (prev != null)
-                    c.Y = Pos.Bottom(prev);
+                    c.Y = Pos.Bottom(prev) + 1;
                 prev = c;
                 Contents.Add(c);
                 //if (i == 10) break;
@@ -355,6 +376,7 @@ namespace CommonUi
             Width = Dim.Fill();
             Height = Dim.Fill();
             Enabled = true;
+
             //Content = new StackLayout(ActionButtons, GeneratedControls) { Orientation = Orientation.Vertical, HorizontalContentAlignment = HorizontalAlignment.Center };
         }
 

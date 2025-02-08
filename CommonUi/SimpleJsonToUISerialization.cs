@@ -22,11 +22,18 @@ namespace CommonUi
             {
                 try
                 {
-                    Output.Add(kv.Key, (kv.Key, kv.Value.GetDouble(), null));
+                    Output.Add(kv.Key, (kv.Key, kv.Value.GetInt64(), null));
                 }
                 catch (Exception E)
                 {
-                    Output.Add(kv.Key, (kv.Key, kv.Value.GetString(), null));
+                    try
+                    {
+                        Output.Add(kv.Key, (kv.Key, kv.Value.GetDouble(), null));
+                    }
+                    catch (Exception _)
+                    {
+                        Output.Add(kv.Key, (kv.Key, kv.Value.GetString(), null));
+                    }
                 }
             }
             return Output;
