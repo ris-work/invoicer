@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.Maui.Core" Version="8.0.100" />
     <PackageReference Include="Microsoft.Maui.Essentials" Version="8.0.100" />
     <PackageReference Include="Microsoft.Maui.Graphics" Version="9.0.40" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3079-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     <PackageReference Include="Terminal.Gui" Version="2.0.0-v2-develop.2329" />
   </ItemGroup>
 
