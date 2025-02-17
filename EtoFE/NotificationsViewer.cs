@@ -102,6 +102,7 @@ namespace EtoFE
                     .GetAwaiter()
                     .GetResult();
             };
+            Width = 400;
         }
     }
 }

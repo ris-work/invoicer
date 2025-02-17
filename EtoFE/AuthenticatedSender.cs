@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using RV.InvNew.Common;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System.Buffers.Text;
 
 namespace EtoFE
 {
@@ -21,11 +22,12 @@ namespace EtoFE
         Ti Message;
         string Endpoint;
         public To Result;
+        bool Bearer;
 
-        public InteractiveAuthenticatedSender(string Endpoint, Ti message)
+        public InteractiveAuthenticatedSender(string Endpoint, Ti message, bool Bearer = false)
         {
             Message = message;
-
+            this.Bearer = Bearer;
             this.Endpoint = Endpoint;
         }
 
@@ -47,30 +49,48 @@ namespace EtoFE
             var logint_w = resultA.Content.ReadAsAsync<LoginToken>();
             logint = logint_w.GetAwaiter().GetResult();
             token = logint;
-            MessageBox.Show(logint.TokenID);
-            MessageBox.Show(logint.Token);
-            MessageBox.Show(logint.Error);
+            MessageBox.Show($"{logint.TokenID}, { logint.Token}, {logint.Error}", "Login information", MessageBoxType.Information);
             if (logint.Error != "")
             {
                 Error = true;
             }
             bool IsSuccessful = false;
-            AR = new AuthenticatedRequest<Ti>(Message, token);
+            if (Bearer == false)
+            {
+                AR = new AuthenticatedRequest<Ti>(Message, token);
 
-            var responseT = Program.client.PostAsJsonAsync(Endpoint, AR);
-            var response = responseT.GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
-            {
-                var result = response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
-                Result = result;
-            }
-            else if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                Error = true;
+                var responseT = Program.client.PostAsJsonAsync(Endpoint, AR);
+                var response = responseT.GetAwaiter().GetResult();
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
+                    Result = result;
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    Error = true;
+                }
+                else
+                {
+                    Error = true;
+                }
             }
             else
             {
-                Error = true;
+                var JR = JsonSerializer.Serialize(Message);
+                var Request = new HttpRequestMessage()
+                {
+                    Content = new StringContent(JR),
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(Program.client.BaseAddress, Endpoint),
+                };
+                Request.Headers.Add("Authorization", $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(logint)))}");
+                Console.WriteLine(JR);
+                var Posted = Program.client.SendAsync(Request);
+                var Response = Posted.GetAwaiter().GetResult();
+                Response.EnsureSuccessStatusCode();
+                var result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
+                Result = result;
             }
         }
     }
@@ -83,8 +103,9 @@ namespace EtoFE
         public Ti Request;
         public To Response;
         public bool Error = false;
+        public bool Bearer = false;
 
-        public AuthenticationForm(string Endpoint, Ti Request)
+        public AuthenticationForm(string Endpoint, Ti Request, bool Bearer = false)
         {
             var LU = new Label() { Text = "Username" };
             var LP = new Label() { Text = "Password" };
@@ -125,9 +146,10 @@ namespace EtoFE
                 Spacing = 10,
             };
             this.Request = Request;
+            this.Bearer = Bearer;
             LoginButton.Click += (e, a) =>
             {
-                InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request);
+                InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request, Bearer);
                 Sender.Send(TU.Text, TP.Text, false);
                 Response = Sender.Result;
                 Error = Sender.Error;
@@ -135,7 +157,7 @@ namespace EtoFE
             };
             ElevatedLoginButton.Click += (e, a) =>
             {
-                InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request);
+                InteractiveAuthenticatedSender<Ti, To> Sender = new(Endpoint, Request, Bearer);
                 Sender.Send(TU.Text, TP.Text, true);
                 Response = Sender.Result;
                 Elevated = true;

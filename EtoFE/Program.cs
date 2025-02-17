@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -27,6 +28,10 @@ public static class LoginTokens
 {
     public static LoginToken token;
     public static LoginToken ElevatedLoginToken;
+    public static string LoginTokenForBearerAuth()
+    {
+        return JsonSerializer.Serialize(token);
+    }
 }
 
 public class Program
@@ -71,9 +76,7 @@ public class MyForm : Form
         var logint_w = result.Content.ReadAsAsync<LoginToken>();
         logint_w.Wait();
         logint = logint_w.Result;
-        MessageBox.Show(logint.TokenID);
-        MessageBox.Show(logint.Token);
-        MessageBox.Show(logint.Error);
+        MessageBox.Show($"{logint.TokenID}, {logint.Token}, {logint.Error}", MessageBoxType.Information);
         if (logint.Error != "")
         {
             return false;

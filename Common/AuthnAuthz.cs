@@ -23,7 +23,7 @@ namespace RV.InvNew.Common
         }
 
         public static void AddToRequestLog(
-            HttpRequest Request,
+            string Request,
             bool WasItBad,
             string? RequestedPrivilegeLevel,
             long? PrincipalUserId,
@@ -37,7 +37,7 @@ namespace RV.InvNew.Common
                 if (WasItBad)
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.Body}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
+                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
                     );
                     /*ctx.RequestsBads.Add(
                         new RequestsBad
@@ -51,7 +51,7 @@ namespace RV.InvNew.Common
                 else
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request.Body}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
+                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
                     );
                     /*ctx.Requests.Add(
                         new Request
@@ -66,7 +66,7 @@ namespace RV.InvNew.Common
             }
         }
 
-        public static bool VerifyAuthorization(
+        public static async Task<(bool Success, string? RequestBody)> VerifyIfAuthorizationIsOk(
             HttpRequest Request,
             string PrivilegeLevel,
             string Endpoint
@@ -78,9 +78,12 @@ namespace RV.InvNew.Common
             bool auth_success;
             //string ExistingPrivilegeList = "";
             Console.WriteLine($"Requested {PrivilegeLevel}");
-            StringValues BearerToken;
-            bool HasBearerToken = Request.Headers.TryGetValue("Bearer", out BearerToken);
-            LoginToken Token = JsonSerializer.Deserialize<LoginToken>(BearerToken[0]);
+            StringValues BearerTokenHeaderValue;
+            bool HasBearerToken = Request.Headers.TryGetValue("Authorization", out BearerTokenHeaderValue);
+            string[] SplitToken =  BearerTokenHeaderValue[0].Split(' ');
+            var BearerToken = String.Join(' ', SplitToken.ToList().Skip(1));
+            System.Console.WriteLine($"Got Authorization: {BearerToken}");
+            LoginToken Token = JsonSerializer.Deserialize<LoginToken>(Encoding.UTF8.GetString(Convert.FromBase64String(BearerToken)));
             using (var ctx = new NewinvContext())
             {
                 try
@@ -121,18 +124,18 @@ namespace RV.InvNew.Common
                     auth_success = false;
                 }
             }
-
+            var RequestAsString = await (new StreamReader(Request.Body)).ReadToEndAsync();
             if (auth_success)
             {
                 AddToRequestLog(
-                    Request,
+                    RequestAsString,
                     false,
                     PrivilegeLevel.ToLowerInvariant(),
                     PrincipalUserId,
                     Token,
                     Endpoint
                 );
-                return true;
+                return (true, RequestAsString);
             }
             else
             {
@@ -140,16 +143,16 @@ namespace RV.InvNew.Common
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
                 AddToRequestLog(
-                    Request,
+                    RequestAsString,
                     true,
                     PrivilegeLevel.ToLowerInvariant(),
                     PrincipalUserId,
                     Token,
                     Endpoint
                 );
-                return false;
+                return (false, null);
             }
-            return false;
+            return (false, null);
         }
     }
 

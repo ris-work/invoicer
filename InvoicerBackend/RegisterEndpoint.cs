@@ -52,19 +52,20 @@ namespace InvoicerBackend
                     $"/{Name}",
                     async (HttpRequest a) =>
                     {
-                        if (LoginBearerTokenVerifier.VerifyAuthorization(a, Permission, Name))
+                        var VerificationResultAndMessage = await LoginBearerTokenVerifier.VerifyIfAuthorizationIsOk(a, Permission, Name);
+                        if (VerificationResultAndMessage.Success)
                         {
-                            using (var R = new StreamReader(a.Body))
-                            {
+
+                                
+                                System.Console.WriteLine($"Authenticated Request Content: { VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}");
                                 var AuthenticatedInner = JsonSerializer.Deserialize<T>(
-                                    await R.ReadToEndAsync()
+                                    VerificationResultAndMessage.RequestBody
                                 );
                                 if (AuthenticatedInner != null)
                                 {
                                     return D(AuthenticatedInner);
                                 }
                             }
-                        }
                         throw new UnauthorizedAccessException();
                     }
                 )
