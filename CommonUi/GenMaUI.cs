@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui;
 using System.Text.Json;
-
+using System.Threading.Tasks;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 
 namespace CommonUi
 {
-    public class GenMaUI : ContentView
+    public class GenMaUI : ContentPage
     {
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
         public IReadOnlyDictionary<string, object> Values
@@ -107,7 +106,7 @@ namespace CommonUi
             foreach (var kv in E)
             {
                 Eto.Forms.TableRow EControl;
-                
+
                 View? ELegend = null;
                 View EInput = new Label();
                 if (
@@ -156,7 +155,7 @@ namespace CommonUi
                     }
                     else if (kv.Value.Item2.GetType() == typeof(bool))
                     {
-                        EInput = new CheckBox() { };// = ((bool)kv.Value.Item2).ToString() };
+                        EInput = new CheckBox() { }; // = ((bool)kv.Value.Item2).ToString() };
                     }
                     else if (kv.Value.Item2.GetType() == typeof(string))
                     {
@@ -171,7 +170,8 @@ namespace CommonUi
                 //EControl = new Eto.Forms.TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
                 _ELegends.Add(kv.Key, ELegend);
-                MControls.Add(ELegend, 0, i);
+                if (ELegend != null)
+                    MControls.Add(ELegend, 0, i);
                 MControls.Add(EInput, 1, i);
                 //MControls.Add(EInput, 1, i);
                 //MControls.Add(ELegend);
@@ -200,20 +200,15 @@ namespace CommonUi
                     Eto.Forms.MessageBoxType.Information
                 );
             };
-            var ActionButtons = new StackLayout()
-            {
-                Orientation = StackOrientation.Vertical,
-            };
+            var ActionButtons = new StackLayout() { Orientation = StackOrientation.Vertical };
             ActionButtons.Add(NewButton);
             ActionButtons.Add(SaveButton);
             ActionButtons.Add(ViewButton);
             ActionButtons.Add(CancelButton);
             var GeneratedControls = _MControls;
-            var SLContent = (new StackLayout()
-            {
-                Orientation = StackOrientation.Vertical,
-                Spacing = 2,
-            });
+            var SLContent = (
+                new StackLayout() { Orientation = StackOrientation.Vertical, Spacing = 2 }
+            );
             SLContent.Add(ActionButtons);
             SLContent.Add(GeneratedControls);
             Content = SLContent;

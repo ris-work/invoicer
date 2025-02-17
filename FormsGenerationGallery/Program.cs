@@ -1,5 +1,10 @@
 ﻿using CommonUi;
 using Eto.Forms;
+using FormsGenerationGallery;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Hosting;
 using RV.InvNew.Common;
 using Terminal.Gui;
 
@@ -150,6 +155,30 @@ Terminal.Gui.Application.Run(
     )
 );
 */
+
+
+var newMauiWindow = (
+    new GenMaUI(
+        SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+        (_) =>
+        {
+            return 100;
+        },
+        (_) =>
+        {
+            return 100;
+        },
+        ActionsMap,
+        null
+    )
+);
+var mauiBuilder = MauiApp.CreateBuilder().UseMauiApp<MauiAppl>((_) => new MauiAppl(newMauiWindow));
+var mauiApp = mauiBuilder.ConfigureFonts().Build();
+
+//mauiApp.
+//
+
+//Microsoft.Maui.Controls.Application.Current.OpenWindow(newMauiWindow);
 
 Terminal.Gui.Application.Run(
     new GenTopLevel(

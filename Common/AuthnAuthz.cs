@@ -21,7 +21,16 @@ namespace RV.InvNew.Common
         {
             return false;
         }
-        public static void AddToRequestLog(HttpRequest Request, bool WasItBad, string? RequestedPrivilegeLevel, long? PrincipalUserId, LoginToken Token, string? ExistingPrivilegeList, string? Endpoint = null)
+
+        public static void AddToRequestLog(
+            HttpRequest Request,
+            bool WasItBad,
+            string? RequestedPrivilegeLevel,
+            long? PrincipalUserId,
+            LoginToken Token,
+            string? ExistingPrivilegeList,
+            string? Endpoint = null
+        )
         {
             using (var ctx = new NewinvContext())
             {
@@ -56,7 +65,12 @@ namespace RV.InvNew.Common
                 //ctx.SaveChanges();
             }
         }
-        public static bool VerifyAuthorization(HttpRequest Request, string PrivilegeLevel, string Endpoint)
+
+        public static bool VerifyAuthorization(
+            HttpRequest Request,
+            string PrivilegeLevel,
+            string Endpoint
+        )
         {
             string Principal;
             long? PrincipalUserId = null;
@@ -77,9 +91,8 @@ namespace RV.InvNew.Common
                         .Privileges.ToLowerInvariant();
                     if (Token.TokenID != null && Token != null)
                         if (
-                            ctx.Tokens.Where(t => t.Tokenid == Token.TokenID)
-                                .First()
-                                .Tokenvalue == Token.Token
+                            ctx.Tokens.Where(t => t.Tokenid == Token.TokenID).First().Tokenvalue
+                                == Token.Token
                             && ExistingPrivilegeList
                                 .Split(',')
                                 .Contains(PrivilegeLevel.ToLowerInvariant())
@@ -111,7 +124,14 @@ namespace RV.InvNew.Common
 
             if (auth_success)
             {
-                AddToRequestLog(Request, false, PrivilegeLevel.ToLowerInvariant(), PrincipalUserId, Token, Endpoint);
+                AddToRequestLog(
+                    Request,
+                    false,
+                    PrivilegeLevel.ToLowerInvariant(),
+                    PrincipalUserId,
+                    Token,
+                    Endpoint
+                );
                 return true;
             }
             else
@@ -119,7 +139,14 @@ namespace RV.InvNew.Common
                 Console.Error.WriteLine(
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
-                AddToRequestLog(Request, true, PrivilegeLevel.ToLowerInvariant(), PrincipalUserId, Token, Endpoint);
+                AddToRequestLog(
+                    Request,
+                    true,
+                    PrivilegeLevel.ToLowerInvariant(),
+                    PrincipalUserId,
+                    Token,
+                    Endpoint
+                );
                 return false;
             }
             return false;
@@ -148,7 +175,12 @@ namespace RV.InvNew.Common
         public long? PrincipalUserId;
         private string? ExistingPrivilegeList = null;
 
-        public void AddToRequestLog(T Request, bool WasItBad, string? RequestedPrivilegeLevel, string? Endpoint = null)
+        public void AddToRequestLog(
+            T Request,
+            bool WasItBad,
+            string? RequestedPrivilegeLevel,
+            string? Endpoint = null
+        )
         {
             using (var ctx = new NewinvContext())
             {
