@@ -28,6 +28,7 @@ public static class LoginTokens
 {
     public static LoginToken token;
     public static LoginToken ElevatedLoginToken;
+
     public static string LoginTokenForBearerAuth()
     {
         return JsonSerializer.Serialize(token);
@@ -76,7 +77,10 @@ public class MyForm : Form
         var logint_w = result.Content.ReadAsAsync<LoginToken>();
         logint_w.Wait();
         logint = logint_w.Result;
-        MessageBox.Show($"{logint.TokenID}, {logint.Token}, {logint.Error}", MessageBoxType.Information);
+        MessageBox.Show(
+            $"{logint.TokenID}, {logint.Token}, {logint.Error}",
+            MessageBoxType.Information
+        );
         if (logint.Error != "")
         {
             return false;

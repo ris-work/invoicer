@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -10,7 +11,6 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using RV.InvNew.Common;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
-using System.Buffers.Text;
 
 namespace EtoFE
 {
@@ -49,7 +49,11 @@ namespace EtoFE
             var logint_w = resultA.Content.ReadAsAsync<LoginToken>();
             logint = logint_w.GetAwaiter().GetResult();
             token = logint;
-            MessageBox.Show($"{logint.TokenID}, { logint.Token}, {logint.Error}", "Login information", MessageBoxType.Information);
+            MessageBox.Show(
+                $"{logint.TokenID}, {logint.Token}, {logint.Error}",
+                "Login information",
+                MessageBoxType.Information
+            );
             if (logint.Error != "")
             {
                 Error = true;
@@ -84,7 +88,10 @@ namespace EtoFE
                     Method = HttpMethod.Post,
                     RequestUri = new Uri(Program.client.BaseAddress, Endpoint),
                 };
-                Request.Headers.Add("Authorization", $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(logint)))}");
+                Request.Headers.Add(
+                    "Authorization",
+                    $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(logint)))}"
+                );
                 Console.WriteLine(JR);
                 var Posted = Program.client.SendAsync(Request);
                 var Response = Posted.GetAwaiter().GetResult();

@@ -52,20 +52,25 @@ namespace InvoicerBackend
                     $"/{Name}",
                     async (HttpRequest a) =>
                     {
-                        var VerificationResultAndMessage = await LoginBearerTokenVerifier.VerifyIfAuthorizationIsOk(a, Permission, Name);
+                        var VerificationResultAndMessage =
+                            await LoginBearerTokenVerifier.VerifyIfAuthorizationIsOk(
+                                a,
+                                Permission,
+                                Name
+                            );
                         if (VerificationResultAndMessage.Success)
                         {
-
-                                
-                                System.Console.WriteLine($"Authenticated Request Content: { VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}");
-                                var AuthenticatedInner = JsonSerializer.Deserialize<T>(
-                                    VerificationResultAndMessage.RequestBody
-                                );
-                                if (AuthenticatedInner != null)
-                                {
-                                    return D(AuthenticatedInner);
-                                }
+                            System.Console.WriteLine(
+                                $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
+                            );
+                            var AuthenticatedInner = JsonSerializer.Deserialize<T>(
+                                VerificationResultAndMessage.RequestBody
+                            );
+                            if (AuthenticatedInner != null)
+                            {
+                                return D(AuthenticatedInner);
                             }
+                        }
                         throw new UnauthorizedAccessException();
                     }
                 )

@@ -79,11 +79,16 @@ namespace RV.InvNew.Common
             //string ExistingPrivilegeList = "";
             Console.WriteLine($"Requested {PrivilegeLevel}");
             StringValues BearerTokenHeaderValue;
-            bool HasBearerToken = Request.Headers.TryGetValue("Authorization", out BearerTokenHeaderValue);
-            string[] SplitToken =  BearerTokenHeaderValue[0].Split(' ');
+            bool HasBearerToken = Request.Headers.TryGetValue(
+                "Authorization",
+                out BearerTokenHeaderValue
+            );
+            string[] SplitToken = BearerTokenHeaderValue[0].Split(' ');
             var BearerToken = String.Join(' ', SplitToken.ToList().Skip(1));
             System.Console.WriteLine($"Got Authorization: {BearerToken}");
-            LoginToken Token = JsonSerializer.Deserialize<LoginToken>(Encoding.UTF8.GetString(Convert.FromBase64String(BearerToken)));
+            LoginToken Token = JsonSerializer.Deserialize<LoginToken>(
+                Encoding.UTF8.GetString(Convert.FromBase64String(BearerToken))
+            );
             using (var ctx = new NewinvContext())
             {
                 try
