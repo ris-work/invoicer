@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Eto.Forms;
 using RV.InvNew.Common;
@@ -93,11 +94,13 @@ namespace EtoFE
             {
                 ReadOnly = true,
                 Size = new Eto.Drawing.Size(400, 100),
+                Text = Endpoint,
             };
             var TRequest = new TextArea()
             {
                 ReadOnly = true,
                 Size = new Eto.Drawing.Size(400, 200),
+                Text = JsonSerializer.Serialize<Ti>(Request),
             };
             var ElevatedLoginButton = new Button() { Text = "⬆ Elevated Login" };
             var LoginButton = new Button() { Text = "📩 Login" };

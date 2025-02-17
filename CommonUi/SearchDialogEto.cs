@@ -10,6 +10,7 @@ using Eto.Drawing;
 using Eto.Forms;
 //using Microsoft.EntityFrameworkCore.Diagnostics;
 using RV.InvNew.Common;
+using System.Threading;
 
 namespace EtoFE
 {
