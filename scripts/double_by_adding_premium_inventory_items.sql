@@ -1,0 +1,2 @@
+INSERT INTO inventory (SELECT 4000000+itemcode, batchcode, batch_enabled, mfg_date, exp_date, packed_size, units, measurement_unit, 1.5 * marked_price, 1.2 * selling_price, 1.2 * cost_price, volume_discounts, suppliercode, user_discounts
+	FROM public.inventory);

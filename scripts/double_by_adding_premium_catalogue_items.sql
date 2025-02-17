@@ -1,0 +1,2 @@
+INSERT INTO catalogue (SELECT 4000000+itemcode, description || ' PREMIUM', active, created_on, description_pos || ' PREMIUM', description_web || ' PREMIUM', descriptions_other_languages, default_vat_category, vat_depends_on_user, vat_category_adjustable, price_manual, enforce_above_cost, active_web, expiry_tracking_enabled, permissions_category, categories_bitmask
+	FROM public.catalogue);
