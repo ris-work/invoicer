@@ -20,6 +20,8 @@ Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
 
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
+var EtoApp = new Application(Eto.Platforms.Wpf);
+
 while (true)
 {
     var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>();
@@ -27,7 +29,8 @@ while (true)
     var SampleJson = JsonSerializer.Serialize(new ItemLabel());
     Console.WriteLine(SampleJson);
 
-    new Application(Eto.Platforms.Wpf).Run(new MainForm());
+    EtoApp.Run(new MainForm());
+    EtoApp.Restart();
 }
 
 class MainForm : Eto.Forms.Form
@@ -59,33 +62,49 @@ class MainForm : Eto.Forms.Form
             .ToList();
         //var SearchDialog =
         //new Eto.Forms.Application(Eto.Platforms.Wpf).Run(new SearchDialogEto(SearchCatalogue, HeaderEntries));
-        var SearchDialog = new SearchDialogEto(SearchCatalogue, HeaderEntries);
+        var SearchDialog = new SearchDialogEto(SearchCatalogue, HeaderEntries, false);
         SearchDialog.ShowModal();
-        if(SearchDialog.Selected != null)(
-            new Form()
-            {
-                Content = new GenEtoUI(
-                        LabelRetriever.I18nLabelsOriginal[(int.Parse(SearchDialog.Selected[0]))].ToDict()
-                    ,
-                    (v) =>
-                    {
-                        LabelRetriever.HC.PostAsJsonAsync<ItemLabel>("https://in.test.vz.al/i18n/upsert.php", ItemLabel.FromDictionary(v.ToDictionary())).GetAwaiter().GetResult();
-                        return 100;
-                    },
-                    (v) =>
-                    {
-                        LabelRetriever.HC.PostAsJsonAsync<ItemLabel>("https://in.test.vz.al/i18n/upsert.php", ItemLabel.FromDictionary(v.ToDictionary())).GetAwaiter().GetResult();
-                        return 100;
-                    },
-                    ActionsMap,
-                    "Itemcode"
-                )
-                ,
-            }
-        ).Show();
+        if (SearchDialog.Selected != null)
+            (
+                new Form()
+                {
+                    Content = new GenEtoUI(
+                        LabelRetriever
+                            .I18nLabelsOriginal[(int.Parse(SearchDialog.Selected[0]))]
+                            .ToDict(),
+                        (v) =>
+                        {
+                            LabelRetriever
+                                .HC.PostAsJsonAsync<ItemLabel>(
+                                    "https://in.test.vz.al/i18n/upsert.php",
+                                    ItemLabel.FromDictionary(v.ToDictionary())
+                                )
+                                .GetAwaiter()
+                                .GetResult();
+                            return 100;
+                        },
+                        (v) =>
+                        {
+                            LabelRetriever
+                                .HC.PostAsJsonAsync<ItemLabel>(
+                                    "https://in.test.vz.al/i18n/upsert.php",
+                                    ItemLabel.FromDictionary(v.ToDictionary())
+                                )
+                                .GetAwaiter()
+                                .GetResult();
+                            return 100;
+                        },
+                        ActionsMap,
+                        "Itemcode"
+                    ),
+                }
+            ).Show();
         //this.Close();
         Button Restart = new Button() { Text = "Restart" };
-        Restart.Click += (_, _) => { this.Close(); };
+        Restart.Click += (_, _) =>
+        {
+            this.Close();
+        };
+        Content = Restart;
     }
 }
-
