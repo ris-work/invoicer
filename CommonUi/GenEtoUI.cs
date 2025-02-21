@@ -33,6 +33,7 @@ namespace CommonUi
         Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, object> ConvertedInputs = new();
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
+        public string Identity = "";
 
         //public delegate long SaveExistingHandler(IReadOnlyDictionary<string, object> UserInput);
         public void ConvertInputs()
@@ -132,6 +133,10 @@ namespace CommonUi
                                 Text = (kv.Value.Item2).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
+                            if (kv.Key == IdentityColumn)
+                            {
+                                ((TextBox)EInput).Enabled = false;
+                            }
                         }
                         else
                         {
@@ -164,6 +169,10 @@ namespace CommonUi
                     else if (kv.Value.Item2.GetType() == typeof(string))
                     {
                         EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
+                        if (kv.Key == IdentityColumn)
+                        {
+                            ((TextBox)EInput).Enabled = false;
+                        }
                     }
                 }
                 else
@@ -189,6 +198,14 @@ namespace CommonUi
             SaveButton.Click += (_, _) =>
             {
                 ConvertInputs();
+                if (_new)
+                {
+                    SaveNewHandler(ConvertedInputs);
+                }
+                else
+                {
+                    SaveExistingHandler(ConvertedInputs);
+                }
             };
             ViewButton.Click += (_, _) =>
             {

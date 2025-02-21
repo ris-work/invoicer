@@ -99,7 +99,7 @@ namespace EtoFE
 
         public SearchDialogEto(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
-            List<(string, TextAlignment, bool)> HeaderEntries
+            List<(string, TextAlignment, bool)> HeaderEntries, bool Debug = true
         )
         {
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
@@ -306,7 +306,7 @@ namespace EtoFE
 
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
             TextBox SearchBox = new TextBox();
-            MessageBox.Show($"PC: {SC.Count()}");
+            if (Debug) MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
                 new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
@@ -315,7 +315,7 @@ namespace EtoFE
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp =
                 new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
 
-            MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
+            if(Debug) MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
             TL.Padding = 10;
             TL.Spacing = new Eto.Drawing.Size(10, 10);
             int FilteredCount = 0;

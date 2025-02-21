@@ -9,20 +9,43 @@ namespace RV.LabelRetriever
     [JsonSerializable(typeof(ItemLabel))]
     public class ItemLabel
     {
-        public int itemcode { get; set; }
+        public long itemcode { get; set; }
         public string label_i18n_ta { get; set; }
         public string label_i18n_si { get; set; }
         public string label_i18n_default { get; set; }
+        public Dictionary<string, (string, object, string?)> ToDict()
+        {
+            return new Dictionary<string, (string, object, string?)>()
+        {
+            { "Itemcode", ("Item code", this.itemcode, null) },
+            { "DefaultDesc", ("Default Description", this.label_i18n_default, null) },
+            { "ta", ("தமிழ்", this.label_i18n_ta, null) },
+            { "si", ("සිංහල", this.label_i18n_si, null) },
+        };
+        }
+
+        public static ItemLabel FromDictionary(Dictionary<string, object> DIn)
+        {
+            return new ItemLabel()
+            {
+                itemcode = (int)(long)DIn["Itemcode"],
+                label_i18n_default = (string)DIn["DefaultDesc"],
+                label_i18n_si = (string)DIn["ta"],
+                label_i18n_ta = (string)DIn["si"],
+            };
+        }
     }
 
     public static class LabelRetriever
     {
         public static HttpClient HC = new HttpClient();
         public static List<ItemLabel> LIL = new List<ItemLabel>();
-        public static Dictionary<int, (string Tamil, string Sinhala)> _I18nLabels = new();
-        public static Dictionary<int, (string Default, string Tamil, string Sinhala)> _I18nLabelsWithDefault = new();
-        public static IReadOnlyDictionary<int, (string Tamil, string Sinhala)> I18nLabels;
-        public static IReadOnlyDictionary<int, (string Default, string Tamil, string Sinhala)> I18nLabelsWithDefault;
+        public static Dictionary<long, (string Tamil, string Sinhala)> _I18nLabels = new();
+        public static Dictionary<long, (string Default, string Tamil, string Sinhala)> _I18nLabelsWithDefault = new();
+        public static Dictionary<long, ItemLabel> _I18nLabelsOriginal = new();
+        public static IReadOnlyDictionary<long, (string Tamil, string Sinhala)> I18nLabels;
+        public static IReadOnlyDictionary<long, (string Default, string Tamil, string Sinhala)> I18nLabelsWithDefault;
+        public static IReadOnlyDictionary<long, ItemLabel> I18nLabelsOriginal;
         public static bool Initialized = false;
         public static string username = "i18n_user";
         public static string password = "i18n_saru";
@@ -51,8 +74,14 @@ namespace RV.LabelRetriever
                 //System.Console.WriteLine($"{IL.itemcode}, {IL.label_i18n_ta} ");
                 _I18nLabelsWithDefault.Add(IL.itemcode, (IL.label_i18n_default, IL.label_i18n_ta, IL.label_i18n_si));
             }
+            foreach (ItemLabel IL in LIL)
+            {
+                //System.Console.WriteLine($"{IL.itemcode}, {IL.label_i18n_ta} ");
+                _I18nLabelsOriginal.Add(IL.itemcode, IL);
+            }
             I18nLabels = _I18nLabels;
             I18nLabelsWithDefault = _I18nLabelsWithDefault;
+            I18nLabelsOriginal = _I18nLabelsOriginal;
             Initialized = true;
             return 0;
         }
