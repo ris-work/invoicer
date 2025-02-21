@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35617.110 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "i18n_label_retriever", "i18n_label_retriever.csproj", "{293BC6DB-4957-491A-BED0-F32A852DF4F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleRetrieval", "..\SampleRetrieval\SampleRetrieval.csproj", "{C08274AE-96F3-4AF0-BE29-3F8449D2B5E5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{293BC6DB-4957-491A-BED0-F32A852DF4F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{293BC6DB-4957-491A-BED0-F32A852DF4F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{293BC6DB-4957-491A-BED0-F32A852DF4F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{293BC6DB-4957-491A-BED0-F32A852DF4F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C08274AE-96F3-4AF0-BE29-3F8449D2B5E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C08274AE-96F3-4AF0-BE29-3F8449D2B5E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C08274AE-96F3-4AF0-BE29-3F8449D2B5E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C08274AE-96F3-4AF0-BE29-3F8449D2B5E5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A55E37D1-96AF-44DB-8772-B0125EC1F80F}
+	EndGlobalSection
+EndGlobal
