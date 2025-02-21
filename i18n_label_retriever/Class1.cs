@@ -12,6 +12,7 @@ namespace RV.LabelRetriever
         public int itemcode { get; set; }
         public string label_i18n_ta { get; set; }
         public string label_i18n_si { get; set; }
+        public string label_i18n_default { get; set; }
     }
 
     public static class LabelRetriever
@@ -19,7 +20,9 @@ namespace RV.LabelRetriever
         public static HttpClient HC = new HttpClient();
         public static List<ItemLabel> LIL = new List<ItemLabel>();
         public static Dictionary<int, (string Tamil, string Sinhala)> _I18nLabels = new();
+        public static Dictionary<int, (string Default, string Tamil, string Sinhala)> _I18nLabelsWithDefault = new();
         public static IReadOnlyDictionary<int, (string Tamil, string Sinhala)> I18nLabels;
+        public static IReadOnlyDictionary<int, (string Default, string Tamil, string Sinhala)> I18nLabelsWithDefault;
         public static bool Initialized = false;
         public static string username = "i18n_user";
         public static string password = "i18n_saru";
@@ -43,7 +46,13 @@ namespace RV.LabelRetriever
                 //System.Console.WriteLine($"{IL.itemcode}, {IL.label_i18n_ta} ");
                 _I18nLabels.Add(IL.itemcode, (IL.label_i18n_ta, IL.label_i18n_si));
             }
+            foreach (ItemLabel IL in LIL)
+            {
+                //System.Console.WriteLine($"{IL.itemcode}, {IL.label_i18n_ta} ");
+                _I18nLabelsWithDefault.Add(IL.itemcode, (IL.label_i18n_default, IL.label_i18n_ta, IL.label_i18n_si));
+            }
             I18nLabels = _I18nLabels;
+            I18nLabelsWithDefault = _I18nLabelsWithDefault;
             Initialized = true;
             return 0;
         }
