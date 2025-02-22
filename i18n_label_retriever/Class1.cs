@@ -30,8 +30,8 @@ namespace RV.LabelRetriever
             {
                 itemcode = (int)(long)DIn["Itemcode"],
                 label_i18n_default = (string)DIn["DefaultDesc"],
-                label_i18n_si = (string)DIn["ta"],
-                label_i18n_ta = (string)DIn["si"],
+                label_i18n_ta = (string)DIn["ta"],
+                label_i18n_si = (string)DIn["si"],
             };
         }
     }
