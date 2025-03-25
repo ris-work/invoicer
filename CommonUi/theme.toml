@@ -1,0 +1,29 @@
+﻿[default.name]
+background_color = "#FFFF00"  # White
+foreground_color = "#000000"  # Black
+background_color_changed = "#FF0000"  # White
+foreground_color_changed = "#FFFFFF"  # Black
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.localName]
+background_color = "#FF0000"  # White
+foreground_color = "#0000FF"  # Black
+background_color_changed = "#FF0000"  # White
+foreground_color_changed = "#FFFFFF"  # Black
+font_family = "Arial"
+font_size = "12"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.location]
+background_color = "#FF00FF"  # White
+foreground_color = "#00FF00"  # Black
+background_color_changed = "#FF0000"  # White
+foreground_color_changed = "#FFFFFF"  # Black
+font_family = "Arial"
+font_size = "24"
+font_style = "Regular"
+control_size = "100,40"

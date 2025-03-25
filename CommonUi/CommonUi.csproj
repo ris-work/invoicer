@@ -24,4 +24,10 @@
     <ProjectReference Include="..\Common\common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="theme.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

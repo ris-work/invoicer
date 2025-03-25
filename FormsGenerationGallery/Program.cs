@@ -82,7 +82,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 };
 
 var SampleJson =
-    @"{""name"": ""name"",""localName"": ""பெயர்"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536}";
+    @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536}";
 
 /*
 new Eto.Forms.Application().Run(
@@ -129,7 +129,8 @@ new Eto.Forms.Application().Run(
                 return 100;
             },
             ActionsMap,
-            null
+            null,
+            true
         ),
     }
 );
