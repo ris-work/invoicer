@@ -145,11 +145,11 @@ namespace CommonUi
         {
             InitializeConfiguration();
             this.ChangesOnly = ChangesOnly;
-            Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
-            BackgroundColor = Eto.Drawing.Colors.White;
-            ForegroundColor = Eto.Drawing.Colors.Black;
-            ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
-            ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
+            //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
+            //BackgroundColor = Eto.Drawing.Colors.White;
+            //ForegroundColor = Eto.Drawing.Colors.Black;
+            //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
+            //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
             List<Eto.Forms.TableRow> EControls = new();
             _Inputs = Inputs;
 
@@ -157,10 +157,10 @@ namespace CommonUi
             foreach (var kv in E)
             {
                 (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) = GetThemeForComponent(kv.Key);
-                BackgroundColor = BGc;
-                ForegroundColor = FGc;
-                ChangedBackgroundColor = BGc;
-                ChangedForegroundColor = FGc;
+                var BackgroundColor = BG;
+                var ForegroundColor = FG;
+                var ChangedBackgroundColor = BGc;
+                var ChangedForegroundColor = FGc;
                 Eto.Forms.TableRow EControl;
                 Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput = new Label();
