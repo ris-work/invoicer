@@ -32,7 +32,14 @@ namespace CommonUi
                     }
                     catch (Exception _)
                     {
-                        Output.Add(kv.Key, (kv.Key, kv.Value.GetString(), null));
+                        try
+                        {
+                            Output.Add(kv.Key, (kv.Key, kv.Value.GetString(), null));
+                        }
+                        catch (Exception)
+                        {
+                            Output.Add(kv.Key, (kv.Key, kv.Value.GetBoolean(), null));
+                        }
                     }
                 }
             }

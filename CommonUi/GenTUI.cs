@@ -292,6 +292,14 @@ namespace CommonUi
                         };
                     }
                 }
+                else if (kv.Value.Item2.GetType() == typeof(bool))
+                {
+                    EInput = new CheckBox()
+                    {
+                        CheckedState = ((bool)kv.Value.Item2) ? CheckState.Checked: CheckState.UnChecked,
+                        ColorScheme = ColorSchemeTF,
+                    };
+                }
                 else
                 {
                     EInput = new TextField()

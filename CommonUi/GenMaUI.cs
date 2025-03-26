@@ -162,6 +162,10 @@ namespace CommonUi
                         EInput = new Entry() { Text = ((string)kv.Value.Item2).ToString() };
                     }
                 }
+                else if (kv.Value.Item2.GetType() == typeof(bool))
+                {
+                    EInput = new CheckBox() { IsChecked = ((bool)kv.Value.Item2) };
+                }
                 else
                 {
                     EInput = new Entry() { Text = ((string)kv.Value.Item2).ToString() };

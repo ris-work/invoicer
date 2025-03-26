@@ -128,7 +128,7 @@ namespace CommonUi
                     }
                     else if (T == typeof(bool))
                     {
-                        ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked);
+                        ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked == true);
                     }
                 }
             }
@@ -285,6 +285,24 @@ namespace CommonUi
                         ((TextBox)EInput).Font = TFont;
                         ((TextBox)EInput).Size = CSize;
                     }
+                }
+                else if (kv.Value.Item2.GetType() == typeof(bool))
+                {
+                    EventHandler<System.EventArgs> ChangedIndication = (e, a) => {
+                        if (e is CheckBox cb)
+                        {
+                            cb.BackgroundColor = ChangedBackgroundColor;
+                            cb.TextColor = ChangedForegroundColor;
+                            
+                            _EChangeTracker.TryAdd(kv.Key, true);
+                        }
+                    };
+                    EInput = new CheckBox() { Checked = ((bool)kv.Value.Item2) };
+                    ((CheckBox)EInput).CheckedChanged += ChangedIndication;
+                    ((CheckBox)EInput).TextColor = FG;
+                    ((CheckBox)EInput).BackgroundColor = BG;
+                    ((CheckBox)EInput).Size = CSize;
+                    ((CheckBox)EInput).Font = TFont;
                 }
                 else
                 {
