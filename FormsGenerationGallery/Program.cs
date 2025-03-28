@@ -134,6 +134,17 @@ new Eto.Forms.Application().Run(
         ),
     }
 );
+var config = ReceiptPrinter.LoadConfig("theme.toml");
+
+var invoiceItems = new List<string[]>
+        {
+            new string[] { "Item1", "2", "$20.00" },
+            new string[] { "Item2", "1", "$10.00" },
+            new string[] { "Item3", "5", "$50.00" }
+        };
+
+var receiptPrinter = new ReceiptPrinter(invoiceItems, config);
+receiptPrinter.PrintReceipt();
 
 Terminal.Gui.Application.Init();
 

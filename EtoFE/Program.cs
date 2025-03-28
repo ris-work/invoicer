@@ -70,25 +70,33 @@ public class MyForm : Form
     {
         LoginToken logint = null;
         LoginCredentials l = new(Username, Password, Terminal, null);
-        var response = Program.client.PostAsJsonAsync("/Login", l);
-        response.Wait();
-        var result = response.Result;
-        result.EnsureSuccessStatusCode();
-        var logint_w = result.Content.ReadAsAsync<LoginToken>();
-        logint_w.Wait();
-        logint = logint_w.Result;
-        MessageBox.Show(
-            $"{logint.TokenID}, {logint.Token}, {logint.Error}",
-            MessageBoxType.Information
-        );
-        if (logint.Error != "")
+        try
         {
-            return false;
+            var response = Program.client.PostAsJsonAsync("/Login", l);
+            response.Wait();
+            var result = response.Result;
+            result.EnsureSuccessStatusCode();
+            var logint_w = result.Content.ReadAsAsync<LoginToken>();
+            logint_w.Wait();
+            logint = logint_w.Result;
+            MessageBox.Show(
+                $"{logint.TokenID}, {logint.Token}, {logint.Error}",
+                MessageBoxType.Information
+            );
+            if (logint.Error != "")
+            {
+                return false;
+            }
+            else
+            {
+                LoginTokens.token = logint;
+                return true;
+            }
         }
-        else
+        catch (Exception E)
         {
-            LoginTokens.token = logint;
-            return true;
+            MessageBox.Show($"Endpoint: {Program.client.BaseAddress}\r\nCheck PORT (backend instance) and ADDRESS reachability\r\n{E.Message}\r\n{E.StackTrace}", "An error has occured, Login failed or likely backend failed", MessageBoxButtons.OK, MessageBoxType.Error);
+            return false;
         }
     }
 

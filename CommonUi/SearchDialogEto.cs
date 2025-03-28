@@ -14,8 +14,28 @@ using RV.InvNew.Common;
 
 namespace EtoFE
 {
+
     public static class Extensions
     {
+        public static string PadRightOrClamp(this string input, int totalWidth, char paddingChar = ' ')
+        {
+            if (input.Length > totalWidth)
+            {
+                return input.Substring(0, totalWidth); // Clamp the string
+            }
+
+            return input.PadRight(totalWidth, paddingChar); // Pad the string
+        }
+
+        public static string PadLeftOrClamp(this string input, int totalWidth, char paddingChar = ' ')
+        {
+            if (input.Length > totalWidth)
+            {
+                return input.Substring(0, totalWidth); // Clamp the string
+            }
+
+            return input.PadLeft(totalWidth, paddingChar); // Pad the string
+        }
         public static IEnumerable<string> FilterWithOptions<T>(
             ref T Input,
             string s,
@@ -210,6 +230,25 @@ namespace EtoFE
             {
                 Text = "Export options...",
                 Content = ExportOptions,
+            };
+
+            Button PrintAllDisplayed = new Button() { Text = "Print Displayed Results..." };
+
+            StackLayout PrintOptions = new StackLayout()
+            {
+                Items =
+                {
+                    PrintAllDisplayed
+                },
+                Orientation = Eto.Forms.Orientation.Vertical,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = 5,
+            };
+
+            GroupBox GBPrintOptions = new GroupBox()
+            {
+                Text = "Printing options...",
+                Content = PrintOptions
             };
 
             int SelectedSearchIndex = SC[0].Item1.Length;
@@ -504,7 +543,7 @@ namespace EtoFE
             };
             var OthersContainer = new StackLayout()
             {
-                Items = { SearchOptions, GBExportOptions },
+                Items = { SearchOptions, GBExportOptions, GBPrintOptions },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
             };
@@ -609,6 +648,7 @@ namespace EtoFE
                     WriteCsv(FilteredUnlim.ToList(), HeaderEntries, SFD.FileName);
                 }
             };
+
             ExportShownAsCsv.Click += (_, _) =>
             {
                 var SFD = new SaveFileDialog() { Title = "Save as..." };
@@ -621,6 +661,17 @@ namespace EtoFE
                     WriteCsv(FilteredTemp, HeaderEntries, SFD.FileName);
                 }
             };
+
+            PrintAllDisplayed.Click += (_, _) =>
+            {
+                if (true)
+                {
+                    var RP = new ReceiptPrinter(FilteredTemp.Select(e => e.Item1).ToList(), (IReadOnlyDictionary<string, object>)(new Dictionary<string, object>()));
+                    RP.PrintReceipt();
+                }
+            };
+
+
             if (ReportSelectedAndSearch != null)
             {
                 ReportSelectedAndSearch.Click += (_, _) =>
