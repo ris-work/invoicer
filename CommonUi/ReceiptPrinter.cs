@@ -63,33 +63,39 @@ public class ReceiptPrinter
 
             e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "=======================");
             y += lineHeight;
-            
+
 
             // Draw items for this page
             while (currentIndex < invoiceItems.Count && y + lineHeight < pageHeight)
             {
                 var item = invoiceItems[currentIndex];
-                var padding = 10;
-                //string line = string.Join("", item.Take(item.Length - 1).Select(x => x.PadRight(padding))) + item.Last();
-                int defaultPadding = 8; // Default padding if array size mismatch or padding not found
+                int defaultPadding = 64; // Default padding if array size mismatch or padding not found
 
                 // Extract the padding array dynamically
                 var paddingConfig = config.TryGetValue("padding", out var paddingObj) && paddingObj is IEnumerable<int> paddingArray
                     ? paddingArray.ToList()
                     : new List<int>(); // Fallback to an empty list if "padding" isn't found or invalid
 
-                // Build the output string
-                string line = string.Join("", item.Select((value, index) =>
+                float x = 0; // Starting X position for the first column
+
+                for (int i = 0; i < item.Length; i++)
                 {
-                    // Use padding from the array if available, otherwise use default padding
-                    int padding = index < paddingConfig.Count ? paddingConfig[index] : defaultPadding;
+                    string value = item[i];
 
-                    // Apply padding, except for the last element
-                    return index < item.Length - 1 ? value.PadRightOrClamp(padding) : value;
-                }));
-                e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), line);
-                y += lineHeight;
+                    // Determine the padding for the current column
+                    int columnPadding = i < paddingConfig.Count ? paddingConfig[i] : defaultPadding;
 
+                    // Clamp or truncate the value if it exceeds the column width
+                    string clampedValue = value.Length > columnPadding ? value.Substring(0, columnPadding) : value;
+
+                    // Draw the text at the current X position
+                    e.Graphics.DrawText(font, Colors.Black, new PointF(x, y), clampedValue);
+
+                    // Increment the X position for the next column
+                    x += columnPadding; // Advance X by the current column's width
+                }
+
+                y += lineHeight; // Move down for the next row
                 currentIndex++;
             }
 
