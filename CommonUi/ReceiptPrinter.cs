@@ -69,7 +69,7 @@ public class ReceiptPrinter
             while (currentIndex < invoiceItems.Count && y + lineHeight < pageHeight)
             {
                 var item = invoiceItems[currentIndex];
-                int defaultPadding = 64; // Default padding if array size mismatch or padding not found
+                int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
                 // Extract the padding array dynamically
                 var paddingConfig = config.TryGetValue("padding", out var paddingObj) && paddingObj is IEnumerable<int> paddingArray
@@ -85,17 +85,30 @@ public class ReceiptPrinter
                     // Determine the padding for the current column
                     int columnPadding = i < paddingConfig.Count ? paddingConfig[i] : defaultPadding;
 
-                    // Clamp or truncate the value if it exceeds the column width
-                    string clampedValue = value.Length > columnPadding ? value.Substring(0, columnPadding) : value;
+                    // Initialize the truncated value
+                    string truncatedValue = value;
 
-                    // Draw the text at the current X position
-                    e.Graphics.DrawText(font, Colors.Black, new PointF(x, y), clampedValue);
+                    // Measure the text size
+                    var textSize = e.Graphics.MeasureString(font, truncatedValue);
+
+                    // Dynamically truncate the string until it visually fits within the column
+                    while (textSize.Width > columnPadding && truncatedValue.Length > 0)
+                    {
+                        truncatedValue = truncatedValue.Substring(0, truncatedValue.Length - 1);
+                        textSize = e.Graphics.MeasureString(font, truncatedValue);
+                    }
+
+                    // Ensure only the truncated text is drawn
+                    if (x + columnPadding <= pageWidth) // Respect page boundaries
+                    {
+                        e.Graphics.DrawText(font, Colors.Black, new PointF(x, y), truncatedValue);
+                    }
 
                     // Increment the X position for the next column
                     x += columnPadding; // Advance X by the current column's width
                 }
 
-                y += lineHeight; // Move down for the next row
+                y += lineHeight; // Move to the next row
                 currentIndex++;
             }
 
