@@ -95,7 +95,12 @@ public class MyForm : Form
         }
         catch (Exception E)
         {
-            MessageBox.Show($"Endpoint: {Program.client.BaseAddress}\r\nCheck PORT (backend instance) and ADDRESS reachability\r\n{E.Message}\r\n{E.StackTrace}", "An error has occured, Login failed or likely backend failed", MessageBoxButtons.OK, MessageBoxType.Error);
+            MessageBox.Show(
+                $"Endpoint: {Program.client.BaseAddress}\r\nCheck PORT (backend instance) and ADDRESS reachability\r\n{E.Message}\r\n{E.StackTrace}",
+                "An error has occured, Login failed or likely backend failed",
+                MessageBoxButtons.OK,
+                MessageBoxType.Error
+            );
             return false;
         }
     }

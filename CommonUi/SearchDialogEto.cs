@@ -14,10 +14,13 @@ using RV.InvNew.Common;
 
 namespace EtoFE
 {
-
     public static class Extensions
     {
-        public static string PadRightOrClamp(this string input, int totalWidth, char paddingChar = ' ')
+        public static string PadRightOrClamp(
+            this string input,
+            int totalWidth,
+            char paddingChar = ' '
+        )
         {
             if (input.Length > totalWidth)
             {
@@ -27,7 +30,11 @@ namespace EtoFE
             return input.PadRight(totalWidth, paddingChar); // Pad the string
         }
 
-        public static string PadLeftOrClamp(this string input, int totalWidth, char paddingChar = ' ')
+        public static string PadLeftOrClamp(
+            this string input,
+            int totalWidth,
+            char paddingChar = ' '
+        )
         {
             if (input.Length > totalWidth)
             {
@@ -36,6 +43,7 @@ namespace EtoFE
 
             return input.PadLeft(totalWidth, paddingChar); // Pad the string
         }
+
         public static IEnumerable<string> FilterWithOptions<T>(
             ref T Input,
             string s,
@@ -119,7 +127,8 @@ namespace EtoFE
 
         public SearchDialogEto(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
-            List<(string, TextAlignment, bool)> HeaderEntries, bool Debug = true
+            List<(string, TextAlignment, bool)> HeaderEntries,
+            bool Debug = true
         )
         {
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
@@ -236,10 +245,7 @@ namespace EtoFE
 
             StackLayout PrintOptions = new StackLayout()
             {
-                Items =
-                {
-                    PrintAllDisplayed
-                },
+                Items = { PrintAllDisplayed },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Padding = 5,
@@ -248,7 +254,7 @@ namespace EtoFE
             GroupBox GBPrintOptions = new GroupBox()
             {
                 Text = "Printing options...",
-                Content = PrintOptions
+                Content = PrintOptions,
             };
 
             int SelectedSearchIndex = SC[0].Item1.Length;
@@ -345,7 +351,8 @@ namespace EtoFE
 
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
             TextBox SearchBox = new TextBox();
-            if (Debug) MessageBox.Show($"PC: {SC.Count()}");
+            if (Debug)
+                MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
                 new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
@@ -354,7 +361,8 @@ namespace EtoFE
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp =
                 new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
 
-            if(Debug) MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
+            if (Debug)
+                MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
             TL.Padding = 10;
             TL.Spacing = new Eto.Drawing.Size(10, 10);
             int FilteredCount = 0;
@@ -664,13 +672,22 @@ namespace EtoFE
 
             PrintAllDisplayed.Click += (_, _) =>
             {
-                if (true)
+                var WhetherToPrint = MessageBox.Show(
+                    $"{FilteredTemp.Count} lines, would you still like to print?",
+                    "List might be too long",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxType.Question
+                );
+
+                if (WhetherToPrint == DialogResult.Yes)
                 {
-                    var RP = new ReceiptPrinter(FilteredTemp.Select(e => e.Item1).ToList(), (IReadOnlyDictionary<string, object>)(new Dictionary<string, object>()));
+                    var RP = new ReceiptPrinter(
+                        FilteredTemp.Select(e => e.Item1).Reverse().Skip(2).Reverse().ToList(),
+                        (IReadOnlyDictionary<string, object>)(new Dictionary<string, object>())
+                    );
                     RP.PrintReceipt();
                 }
             };
-
 
             if (ReportSelectedAndSearch != null)
             {

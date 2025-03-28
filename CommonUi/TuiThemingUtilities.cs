@@ -1,15 +1,13 @@
-﻿using Microsoft.Maui.Platform;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Maui.Platform;
 using Terminal.Gui;
 using Tomlyn;
 using Tomlyn.Model;
 
 namespace CommonUi
 {
-
-
     public static class TuiThemingUtilities
     {
         // Loads theming configuration from a TOML file
@@ -51,7 +49,12 @@ namespace CommonUi
         }
 
         // Applies the control theming (background and foreground colors)
-        public static void ApplyControlColors(View view, Dictionary<string, object> config, string context, string control)
+        public static void ApplyControlColors(
+            View view,
+            Dictionary<string, object> config,
+            string context,
+            string control
+        )
         {
             string backgroundKey = $"{context}.{control}.background_color";
             string foregroundKey = $"{context}.{control}.foreground_color";
@@ -60,13 +63,17 @@ namespace CommonUi
             Color defaultForeground = Color.White; // Default fallback
 
             // Retrieve background and foreground colors
-            Color backgroundColor = config.TryGetValue(backgroundKey, out object backgroundColorValue) && backgroundColorValue is string backgroundColorString
-                ? TuiThemingUtilities.ParseColor(backgroundColorString, defaultBackground)
-                : defaultBackground;
+            Color backgroundColor =
+                config.TryGetValue(backgroundKey, out object backgroundColorValue)
+                && backgroundColorValue is string backgroundColorString
+                    ? TuiThemingUtilities.ParseColor(backgroundColorString, defaultBackground)
+                    : defaultBackground;
 
-            Color foregroundColor = config.TryGetValue(foregroundKey, out object foregroundColorValue) && foregroundColorValue is string foregroundColorString
-                ? TuiThemingUtilities.ParseColor(foregroundColorString, defaultForeground)
-                : defaultForeground;
+            Color foregroundColor =
+                config.TryGetValue(foregroundKey, out object foregroundColorValue)
+                && foregroundColorValue is string foregroundColorString
+                    ? TuiThemingUtilities.ParseColor(foregroundColorString, defaultForeground)
+                    : defaultForeground;
 
             // Create a new ColorScheme instance
             view.ColorScheme = new ColorScheme
@@ -74,13 +81,18 @@ namespace CommonUi
                 Normal = new Terminal.Gui.Attribute(foregroundColor, backgroundColor),
                 Focus = new Terminal.Gui.Attribute(foregroundColor, backgroundColor),
                 HotNormal = new Terminal.Gui.Attribute(foregroundColor, backgroundColor),
-                HotFocus = new Terminal.Gui.Attribute(foregroundColor, backgroundColor)
+                HotFocus = new Terminal.Gui.Attribute(foregroundColor, backgroundColor),
             };
         }
 
         // Applies changed state colors (background and foreground)
 
-        public static void ApplyChangedColors(View view, Dictionary<string, object> config, string context, string control)
+        public static void ApplyChangedColors(
+            View view,
+            Dictionary<string, object> config,
+            string context,
+            string control
+        )
         {
             string backgroundChangedKey = $"{context}.{control}.background_color_changed";
             string foregroundChangedKey = $"{context}.{control}.foreground_color_changed";
@@ -89,26 +101,47 @@ namespace CommonUi
             Color defaultChangedForeground = Color.BrightYellow; // Fallback for changed foreground
 
             // Retrieve changed background and foreground colors
-            Color changedBackgroundColor = config.TryGetValue(backgroundChangedKey, out object backgroundChangedColorValue) && backgroundChangedColorValue is string backgroundChangedColorString
-                ? TuiThemingUtilities.ParseColor(backgroundChangedColorString, defaultChangedBackground)
-                : defaultChangedBackground;
+            Color changedBackgroundColor =
+                config.TryGetValue(backgroundChangedKey, out object backgroundChangedColorValue)
+                && backgroundChangedColorValue is string backgroundChangedColorString
+                    ? TuiThemingUtilities.ParseColor(
+                        backgroundChangedColorString,
+                        defaultChangedBackground
+                    )
+                    : defaultChangedBackground;
 
-            Color changedForegroundColor = config.TryGetValue(foregroundChangedKey, out object foregroundChangedColorValue) && foregroundChangedColorValue is string foregroundChangedColorString
-                ? TuiThemingUtilities.ParseColor(foregroundChangedColorString, defaultChangedForeground)
-                : defaultChangedForeground;
+            Color changedForegroundColor =
+                config.TryGetValue(foregroundChangedKey, out object foregroundChangedColorValue)
+                && foregroundChangedColorValue is string foregroundChangedColorString
+                    ? TuiThemingUtilities.ParseColor(
+                        foregroundChangedColorString,
+                        defaultChangedForeground
+                    )
+                    : defaultChangedForeground;
 
             // Create a new ColorScheme for the changed state
             view.ColorScheme = new ColorScheme
             {
                 Normal = view.ColorScheme.Normal, // Retain the current normal state
                 Focus = view.ColorScheme.Focus, // Retain the current focused state
-                HotNormal = new Terminal.Gui.Attribute(changedForegroundColor, changedBackgroundColor),
-                HotFocus = new Terminal.Gui.Attribute(changedForegroundColor, changedBackgroundColor)
+                HotNormal = new Terminal.Gui.Attribute(
+                    changedForegroundColor,
+                    changedBackgroundColor
+                ),
+                HotFocus = new Terminal.Gui.Attribute(
+                    changedForegroundColor,
+                    changedBackgroundColor
+                ),
             };
         }
 
         // Configures control size based on TOML settings
-        public static void ApplyControlSize(View view, Dictionary<string, object> config, string context, string control)
+        public static void ApplyControlSize(
+            View view,
+            Dictionary<string, object> config,
+            string context,
+            string control
+        )
         {
             string sizeKey = $"{context}.{control}.control_size";
 

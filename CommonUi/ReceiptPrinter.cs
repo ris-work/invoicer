@@ -1,10 +1,10 @@
-﻿using Eto.Drawing;
-using Eto.Forms;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using RV.InvNew.CommonUi;
+using Eto.Drawing;
+using Eto.Forms;
 using EtoFE;
+using RV.InvNew.CommonUi;
 
 public class ReceiptPrinter
 {
@@ -21,7 +21,9 @@ public class ReceiptPrinter
 
     private T GetValueOrDefault<T>(string key, T defaultValue)
     {
-        return config.TryGetValue(key, out var value) && value is T typedValue ? typedValue : defaultValue;
+        return config.TryGetValue(key, out var value) && value is T typedValue
+            ? typedValue
+            : defaultValue;
     }
 
     public void PrintReceipt()
@@ -29,7 +31,10 @@ public class ReceiptPrinter
         // Load settings from configuration
         float pageHeight = GetValueOrDefault("ReceiptPrinter.PageHeight", 600f); // Custom page height
         float pageWidth = GetValueOrDefault("ReceiptPrinter.PageWidth", 800f); // Custom page width
-        string fontFamily = GetValueOrDefault("ReceiptPrinter.FontFamily", SystemFont.Default.ToString());
+        string fontFamily = GetValueOrDefault(
+            "ReceiptPrinter.FontFamily",
+            SystemFont.Default.ToString()
+        );
         float fontSize = GetValueOrDefault("ReceiptPrinter.FontSize", 10f);
         float lineHeight = GetValueOrDefault("ReceiptPrinter.LineHeight", 20f);
 
@@ -64,7 +69,6 @@ public class ReceiptPrinter
             e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "=======================");
             y += lineHeight;
 
-
             // Draw items for this page
             while (currentIndex < invoiceItems.Count && y + lineHeight < pageHeight)
             {
@@ -72,9 +76,11 @@ public class ReceiptPrinter
                 int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
                 // Extract the padding array dynamically
-                var paddingConfig = config.TryGetValue("padding", out var paddingObj) && paddingObj is IEnumerable<int> paddingArray
-                    ? paddingArray.ToList()
-                    : new List<int>(); // Fallback to an empty list if "padding" isn't found or invalid
+                var paddingConfig =
+                    config.TryGetValue("padding", out var paddingObj)
+                    && paddingObj is IEnumerable<int> paddingArray
+                        ? paddingArray.ToList()
+                        : new List<int>(); // Fallback to an empty list if "padding" isn't found or invalid
 
                 float x = 0; // Starting X position for the first column
 
@@ -120,10 +126,20 @@ public class ReceiptPrinter
             else
             {
                 morePages = false;
-                e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "=======================");
+                e.Graphics.DrawText(
+                    font,
+                    Colors.Black,
+                    new PointF(0, y),
+                    "======================="
+                );
                 y += lineHeight;
 
-                e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "Thank you for your purchase!");
+                e.Graphics.DrawText(
+                    font,
+                    Colors.Black,
+                    new PointF(0, y),
+                    "Thank you for your purchase!"
+                );
             }
 
             // If more pages are needed, call Print again
@@ -142,13 +158,11 @@ public class ReceiptPrinter
             { "ReceiptPrinter.FontSize", 12f },
             { "ReceiptPrinter.LineHeight", 25f },
             { "ReceiptPrinter.PageHeight", 600f },
-            { "ReceiptPrinter.PageWidth", 800f }
+            { "ReceiptPrinter.PageWidth", 800f },
         };
         return config;
     }
 }
-
-
 
 // Example usage
 public class Program
@@ -162,7 +176,7 @@ public class Program
         {
             new string[] { "Item1", "2", "$20.00" },
             new string[] { "Item2", "1", "$10.00" },
-            new string[] { "Item3", "5", "$50.00" }
+            new string[] { "Item3", "5", "$50.00" },
             // Add more items if needed
         };
 

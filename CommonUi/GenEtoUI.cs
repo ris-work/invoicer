@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Eto.Forms;
-using Tomlyn;
 using Eto.Drawing;
+using Eto.Forms;
 using Microsoft.Win32.SafeHandles;
+using Tomlyn;
 
 namespace CommonUi
 {
@@ -42,7 +42,7 @@ namespace CommonUi
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
-        
+
         public void InitializeConfiguration()
         {
             string ConfigText;
@@ -57,15 +57,64 @@ namespace CommonUi
             Configuration = Tomlyn.Toml.Parse(ConfigText).ToModel().ToDictionary();
         }
 
-        public (Eto.Drawing.Color FG, Eto.Drawing.Color BG, Eto.Drawing.Color FGc, Eto.Drawing.Color BGc, Eto.Drawing.Font TFont, Eto.Drawing.Size CSize, Eto.Drawing.Size TSize) GetThemeForComponent(string ControlName)
+        public (
+            Eto.Drawing.Color FG,
+            Eto.Drawing.Color BG,
+            Eto.Drawing.Color FGc,
+            Eto.Drawing.Color BGc,
+            Eto.Drawing.Font TFont,
+            Eto.Drawing.Size CSize,
+            Eto.Drawing.Size TSize
+        ) GetThemeForComponent(string ControlName)
         {
-            Color FG = EtoThemingUtilities.GetNestedColor(Configuration, Context, ControlName, "foreground_color", Eto.Drawing.Colors.DarkBlue);
-            Color BG = EtoThemingUtilities.GetNestedColor(Configuration, Context, ControlName, "background_color", Eto.Drawing.Colors.White);
-            Color FGc = EtoThemingUtilities.GetNestedColor(Configuration, Context, ControlName, "foreground_color_changed", Eto.Drawing.Colors.DarkSlateGray);
-            Color BGc = EtoThemingUtilities.GetNestedColor(Configuration, Context, ControlName, "background_color_changed", Eto.Drawing.Colors.LightYellow);
-            Font EFont = EtoThemingUtilities.GetNestedFont(Configuration, Context, ControlName, Eto.Drawing.Fonts.Monospace(12));
-            Size TSize = EtoThemingUtilities.GetNestedSize(Configuration, Context, ControlName, "font_size", new Eto.Drawing.Size(12, 12));
-            Size CSize = EtoThemingUtilities.GetNestedSize(Configuration, Context, ControlName, "control_size", new Eto.Drawing.Size(12, 30));
+            Color FG = EtoThemingUtilities.GetNestedColor(
+                Configuration,
+                Context,
+                ControlName,
+                "foreground_color",
+                Eto.Drawing.Colors.DarkBlue
+            );
+            Color BG = EtoThemingUtilities.GetNestedColor(
+                Configuration,
+                Context,
+                ControlName,
+                "background_color",
+                Eto.Drawing.Colors.White
+            );
+            Color FGc = EtoThemingUtilities.GetNestedColor(
+                Configuration,
+                Context,
+                ControlName,
+                "foreground_color_changed",
+                Eto.Drawing.Colors.DarkSlateGray
+            );
+            Color BGc = EtoThemingUtilities.GetNestedColor(
+                Configuration,
+                Context,
+                ControlName,
+                "background_color_changed",
+                Eto.Drawing.Colors.LightYellow
+            );
+            Font EFont = EtoThemingUtilities.GetNestedFont(
+                Configuration,
+                Context,
+                ControlName,
+                Eto.Drawing.Fonts.Monospace(12)
+            );
+            Size TSize = EtoThemingUtilities.GetNestedSize(
+                Configuration,
+                Context,
+                ControlName,
+                "font_size",
+                new Eto.Drawing.Size(12, 12)
+            );
+            Size CSize = EtoThemingUtilities.GetNestedSize(
+                Configuration,
+                Context,
+                ControlName,
+                "control_size",
+                new Eto.Drawing.Size(12, 30)
+            );
             return (FG, BG, FGc, BGc, EFont, TSize, CSize);
         }
 
@@ -104,7 +153,10 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            ConvertedInputs.Add(e.Key, float.Parse(((TextBox)_Einputs[e.Key]).Text));
+                            ConvertedInputs.Add(
+                                e.Key,
+                                float.Parse(((TextBox)_Einputs[e.Key]).Text)
+                            );
                         }
                         else
                         {
@@ -115,11 +167,17 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            ConvertedInputs.Add(e.Key, double.Parse(((TextBox)_Einputs[e.Key]).Text));
+                            ConvertedInputs.Add(
+                                e.Key,
+                                double.Parse(((TextBox)_Einputs[e.Key]).Text)
+                            );
                         }
                         else
                         {
-                            ConvertedInputs.Add(e.Key, double.Parse(((Button)_Einputs[e.Key]).Text));
+                            ConvertedInputs.Add(
+                                e.Key,
+                                double.Parse(((Button)_Einputs[e.Key]).Text)
+                            );
                         }
                     }
                     else if (T == typeof(string))
@@ -156,7 +214,8 @@ namespace CommonUi
             var E = Inputs.AsEnumerable();
             foreach (var kv in E)
             {
-                (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) = GetThemeForComponent(kv.Key);
+                (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) =
+                    GetThemeForComponent(kv.Key);
                 var BackgroundColor = BG;
                 var ForegroundColor = FG;
                 var ChangedBackgroundColor = BGc;
@@ -178,7 +237,8 @@ namespace CommonUi
                     {
                         if (kv.Value.Item3 == null)
                         {
-                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => { 
+                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                            {
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -203,7 +263,8 @@ namespace CommonUi
                         }
                         else
                         {
-                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => {
+                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                            {
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -228,7 +289,8 @@ namespace CommonUi
                     }
                     else if (kv.Value.Item2.GetType() == typeof(double))
                     {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => {
+                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                        {
                             if (e is TextBox tb)
                             {
                                 tb.BackgroundColor = ChangedBackgroundColor;
@@ -249,7 +311,8 @@ namespace CommonUi
                     }
                     else if (kv.Value.Item2.GetType() == typeof(bool))
                     {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => {
+                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                        {
                             if (e is CheckBox cb)
                             {
                                 cb.BackgroundColor = ChangedBackgroundColor;
@@ -266,7 +329,8 @@ namespace CommonUi
                     }
                     else if (kv.Value.Item2.GetType() == typeof(string))
                     {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => {
+                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                        {
                             if (e is TextBox tb)
                             {
                                 tb.BackgroundColor = ChangedBackgroundColor;
@@ -288,12 +352,13 @@ namespace CommonUi
                 }
                 else if (kv.Value.Item2.GetType() == typeof(bool))
                 {
-                    EventHandler<System.EventArgs> ChangedIndication = (e, a) => {
+                    EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
+                    {
                         if (e is CheckBox cb)
                         {
                             cb.BackgroundColor = ChangedBackgroundColor;
                             cb.TextColor = ChangedForegroundColor;
-                            
+
                             _EChangeTracker.TryAdd(kv.Key, true);
                         }
                     };
@@ -306,7 +371,8 @@ namespace CommonUi
                 }
                 else
                 {
-                    EventHandler<TextInputEventArgs> ChangedIndication = (e, a) => {
+                    EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                    {
                         if (e is TextBox tb)
                         {
                             tb.BackgroundColor = ChangedBackgroundColor;

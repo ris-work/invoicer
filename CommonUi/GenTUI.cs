@@ -296,7 +296,8 @@ namespace CommonUi
                 {
                     EInput = new CheckBox()
                     {
-                        CheckedState = ((bool)kv.Value.Item2) ? CheckState.Checked: CheckState.UnChecked,
+                        CheckedState =
+                            ((bool)kv.Value.Item2) ? CheckState.Checked : CheckState.UnChecked,
                         ColorScheme = ColorSchemeTF,
                     };
                 }
