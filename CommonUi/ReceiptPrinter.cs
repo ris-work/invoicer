@@ -21,10 +21,54 @@ public class ReceiptPrinter
 
     private T GetValueOrDefault<T>(string key, T defaultValue)
     {
-        return config.TryGetValue(key, out var value) && value is T typedValue
-            ? typedValue
-            : defaultValue;
+        return GetValueOrDefault(config, key, defaultValue);
     }
+
+    private T GetValueOrDefault<T>(IReadOnlyDictionary<string, object> config, string key, T defaultValue)
+    {
+        var keys = key.Split('.'); // Split the dot-separated key
+        object current = config;
+
+        foreach (var part in keys)
+        {
+            if (current is IDictionary<string, object> dictionary && dictionary.TryGetValue(part, out var next))
+            {
+                current = next; // Navigate deeper into the dictionary
+            }
+            else
+            {
+                Console.WriteLine($"Key not found: {key}"); // Log unsuccessful read
+                return defaultValue;
+            }
+        }
+
+        // Log successful read
+        Console.WriteLine($"Key found: {key}, Value: {current}, Value's type: {current.GetType()}, Default's type: {defaultValue.GetType()}");
+
+        // Attempt to cast the value
+        if (current is T typedValue)
+        {
+            return typedValue;
+        }
+        else if (typeof(T) == typeof(float) && current is int intValue)
+        {
+            // Cast int to float when the target type is float
+            return (T)(object)(float)intValue;
+        }
+        else if (typeof(T) == typeof(double) && current is int intValue_)
+        {
+            // Cast int to double when the target type is float
+            return (T)(object)(double)intValue_;
+        }
+        else if (typeof(T) == typeof(float) && current is double doubleValue)
+        {
+            // Cast int to float when the target type is float
+            return (T)(object)(float)doubleValue;
+        }
+
+        return defaultValue; // Return the default if casting fails
+    }
+
 
     public void PrintReceipt()
     {
@@ -159,6 +203,8 @@ public class ReceiptPrinter
 
         // Start printing
         printDocument.Print();
+        System.Console.WriteLine("Press any key to proceed");
+        System.Console.ReadKey();
     }
 
     public static IReadOnlyDictionary<string, object> LoadConfig(string configPath)
@@ -171,6 +217,13 @@ public class ReceiptPrinter
             { "ReceiptPrinter.PageHeight", 600f },
             { "ReceiptPrinter.PageWidth", 800f },
         };
+        System.Console.WriteLine("Sample config:");
+        System.Console.WriteLine(Tomlyn.Toml.FromModel(config));
+        if (System.IO.File.Exists("theme.toml")) config = Tomlyn.Toml.ToModel(System.IO.File.ReadAllText("theme.toml")).ToDictionary();
+        System.Console.WriteLine("Using config:");
+        System.Console.WriteLine(Tomlyn.Toml.FromModel(config));
+        System.IO.File.WriteAllText("current_config.toml", Tomlyn.Toml.FromModel(config));
+
         return config;
     }
 }

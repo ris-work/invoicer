@@ -97,3 +97,10 @@ font_family = "Arial"
 font_size = "24"
 font_style = "Regular"
 control_size = "100,40"
+
+[ReceiptPrinter]
+PageHeight = 600.0
+PageWidth = 200.0
+FontSize = 20.0
+LineHeight = 20.0
+FontFamily = "IBM COURIER"

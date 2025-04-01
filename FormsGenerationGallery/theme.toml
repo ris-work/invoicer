@@ -1,4 +1,13 @@
-﻿[default.name]
+﻿
+
+[ReceiptPrinter]
+PageHeight = 400.0
+PageWidth = 400.0
+FontSize = 16.0
+LineHeight = 20.0
+FontFamily = "Monospace"
+
+[default.name]
 background_color = "#FFFF00"
 foreground_color = "#000000"
 background_color_changed = "#FF0000"
@@ -97,3 +106,11 @@ font_family = "Arial"
 font_size = "24"
 font_style = "Regular"
 control_size = "100,40"
+
+
+#[ReceiptPrinter]
+ReceiptPrinter.PageHeight = 600.0
+ReceiptPrinter.PageWidth = 200.0
+ReceiptPrinter.FontSize = 20.0
+ReceiptPrinter.LineHeight = 20.0
+ReceiptPrinter.FontFamily = "IBM COURIER"
