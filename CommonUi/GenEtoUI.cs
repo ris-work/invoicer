@@ -9,6 +9,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using Microsoft.Win32.SafeHandles;
 using Tomlyn;
+using Xceed.Wpf.Toolkit.Converters;
 
 namespace CommonUi
 {
@@ -202,6 +203,18 @@ namespace CommonUi
         )
         {
             InitializeConfiguration();
+            (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
+                    GetThemeForComponent("form");
+            var SaveButtonTheme =
+                    GetThemeForComponent("save");
+            var NewButtonTheme =
+                    GetThemeForComponent("new");
+            var ViewButtonTheme =
+                    GetThemeForComponent("view");
+            var CancelButtonTheme =
+                    GetThemeForComponent("cancel");
+            BackgroundColor = BGF;
+
             this.ChangesOnly = ChangesOnly;
             //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
             //BackgroundColor = Eto.Drawing.Colors.White;
@@ -399,6 +412,15 @@ namespace CommonUi
             Button SaveButton = new Button() { Text = "Save" };
             Button ViewButton = new Button() { Text = "View" };
             Button CancelButton = new Button() { Text = "Cancel" };
+            NewButton.Font = NewButtonTheme.TFont;
+            NewButton.BackgroundColor = NewButtonTheme.BG;
+            SaveButton.Font = SaveButtonTheme.TFont;
+            SaveButton.BackgroundColor = SaveButtonTheme.BG;
+            ViewButton.Font = ViewButtonTheme.TFont;
+            ViewButton.BackgroundColor = ViewButtonTheme.BG;
+            CancelButton.Font = CancelButtonTheme.TFont;
+            CancelButton.BackgroundColor = CancelButtonTheme.BG;
+            
             NewButton.Click += (_, _) =>
             {
                 ConvertInputs();

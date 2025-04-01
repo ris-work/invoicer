@@ -83,7 +83,17 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 
 var SampleJson =
     @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true}";
-
+if (args.Length >= 1 && File.Exists(args[0]))
+{
+    try
+    {
+        SampleJson = File.ReadAllText(args[0]);
+    }
+    catch (Exception E)
+    {
+        Console.WriteLine($"Error reading {args[0]}: {E.ToString()}, {E.StackTrace}");
+    }
+}
 /*
 new Eto.Forms.Application().Run(
     new Form()

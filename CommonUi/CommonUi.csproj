@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <None Update="theme.toml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
