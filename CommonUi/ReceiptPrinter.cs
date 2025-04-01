@@ -25,14 +25,21 @@ public class ReceiptPrinter
         return GetValueOrDefault(config, key, defaultValue);
     }
 
-    private T GetValueOrDefault<T>(IReadOnlyDictionary<string, object> config, string key, T defaultValue)
+    private T GetValueOrDefault<T>(
+        IReadOnlyDictionary<string, object> config,
+        string key,
+        T defaultValue
+    )
     {
         var keys = key.Split('.'); // Split the dot-separated key
         object current = config;
 
         foreach (var part in keys)
         {
-            if (current is IDictionary<string, object> dictionary && dictionary.TryGetValue(part, out var next))
+            if (
+                current is IDictionary<string, object> dictionary
+                && dictionary.TryGetValue(part, out var next)
+            )
             {
                 current = next; // Navigate deeper into the dictionary
             }
@@ -44,7 +51,9 @@ public class ReceiptPrinter
         }
 
         // Log successful read
-        Console.WriteLine($"Key found: {key}, Value: {current}, Value's type: {current.GetType()}, Default's type: {defaultValue.GetType()}");
+        Console.WriteLine(
+            $"Key found: {key}, Value: {current}, Value's type: {current.GetType()}, Default's type: {defaultValue.GetType()}"
+        );
 
         // Attempt to cast the value
         if (current is T typedValue)
@@ -70,7 +79,6 @@ public class ReceiptPrinter
         return defaultValue; // Return the default if casting fails
     }
 
-
     public void PrintReceipt()
     {
         // Load settings from configuration
@@ -95,10 +103,10 @@ public class ReceiptPrinter
             Size pageSize = Size.Round(e.PageSize);
 
             // draw a border around the printable area
-            var rect = new Rectangle(pageSize);
+            //var rect = new Rectangle(pageSize);
             float y = 0; // Start position for drawing content
             var font = new Font(fontFamily, fontSize);
-            e.Graphics.DrawRectangle(Pens.Silver, rect);
+            //e.Graphics.DrawRectangle(Pens.Silver, rect);
 
             // draw title
             e.Graphics.DrawText(font, Colors.Black, new Point(50, 20), "document.Name");
@@ -113,9 +121,14 @@ public class ReceiptPrinter
 
             e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "=======================");
             y += lineHeight;
-            e.Graphics.DrawText(font, Colors.LightGrey, new PointF(0, y), "=======================");
+            e.Graphics.DrawText(
+                font,
+                Colors.LightGrey,
+                new PointF(0, y),
+                "======================="
+            );
             y += lineHeight;
-            
+
             e.Graphics.DrawText(font, Colors.Gray, new PointF(0, y), "=======================");
             y += lineHeight;
             e.Graphics.DrawText(font, Colors.DarkGray, new PointF(0, y), "=======================");
@@ -132,13 +145,15 @@ public class ReceiptPrinter
                 int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
                 config.TryGetValue("padding", out var paddingObjInspection);
-                System.Console.WriteLine($"Supplied padding values: {paddingObjInspection.GetType()}");
+                System.Console.WriteLine(
+                    $"Supplied padding values: {paddingObjInspection.GetType()}"
+                );
                 ((TomlArray)paddingObjInspection).ToArray();
                 // Extract the padding array dynamically
                 var paddingConfig =
                     config.TryGetValue("padding", out var paddingObj)
                     && paddingObj is TomlArray paddingArray
-    ? paddingArray.Select(value => Convert.ToInt32(value)).ToList()
+                        ? paddingArray.Select(value => Convert.ToInt32(value)).ToList()
                         : new List<int>(); // Fallback to an empty list if "padding" isn't found or invalid
 
                 float x = 0; // Starting X position for the first column
@@ -149,7 +164,9 @@ public class ReceiptPrinter
 
                     // Determine the padding for the current column
                     int columnPadding = i < paddingConfig.Count ? paddingConfig[i] : defaultPadding;
-                    System.Console.WriteLine($"Itertation: {i}, Padding: {columnPadding}, Supplied paddings: {paddingConfig.Count}");
+                    System.Console.WriteLine(
+                        $"Itertation: {i}, Padding: {columnPadding}, Supplied paddings: {paddingConfig.Count}"
+                    );
 
                     // Initialize the truncated value
                     string truncatedValue = value;
@@ -224,7 +241,8 @@ public class ReceiptPrinter
         };
         System.Console.WriteLine("Sample config:");
         System.Console.WriteLine(Tomlyn.Toml.FromModel(config));
-        if (System.IO.File.Exists("theme.toml")) config = Tomlyn.Toml.ToModel(System.IO.File.ReadAllText("theme.toml")).ToDictionary();
+        if (System.IO.File.Exists("theme.toml"))
+            config = Tomlyn.Toml.ToModel(System.IO.File.ReadAllText("theme.toml")).ToDictionary();
         System.Console.WriteLine("Using config:");
         System.Console.WriteLine(Tomlyn.Toml.FromModel(config));
         System.IO.File.WriteAllText("current_config.toml", Tomlyn.Toml.FromModel(config));

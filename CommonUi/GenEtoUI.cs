@@ -204,15 +204,11 @@ namespace CommonUi
         {
             InitializeConfiguration();
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
-                    GetThemeForComponent("form");
-            var SaveButtonTheme =
-                    GetThemeForComponent("save");
-            var NewButtonTheme =
-                    GetThemeForComponent("new");
-            var ViewButtonTheme =
-                    GetThemeForComponent("view");
-            var CancelButtonTheme =
-                    GetThemeForComponent("cancel");
+                GetThemeForComponent("form");
+            var SaveButtonTheme = GetThemeForComponent("save");
+            var NewButtonTheme = GetThemeForComponent("new");
+            var ViewButtonTheme = GetThemeForComponent("view");
+            var CancelButtonTheme = GetThemeForComponent("cancel");
             BackgroundColor = BGF;
 
             this.ChangesOnly = ChangesOnly;
@@ -420,7 +416,7 @@ namespace CommonUi
             ViewButton.BackgroundColor = ViewButtonTheme.BG;
             CancelButton.Font = CancelButtonTheme.TFont;
             CancelButton.BackgroundColor = CancelButtonTheme.BG;
-            
+
             NewButton.Click += (_, _) =>
             {
                 ConvertInputs();
