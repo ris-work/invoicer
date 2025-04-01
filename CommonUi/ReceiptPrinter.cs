@@ -68,6 +68,17 @@ public class ReceiptPrinter
 
             e.Graphics.DrawText(font, Colors.Black, new PointF(0, y), "=======================");
             y += lineHeight;
+            e.Graphics.DrawText(font, Colors.LightGrey, new PointF(0, y), "=======================");
+            y += lineHeight;
+            
+            e.Graphics.DrawText(font, Colors.Gray, new PointF(0, y), "=======================");
+            y += lineHeight;
+            e.Graphics.DrawText(font, Colors.DarkGray, new PointF(0, y), "=======================");
+            y += lineHeight;
+            e.Graphics.FillRectangle(Colors.Black, 0, y, pageWidth, 100);
+            e.Graphics.DrawText(font, Colors.White, new PointF(0, y), "WHITE ON BLACK");
+            y += 100;
+            y += lineHeight;
 
             // Draw items for this page
             while (currentIndex < invoiceItems.Count && y + lineHeight < pageHeight)
