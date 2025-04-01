@@ -1,9 +1,9 @@
-﻿
+﻿padding = [160, 80, 80]
 
 [ReceiptPrinter]
 PageHeight = 400.0
 PageWidth = 400.0
-FontSize = 16.0
+FontSize = 10.0
 LineHeight = 20.0
 FontFamily = "Monospace"
 

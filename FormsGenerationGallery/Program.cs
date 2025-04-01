@@ -149,9 +149,9 @@ var config = ReceiptPrinter.LoadConfig("theme.toml");
 
 var invoiceItems = new List<string[]>
 {
-    new string[] { "Item1", "2", "$20.00" },
-    new string[] { "Item2", "1", "$10.00" },
-    new string[] { "Item3", "5", "$50.00" },
+    new string[] { "Item1 பெயர், नमस्ते 1", "2", "$20.00" },
+    new string[] { "Item2 பெயர், नमस्ते 2", "1", "$10.00" },
+    new string[] { "Item3 பெயர், नमस्ते 3", "5", "$50.00" },
 };
 
 var receiptPrinter = new ReceiptPrinter(invoiceItems, config);

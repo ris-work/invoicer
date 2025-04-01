@@ -5,6 +5,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
 using RV.InvNew.CommonUi;
+using Tomlyn.Model;
 
 public class ReceiptPrinter
 {
@@ -130,11 +131,14 @@ public class ReceiptPrinter
                 var item = invoiceItems[currentIndex];
                 int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
+                config.TryGetValue("padding", out var paddingObjInspection);
+                System.Console.WriteLine($"Supplied padding values: {paddingObjInspection.GetType()}");
+                ((TomlArray)paddingObjInspection).ToArray();
                 // Extract the padding array dynamically
                 var paddingConfig =
                     config.TryGetValue("padding", out var paddingObj)
-                    && paddingObj is IEnumerable<int> paddingArray
-                        ? paddingArray.ToList()
+                    && paddingObj is TomlArray paddingArray
+    ? paddingArray.Select(value => Convert.ToInt32(value)).ToList()
                         : new List<int>(); // Fallback to an empty list if "padding" isn't found or invalid
 
                 float x = 0; // Starting X position for the first column
@@ -145,6 +149,7 @@ public class ReceiptPrinter
 
                     // Determine the padding for the current column
                     int columnPadding = i < paddingConfig.Count ? paddingConfig[i] : defaultPadding;
+                    System.Console.WriteLine($"Itertation: {i}, Padding: {columnPadding}, Supplied paddings: {paddingConfig.Count}");
 
                     // Initialize the truncated value
                     string truncatedValue = value;
