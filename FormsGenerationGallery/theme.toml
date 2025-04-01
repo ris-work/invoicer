@@ -1,0 +1,99 @@
+﻿[default.name]
+background_color = "#FFFF00"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.new]
+background_color = "#ccc"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.save]
+background_color = "#FF00FF"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.cancel]
+background_color = "#FF0000"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.view]
+background_color = "#FFFFFF"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.form]
+background_color = "#FFFFFF"
+foreground_color = "#000000"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "16"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.localName]
+background_color = "#FF0000"
+foreground_color = "#0000FF"
+background_color_changed = "#FF00FF"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "12"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.location]
+background_color = "#FF00FF"
+foreground_color = "#00FF00"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "24"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.float]
+background_color = "#FF00FF"
+foreground_color = "#00FF00"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "24"
+font_style = "Regular"
+control_size = "100,40"
+
+[default.bool]
+background_color = "#FF00FF"
+foreground_color = "#00FF00"
+background_color_changed = "#FF0000"
+foreground_color_changed = "#FFFFFF"
+font_family = "Arial"
+font_size = "24"
+font_style = "Regular"
+control_size = "100,40"

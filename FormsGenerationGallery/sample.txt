@@ -1,0 +1,17 @@
+{
+  "mission_name": "StarVoyager-1",
+  "launch_date": "2025-08-15",
+  "destination": "Proxima Centauri b",
+  "spacecraft_id": "SV1-0923",
+  "crew_count": 6,
+  "mission_duration_days": 4380,
+  "primary_objective": "Exoplanet Habitability Study",
+  "secondary_objective": "Interstellar Particle Analysis",
+  "onboard_ai_name": "AstroAI",
+  "fuel_type": "Antimatter",
+  "max_speed_kmps": 300000,
+  "current_status": "Cruising",
+  "communication_delay_minutes": 18,
+  "power_source": "Fusion Reactor",
+  "emergency_escape_pods": 2
+}

@@ -94,6 +94,7 @@ if (args.Length >= 1 && File.Exists(args[0]))
         Console.WriteLine($"Error reading {args[0]}: {E.ToString()}, {E.StackTrace}");
     }
 }
+
 /*
 new Eto.Forms.Application().Run(
     new Form()
