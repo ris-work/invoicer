@@ -1,4 +1,4 @@
-﻿padding = [160, 80, 80]
+﻿#padding = [160, 80, 80]
 
 [ReceiptPrinter]
 PageHeight = 400.0
@@ -6,6 +6,19 @@ PageWidth = 400.0
 FontSize = 10.0
 LineHeight = 20.0
 FontFamily = "Monospace"
+
+[ReceiptPrinter.images]
+# Top images to be rendered in the header section.
+top = [
+  { Path = "logo.png", XPosition = "left", YPosition = "top", Width = 100, Height = 50 },
+  { Path = "banner.png", XPosition = "center", YPosition = "top", Width = 200, Height = 100 }
+]
+
+# Bottom images to be rendered in the footer section.
+bottom = [
+  { Path = "footer.png", XPosition = "left", YPosition = "bottom", Width = 150, Height = 50 },
+  { Path = "stamp.png", XPosition = "bottom", YPosition = "bottom", Width = 100, Height = 100 }
+]
 
 [default.name]
 background_color = "#FFFF00"

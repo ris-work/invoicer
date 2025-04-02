@@ -98,6 +98,101 @@ public class ReceiptPrinter
         var printDocument = new PrintDocument();
         printDocument.PageCount = 1;
 
+        // --- Top Images Loading with Debug ---
+        // Instead of inferring List<object>, we load as object first.
+        object topImagesObj = GetValueOrDefault<object>(
+            config,
+            "ReceiptPrinter.images.top",
+            new List<object>()
+        );
+
+        // Convert topImagesObj to an enumerable sequence.
+        IEnumerable<object> topImagesEnumerable;
+        if (topImagesObj is Tomlyn.Model.TomlArray tomlTop)
+        {
+            topImagesEnumerable = tomlTop.Cast<object>();
+        }
+        else if (topImagesObj is IEnumerable<object> enumerableTop)
+        {
+            topImagesEnumerable = enumerableTop;
+        }
+        else
+        {
+            topImagesEnumerable = Enumerable.Empty<object>();
+        }
+
+        var topImages = topImagesEnumerable
+            .Select(img =>
+            {
+                // Each image should be a dictionary; if not, skip it.
+                var imgDict = img as IDictionary<string, object>;
+                if (imgDict == null)
+                    return null;
+
+                // Create the anonymous object.
+                var topImg = new
+                {
+                    FilePath = imgDict["Path"].ToString(),
+                    XPosition = imgDict["XPosition"].ToString(), // Expected: "left", "center", or "bottom" (interpreted as right)
+                    YPosition = imgDict["YPosition"].ToString(), // Expected: "top" or "bottom"
+                    Height = Convert.ToInt32(imgDict["Height"]),
+                    Width = Convert.ToInt32(imgDict["Width"]),
+                };
+
+                // Debug: print the loaded top image.
+                System.Console.WriteLine(
+                    $"Top Image loaded: Path={topImg.FilePath}, XPosition={topImg.XPosition}, YPosition={topImg.YPosition}, Width={topImg.Width}, Height={topImg.Height}"
+                );
+                return topImg;
+            })
+            .Where(img => img != null)
+            .ToList();
+
+        // --- Bottom Images Loading with Debug ---
+        object bottomImagesObj = GetValueOrDefault<object>(
+            config,
+            "ReceiptPrinter.images.bottom",
+            new List<object>()
+        );
+
+        IEnumerable<object> bottomImagesEnumerable;
+        if (bottomImagesObj is Tomlyn.Model.TomlArray tomlBottom)
+        {
+            bottomImagesEnumerable = tomlBottom.Cast<object>();
+        }
+        else if (bottomImagesObj is IEnumerable<object> enumerableBottom)
+        {
+            bottomImagesEnumerable = enumerableBottom;
+        }
+        else
+        {
+            bottomImagesEnumerable = Enumerable.Empty<object>();
+        }
+
+        var bottomImages = bottomImagesEnumerable
+            .Select(img =>
+            {
+                var imgDict = img as IDictionary<string, object>;
+                if (imgDict == null)
+                    return null;
+
+                var bottomImg = new
+                {
+                    FilePath = imgDict["Path"].ToString(),
+                    XPosition = imgDict["XPosition"].ToString(), // Expected: "left", "center", or "bottom" (interpreted as right)
+                    YPosition = imgDict["YPosition"].ToString(), // Expected: "top" or "bottom"
+                    Height = Convert.ToInt32(imgDict["Height"]),
+                    Width = Convert.ToInt32(imgDict["Width"]),
+                };
+
+                System.Console.WriteLine(
+                    $"Bottom Image loaded: Path={bottomImg.FilePath}, XPosition={bottomImg.XPosition}, YPosition={bottomImg.YPosition}, Width={bottomImg.Width}, Height={bottomImg.Height}"
+                );
+                return bottomImg;
+            })
+            .Where(img => img != null)
+            .ToList();
+
         printDocument.PrintPage += (sender, e) =>
         {
             Size pageSize = Size.Round(e.PageSize);
@@ -107,6 +202,7 @@ public class ReceiptPrinter
             float y = 0; // Start position for drawing content
             var font = new Font(fontFamily, fontSize);
             //e.Graphics.DrawRectangle(Pens.Silver, rect);
+
 
             // draw title
             e.Graphics.DrawText(font, Colors.Black, new Point(50, 20), "document.Name");
@@ -144,11 +240,39 @@ public class ReceiptPrinter
                 var item = invoiceItems[currentIndex];
                 int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
-                config.TryGetValue("padding", out var paddingObjInspection);
-                System.Console.WriteLine(
-                    $"Supplied padding values: {paddingObjInspection.GetType()}"
-                );
-                ((TomlArray)paddingObjInspection).ToArray();
+                // ---- Top Images Processing (Header) ----
+                // Starting Y for header images.
+                float topOffset = 0; // Start at the very top.
+                foreach (var image in topImages)
+                {
+                    // Calculate horizontal position based on XPosition alignment.
+                    float imgX = 0;
+                    if (image.XPosition.Equals("left", StringComparison.OrdinalIgnoreCase))
+                        imgX = 0;
+                    else if (image.XPosition.Equals("center", StringComparison.OrdinalIgnoreCase))
+                        imgX = (pageWidth - image.Width) / 2;
+                    else if (image.XPosition.Equals("bottom", StringComparison.OrdinalIgnoreCase))
+                        imgX = pageWidth - image.Width; // "bottom" interpreted as right aligned.
+                    else
+                        imgX = 0;
+
+                    // For top images, we assume YPosition "top" means drawing at the current topOffset.
+                    float imgY = topOffset;
+                    // (If YPosition were “bottom”, you might decide on a different rule, but here we'll default to stacking.)
+
+                    // Draw the image.
+                    using (var img = new Bitmap(image.FilePath))
+                    {
+                        e.Graphics.DrawImage(
+                            img,
+                            new RectangleF(imgX, imgY, image.Width, image.Height)
+                        );
+                    }
+
+                    // Increment Y after drawing each top image (with a 10px spacing).
+                    topOffset += image.Height + 10;
+                }
+
                 // Extract the padding array dynamically
                 var paddingConfig =
                     config.TryGetValue("padding", out var paddingObj)
@@ -189,6 +313,54 @@ public class ReceiptPrinter
 
                     // Increment the X position for the next column
                     x += columnPadding; // Advance X by the current column's width
+                }
+
+                // ---- Bottom Images Processing (Footer) ----
+                // Start at the bottom (pageHeight) and work upward.
+                float bottomOffset = pageHeight;
+                // Process bottom images in reverse order so they stack upward.
+                foreach (var image in bottomImages.AsEnumerable().Reverse())
+                {
+                    // Calculate horizontal position based on XPosition.
+                    float imgX = 0;
+                    if (image.XPosition.Equals("left", StringComparison.OrdinalIgnoreCase))
+                        imgX = 0;
+                    else if (image.XPosition.Equals("center", StringComparison.OrdinalIgnoreCase))
+                        imgX = (pageWidth - image.Width) / 2;
+                    else if (image.XPosition.Equals("bottom", StringComparison.OrdinalIgnoreCase))
+                        imgX = pageWidth - image.Width;
+                    else
+                        imgX = 0;
+
+                    // For bottom images, anchor them to the bottom.
+                    float imgY = 0;
+                    if (image.YPosition.Equals("bottom", StringComparison.OrdinalIgnoreCase))
+                    {
+                        bottomOffset -= image.Height;
+                        imgY = bottomOffset;
+                        bottomOffset -= 10; // spacing between images
+                    }
+                    else if (image.YPosition.Equals("top", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If a bottom image is marked "top", still anchor it from the bottom.
+                        bottomOffset -= image.Height;
+                        imgY = bottomOffset;
+                        bottomOffset -= 10;
+                    }
+                    else
+                    {
+                        bottomOffset -= image.Height;
+                        imgY = bottomOffset;
+                        bottomOffset -= 10;
+                    }
+
+                    using (var img = new Bitmap(image.FilePath))
+                    {
+                        e.Graphics.DrawImage(
+                            img,
+                            new RectangleF(imgX, imgY, image.Width, image.Height)
+                        );
+                    }
                 }
 
                 y += lineHeight; // Move to the next row

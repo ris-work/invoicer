@@ -28,6 +28,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="banner.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="footer.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="stamp.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="theme.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
