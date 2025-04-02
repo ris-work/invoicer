@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Eto.Drawing;
 using Eto.Forms;
@@ -240,36 +241,46 @@ public class ReceiptPrinter
                 var item = invoiceItems[currentIndex];
                 int defaultPadding = 80; // Default padding if array size mismatch or padding not found
 
-                // ---- Top Images Processing (Header) ----
-                // Starting Y for header images.
-                float topOffset = 0; // Start at the very top.
+                // ---------- Top Images Processing (Header) ----------
+                float topOffset = 0; // starting y-position for top images
                 foreach (var image in topImages)
                 {
-                    // Calculate horizontal position based on XPosition alignment.
+                    // Convert relative FilePath to an absolute path
+                    string imagePath = image.FilePath;
+                    if (!Path.IsPathRooted(imagePath))
+                    {
+                        imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imagePath);
+                    }
+                    System.Console.WriteLine($"Top image final path: {imagePath}");
+                    if (!File.Exists(imagePath))
+                    {
+                        System.Console.WriteLine($"Top image file not found: {imagePath}");
+                        continue;
+                    }
+
+                    // Calculate horizontal position based on XPosition alignment
                     float imgX = 0;
                     if (image.XPosition.Equals("left", StringComparison.OrdinalIgnoreCase))
                         imgX = 0;
                     else if (image.XPosition.Equals("center", StringComparison.OrdinalIgnoreCase))
                         imgX = (pageWidth - image.Width) / 2;
                     else if (image.XPosition.Equals("bottom", StringComparison.OrdinalIgnoreCase))
-                        imgX = pageWidth - image.Width; // "bottom" interpreted as right aligned.
+                        imgX = pageWidth - image.Width; // "bottom" is interpreted as right-aligned
                     else
                         imgX = 0;
 
-                    // For top images, we assume YPosition "top" means drawing at the current topOffset.
+                    // For top images, Y is defined by our running topOffset.
                     float imgY = topOffset;
-                    // (If YPosition were “bottom”, you might decide on a different rule, but here we'll default to stacking.)
 
-                    // Draw the image.
-                    using (var img = new Bitmap(image.FilePath))
+                    using (var bmp = new Bitmap(imagePath))
                     {
                         e.Graphics.DrawImage(
-                            img,
+                            bmp,
                             new RectangleF(imgX, imgY, image.Width, image.Height)
                         );
                     }
 
-                    // Increment Y after drawing each top image (with a 10px spacing).
+                    // Increment topOffset by the image's height plus a spacing gap.
                     topOffset += image.Height + 10;
                 }
 
@@ -315,13 +326,25 @@ public class ReceiptPrinter
                     x += columnPadding; // Advance X by the current column's width
                 }
 
-                // ---- Bottom Images Processing (Footer) ----
-                // Start at the bottom (pageHeight) and work upward.
-                float bottomOffset = pageHeight;
-                // Process bottom images in reverse order so they stack upward.
+                // ---------- Bottom Images Processing (Footer) ----------
+                float bottomOffset = pageHeight; // starting from the bottom of the page
+                // Process bottom images in reverse order so that they stack upward.
                 foreach (var image in bottomImages.AsEnumerable().Reverse())
                 {
-                    // Calculate horizontal position based on XPosition.
+                    // Convert relative FilePath to an absolute path
+                    string imagePath = image.FilePath;
+                    if (!Path.IsPathRooted(imagePath))
+                    {
+                        imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imagePath);
+                    }
+                    System.Console.WriteLine($"Bottom image final path: {imagePath}");
+                    if (!File.Exists(imagePath))
+                    {
+                        System.Console.WriteLine($"Bottom image file not found: {imagePath}");
+                        continue;
+                    }
+
+                    // Calculate horizontal position based on XPosition alignment
                     float imgX = 0;
                     if (image.XPosition.Equals("left", StringComparison.OrdinalIgnoreCase))
                         imgX = 0;
@@ -332,17 +355,16 @@ public class ReceiptPrinter
                     else
                         imgX = 0;
 
-                    // For bottom images, anchor them to the bottom.
+                    // For bottom images, anchor them from the bottom upward.
                     float imgY = 0;
                     if (image.YPosition.Equals("bottom", StringComparison.OrdinalIgnoreCase))
                     {
                         bottomOffset -= image.Height;
                         imgY = bottomOffset;
-                        bottomOffset -= 10; // spacing between images
+                        bottomOffset -= 10; // additional spacing between images
                     }
                     else if (image.YPosition.Equals("top", StringComparison.OrdinalIgnoreCase))
                     {
-                        // If a bottom image is marked "top", still anchor it from the bottom.
                         bottomOffset -= image.Height;
                         imgY = bottomOffset;
                         bottomOffset -= 10;
@@ -354,10 +376,10 @@ public class ReceiptPrinter
                         bottomOffset -= 10;
                     }
 
-                    using (var img = new Bitmap(image.FilePath))
+                    using (var bmp = new Bitmap(imagePath))
                     {
                         e.Graphics.DrawImage(
-                            img,
+                            bmp,
                             new RectangleF(imgX, imgY, image.Width, image.Height)
                         );
                     }
