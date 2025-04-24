@@ -14,14 +14,27 @@
 
   <ItemGroup>
     <PackageReference Include="Eto.Forms" Version="2.9.0" />
-    <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+    <!--<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />-->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
     <PackageReference Include="Microsoft.Maui.Core" Version="8.0.100" />
     <PackageReference Include="Microsoft.Maui.Essentials" Version="8.0.100" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
+
     <PackageReference Include="Terminal.Gui" Version="2.0.0-v2-develop.2329" />
   </ItemGroup>
+
+
+	<!-- On Windows, include Windows and WPF platforms -->
+	<ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+		<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
+	</ItemGroup>
+
+	<!-- On non-Windows platforms, include only the GTK platform -->
+	<ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+		<PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Commonui\CommonUi.csproj" />

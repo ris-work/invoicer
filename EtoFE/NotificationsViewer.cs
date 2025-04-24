@@ -92,7 +92,7 @@ namespace EtoFE
                         NotifId = e.NotifId,
                     })
                     .ToList();
-                MessageBox.Show(NotificationsToMark.Count.ToString());
+                //MessageBox.Show(NotificationsToMark.Count.ToString());
                 var NotificationsMarkAR = new AuthenticatedRequest<List<NotificationTransfer>>(
                     NotificationsToMark,
                     LoginTokens.token
@@ -103,6 +103,9 @@ namespace EtoFE
                     .GetResult();
             };
             Width = 400;
+            KeyDown += (e, a) => {
+                if (a.Key == Keys.Escape) this.Close();
+            };
         }
     }
 }
