@@ -103,8 +103,10 @@ namespace EtoFE
                     .GetResult();
             };
             Width = 400;
-            KeyDown += (e, a) => {
-                if (a.Key == Keys.Escape) this.Close();
+            KeyDown += (e, a) =>
+            {
+                if (a.Key == Keys.Escape)
+                    this.Close();
             };
         }
     }
