@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -56,7 +57,9 @@ public class Program
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json")
         );
-        new Application(Eto.Platforms.Wpf).Run(new MyForm());
+        string CurrentUI = Eto.Platforms.Wpf;
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) CurrentUI = Eto.Platforms.Gtk;
+        new Application(CurrentUI).Run(new MyForm());
         Terminal.Gui.Application.Init();
         Terminal.Gui.Application.Run(
             new CommonUi.SearchDialogTUI(Mock.SearchCatalogue, Mock.HeaderEntries)
