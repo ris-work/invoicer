@@ -10,7 +10,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Eto.Forms;
 using RV.InvNew.Common;
+#if WINDOWS
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+#endif
 
 namespace EtoFE
 {

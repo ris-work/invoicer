@@ -10,6 +10,8 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <ApplicationIcon>icons\pos_exe.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
+	  <!-- Define a property that evaluates if '-windows' is found -->
+	  <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,16 +37,21 @@
     <PackageReference Include="Wiry.Base32" Version="1.1.1" />
 
   </ItemGroup>
+
 	<!-- On Windows, include Windows and WPF platforms -->
-	<ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+	<ItemGroup
+    Condition="'$(IsWindowsTarget)' == 'True'">
 		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
 		<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
 	</ItemGroup>
 
 	<!-- On non-Windows platforms, include only the GTK platform -->
-	<ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+	<ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
 		<PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
 	</ItemGroup>
+
 
   <ItemGroup>
     <None Update="config.toml">

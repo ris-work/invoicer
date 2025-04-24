@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+#if WINDOWS
 using System.Windows.Controls;
+#endif
 using Eto.Forms;
 
 namespace EtoFE
@@ -16,6 +18,7 @@ namespace EtoFE
 
         public static void DisableGridViewEnterKey(this Eto.Forms.GridView GW, System.Action H)
         {
+#if WINDOWS
             var P = Eto.Platform.Instance.ToString();
 
             if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
@@ -46,10 +49,12 @@ namespace EtoFE
                 WpfGW.BorderThickness = new System.Windows.Thickness(0);
                 WpfGW.GridLinesVisibility = DataGridGridLinesVisibility.None;
             }
+#endif
         }
 
         public static void DisableTextBoxDownArrow(this Eto.Forms.TextBox GW, System.Action H)
         {
+#if WINDOWS
             var P = Eto.Platform.Instance.ToString();
 
             if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
@@ -67,6 +72,7 @@ namespace EtoFE
                     }
                 };
             }
+#endif
         }
     }
 }
