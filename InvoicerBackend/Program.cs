@@ -422,6 +422,17 @@ app.AddEndpointWithBearerAuth<string>(
     },
     "VIEW_SERVER_TIME"
 );
+/*
+app.AddEndpointWithBearerAuth<RV.InvNew.Common.CatalogueTransfer>("CatalogueAdd",
+    (R) =>
+    {
+
+        ((CatalogueTransfer)R)
+    },
+    "CATALOGUE_ADD"
+    );
+*/
+
 System.Console.WriteLine("Done setting up!");
 app.Run();
 
