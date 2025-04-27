@@ -1,73 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace MyAOTFriendlyExtensions
 {
     /// <summary>
     /// A record struct representing field metadata for UI rendering.
-    /// Description is a human‑friendly label.
-    /// Value is the current property value.
-    /// HandlerName is an optional string to drive UI input controls.
+    /// Description is a friendly label, Value is the current property value,
+    /// and HandlerName is an optional indicator of which UI widget to use.
     /// </summary>
     public readonly record struct FieldData(string Description, object? Value, string? HandlerName);
 
     /// <summary>
-    /// A simple registry that maps field names to UI handler strings.
-    /// Call SetUIHandler to override default or later supply a custom handler.
+    /// A simple registry for UI handler overrides. Instead of using built‑in heuristics,
+    /// you can set a custom handler for a given field.
     /// </summary>
     public static class UIHandlerRegistry
     {
-        // Using a standard dictionary; in a multithreaded scenario consider thread‐safety.
         private static readonly Dictionary<string, string> _handlerOverrides = new();
 
         /// <summary>
-        /// Sets the UI handler string for a given field name.
+        /// Manually specifies the UI handler for a given field.
         /// </summary>
-        /// <param name="fieldName">The field name as it appears in your JSON</param>
-        /// <param name="handler">The UI handler identifier (for example, "DatePicker" or "TextInput")</param>
         public static void SetUIHandler(string fieldName, string handler)
         {
             if (string.IsNullOrWhiteSpace(fieldName))
-                throw new ArgumentException("Field name may not be null or whitespace.", nameof(fieldName));
-
+                throw new ArgumentException(
+                    "Field name may not be null or whitespace.",
+                    nameof(fieldName)
+                );
             _handlerOverrides[fieldName] = handler;
         }
 
         /// <summary>
-        /// Retrieves the UI handler for a given field, if one was registered.
-        /// Returns null if none was registered.
+        /// Retrieves the handler for the given field (if one was set); otherwise returns null.
         /// </summary>
-        public static string? GetHandler(string fieldName)
-        {
-            return _handlerOverrides.TryGetValue(fieldName, out string handler) ? handler : null;
-        }
+        public static string? GetHandler(string fieldName) =>
+            _handlerOverrides.TryGetValue(fieldName, out string handler) ? handler : null;
     }
 
     /// <summary>
-    /// Provides extension methods to convert objects to/from dictionaries without using reflection
-    /// (other than the JSON source–generated conversion, which is AOT‑friendly).
-    /// In addition, it offers an ApplyChangesFromFiltered method for fine‑grained updates.
+    /// Provides extension methods that leverage JSON round‑trip conversions (assuming source generators)
+    /// to work with EF Core entities in an AOT–friendly manner. This includes:
+    /// • Converting objects to/from dictionaries,
+    /// • Applying filtered updates,
+    /// • Creating default JSON objects,
+    /// • Performing single‑entry updates, and now
+    /// • Removing fields from objects.
     /// </summary>
     public static class JsonDictionaryExtensions
     {
-        #region Basic Conversions Using JSON Round‑Trip (Assumes Source Generators)
+        #region Basic Conversions Using JSON Round‑Trip
 
         /// <summary>
-        /// Converts an object into a flat dictionary based on its JSON representation.
-        /// This yields a dictionary mapping property names to native simple values.
+        /// Converts an object into a flat dictionary by serializing it to JSON and then deserializing
+        /// into a dictionary mapping property names to native values.
         /// </summary>
         public static Dictionary<string, object?> ToDictionary(this object source)
         {
             if (source is null)
                 throw new ArgumentNullException(nameof(source));
 
-            // Serialize the object to JSON.
-            // With source generators, this is AOT–friendly.
             string json = JsonSerializer.Serialize(source);
-            // Convert JSON into a dictionary with JsonElement values.
-            Dictionary<string, JsonElement>? temp =
-                JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            Dictionary<string, JsonElement>? temp = JsonSerializer.Deserialize<
+                Dictionary<string, JsonElement>
+            >(json);
             var result = new Dictionary<string, object?>(temp?.Count ?? 0);
             if (temp is not null)
             {
@@ -79,22 +77,22 @@ namespace MyAOTFriendlyExtensions
             return result;
         }
 
-        // Minimal helper that converts a JsonElement into a native .NET type.
-        private static object? ConvertJsonElement(JsonElement element) => element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt32(out int intVal) ? intVal :
-                                     element.TryGetInt64(out long longVal) ? longVal :
-                                     element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => null,
-            _ => element.ToString()
-        };
+        // Helper to convert a JsonElement into a native .NET type (flat values only).
+        private static object? ConvertJsonElement(JsonElement element) =>
+            element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt32(out int intVal) ? intVal
+                : element.TryGetInt64(out long longVal) ? longVal
+                : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => element.ToString(),
+            };
 
         /// <summary>
-        /// Converts a flat dictionary (created via ToDictionary) back into an object of type T.
-        /// This uses JSON as an intermediate and is AOT–friendly with source generators.
+        /// Converts a flat dictionary (produced via ToDictionary) back into an object of type T.
         /// </summary>
         public static T FromDictionary<T>(this Dictionary<string, object?> dictionary)
         {
@@ -110,26 +108,24 @@ namespace MyAOTFriendlyExtensions
 
         #endregion
 
-        #region Dictionary With UI Handler (Using the Registry)
+        #region Dictionary With UI Handler
 
         /// <summary>
         /// Converts an object into a dictionary of FieldData.
-        /// Each entry includes:
-        ///   • A human–friendly description (the property name by default)
-        ///   • The property’s value (from JSON conversion)
-        ///   • A UI handler string determined by the UIHandlerRegistry (or null if not set)
+        /// Each entry contains:
+        ///   • A human‑friendly description (default: the property name),
+        ///   • The property's value (from JSON conversion),
+        ///   • A UI handler string (if one was set via UIHandlerRegistry).
         /// </summary>
         public static Dictionary<string, FieldData> ToDictionaryWithHandler(this object source)
         {
             if (source is null)
                 throw new ArgumentNullException(nameof(source));
 
-            // Leverage the JSON round–trip to get property values.
-            Dictionary<string, object?> baseDict = source.ToDictionary();
+            var baseDict = source.ToDictionary();
             var result = new Dictionary<string, FieldData>(baseDict.Count);
             foreach (var kv in baseDict)
             {
-                // Instead of reflection-based heuristics, use our static registry override.
                 string? uiHandler = UIHandlerRegistry.GetHandler(kv.Key);
                 result.Add(kv.Key, new FieldData(kv.Key, kv.Value, uiHandler));
             }
@@ -137,16 +133,14 @@ namespace MyAOTFriendlyExtensions
         }
 
         /// <summary>
-        /// Reconstitutes an object of type T from a dictionary mapping property names to
-        /// a tuple of (description, value). The description is ignored.
-        /// This uses JSON–based deserialization, and thus does not rely on reflection.
+        /// Reconstitutes an object of type T from a dictionary whose values are (description, value) tuples.
+        /// The description is ignored.
         /// </summary>
         public static T FromDictionaryWithHandler<T>(this Dictionary<string, (string, object)> dict)
         {
             if (dict is null)
                 throw new ArgumentNullException(nameof(dict));
 
-            // Convert the input into a simpler dictionary mapping.
             var simpleDict = new Dictionary<string, object?>(dict.Count);
             foreach (var kv in dict)
             {
@@ -157,20 +151,13 @@ namespace MyAOTFriendlyExtensions
 
         #endregion
 
-        #region Filtered Updates Using JSON (No Reflection)
+        #region Filtered Updates for Fine‑Grained ACL Control
 
         /// <summary>
-        /// Creates an updated instance of T by copying changes from a JSON payload but only for
-        /// keys specified in the filter array. Keys not in the filter are ignored.
-        /// This is useful for fine–grained access control in CRUD operations.
-        /// Since updating in–place without reflection is challenging in AOT,
-        /// this method returns the new instance with applied changes.
+        /// Creates a new instance of T by copying only the allowed keys (provided in filter)
+        /// from a JSON payload. Keys not in filter are ignored.
+        /// This is useful for ACL–based updates.
         /// </summary>
-        /// <typeparam name="T">Type to update (should be JSON–serializable via source generators)</typeparam>
-        /// <param name="target">The original instance.</param>
-        /// <param name="filter">The array of allowed property names.</param>
-        /// <param name="json">The JSON payload containing property values (B).</param>
-        /// <returns>A new instance of T with allowed changes applied.</returns>
         public static T ApplyChangesFromFiltered<T>(this T target, string[] filter, string json)
         {
             if (target is null)
@@ -180,16 +167,13 @@ namespace MyAOTFriendlyExtensions
             if (string.IsNullOrWhiteSpace(json))
                 return target;
 
-            // Convert the target object to a dictionary.
-            Dictionary<string, object?> targetDict = target.ToDictionary();
-
-            // Deserialize the incoming JSON to a dictionary of JsonElement.
-            Dictionary<string, JsonElement>? updateDict =
-                JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            Dictionary<string, JsonElement>? updateDict = JsonSerializer.Deserialize<
+                Dictionary<string, JsonElement>
+            >(json);
             if (updateDict is null)
                 return target;
 
-            // For each allowed property (those in filter), override the value in the target dictionary.
+            Dictionary<string, object?> targetDict = target.ToDictionary();
             foreach (string key in filter)
             {
                 if (updateDict.TryGetValue(key, out JsonElement elem))
@@ -197,8 +181,119 @@ namespace MyAOTFriendlyExtensions
                     targetDict[key] = ConvertJsonElement(elem);
                 }
             }
-            // Produce a new instance from the merged dictionary.
             return targetDict.FromDictionary<T>();
+        }
+
+        #endregion
+
+        #region Create Default Object JSON
+
+        /// <summary>
+        /// Creates a JSON string for a default instance of type T using default field values.
+        /// Optionally, you can specify an ID field to override its default value.
+        /// </summary>
+        /// <typeparam name="T">The EF Core entity type to default (must have a parameterless constructor).</typeparam>
+        /// <param name="idField">The name of the ID field to override (default is "id").</param>
+        /// <param name="idDefault">The value to assign to the ID field. If not provided, null is used.</param>
+        /// <returns>A JSON string representing the default object.</returns>
+        public static string CreateDefaultObject<T>(string idField = "id", object? idDefault = null)
+            where T : new()
+        {
+            T instance = new T();
+            var dict = instance.ToDictionary();
+            if (dict.ContainsKey(idField))
+            {
+                dict[idField] = idDefault;
+            }
+            return JsonSerializer.Serialize(dict);
+        }
+
+        #endregion
+
+        #region IEnumerable Extension for Single‑Entry Updates
+
+        /// <summary>
+        /// Updates a collection of EF Core tracked entities using an update object.
+        /// This method works on an IEnumerable&lt;T&gt; and only runs the update
+        /// if exactly one entity is present. It merges properties from the update object into
+        /// the original (ignoring the ID field).
+        /// </summary>
+        /// <typeparam name="T">The entity type (must have a parameterless constructor).</typeparam>
+        /// <param name="source">A filtered sequence expected to contain exactly one element.</param>
+        /// <param name="update">The update object containing new values (ID field is ignored).</param>
+        /// <param name="idField">The name of the ID field to ignore (default is "id").</param>
+        /// <returns>The updated entity (a new instance with merged values).</returns>
+        public static T UpdateIfOne<T>(this IEnumerable<T> source, T update, string idField = "id")
+            where T : class, new()
+        {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+            if (update is null)
+                throw new ArgumentNullException(nameof(update));
+
+            var list = source.ToList();
+            if (list.Count != 1)
+                throw new InvalidOperationException(
+                    "UpdateIfOne requires exactly one element in the sequence."
+                );
+
+            T original = list[0];
+            var origDict = original.ToDictionary();
+            var updateDict = update.ToDictionary();
+            updateDict.Remove(idField); // Ensure the ID field is not copied over.
+            foreach (var kv in updateDict)
+            {
+                origDict[kv.Key] = kv.Value;
+            }
+            return origDict.FromDictionary<T>();
+        }
+
+        #endregion
+
+        #region Additional Extension: RemoveField for Any JSON Serializable Object
+
+        /// <summary>
+        /// Removes the specified field from the object by converting it to a dictionary,
+        /// deleting the provided key, and rehydrating the object as a new instance.
+        /// This enables using, for example:
+        ///    Product newProduct = product.RemoveField("id");
+        /// which returns a new instance lacking that field.
+        /// </summary>
+        /// <typeparam name="T">The type of the JSON serializable object.</typeparam>
+        /// <param name="target">The object from which to remove the field.</param>
+        /// <param name="fieldName">The name of the field to remove.</param>
+        /// <returns>A new instance of T without the specified field.</returns>
+        public static T RemoveField<T>(this T target, string fieldName)
+        {
+            if (target is null)
+                throw new ArgumentNullException(nameof(target));
+            var dict = target.ToDictionary();
+            dict.RemoveField(fieldName); // Uses the dictionary extension below.
+            return dict.FromDictionary<T>();
+        }
+
+        /// <summary>
+        /// Removes the specified field from the dictionary (in place) and returns the dictionary.
+        /// Useful for unconditional filtering (e.g. stripping out an "id" field).
+        /// </summary>
+        /// <typeparam name="T">The type of the dictionary values.</typeparam>
+        /// <param name="dict">The dictionary from which to remove the field.</param>
+        /// <param name="fieldName">The field name to remove.</param>
+        /// <returns>The modified dictionary.</returns>
+        public static Dictionary<string, T> RemoveField<T>(
+            this Dictionary<string, T> dict,
+            string fieldName
+        )
+        {
+            if (dict is null)
+                throw new ArgumentNullException(nameof(dict));
+            if (string.IsNullOrWhiteSpace(fieldName))
+                throw new ArgumentException(
+                    "Field name cannot be null or whitespace.",
+                    nameof(fieldName)
+                );
+            dict.Remove(fieldName);
+            return dict;
         }
 
         #endregion
