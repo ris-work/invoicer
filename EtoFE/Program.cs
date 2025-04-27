@@ -58,12 +58,25 @@ public class Program
             new MediaTypeWithQualityHeaderValue("application/json")
         );
         string CurrentUI = Eto.Platforms.Wpf;
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) CurrentUI = Eto.Platforms.Gtk;
-        new Application(CurrentUI).Run(new MyForm());
-        Terminal.Gui.Application.Init();
-        Terminal.Gui.Application.Run(
-            new CommonUi.SearchDialogTUI(Mock.SearchCatalogue, Mock.HeaderEntries)
-        );
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            CurrentUI = Eto.Platforms.Gtk;
+        bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
+        bool FullMode = (bool)ConfigDict.GetValueOrDefault("EnableFullMode", false);
+        if (!FullMode)
+        {
+            new Application(CurrentUI).Run(new MyForm());
+        }
+        else
+        {
+            new Application(CurrentUI).Run(new MyFullModeForm());
+        }
+        if (EnableTUI)
+        {
+            Terminal.Gui.Application.Init();
+            Terminal.Gui.Application.Run(
+                new CommonUi.SearchDialogTUI(Mock.SearchCatalogue, Mock.HeaderEntries)
+            );
+        }
     }
 }
 

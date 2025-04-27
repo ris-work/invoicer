@@ -50,7 +50,6 @@ namespace HealthMonitor
             etoPlotSuccessRates.Plot.Legend.FontSize = 10;
             //MovableByWindowBackground = true;
 
-
             var SaveButton = new Button() { Text = "💾 Save As ..." };
             SaveButton.Click += (e, a) =>
             {

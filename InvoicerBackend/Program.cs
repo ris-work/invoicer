@@ -8,6 +8,7 @@ using System.Transactions;
 using InvoicerBackend;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using MyAOTFriendlyExtensions;
 using RV.InvNew.Common;
 
 static bool IsTokenValid(LoginToken T, string AccessLevel)
@@ -422,16 +423,23 @@ app.AddEndpointWithBearerAuth<string>(
     },
     "VIEW_SERVER_TIME"
 );
-/*
-app.AddEndpointWithBearerAuth<RV.InvNew.Common.CatalogueTransfer>("CatalogueAdd",
+
+app.AddEndpointWithBearerAuth<IResult>("CatalogueAdd",
     (R) =>
     {
 
-        ((CatalogueTransfer)R)
+        var SafeR = ((Catalogue)R).RemoveField("Id");
+        using (var ctx = new NewinvContext())
+        {
+            ctx.Catalogues.Add(SafeR);
+            ctx.SaveChanges();
+        }
+        
+        return Results.Accepted();
     },
     "CATALOGUE_ADD"
-    );
-*/
+);
+
 
 System.Console.WriteLine("Done setting up!");
 app.Run();

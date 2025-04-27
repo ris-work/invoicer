@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Eto.Forms/2.8.3">
-
   <!--
     Set the BuildPlatform property to the Eto platform you wish to build for.
     The default is the platform you are building on.
     Valid values: Wpf, Windows, Mac64, XamMac2, Gtk, Direct2D
   -->
-
   <PropertyGroup>
     <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
     <StartupObject>HealthMonitor.Program</StartupObject>
@@ -13,23 +11,21 @@
     <ApplicationIcon>cd_sat.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
     <OutputType>Exe</OutputType>
-	  <Description>Health Monitor Log Viewer $([System.DateTime]::Now.ToString("o"))</Description>
-	  <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
-	  <Version>0.2.0</Version>
-	  <PublisherName>Rishikeshan S/L</PublisherName>
-	  <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
-	  <WebPage>https://rishikeshan.com</WebPage>
-	  <TrimMode>partial</TrimMode>
-	  
-
+    <Description>Health Monitor Log Viewer $([System.DateTime]::Now.ToString("o"))</Description>
+    <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
+    <Version>0.2.0</Version>
+    <PublisherName>Rishikeshan S/L</PublisherName>
+    <ProductVersion>$([System.DateTime]::Now.ToString("o"))</ProductVersion>
+    <WebPage>https://rishikeshan.com</WebPage>
+    <TrimMode>partial</TrimMode>
+    <!-- Define a property that evaluates if '-windows' is found -->
+    <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="cd_file.ico" />
     <None Remove="res\cd_result.ico" />
     <None Remove="res\ListViewer.ico" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="cd_file.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -38,10 +34,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
   <ItemGroup>
+    <!--
     <PackageReference Include="Eto.Platform.Gtk" Version="2.8.3" />
     <PackageReference Include="Eto.Platform.Windows" Version="2.8.3" />
+	-->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -49,9 +46,19 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
     <PackageReference Include="ScottPlot.Eto" Version="5.0.37" />
-
   </ItemGroup>
-
+  <!-- On Windows, include Windows and WPF platforms -->
+  <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
+    <PackageReference Include="Eto.Platform.Windows" Version="2.8.3" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.8.3" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.3" />
+  </ItemGroup>
+  <!-- On non-Windows platforms, include only the GTK platform -->
+  <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.3" />
+    <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="res\cd_file.ico" />
     <Resource Include="res\cd_result.ico" />
@@ -59,7 +66,6 @@
     <Resource Include="res\ListViewer.ico" />
     <Resource Include="res\time-view.ico" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="res\resources.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -67,14 +73,12 @@
       <DependentUpon>resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="res\resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="assoc.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -92,9 +96,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="screenshots\" />
   </ItemGroup>
-
 </Project>

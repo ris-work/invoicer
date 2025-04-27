@@ -24,6 +24,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using Eto.Forms;
+#if WINDOWS
+
+#endif
 
 namespace Eto.Forms
 {
@@ -35,15 +38,19 @@ namespace Eto.Forms
             var P = Eto.Platform.Instance.ToString();
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
+#if WINDOWS
                 System.Windows.Forms.ComboBox N = (System.Windows.Forms.ComboBox)
                     Eto.Forms.WinFormsHelpers.ToNative(C);
+#endif
                 N.DroppedDown = true;
             }
             else if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
+#if WINDOWS
                 System.Windows.Controls.ComboBox N = (System.Windows.Controls.ComboBox)
                     Eto.Forms.WpfHelpers.ToNative(C);
                 N.IsDropDownOpen = true;
+#endif
             }
             else if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
             {
@@ -62,15 +69,19 @@ namespace Eto.Forms
             var P = Eto.Platform.Instance.ToString();
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
+#if WINDOWS
                 System.Windows.Forms.ComboBox N = (System.Windows.Forms.ComboBox)
                     Eto.Forms.WinFormsHelpers.ToNative(C);
                 N.DroppedDown = false;
+#endif
             }
             else if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
+#if WINDOWS
                 System.Windows.Controls.ComboBox N = (System.Windows.Controls.ComboBox)
                     Eto.Forms.WpfHelpers.ToNative(C);
                 N.IsDropDownOpen = false;
+#endif
             }
             else if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
             {
