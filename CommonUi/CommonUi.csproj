@@ -1,52 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFrameworks>net9.0-windows10.0.17763.0;net9.0</TargetFrameworks>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	  <!-- Define a property that evaluates if '-windows' is found -->
-	  <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
-    <PackageReference Include="Eto.Forms" Version="2.9.0" />
-	  <!--
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFrameworks>net9.0-windows10.0.17763.0;net9.0</TargetFrameworks>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!-- Define a property that evaluates if '-windows' is found -->
+        <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="CsvHelper" Version="33.0.1" />
+        <PackageReference Include="Eto.Forms" Version="2.9.0" />
+        <!--
     <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
 	-->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.4" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
-    <PackageReference Include="Microsoft.Maui.Core" Version="8.0.100" />
-    <PackageReference Include="Microsoft.Maui.Essentials" Version="8.0.100" />
-    <PackageReference Include="Microsoft.Maui.Graphics" Version="9.0.40" />
-
-    <PackageReference Include="Terminal.Gui" Version="2.0.0-v2-develop.2329" />
-  </ItemGroup>
-
-	<!-- On Windows, include Windows and WPF platforms -->
-	<ItemGroup
-    Condition="'$(IsWindowsTarget)' == 'True'">
-		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
-		<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
-	</ItemGroup>
-
-	<!-- On non-Windows platforms, include only the GTK platform -->
-	<ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
-		<PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
-	</ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Common\common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="theme.toml">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.4" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
+        <PackageReference Include="Microsoft.Maui.Core" Version="8.0.100" />
+        <PackageReference Include="Microsoft.Maui.Essentials" Version="8.0.100" />
+        <PackageReference Include="Microsoft.Maui.Graphics" Version="9.0.40" />
+        <PackageReference Include="Terminal.Gui" Version="2.0.0-v2-develop.2329" />
+    </ItemGroup>
+    <!-- On Windows, include Windows and WPF platforms -->
+    <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
+        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+        <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
+    </ItemGroup>
+    <!-- On non-Windows platforms, include only the GTK platform -->
+    <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
+        <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Common\common.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="theme.toml">
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

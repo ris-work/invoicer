@@ -119,7 +119,6 @@ namespace HealthMonitorLogViewer
                     Label ClickedLabel = ((Label)e);
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
-
                     CurrentPanel.Content = (Control)
                         (
                             (ILoadOncePanel<object>)

@@ -1,49 +1,44 @@
 ﻿<Project Sdk="Eto.Forms/2.7.5">
-
-  <!--
+    <!--
     Set the BuildPlatform property to the Eto platform you wish to build for.
     The default is the platform you are building on.
     Valid values: Wpf, Windows, Mac64, XamMac2, Gtk, Direct2D
   -->
-
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
-    <Platforms>AnyCPU;x64</Platforms>
-    <AnalysisLevel>latest</AnalysisLevel>
-    <PublishTrimmed>False</PublishTrimmed>
-    <PublishAot>False</PublishAot>
-	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-	  <PublishSingleFile>true</PublishSingleFile>
-	  <PublishReadyToRun>true</PublishReadyToRun>
-
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="NodaTime" Version="3.1.11" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-    <PackageReference Include="Tomlyn" Version="0.17.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="connstring.toml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Eto.Forms" Version="2.8.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Common\common.csproj" />
-  </ItemGroup>
-
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows7.0</TargetFramework>
+        <Platforms>AnyCPU;x64</Platforms>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <PublishTrimmed>False</PublishTrimmed>
+        <PublishAot>False</PublishAot>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <PublishSingleFile>true</PublishSingleFile>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference
+            Include="Microsoft.AspNetCore.Cryptography.KeyDerivation"
+            Version="8.0.7"
+        />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NodaTime" Version="3.1.11" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+        <PackageReference Include="Tomlyn" Version="0.17.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="connstring.toml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Update="Eto.Forms" Version="2.8.3" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Common\common.csproj" />
+    </ItemGroup>
 </Project>

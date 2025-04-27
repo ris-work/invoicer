@@ -1,54 +1,49 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <!--<PublishAot>true</PublishAot>-->
-	  <!--<PublishTrimmed>true</PublishTrimmed>-->
-	  <PublishSingleFile>true</PublishSingleFile>
-    <InvariantGlobalization>true</InvariantGlobalization>
-  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  <ApplicationIcon>log_2.ico</ApplicationIcon>
-  <Platforms>AnyCPU;x64</Platforms>
-	  <Description>Health Monitor (Built: $([System.DateTime]::Now.ToString("o")))</Description>
-	  <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
-	  <Version>0.1.0</Version>
-	  <PublisherName>Rishikeshan S/L</PublisherName>
-	  <ProductVersion>0.1.0 $([System.DateTime]::Now.ToString("o"))</ProductVersion>
-	  <WebPage>https://rishikeshan.com</WebPage>
-	  <PackageLicenseExpression>OSL-3.0</PackageLicenseExpression>
-	  <Optimize>true</Optimize>
-	  <Title>Health Monitor</Title>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="log_2.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.7" />
-    <PackageReference Include="Tomlyn" Version="0.17.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="HealthMonitor.toml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="logs.sqlite3">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="logs.sqlite3.rvhealthmonitorlogfile">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="new.logs.sqlite3.rvhealthmonitorlogfile">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!--<PublishAot>true</PublishAot>-->
+        <!--<PublishTrimmed>true</PublishTrimmed>-->
+        <PublishSingleFile>true</PublishSingleFile>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <ApplicationIcon>log_2.ico</ApplicationIcon>
+        <Platforms>AnyCPU;x64</Platforms>
+        <Description>Health Monitor (Built: $([System.DateTime]::Now.ToString("o")))</Description>
+        <Copyright>Rishikeshan Sulochana/Lavakumar, OSLv3</Copyright>
+        <Version>0.1.0</Version>
+        <PublisherName>Rishikeshan S/L</PublisherName>
+        <ProductVersion>0.1.0 $([System.DateTime]::Now.ToString("o"))</ProductVersion>
+        <WebPage>https://rishikeshan.com</WebPage>
+        <PackageLicenseExpression>OSL-3.0</PackageLicenseExpression>
+        <Optimize>true</Optimize>
+        <Title>Health Monitor</Title>
+    </PropertyGroup>
+    <ItemGroup>
+        <Content Include="log_2.ico" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.7" />
+        <PackageReference Include="Tomlyn" Version="0.17.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="HealthMonitor.toml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="logs.sqlite3">
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        </None>
+        <None Update="logs.sqlite3.rvhealthmonitorlogfile">
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        </None>
+        <None Update="new.logs.sqlite3.rvhealthmonitorlogfile">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

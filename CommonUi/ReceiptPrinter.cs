@@ -204,7 +204,6 @@ public class ReceiptPrinter
             var font = new Font(fontFamily, fontSize);
             //e.Graphics.DrawRectangle(Pens.Silver, rect);
 
-
             // draw title
             e.Graphics.DrawText(font, Colors.Black, new Point(50, 20), "document.Name");
 

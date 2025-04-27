@@ -424,22 +424,21 @@ app.AddEndpointWithBearerAuth<string>(
     "VIEW_SERVER_TIME"
 );
 
-app.AddEndpointWithBearerAuth<IResult>("CatalogueAdd",
+app.AddEndpointWithBearerAuth<IResult>(
+    "CatalogueAdd",
     (R) =>
     {
-
         var SafeR = ((Catalogue)R).RemoveField("Id");
         using (var ctx = new NewinvContext())
         {
             ctx.Catalogues.Add(SafeR);
             ctx.SaveChanges();
         }
-        
+
         return Results.Accepted();
     },
     "CATALOGUE_ADD"
 );
-
 
 System.Console.WriteLine("Done setting up!");
 app.Run();

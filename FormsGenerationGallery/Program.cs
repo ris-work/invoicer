@@ -179,7 +179,6 @@ Terminal.Gui.Application.Run(
 );
 */
 
-
 var newMauiWindow = (
     new GenMaUI(
         SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
