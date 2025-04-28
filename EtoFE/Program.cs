@@ -61,15 +61,8 @@ public class Program
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
-        bool FullMode = (bool)ConfigDict.GetValueOrDefault("EnableFullMode", false);
-        if (!FullMode)
-        {
-            new Application(CurrentUI).Run(new MyForm());
-        }
-        else
-        {
-            new Application(CurrentUI).Run(new MyFullModeForm());
-        }
+        new Application(CurrentUI).Run(new MyForm());
+
         if (EnableTUI)
         {
             Terminal.Gui.Application.Init();
@@ -245,7 +238,17 @@ public class MyForm : Form
                         else
                         {
                             MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
-                            (new PosTerminal()).Show();
+                            bool FullMode = (bool)Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
+
+                            if (!FullMode)
+                            {
+                                (new MyFullModeForm()).Show();
+                            }
+                            else
+                            {
+                                (new PosTerminal()).Show();
+                            }
+                            //(new PosTerminal()).Show();
                         }
                         ;
                     }
