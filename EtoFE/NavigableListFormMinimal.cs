@@ -8,7 +8,7 @@ using System.Windows;
 using Eto;
 using Eto.Forms;
 
-namespace CommonUi
+namespace EtoFE
 {
     public class NavigableListFormMinimal : Form
     {

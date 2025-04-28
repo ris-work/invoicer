@@ -12,7 +12,7 @@ using Eto.Forms;
 //using Microsoft.EntityFrameworkCore.Diagnostics;
 using RV.InvNew.Common;
 
-namespace EtoFE
+namespace CommonUi
 {
     /*public static class Extensions
     {

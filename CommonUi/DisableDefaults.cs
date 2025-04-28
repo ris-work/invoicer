@@ -11,7 +11,7 @@ using System.Windows.Controls;
 #endif
 
 
-namespace EtoFE
+namespace CommonUi
 {
     public static class DisableDefaults
     {
@@ -72,6 +72,37 @@ namespace EtoFE
                         return;
                     }
                 };
+            }
+#endif
+        }
+
+        public static void DisableLines(this Eto.Forms.GridView GW)
+        {
+#if WINDOWS
+            var P = Eto.Platform.Instance.ToString();
+
+            if (P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                System.Windows.Controls.DataGrid WpfGW = (System.Windows.Controls.DataGrid)
+                    (System.Windows.FrameworkElement)(Eto.Forms.WpfHelpers.ToNative(GW, false));
+                WpfGW.BorderBrush = System.Windows.Media.Brushes.Transparent;
+                WpfGW.HorizontalGridLinesBrush = System.Windows.Media.Brushes.Aqua;
+                WpfGW.VerticalGridLinesBrush = System.Windows.Media.Brushes.Transparent;
+                //WpfGW.BorderThickness = new System.Windows.Thickness(0);
+                WpfGW.BorderThickness = new System.Windows.Thickness(0);
+
+                //WpfGW.Row
+                WpfGW.GridLinesVisibility = DataGridGridLinesVisibility.None;
+
+                WpfGW.CellStyle = null;
+                WpfGW.Columns.First().CellStyle = null;
+                Setter setter = new Setter(
+                    DataGridCell.BorderBrushProperty,
+                    System.Windows.Media.Brushes.Transparent
+                );
+                WpfGW.Style = null;
+                //WpfGW.B
+                //Eto.Forms.MessageBox.Show("WPF!");
             }
 #endif
         }

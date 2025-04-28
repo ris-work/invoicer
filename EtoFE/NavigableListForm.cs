@@ -7,14 +7,15 @@ using System.Threading.Tasks;
 using Eto;
 using Eto.Forms;
 using EtoFE;
+using CommonUi;
 
-namespace CommonUi
+namespace EtoFE
 {
     public class NavigableListForm : Form
     {
         public NavigableListForm()
         {
-            Title = $"RV Health and Network Monitor, OSLv3 [{Config.LogFile}]";
+            Title = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, 600);
             LB.Columns.Add(
@@ -35,19 +36,19 @@ namespace CommonUi
                 {
                     (
                         $" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaseconds (10 sec)) ",
-                        (new LoadOncePanel<NetworkPingStatsPanel>())
+                        (new LoadOncePanel<Panel>())
                     ),
                     (
                         " ⏱ Network Ping Stats (by hour) ",
-                        (new LoadOncePanel<NetworkPingStatsFormHourly>())
+                        (new LoadOncePanel<Panel>())
                     ),
-                    (" 📃 Process Stats ", (new LoadOncePanel<ProcessStatsFormHourlyPanel>())),
+                    (" 📃 Process Stats ", (new LoadOncePanel<Panel>())),
                     (
                         " ⚙ Process Stats (Advanced) ",
-                        (new LoadOncePanel<MainModuleProcessStatsFormHourlyPanel>())
+                        (new LoadOncePanel<Panel>())
                     ),
-                    (" 🖥 Machine Stats ", (new LoadOncePanel<MachineStatsPanel>())),
-                    (" 🎫 About ", (new LoadOncePanel<AboutPanel>())),
+                    (" 🖥 Machine Stats ", (new LoadOncePanel<Panel>())),
+                    (" 🎫 About ", (new LoadOncePanel<Panel>())),
                 }
             ).ToArray();
             int SelectedButtonIndex = -1;
@@ -139,7 +140,7 @@ namespace CommonUi
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
                     Title =
-                        $"\u300e{ClickedLabel.Text}\u300f RV Health and Network Monitor, OSLv3 [{Config.LogFile}]";
+                        $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
                 };
 
                 Buttons.Add(B);

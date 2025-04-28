@@ -9,6 +9,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using RV.InvNew.Common;
 using Wiry.Base32;
+using CommonUi;
 
 //using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
