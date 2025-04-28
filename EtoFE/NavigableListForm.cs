@@ -8,6 +8,7 @@ using Eto;
 using Eto.Forms;
 using EtoFE;
 using CommonUi;
+using Eto.Containers;
 
 namespace EtoFE
 {
@@ -36,7 +37,32 @@ namespace EtoFE
                 {
                     (
                         $" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaseconds (10 sec)) ",
-                        (new LoadOncePanel<Panel>())
+                        (new LoadOncePanel<Panel>(new NestableNavigableListPanel( new List<(string Label, object Content)>
+        {
+            // Core inventory panels
+            ("📝 Editor", new LoadOncePanel<Panel>()),
+            ("📋 Batch Editor", new LoadOncePanel<Panel>()),
+            ("🔧 Adjustments", new LoadOncePanel<Panel>()),
+            ("📦 Items", new LoadOncePanel<Panel>()),
+            ("📊 Stock Overview", new LoadOncePanel<Panel>()),
+            ("📍 Locations", new LoadOncePanel<Panel>()),
+            ("🔄 Transfers", new LoadOncePanel<Panel>()),
+            ("📈 Reports", new LoadOncePanel<Panel>()),
+            ("⛑ Alerts", new LoadOncePanel<Panel>()),
+            ("🔍 Search", new LoadOncePanel<Panel>()),
+
+            // Additional standardized ERP modules
+            ("🗃 Material Master", new LoadOncePanel<Panel>()),
+            ("📥 Goods Receipt", new LoadOncePanel<Panel>()),
+            ("📤 Goods Issue", new LoadOncePanel<Panel>()),
+            ("🧮 Cycle Count", new LoadOncePanel<Panel>()),
+            ("🏭 Warehouse Management", new LoadOncePanel<Panel>()),
+            ("🔢 Serial & Lot Control", new LoadOncePanel<Panel>()),
+            ("🔄 Replenishment", new LoadOncePanel<Panel>()),
+
+            // Barcode printing section
+            ("🖨️ Barcode Print", new LoadOncePanel<Panel>())
+        })))
                     ),
                     (
                         " ⏱ Network Ping Stats (by hour) ",

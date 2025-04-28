@@ -242,7 +242,7 @@ public class MyForm : Form
 
                             if (!FullMode)
                             {
-                                (new MyFullModeForm()).Show();
+                                (new NavigableListForm()).Show();
                             }
                             else
                             {

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Eto;
 using Eto.Forms;
+using Eto.Containers;
 
 namespace EtoFE
 {

@@ -8,6 +8,7 @@ using System.Windows;
 using Eto.Forms;
 #if WINDOWS
 using System.Windows.Controls;
+using System.Windows.Media;
 #endif
 
 
@@ -103,6 +104,87 @@ namespace CommonUi
                 WpfGW.Style = null;
                 //WpfGW.B
                 //Eto.Forms.MessageBox.Show("WPF!");
+            }
+#endif
+        }
+        /// <summary>
+        /// Forces the given background color on an Eto.Forms.Button on the WPF backend,
+        /// overriding the default blue-gray hover background.
+        /// </summary>
+        /// <param name="button">The Eto.Forms.Button instance.</param>
+        /// <param name="normalColor">The Eto.Drawing.Color that should be used even when hovered.</param>
+        public static void DisableHoverBackgroundChange(this Eto.Forms.Button button, Eto.Drawing.Color normalColor)
+        {
+            System.Console.WriteLine($"Running on {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}");
+#if WINDOWS
+            // Verify that we're running on the WPF platform.
+            var currentPlatform = Eto.Platform.Instance.ToString();
+            if (currentPlatform == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                System.Console.WriteLine("WPF detected, attempt resetting button hover");
+                // Retrieve the underlying native WPF Button.
+                System.Windows.Controls.Button wpfButton = (System.Windows.Controls.Button)
+                    (System.Windows.FrameworkElement)(Eto.Forms.WpfHelpers.ToNative(button, false));
+
+                // Convert Eto.Drawing.Color to System.Windows.Media.Color.
+                var wpfColor = System.Windows.Media.Color.FromArgb(
+                    (byte)normalColor.A,
+                    (byte)normalColor.R,
+                    (byte)normalColor.G,
+                    (byte)normalColor.B);
+                var normalBrush = new System.Windows.Media.SolidColorBrush(wpfColor);
+
+                // Set the initial background.
+                wpfButton.Background = normalBrush;
+
+                // Force WPF to use our custom template by overriding the default style.
+                wpfButton.OverridesDefaultStyle = true;
+
+                // Create a new ControlTemplate that does nothing fancy.
+                var template = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Button));
+
+                // Create a Border element that binds its Background (and border properties) to the Button.
+                var borderFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
+                borderFactory.SetBinding(System.Windows.Controls.Border.BackgroundProperty,
+                    new System.Windows.Data.Binding("Background")
+                    {
+                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
+                    });
+                borderFactory.SetBinding(System.Windows.Controls.Border.BorderBrushProperty,
+                    new System.Windows.Data.Binding("BorderBrush")
+                    {
+                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
+                    });
+                borderFactory.SetBinding(System.Windows.Controls.Border.BorderThicknessProperty,
+                    new System.Windows.Data.Binding("BorderThickness")
+                    {
+                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
+                    });
+
+                // Create a ContentPresenter to display the button's content.
+                var contentPresenterFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.ContentPresenter));
+                contentPresenterFactory.SetValue(System.Windows.Controls.ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+                contentPresenterFactory.SetValue(System.Windows.Controls.ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
+                contentPresenterFactory.SetBinding(System.Windows.Controls.ContentPresenter.ContentProperty,
+                    new System.Windows.Data.Binding("Content")
+                    {
+                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
+                    });
+                contentPresenterFactory.SetBinding(System.Windows.Controls.ContentPresenter.ContentTemplateProperty,
+                    new System.Windows.Data.Binding("ContentTemplate")
+                    {
+                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
+                    });
+
+                // Nest the ContentPresenter inside the Border.
+                borderFactory.AppendChild(contentPresenterFactory);
+                template.VisualTree = borderFactory;
+
+                // Apply the new ControlTemplate so that no VisualState (e.g., hover) changes the background.
+                wpfButton.Template = template;
+            }
+            else {
+                System.Console.WriteLine($"{currentPlatform} != {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}");
             }
 #endif
         }

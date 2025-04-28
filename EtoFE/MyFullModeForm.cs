@@ -8,6 +8,8 @@ namespace EtoFE
 {
     public class MyFullModeForm : Eto.Forms.Form
     {
-        public MyFullModeForm() { }
+        public MyFullModeForm() { 
+
+        }
     }
 }
