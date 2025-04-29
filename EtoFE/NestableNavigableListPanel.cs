@@ -64,42 +64,82 @@ namespace EtoFE
                     Eto.Drawing.FontDecoration.None
                 );
             };
-            List<Button> Buttons = new();
+            List<StackLayout> Buttons = new();
             int i = 0;
             foreach ((string, object) LoadOncePanel in loadOncePanels)
             {
                 Button B = new Button() { Text = LoadOncePanel.Item1 };
                 B.DisableHoverBackgroundChange(Eto.Drawing.Colors.PaleVioletRed);
                 //B.VerticalAlignment = VerticalAlignment.Center;
-                B.Height = 50;
+                B.Height = 35;
 
                 B.Font = new Eto.Drawing.Font("Gourier", 12) { };
                 B.TextColor = Eto.Drawing.Colors.White;
                 B.Enabled = true;
+                B.Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.Monospace, 10, Eto.Drawing.FontStyle.None, Eto.Drawing.FontDecoration.Strikethrough);
                 B.BackgroundColor = Eto.Drawing.Colors.Black;
                 //B.Click += (e, a) => { };
-                B.MouseEnter += (e, a) =>
+                
+                B.TabIndex = i;
+                
+
+                StackLayout FullWidthB = new StackLayout(B);
+                Buttons.Add(FullWidthB);
+                FullWidthB.MouseEnter += (e, a) =>
                 {
-                    Button CurrentLabel = ((Button)e);
+                    StackLayout CurrentLabel = ((StackLayout)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
                         B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
                         B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                        FullWidthB.BackgroundColor = Eto.Drawing.Colors.Purple;
                     }
                 };
-                B.MouseLeave += (e, a) =>
+                FullWidthB.MouseLeave += (e, a) =>
                 {
-                    Button CurrentLabel = ((Button)e);
+                    StackLayout CurrentLabel = ((StackLayout)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
                         B.TextColor = Eto.Drawing.Colors.White;
                         B.BackgroundColor = Eto.Drawing.Colors.Black;
+                        FullWidthB.BackgroundColor = Eto.Drawing.Colors.Black;
                     }
                     this.Invalidate();
                 };
-                B.TabIndex = i;
+                
+                FullWidthB.MouseDown += (e, a) =>
+                {
+                    MessageBox.Show("Event", "Mouse down", MessageBoxType.Information);
+                    StackLayout ClickedLabel = ((StackLayout)e);
+                    //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
+
+                    CurrentPanel.Content = (Control)
+                        (
+                            (ILoadOncePanel<object>)
+                                ROD.GetValueOrDefault<string, object?>(
+                                    (string)((string)((Button)(ClickedLabel.Children.First())).Text),
+                                    null
+                                )
+                        ).GetInnerAsObject();
+                    SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
+                    foreach (StackLayout L in Buttons)
+                    {
+                        ((Button)(L.Children.First())).TextColor = Eto.Drawing.Colors.White;
+                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.Invalidate(true);
+                    }
+                    ((Button)ClickedLabel.Children.First()).TextColor = Eto.Drawing.Colors.Black;
+                    ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate(true);
+                    this.TriggerStyleChanged();
+                    CurrentPanelName =
+                        $"\u300e{((Button)ClickedLabel.Children.First()).Text}\u300f RV InvNew Inventory Manager";
+                };
+
                 B.MouseDown += (e, a) =>
                 {
+                    MessageBox.Show("Event", "Mouse down", MessageBoxType.Information);
                     Button ClickedLabel = ((Button)e);
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
@@ -111,23 +151,21 @@ namespace EtoFE
                                     null
                                 )
                         ).GetInnerAsObject();
-                    SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
-                    foreach (Button L in Buttons)
+                    SelectedButtonIndex = Buttons.IndexOf(Buttons.Where(e => e.Children.First() == ClickedLabel).First());
+                    foreach (StackLayout L in Buttons)
                     {
-                        L.TextColor = Eto.Drawing.Colors.White;
+                        ((Button)(L.Children.First())).TextColor = Eto.Drawing.Colors.White;
                         L.BackgroundColor = Eto.Drawing.Colors.Black;
                         L.Invalidate(true);
                     }
-                    ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
+                    ((Button)ClickedLabel).TextColor = Eto.Drawing.Colors.Black;
                     ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
                     this.Size = new Eto.Drawing.Size(-1, -1);
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
                     CurrentPanelName =
-                        $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
+                        $"\u300e{((Button)ClickedLabel).Text}\u300f RV InvNew Inventory Manager";
                 };
-
-                Buttons.Add(B);
                 i++;
             }
             LB.SelectedItemsChanged += (sender, e) =>
@@ -162,11 +200,11 @@ namespace EtoFE
                 (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
             };
             var Inner = new StackLayout(
-                new Scrollable(){Content = new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray())
+                new DragScrollable(){Content = new StackLayout(Buttons.Select(b => new StackLayoutItem(Content  = new StackLayout(b) )).ToArray())
                 {
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                    Spacing = 5,
-                }, Height = 100 },
+                    Spacing = 2,
+                }, Height = 100, Border = BorderType.None },
                 new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
