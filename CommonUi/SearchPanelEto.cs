@@ -309,6 +309,7 @@ namespace CommonUi
             }
 
             Results.Enabled = true;
+            Results.ApplyDarkGridHeaders();
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(

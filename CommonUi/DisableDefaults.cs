@@ -196,7 +196,7 @@ namespace CommonUi
             {
                 var resources = System.Windows.Application.Current.Resources;
 
-                // Global ScrollBar style (for the track)
+                /*// Global ScrollBar style (for the track)
                 var scrollBarStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar));
                 scrollBarStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.BackgroundProperty, System.Windows.Media.Brushes.Black));
                 scrollBarStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.ForegroundProperty, System.Windows.Media.Brushes.White));
@@ -211,7 +211,7 @@ namespace CommonUi
                 // GridViewColumnHeader style.
                 var gridViewHeaderStyle = new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader));
                 gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Black));
-                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White));
+                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White));*/
 
                 // Define a minimal DataTemplate so header content (assumed text) binds to the parent's Foreground.
                 var dataTemplate = new System.Windows.DataTemplate();
@@ -226,8 +226,8 @@ namespace CommonUi
                             1)
                     });
                 dataTemplate.VisualTree = textBlockFactory;
-                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ContentTemplateProperty, dataTemplate));
-                resources[typeof(System.Windows.Controls.GridViewColumnHeader)] = gridViewHeaderStyle;
+                //gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ContentTemplateProperty, dataTemplate));
+                //resources[typeof(System.Windows.Controls.GridViewColumnHeader)] = gridViewHeaderStyle;
             }
 #endif
         }
@@ -236,16 +236,56 @@ namespace CommonUi
 #if WINDOWS
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
-                var themePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DarkTheme.xaml");
-                if (File.Exists(themePath))
+                var window = (System.Windows.Window)Eto.Forms.WpfHelpers.ToNative(form, false);
+                var themeFiles = new (string File, string Uri)[]
                 {
-                    var window = (System.Windows.Window)Eto.Forms.WpfHelpers.ToNative(form, false);
-                    window.Resources.MergedDictionaries.Add(
-                        new System.Windows.ResourceDictionary
-                        {
-                            Source = new Uri("pack://siteoforigin:,,,/DarkTheme.xaml", UriKind.Absolute)
-                        }
-                    );
+                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SoftDark.xaml"), "pack://siteoforigin:,,,/SoftDark.xaml"),
+                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ControlColours.xaml"), "pack://siteoforigin:,,,/ControlColours.xaml"),
+                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Controls.xaml"), "pack://siteoforigin:,,,/Controls.xaml")
+                };
+                foreach (var theme in themeFiles)
+                {
+                    if (File.Exists(theme.File))
+                    {
+                        window.Resources.MergedDictionaries.Add(
+                            new System.Windows.ResourceDictionary { Source = new Uri(theme.Uri, UriKind.Absolute) }
+                        );
+                    }
+                }
+            }
+#endif
+        }
+        public static void ApplyDarkGridHeaders(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                var native = Eto.Forms.WpfHelpers.ToNative(gridView, false);
+
+                // Case 1: Eto.GridView wraps a WPF DataGrid.
+                if (native is System.Windows.Controls.DataGrid dataGrid)
+                {
+                    var headerStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridColumnHeader));
+                    headerStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.Primitives.DataGridColumnHeader.BackgroundProperty,
+                        System.Windows.Media.Brushes.Black));
+                    headerStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.Primitives.DataGridColumnHeader.ForegroundProperty,
+                        System.Windows.Media.Brushes.White));
+                    dataGrid.ColumnHeaderStyle = headerStyle;
+                }
+                // Case 2: Eto.GridView is realized as a ListView with a GridView view.
+                else if (native is System.Windows.Controls.ListView listView &&
+                         listView.View is System.Windows.Controls.GridView listGridView)
+                {
+                    var headerStyle = new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader));
+                    headerStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.GridViewColumnHeader.BackgroundProperty,
+                        System.Windows.Media.Brushes.Black));
+                    headerStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.GridViewColumnHeader.ForegroundProperty,
+                        System.Windows.Media.Brushes.White));
+                    listGridView.ColumnHeaderContainerStyle = headerStyle;
                 }
             }
 #endif

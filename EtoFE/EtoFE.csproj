@@ -13,8 +13,26 @@
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
     </PropertyGroup>
     <ItemGroup>
+      <Compile Remove="Themes\**" />
+      <Compile Remove="WPFDarkTheme\**" />
+      <EmbeddedResource Remove="Themes\**" />
+      <EmbeddedResource Remove="WPFDarkTheme\**" />
+      <MauiCss Remove="Themes\**" />
+      <MauiCss Remove="WPFDarkTheme\**" />
+      <MauiXaml Remove="Themes\**" />
+      <MauiXaml Remove="WPFDarkTheme\**" />
+      <None Remove="Themes\**" />
+      <None Remove="WPFDarkTheme\**" />
+    </ItemGroup>
+    <ItemGroup>
         <Compile Remove="DisableDefaults.cs" />
         <Compile Remove="SearchDialog.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <MauiXaml Remove="ControlColours.xaml" />
+      <MauiXaml Remove="Controls.xaml" />
+      <MauiXaml Remove="DarkTheme.xaml" />
+      <MauiXaml Remove="SoftDark.xaml" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
