@@ -188,14 +188,14 @@ namespace CommonUi
             }
 #endif
         }
-        public static void ApplyDarkScrollBarsAndGridView(this Form form)
+        public static void ApplyDarkThemeForScrollBarsAndGridView(this Form form)
         {
 #if WINDOWS
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
-                var appResources = System.Windows.Application.Current.Resources;
-                // Apply dark colors for all ScrollBars.
-                appResources.Add(
+                var resources = System.Windows.Application.Current.Resources;
+                // Style for all ScrollBars.
+                resources.Add(
                     typeof(System.Windows.Controls.Primitives.ScrollBar),
                     new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar))
                     {
@@ -206,11 +206,8 @@ namespace CommonUi
                         }
                     }
                 );
-
-                // Apply dark colors for GridView headers.
-                // Eto.Forms GridView on WPF is usually implemented over a native ListView with GridView,
-                // whose column headers are of type GridViewColumnHeader.
-                appResources.Add(
+                // Style for GridView column headers.
+                resources.Add(
                     typeof(System.Windows.Controls.GridViewColumnHeader),
                     new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader))
                     {
@@ -218,6 +215,18 @@ namespace CommonUi
                         {
                         new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Black),
                         new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White)
+                        }
+                    }
+                );
+                // Style for RepeatButtons (the arrow buttons in scrollbars).
+                resources.Add(
+                    typeof(System.Windows.Controls.Primitives.RepeatButton),
+                    new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton))
+                    {
+                        Setters =
+                        {
+                        new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.BackgroundProperty, System.Windows.Media.Brushes.Black),
+                        new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.ForegroundProperty, System.Windows.Media.Brushes.White)
                         }
                     }
                 );

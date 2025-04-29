@@ -17,7 +17,7 @@ namespace EtoFE
     {
         public NavigableListForm()
         {
-            this.ApplyDarkScrollBarsAndGridView();
+            this.ApplyDarkThemeForScrollBarsAndGridView();
             Title = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, 600);
