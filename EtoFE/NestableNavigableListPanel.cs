@@ -65,6 +65,7 @@ namespace EtoFE
                 );
             };
             List<Button> Buttons = new();
+            List<Panel> ButtonsContainer = new();
             int i = 0;
             foreach ((string, object) LoadOncePanel in loadOncePanels)
             {
@@ -85,6 +86,24 @@ namespace EtoFE
                     {
                         B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
                         B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                    }
+                };
+                B.GotFocus += (e, a) =>
+                {
+                    Button CurrentLabel = ((Button)e);
+                    if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
+                    {
+                        B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
+                        B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                    }
+                };
+                B.LostFocus += (e, a) =>
+                {
+                    Button CurrentLabel = ((Button)e);
+                    if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
+                    {
+                        B.TextColor = Eto.Drawing.Colors.White;
+                        B.BackgroundColor = Eto.Drawing.Colors.Black;
                     }
                 };
                 B.MouseLeave += (e, a) =>
@@ -118,6 +137,11 @@ namespace EtoFE
                         L.BackgroundColor = Eto.Drawing.Colors.Black;
                         L.Invalidate(true);
                     }
+                    foreach (Panel L in ButtonsContainer)
+                    {
+                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.Invalidate(true);
+                    }
                     ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
                     ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
                     this.Size = new Eto.Drawing.Size(-1, -1);
@@ -127,7 +151,84 @@ namespace EtoFE
                         $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
                 };
 
+                B.KeyDown += (e, a) =>
+                {
+                    if(a.Key == Keys.Enter || a.Key == Keys.Space)
+                    {
+                        Button ClickedLabel = ((Button)e);
+                        //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
+
+                        CurrentPanel.Content = (Control)
+                            (
+                                (ILoadOncePanel<object>)
+                                    ROD.GetValueOrDefault<string, object?>(
+                                        (string)((string)ClickedLabel.Text),
+                                        null
+                                    )
+                            ).GetInnerAsObject();
+                        SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
+                        foreach (Button L in Buttons)
+                        {
+                            L.TextColor = Eto.Drawing.Colors.White;
+                            L.BackgroundColor = Eto.Drawing.Colors.Black;
+                            L.Invalidate(true);
+                        }
+                        foreach (Panel L in ButtonsContainer)
+                        {
+                            L.BackgroundColor = Eto.Drawing.Colors.Black;
+                            L.Invalidate(true);
+                        }
+                        ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
+                        ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                        this.Size = new Eto.Drawing.Size(-1, -1);
+                        this.Invalidate(true);
+                        this.TriggerStyleChanged();
+                        CurrentPanelName =
+                            $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
+                    }
+                };
+
+
                 Buttons.Add(B);
+                var BC = new Panel() { Content = new StackLayout(B, null)};
+                BC.MouseDown += (e, a) =>
+                {
+                    //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);
+                    Panel ClickedPanel = ((Panel)e);
+                    Button TargetButton = (Button)((StackLayout)ClickedPanel.Children.First()).Children.First();
+                    //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
+
+                    CurrentPanel.Content = (Control)
+                        (
+                            (ILoadOncePanel<object>)
+                                ROD.GetValueOrDefault<string, object?>(
+                                    (string)((string)TargetButton.Text),
+                                    null
+                                )
+                        ).GetInnerAsObject();
+                    SelectedButtonIndex = Buttons.IndexOf(TargetButton);
+                    foreach (Button L in Buttons)
+                    {
+                        L.TextColor = Eto.Drawing.Colors.White;
+                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.Invalidate(true);
+                    }
+                    foreach (Panel L in ButtonsContainer)
+                    {
+                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.Invalidate(true);
+                    }
+                    TargetButton.TextColor = Eto.Drawing.Colors.Black;
+                    TargetButton.BackgroundColor = Eto.Drawing.Colors.White;
+                    ClickedPanel.BackgroundColor = Eto.Drawing.Colors.White;
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate(true);
+                    this.TriggerStyleChanged();
+                    CurrentPanelName =
+                        $"\u300e{TargetButton.Text}\u300f RV InvNew Inventory Manager";
+                };
+                ButtonsContainer.Add(BC);
+                
                 i++;
             }
             LB.SelectedItemsChanged += (sender, e) =>
@@ -162,11 +263,11 @@ namespace EtoFE
                 (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
             };
             var Inner = new StackLayout(
-                new Scrollable(){Content = new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray())
+                new Scrollable(){Content = new StackLayout(ButtonsContainer.Select(b => new StackLayoutItem(b)).ToArray())
                 {
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Spacing = 5,
-                }, Height = 100 },
+                }, Height = 100, Border = BorderType.None },
                 new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
