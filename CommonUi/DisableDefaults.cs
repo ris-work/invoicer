@@ -188,5 +188,41 @@ namespace CommonUi
             }
 #endif
         }
+        public static void ApplyDarkScrollBarsAndGridView(this Form form)
+        {
+#if WINDOWS
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                var appResources = System.Windows.Application.Current.Resources;
+                // Apply dark colors for all ScrollBars.
+                appResources.Add(
+                    typeof(System.Windows.Controls.Primitives.ScrollBar),
+                    new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar))
+                    {
+                        Setters =
+                        {
+                        new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.BackgroundProperty, System.Windows.Media.Brushes.Black),
+                        new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.ForegroundProperty, System.Windows.Media.Brushes.White)
+                        }
+                    }
+                );
+
+                // Apply dark colors for GridView headers.
+                // Eto.Forms GridView on WPF is usually implemented over a native ListView with GridView,
+                // whose column headers are of type GridViewColumnHeader.
+                appResources.Add(
+                    typeof(System.Windows.Controls.GridViewColumnHeader),
+                    new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader))
+                    {
+                        Setters =
+                        {
+                        new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Black),
+                        new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White)
+                        }
+                    }
+                );
+            }
+#endif
+        }
     }
 }

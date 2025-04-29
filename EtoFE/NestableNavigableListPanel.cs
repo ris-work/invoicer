@@ -120,6 +120,7 @@ namespace EtoFE
                 B.MouseDown += (e, a) =>
                 {
                     Button ClickedLabel = ((Button)e);
+                    var CurrentButtonHolderPanel = ButtonsContainer[Buttons.IndexOf(ClickedLabel)];
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
                     CurrentPanel.Content = (Control)
@@ -144,6 +145,7 @@ namespace EtoFE
                     }
                     ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
                     ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                    CurrentButtonHolderPanel.BackgroundColor = Eto.Drawing.Colors.White;
                     this.Size = new Eto.Drawing.Size(-1, -1);
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
@@ -155,7 +157,9 @@ namespace EtoFE
                 {
                     if (a.Key == Keys.Enter || a.Key == Keys.Space)
                     {
+                        
                         Button ClickedLabel = ((Button)e);
+                        var CurrentButtonHolderPanel = ButtonsContainer[Buttons.IndexOf(ClickedLabel)];
                         //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
                         CurrentPanel.Content = (Control)
@@ -180,6 +184,7 @@ namespace EtoFE
                         }
                         ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
                         ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                        CurrentButtonHolderPanel.BackgroundColor = Eto.Drawing.Colors.White;
                         this.Size = new Eto.Drawing.Size(-1, -1);
                         this.Invalidate(true);
                         this.TriggerStyleChanged();
@@ -285,10 +290,11 @@ namespace EtoFE
                     )
                     {
                         HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                        Spacing = 5,
+                        Spacing = 2,
                     },
                     Height = 100,
                     Border = BorderType.None,
+                    //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
                 new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
