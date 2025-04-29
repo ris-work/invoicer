@@ -104,6 +104,29 @@ namespace EtoFE
         }
     }
 
+    public static class SendAuthenticatedRequest<Ti, To>
+    {
+        public static (To Out, bool Error) Send(Ti Message, string Endpoint, bool RetryInteractively = false) {
+            var JR = JsonSerializer.Serialize(Message);
+            var Request = new HttpRequestMessage()
+            {
+                Content = new StringContent(JR),
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(Program.client.BaseAddress, Endpoint),
+            };
+            Request.Headers.Add(
+                "Authorization",
+                $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(LoginTokens.token)))}"
+            );
+            Console.WriteLine(JR);
+            var Posted = Program.client.SendAsync(Request);
+            var Response = Posted.GetAwaiter().GetResult();
+            Response.EnsureSuccessStatusCode();
+            var result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
+            return (result, false);
+        }
+    }
+
     class AuthenticationForm<Ti, To> : Dialog
     {
         public string Username;

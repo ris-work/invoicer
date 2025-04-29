@@ -424,7 +424,23 @@ app.AddEndpointWithBearerAuth<string>(
     "VIEW_SERVER_TIME"
 );
 
-app.AddEndpointWithBearerAuth<IResult>(
+app.AddEndpointWithBearerAuth<object>(
+    "CatalogueRead",
+    (R) =>
+    {
+        //var SafeR = ((Catalogue)R).RemoveField("Id");
+        Catalogue A;
+        using (var ctx = new NewinvContext())
+        {
+            A = ctx.Catalogues.Where(a => a.Itemcode == (long)R).First();
+        }
+
+        return A;
+    },
+    "Refresh"
+);
+
+app.AddEndpointWithBearerAuth<object>(
     "CatalogueAdd",
     (R) =>
     {
@@ -437,7 +453,7 @@ app.AddEndpointWithBearerAuth<IResult>(
 
         return Results.Accepted();
     },
-    "CATALOGUE_ADD"
+    "Refresh"
 );
 
 app.AddEndpointWithBearerAuth<string>(

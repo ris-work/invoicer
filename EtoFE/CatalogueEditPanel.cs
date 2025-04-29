@@ -18,16 +18,16 @@ namespace EtoFE
             while (true)
             {
                 var req = (
-                    new AuthenticationForm<string, PosRefresh>(
-                        "/PosRefreshBearerAuth",
+                    SendAuthenticatedRequest<string, PosRefresh>.Send(
                         "Refresh",
+                        "/PosRefreshBearerAuth",
                         true
                     )
                 );
-                req.ShowModal();
+                //req.ShowModal();
                 if (req.Error == false)
                 {
-                    PR = req.Response;
+                    PR = req.Out;
                     //MessageBox.Show(req.Response.Catalogue.Count.ToString(), "Time", MessageBoxType.Information);
                     break;
                 }
@@ -50,7 +50,9 @@ namespace EtoFE
                 })
                 .ToList();
             var SearchBox = new SearchPanelEto(SearchCatalogue, HeaderEntries, false);
-            SearchBox.OnSelectionMade = () => { MessageBox.Show(String.Join(',', SearchBox.Selected)); };
+            SearchBox.OnSelectionMade = () => { 
+                MessageBox.Show(String.Join(',', SearchBox.Selected));
+            };
             Content = new StackLayout(SearchBox);
         }
     }
