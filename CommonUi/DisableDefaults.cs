@@ -10,6 +10,7 @@ using Eto.Forms;
 using System.Windows.Controls;
 using System.Windows.Media;
 #endif
+using System.IO;
 
 
 namespace CommonUi
@@ -194,42 +195,58 @@ namespace CommonUi
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
                 var resources = System.Windows.Application.Current.Resources;
-                // Style for all ScrollBars.
-                resources.Add(
-                    typeof(System.Windows.Controls.Primitives.ScrollBar),
-                    new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar))
+
+                // Global ScrollBar style (for the track)
+                var scrollBarStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar));
+                scrollBarStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.BackgroundProperty, System.Windows.Media.Brushes.Black));
+                scrollBarStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.ForegroundProperty, System.Windows.Media.Brushes.White));
+                resources[typeof(System.Windows.Controls.Primitives.ScrollBar)] = scrollBarStyle;
+
+                // RepeatButton style for the arrow (up/down/left/right) buttons in scrollbars.
+                var repeatButtonStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton));
+                repeatButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.BackgroundProperty, System.Windows.Media.Brushes.Black));
+                repeatButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.ForegroundProperty, System.Windows.Media.Brushes.White));
+                resources[typeof(System.Windows.Controls.Primitives.RepeatButton)] = repeatButtonStyle;
+
+                // GridViewColumnHeader style.
+                var gridViewHeaderStyle = new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader));
+                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Black));
+                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White));
+
+                // Define a minimal DataTemplate so header content (assumed text) binds to the parent's Foreground.
+                var dataTemplate = new System.Windows.DataTemplate();
+                var textBlockFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
+                textBlockFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding("."));
+                textBlockFactory.SetBinding(System.Windows.Controls.TextBlock.ForegroundProperty,
+                    new System.Windows.Data.Binding("Foreground")
                     {
-                        Setters =
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.FindAncestor,
+                            typeof(System.Windows.Controls.GridViewColumnHeader),
+                            1)
+                    });
+                dataTemplate.VisualTree = textBlockFactory;
+                gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ContentTemplateProperty, dataTemplate));
+                resources[typeof(System.Windows.Controls.GridViewColumnHeader)] = gridViewHeaderStyle;
+            }
+#endif
+        }
+        public static void ApplyDarkTheme(this Form form)
+        {
+#if WINDOWS
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                var themePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DarkTheme.xaml");
+                if (File.Exists(themePath))
+                {
+                    var window = (System.Windows.Window)Eto.Forms.WpfHelpers.ToNative(form, false);
+                    window.Resources.MergedDictionaries.Add(
+                        new System.Windows.ResourceDictionary
                         {
-                        new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.BackgroundProperty, System.Windows.Media.Brushes.Black),
-                        new System.Windows.Setter(System.Windows.Controls.Primitives.ScrollBar.ForegroundProperty, System.Windows.Media.Brushes.White)
+                            Source = new Uri("pack://siteoforigin:,,,/DarkTheme.xaml", UriKind.Absolute)
                         }
-                    }
-                );
-                // Style for GridView column headers.
-                resources.Add(
-                    typeof(System.Windows.Controls.GridViewColumnHeader),
-                    new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader))
-                    {
-                        Setters =
-                        {
-                        new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Black),
-                        new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ForegroundProperty, System.Windows.Media.Brushes.White)
-                        }
-                    }
-                );
-                // Style for RepeatButtons (the arrow buttons in scrollbars).
-                resources.Add(
-                    typeof(System.Windows.Controls.Primitives.RepeatButton),
-                    new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton))
-                    {
-                        Setters =
-                        {
-                        new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.BackgroundProperty, System.Windows.Media.Brushes.Black),
-                        new System.Windows.Setter(System.Windows.Controls.Primitives.RepeatButton.ForegroundProperty, System.Windows.Media.Brushes.White)
-                        }
-                    }
-                );
+                    );
+                }
             }
 #endif
         }
