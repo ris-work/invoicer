@@ -5,11 +5,11 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 using RV.InvNew.Common;
 using Wiry.Base32;
-using CommonUi;
 
 //using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 

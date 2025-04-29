@@ -238,7 +238,8 @@ public class MyForm : Form
                         else
                         {
                             MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
-                            bool FullMode = (bool)Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
+                            bool FullMode = (bool)
+                                Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
 
                             if (!FullMode)
                             {

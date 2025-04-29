@@ -4,17 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonUi;
 using Eto;
+using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
-using CommonUi;
-using Eto.Containers;
 
 namespace EtoFE
 {
     public class NestableNavigableListPanel : Panel
     {
         public string CurrentPanelName = "";
+
         public NestableNavigableListPanel(List<(string Title, object InnerPanel)> loadOncePanels)
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
@@ -32,7 +33,6 @@ namespace EtoFE
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
-
 
             int SelectedButtonIndex = -1;
             Dictionary<string, object> Panels = new Dictionary<string, object>();
@@ -153,7 +153,7 @@ namespace EtoFE
 
                 B.KeyDown += (e, a) =>
                 {
-                    if(a.Key == Keys.Enter || a.Key == Keys.Space)
+                    if (a.Key == Keys.Enter || a.Key == Keys.Space)
                     {
                         Button ClickedLabel = ((Button)e);
                         //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
@@ -188,14 +188,14 @@ namespace EtoFE
                     }
                 };
 
-
                 Buttons.Add(B);
-                var BC = new Panel() { Content = new StackLayout(B, null)};
+                var BC = new Panel() { Content = new StackLayout(B, null) };
                 BC.MouseDown += (e, a) =>
                 {
                     //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);
                     Panel ClickedPanel = ((Panel)e);
-                    Button TargetButton = (Button)((StackLayout)ClickedPanel.Children.First()).Children.First();
+                    Button TargetButton = (Button)
+                        ((StackLayout)ClickedPanel.Children.First()).Children.First();
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
                     CurrentPanel.Content = (Control)
@@ -228,7 +228,7 @@ namespace EtoFE
                         $"\u300e{TargetButton.Text}\u300f RV InvNew Inventory Manager";
                 };
                 ButtonsContainer.Add(BC);
-                
+
                 i++;
             }
             LB.SelectedItemsChanged += (sender, e) =>
@@ -263,11 +263,18 @@ namespace EtoFE
                 (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
             };
             var Inner = new StackLayout(
-                new Scrollable(){Content = new StackLayout(ButtonsContainer.Select(b => new StackLayoutItem(b)).ToArray())
+                new Scrollable()
                 {
-                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                    Spacing = 5,
-                }, Height = 100, Border = BorderType.None },
+                    Content = new StackLayout(
+                        ButtonsContainer.Select(b => new StackLayoutItem(b)).ToArray()
+                    )
+                    {
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        Spacing = 5,
+                    },
+                    Height = 100,
+                    Border = BorderType.None,
+                },
                 new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
@@ -277,7 +284,7 @@ namespace EtoFE
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
             var TopPanel = new StackLayout(EnableAccessibilityButton) { Spacing = 10 };
-            Content = new StackLayout(TopPanel, Inner );
+            Content = new StackLayout(TopPanel, Inner);
             Padding = 10;
             //Position
         }
