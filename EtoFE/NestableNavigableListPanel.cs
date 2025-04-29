@@ -298,7 +298,7 @@ namespace EtoFE
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
-            var TopPanel = new StackLayout(EnableAccessibilityButton, null, QuitCurrentPanelButton, null) { Spacing = 10, Orientation = Orientation.Horizontal, Padding = 10 };
+            var TopPanel = new StackLayout(EnableAccessibilityButton, null, null, QuitCurrentPanelButton, null) { Spacing = 10, Orientation = Orientation.Horizontal, Padding = 10 };
             Content = new StackLayout(TopPanel, Inner) { HorizontalContentAlignment = HorizontalAlignment.Stretch};
             Padding = 10;
             //Position

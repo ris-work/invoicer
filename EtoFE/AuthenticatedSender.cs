@@ -173,6 +173,8 @@ namespace EtoFE
                 Error = Sender.Error;
                 this.Close();
             };
+            TU.KeyDown += (e, a) => { if (a.Key == Keys.Enter) { TP.Focus(); } };
+            TP.KeyDown += (e, a) => { if (a.Key == Keys.Enter) { LoginButton.Focus(); } };
         }
     }
 }

@@ -232,7 +232,7 @@ namespace EtoFE
             var TopPanel = new StackLayout(EnableAccessibilityButton, CurrentClientTimeLabel, CurrentServerTimeLabel) { Spacing = 10, Orientation = Orientation.Horizontal };
             Content = new StackLayout(TopPanel, Inner);
             Padding = 10;
-            var LocalTimeRefresher = (new Thread(() => { while (true) { Application.Instance.Invoke(() => { CurrentClientTimeLabel.Text = $"Client time: {DateTime.Now.ToString("O")}"; }); Thread.Sleep(1000); } }));
+            var LocalTimeRefresher = (new Thread(() => { while (true) { Application.Instance.Invoke(() => { CurrentClientTimeLabel.Text = $"Client time: {DateTime.Now.ToString("s")}"; }); Thread.Sleep(1000); } }));
             var ServerTimeRefresher = (new Thread(() => { Application.Instance.Invoke(() => { }); }));
             LocalTimeRefresher.Start();
             ServerTimeRefresher.Start();

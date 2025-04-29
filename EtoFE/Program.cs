@@ -168,6 +168,7 @@ public class MyForm : Form
         TextBox UsernameBox,
             TerminalBox;
         PasswordBox PasswordBox;
+        
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
@@ -225,10 +226,7 @@ public class MyForm : Form
                 null
             )
         );
-        layout.Rows.Add(
-            new TableRow(
-                null,
-                new Button(
+        var LoginButton = new Button(
                     (sender, e) =>
                     {
                         if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
@@ -254,11 +252,15 @@ public class MyForm : Form
                         ;
                     }
                 )
-                {
-                    Text = "Login",
-                    Size = new Size(200, 50),
-                    Style = "large",
-                },
+        {
+            Text = "Login",
+            Size = new Size(200, 50),
+            Style = "large",
+        };
+        layout.Rows.Add(
+            new TableRow(
+                null,
+                LoginButton,
                 new TableRow(
                     new Button(
                         (sender, e) =>
@@ -275,6 +277,8 @@ public class MyForm : Form
                 null
             )
         );
+        UsernameBox.KeyDown += (e, a) => { if(a.Key == Keys.Enter) PasswordBox.Focus(); };
+        PasswordBox.KeyDown += (e, a) => { if (a.Key == Keys.Enter) LoginButton.Focus(); };
         layout.Rows.Add(null);
         Content = layout;
     }

@@ -220,7 +220,7 @@ namespace CommonUi
             {
                 Items =
                 {
-                    SearchCaseSensitivity,
+                    //SearchCaseSensitivity,
                     SearchCasePosition,
                     SearchCriteria,
                     SearchSpellingNormalization,
@@ -310,7 +310,7 @@ namespace CommonUi
 
             Results.Enabled = true;
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
-            Results.Size = new Size(600, 700);
+            Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
                 Eto.Drawing.Color?
@@ -569,12 +569,15 @@ namespace CommonUi
             };
             var OthersContainer = new StackLayout()
             {
-                Items = { SearchOptions, GBExportOptions, GBPrintOptions },
+                Items = { SearchOptions, 
+                    //GBExportOptions, 
+                    //GBPrintOptions 
+                },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
             };
             TL.Rows.Add(new TableRow(SearchBox));
-            TL.Rows.Add(new TableRow(LabelResults));
+            //TL.Rows.Add(new TableRow(LabelResults));
             TL.Rows.Add(
                 new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, OthersContainer)
                 {
