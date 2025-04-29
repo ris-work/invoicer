@@ -151,16 +151,23 @@ namespace CommonUi
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+                
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
             RadioButtonList RBLSearchPosition = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
             RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
             RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
@@ -168,8 +175,8 @@ namespace CommonUi
             RBLSearchPosition.Items.Add("StartsWith [F4]");
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
-            CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
-            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
+            CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White, };
+            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White, };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
@@ -188,11 +195,15 @@ namespace CommonUi
             {
                 Text = "Case sensitivity setting",
                 Content = RBLSearchCaseSensitivity,
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
             GroupBox SearchCasePosition = new()
             {
                 Text = "Search Position",
                 Content = RBLSearchPosition,
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
             GroupBox SearchSpellingNormalization = new()
             {
@@ -201,6 +212,8 @@ namespace CommonUi
                 {
                     Orientation = Eto.Forms.Orientation.Vertical,
                 },
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
 
             StackLayout SearchOptions = new StackLayout()

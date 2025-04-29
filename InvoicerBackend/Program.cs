@@ -440,8 +440,8 @@ app.AddEndpointWithBearerAuth<IResult>(
     "CATALOGUE_ADD"
 );
 
-app.AddEndpointWithBearerAuth<IResult>(
-        "/PosRefreshBearerAuth",
+app.AddEndpointWithBearerAuth<string>(
+        "PosRefreshBearerAuth",
         (AS, LoginInfo) =>
         {
                 List<PosCatalogue> PC;
@@ -496,7 +496,7 @@ app.AddEndpointWithBearerAuth<IResult>(
                 };
             ;
         },
-        "REFRESH"
+        "Refresh"
     );
 
 System.Console.WriteLine("Done setting up!");

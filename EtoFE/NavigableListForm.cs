@@ -9,6 +9,7 @@ using Eto;
 using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
+using System.Threading;
 
 namespace EtoFE
 {
@@ -31,6 +32,7 @@ namespace EtoFE
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
+            
 
             var loadOncePanels = (
                 new List<(string, object)>()
@@ -43,7 +45,7 @@ namespace EtoFE
                                     new List<(string Label, object Content)>
                                     {
                                         // Core inventory panels
-                                        ("📝 Editor", new LoadOncePanel<Panel>()),
+                                        ("📝 Editor", new LoadOncePanel<Panel>(new CatalogueEditPanel())),
                                         ("📋 Batch Editor", new LoadOncePanel<Panel>()),
                                         ("🔧 Adjustments", new LoadOncePanel<Panel>()),
                                         ("📦 Items", new LoadOncePanel<Panel>()),
@@ -196,6 +198,19 @@ namespace EtoFE
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
             };
+            Label CurrentClientTimeLabel = new Label()
+            {
+                Text = DateTime.UtcNow.ToString("O"),
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+                
+            };
+            Label CurrentServerTimeLabel = new Label()
+            {
+                Text = "TBD",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
             EnableAccessibilityButton.Click += (sender, e) =>
             {
                 (new ListPanelOptionsAsButtons(loadOncePanels)).Show();
@@ -214,9 +229,13 @@ namespace EtoFE
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
-            var TopPanel = new StackLayout(EnableAccessibilityButton) { Spacing = 10 };
+            var TopPanel = new StackLayout(EnableAccessibilityButton, CurrentClientTimeLabel, CurrentServerTimeLabel) { Spacing = 10, Orientation = Orientation.Horizontal };
             Content = new StackLayout(TopPanel, Inner);
             Padding = 10;
+            var LocalTimeRefresher = (new Thread(() => { while (true) { Application.Instance.Invoke(() => { CurrentClientTimeLabel.Text = $"Client time: {DateTime.Now.ToString("O")}"; }); Thread.Sleep(1000); } }));
+            var ServerTimeRefresher = (new Thread(() => { Application.Instance.Invoke(() => { }); }));
+            LocalTimeRefresher.Start();
+            ServerTimeRefresher.Start();
             //Position
         }
     }

@@ -258,7 +258,22 @@ namespace EtoFE
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
             };
+            Button QuitCurrentPanelButton = new Button()
+            {
+                Text = " X ",
+                Font = new Eto.Drawing.Font("Gourier", 10),
+                MinimumSize = new Eto.Drawing.Size (30, 30),
+                BackgroundColor = Eto.Drawing.Colors.DarkRed,
+                TextColor = Eto.Drawing.Colors.Black,
+                
+            };
+            EnableAccessibilityButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Black);
+            //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
             EnableAccessibilityButton.Click += (sender, e) =>
+            {
+                (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
+            };
+            QuitCurrentPanelButton.Click += (sender, e) =>
             {
                 (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
             };
@@ -283,8 +298,8 @@ namespace EtoFE
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
-            var TopPanel = new StackLayout(EnableAccessibilityButton) { Spacing = 10 };
-            Content = new StackLayout(TopPanel, Inner);
+            var TopPanel = new StackLayout(EnableAccessibilityButton, null, QuitCurrentPanelButton, null) { Spacing = 10, Orientation = Orientation.Horizontal, Padding = 10 };
+            Content = new StackLayout(TopPanel, Inner) { HorizontalContentAlignment = HorizontalAlignment.Stretch};
             Padding = 10;
             //Position
         }
