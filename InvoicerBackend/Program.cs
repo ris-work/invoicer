@@ -440,6 +440,65 @@ app.AddEndpointWithBearerAuth<IResult>(
     "CATALOGUE_ADD"
 );
 
+app.AddEndpointWithBearerAuth<IResult>(
+        "/PosRefreshBearerAuth",
+        (AS, LoginInfo) =>
+        {
+                List<PosCatalogue> PC;
+                List<PosBatch> PB;
+                List<VatCategory> VC;
+                using (var ctx = new NewinvContext())
+                {
+                    //ctx.Database.lo
+                    long TokenCategoriesBitmask = ctx
+                        .Tokens.Where(e => e.Tokenid == LoginInfo.TokenId)
+                        .Select(e => e.CategoriesBitmask)
+                        .First();
+                    PC = ctx
+                        .Catalogues.Where(e => (e.CategoriesBitmask & TokenCategoriesBitmask) > 0)
+                        .Select(e => new PosCatalogue
+                        {
+                            itemcode = e.Itemcode,
+                            EnforceAboveCost = e.EnforceAboveCost,
+                            itemdesc = e.DescriptionPos,
+                            ManualPrice = e.PriceManual,
+                            VatCategoryAdjustable = e.VatCategoryAdjustable,
+                            VatDependsOnUser = e.VatDependsOnUser,
+                            DefaultVatCategory = e.DefaultVatCategory,
+                        })
+                        .ToList();
+                    PB = ctx
+                        .Inventories.Select(
+                            (e) =>
+                                new PosBatch
+                                {
+                                    itemcode = e.Itemcode,
+                                    batchcode = e.Batchcode,
+                                    selling = e.SellingPrice,
+                                    marked = e.MarkedPrice,
+                                    expireson = DateOnly.FromDateTime(
+                                        e.ExpDate.GetValueOrDefault(DateTime.MaxValue)
+                                    ),
+                                    SIH = e.Units,
+                                }
+                        )
+                        .ToList();
+                    VC = ctx.VatCategories.ToList();
+                }
+                Console.WriteLine($"Sending PC: {PC.Count()} PB: {PB.Count} VC: {VC.Count}");
+                var JSO = new JsonSerializerOptions { IncludeFields = true };
+                //Console.WriteLine(JsonSerializer.Serialize(new PosRefresh() { VatCategories = VC, Batches = PB, Catalogue = PC }, JSO));
+                return new PosRefresh()
+                {
+                    VatCategories = VC,
+                    Batches = PB,
+                    Catalogue = PC,
+                };
+            ;
+        },
+        "REFRESH"
+    );
+
 System.Console.WriteLine("Done setting up!");
 app.Run();
 
