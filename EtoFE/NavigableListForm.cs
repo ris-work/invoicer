@@ -225,13 +225,14 @@ namespace EtoFE
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Spacing = 4,
                 },
-                new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
+                new Panel() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
+                BackgroundColor = Eto.Drawing.Colors.Black,
             };
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,

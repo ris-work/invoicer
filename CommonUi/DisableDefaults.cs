@@ -120,9 +120,9 @@ namespace CommonUi
             Eto.Drawing.Color normalColor
         )
         {
-            System.Console.WriteLine(
+            /*System.Console.WriteLine(
                 $"Running on {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}"
-            );
+            );*/
 #if WINDOWS
             // Verify that we're running on the WPF platform.
             var currentPlatform = Eto.Platform.Instance.ToString();

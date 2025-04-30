@@ -294,15 +294,17 @@ namespace EtoFE
                     },
                     Height = 100,
                     Border = BorderType.None,
+                    //BackgroundColor = Eto.Drawing.Colors.Black,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
-                new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
+                new Panel() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
+                BackgroundColor = Eto.Drawing.Colors.Black,
             };
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
