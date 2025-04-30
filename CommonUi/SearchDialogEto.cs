@@ -126,12 +126,20 @@ namespace CommonUi
         public string ReportSelectedButtonText = "Report Selected";
 
         public SearchDialogEto(
-            List<(string[] SearchItems, Eto.Drawing.Color? BackgroundColor, Eto.Drawing.Color? ForegroundColor)> SC,
-            List<(string Title, TextAlignment Alignment, bool )> HeaderEntries,
+            List<(
+                string[] SearchItems,
+                Eto.Drawing.Color? BackgroundColor,
+                Eto.Drawing.Color? ForegroundColor
+            )> SC,
+            List<(string Title, TextAlignment Alignment, bool)> HeaderEntries,
             bool Debug = true
         )
         {
-            IEnumerable<(string[] SearchItems, Eto.Drawing.Color? BackgroundColor, Eto.Drawing.Color? ForegroundColor)> OptimizedCatalogue;
+            IEnumerable<(
+                string[] SearchItems,
+                Eto.Drawing.Color? BackgroundColor,
+                Eto.Drawing.Color? ForegroundColor
+            )> OptimizedCatalogue;
             OptimizedCatalogue = SC.Select(e =>
                     (
                         e.Item1.ToList()

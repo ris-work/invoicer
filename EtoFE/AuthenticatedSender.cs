@@ -106,7 +106,12 @@ namespace EtoFE
 
     public static class SendAuthenticatedRequest<Ti, To>
     {
-        public static (To Out, bool Error) Send(Ti Message, string Endpoint, bool RetryInteractively = false) {
+        public static (To Out, bool Error) Send(
+            Ti Message,
+            string Endpoint,
+            bool RetryInteractively = false
+        )
+        {
             var JR = JsonSerializer.Serialize(Message);
             var Request = new HttpRequestMessage()
             {
@@ -196,8 +201,20 @@ namespace EtoFE
                 Error = Sender.Error;
                 this.Close();
             };
-            TU.KeyDown += (e, a) => { if (a.Key == Keys.Enter) { TP.Focus(); } };
-            TP.KeyDown += (e, a) => { if (a.Key == Keys.Enter) { LoginButton.Focus(); } };
+            TU.KeyDown += (e, a) =>
+            {
+                if (a.Key == Keys.Enter)
+                {
+                    TP.Focus();
+                }
+            };
+            TP.KeyDown += (e, a) =>
+            {
+                if (a.Key == Keys.Enter)
+                {
+                    LoginButton.Focus();
+                }
+            };
         }
     }
 }

@@ -66,11 +66,13 @@ namespace RV.InvNew.Common
             }
         }
 
-        public static async Task<(bool Success, string? RequestBody, long? UserID, string Username, string Token)> VerifyIfAuthorizationIsOk(
-            HttpRequest Request,
-            string PrivilegeLevel,
-            string Endpoint
-        )
+        public static async Task<(
+            bool Success,
+            string? RequestBody,
+            long? UserID,
+            string Username,
+            string Token
+        )> VerifyIfAuthorizationIsOk(HttpRequest Request, string PrivilegeLevel, string Endpoint)
         {
             string Principal = null;
             long? PrincipalUserId = null;

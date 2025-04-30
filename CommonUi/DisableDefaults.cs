@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,6 @@ using Eto.Forms;
 using System.Windows.Controls;
 using System.Windows.Media;
 #endif
-using System.IO;
 
 
 namespace CommonUi
@@ -108,15 +108,21 @@ namespace CommonUi
             }
 #endif
         }
+
         /// <summary>
         /// Forces the given background color on an Eto.Forms.Button on the WPF backend,
         /// overriding the default blue-gray hover background.
         /// </summary>
         /// <param name="button">The Eto.Forms.Button instance.</param>
         /// <param name="normalColor">The Eto.Drawing.Color that should be used even when hovered.</param>
-        public static void DisableHoverBackgroundChange(this Eto.Forms.Button button, Eto.Drawing.Color normalColor)
+        public static void DisableHoverBackgroundChange(
+            this Eto.Forms.Button button,
+            Eto.Drawing.Color normalColor
+        )
         {
-            System.Console.WriteLine($"Running on {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}");
+            System.Console.WriteLine(
+                $"Running on {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}"
+            );
 #if WINDOWS
             // Verify that we're running on the WPF platform.
             var currentPlatform = Eto.Platform.Instance.ToString();
@@ -132,7 +138,8 @@ namespace CommonUi
                     (byte)normalColor.A,
                     (byte)normalColor.R,
                     (byte)normalColor.G,
-                    (byte)normalColor.B);
+                    (byte)normalColor.B
+                );
                 var normalBrush = new System.Windows.Media.SolidColorBrush(wpfColor);
 
                 // Set the initial background.
@@ -142,40 +149,72 @@ namespace CommonUi
                 wpfButton.OverridesDefaultStyle = true;
 
                 // Create a new ControlTemplate that does nothing fancy.
-                var template = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Button));
+                var template = new System.Windows.Controls.ControlTemplate(
+                    typeof(System.Windows.Controls.Button)
+                );
 
                 // Create a Border element that binds its Background (and border properties) to the Button.
-                var borderFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
-                borderFactory.SetBinding(System.Windows.Controls.Border.BackgroundProperty,
+                var borderFactory = new System.Windows.FrameworkElementFactory(
+                    typeof(System.Windows.Controls.Border)
+                );
+                borderFactory.SetBinding(
+                    System.Windows.Controls.Border.BackgroundProperty,
                     new System.Windows.Data.Binding("Background")
                     {
-                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
-                    });
-                borderFactory.SetBinding(System.Windows.Controls.Border.BorderBrushProperty,
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.TemplatedParent
+                        ),
+                    }
+                );
+                borderFactory.SetBinding(
+                    System.Windows.Controls.Border.BorderBrushProperty,
                     new System.Windows.Data.Binding("BorderBrush")
                     {
-                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
-                    });
-                borderFactory.SetBinding(System.Windows.Controls.Border.BorderThicknessProperty,
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.TemplatedParent
+                        ),
+                    }
+                );
+                borderFactory.SetBinding(
+                    System.Windows.Controls.Border.BorderThicknessProperty,
                     new System.Windows.Data.Binding("BorderThickness")
                     {
-                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
-                    });
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.TemplatedParent
+                        ),
+                    }
+                );
 
                 // Create a ContentPresenter to display the button's content.
-                var contentPresenterFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.ContentPresenter));
-                contentPresenterFactory.SetValue(System.Windows.Controls.ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
-                contentPresenterFactory.SetValue(System.Windows.Controls.ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
-                contentPresenterFactory.SetBinding(System.Windows.Controls.ContentPresenter.ContentProperty,
+                var contentPresenterFactory = new System.Windows.FrameworkElementFactory(
+                    typeof(System.Windows.Controls.ContentPresenter)
+                );
+                contentPresenterFactory.SetValue(
+                    System.Windows.Controls.ContentPresenter.HorizontalAlignmentProperty,
+                    System.Windows.HorizontalAlignment.Center
+                );
+                contentPresenterFactory.SetValue(
+                    System.Windows.Controls.ContentPresenter.VerticalAlignmentProperty,
+                    System.Windows.VerticalAlignment.Center
+                );
+                contentPresenterFactory.SetBinding(
+                    System.Windows.Controls.ContentPresenter.ContentProperty,
                     new System.Windows.Data.Binding("Content")
                     {
-                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
-                    });
-                contentPresenterFactory.SetBinding(System.Windows.Controls.ContentPresenter.ContentTemplateProperty,
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.TemplatedParent
+                        ),
+                    }
+                );
+                contentPresenterFactory.SetBinding(
+                    System.Windows.Controls.ContentPresenter.ContentTemplateProperty,
                     new System.Windows.Data.Binding("ContentTemplate")
                     {
-                        RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent)
-                    });
+                        RelativeSource = new System.Windows.Data.RelativeSource(
+                            System.Windows.Data.RelativeSourceMode.TemplatedParent
+                        ),
+                    }
+                );
 
                 // Nest the ContentPresenter inside the Border.
                 borderFactory.AppendChild(contentPresenterFactory);
@@ -184,11 +223,15 @@ namespace CommonUi
                 // Apply the new ControlTemplate so that no VisualState (e.g., hover) changes the background.
                 wpfButton.Template = template;
             }
-            else {
-                System.Console.WriteLine($"{currentPlatform} != {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}");
+            else
+            {
+                System.Console.WriteLine(
+                    $"{currentPlatform} != {Eto.Platform.Get(Eto.Platforms.Wpf).ToString()}"
+                );
             }
 #endif
         }
+
         public static void ApplyDarkThemeForScrollBarsAndGridView(this Form form)
         {
 #if WINDOWS
@@ -215,22 +258,31 @@ namespace CommonUi
 
                 // Define a minimal DataTemplate so header content (assumed text) binds to the parent's Foreground.
                 var dataTemplate = new System.Windows.DataTemplate();
-                var textBlockFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
-                textBlockFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding("."));
-                textBlockFactory.SetBinding(System.Windows.Controls.TextBlock.ForegroundProperty,
+                var textBlockFactory = new System.Windows.FrameworkElementFactory(
+                    typeof(System.Windows.Controls.TextBlock)
+                );
+                textBlockFactory.SetBinding(
+                    System.Windows.Controls.TextBlock.TextProperty,
+                    new System.Windows.Data.Binding(".")
+                );
+                textBlockFactory.SetBinding(
+                    System.Windows.Controls.TextBlock.ForegroundProperty,
                     new System.Windows.Data.Binding("Foreground")
                     {
                         RelativeSource = new System.Windows.Data.RelativeSource(
                             System.Windows.Data.RelativeSourceMode.FindAncestor,
                             typeof(System.Windows.Controls.GridViewColumnHeader),
-                            1)
-                    });
+                            1
+                        ),
+                    }
+                );
                 dataTemplate.VisualTree = textBlockFactory;
                 //gridViewHeaderStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.GridViewColumnHeader.ContentTemplateProperty, dataTemplate));
                 //resources[typeof(System.Windows.Controls.GridViewColumnHeader)] = gridViewHeaderStyle;
             }
 #endif
         }
+
         public static void ApplyDarkTheme(this Form form)
         {
 #if WINDOWS
@@ -239,22 +291,35 @@ namespace CommonUi
                 var window = (System.Windows.Window)Eto.Forms.WpfHelpers.ToNative(form, false);
                 var themeFiles = new (string File, string Uri)[]
                 {
-                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SoftDark.xaml"), "pack://siteoforigin:,,,/SoftDark.xaml"),
-                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ControlColours.xaml"), "pack://siteoforigin:,,,/ControlColours.xaml"),
-                (Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Controls.xaml"), "pack://siteoforigin:,,,/Controls.xaml")
+                    (
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SoftDark.xaml"),
+                        "pack://siteoforigin:,,,/SoftDark.xaml"
+                    ),
+                    (
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ControlColours.xaml"),
+                        "pack://siteoforigin:,,,/ControlColours.xaml"
+                    ),
+                    (
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Controls.xaml"),
+                        "pack://siteoforigin:,,,/Controls.xaml"
+                    ),
                 };
                 foreach (var theme in themeFiles)
                 {
                     if (File.Exists(theme.File))
                     {
                         window.Resources.MergedDictionaries.Add(
-                            new System.Windows.ResourceDictionary { Source = new Uri(theme.Uri, UriKind.Absolute) }
+                            new System.Windows.ResourceDictionary
+                            {
+                                Source = new Uri(theme.Uri, UriKind.Absolute),
+                            }
                         );
                     }
                 }
             }
 #endif
         }
+
         public static void ApplyDarkGridHeaders(this Eto.Forms.GridView gridView)
         {
 #if WINDOWS
@@ -265,26 +330,54 @@ namespace CommonUi
                 // Case 1: Eto.GridView wraps a WPF DataGrid.
                 if (native is System.Windows.Controls.DataGrid dataGrid)
                 {
-                    var headerStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridColumnHeader));
-                    headerStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.Primitives.DataGridColumnHeader.BackgroundProperty,
-                        System.Windows.Media.Brushes.Black));
-                    headerStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.Primitives.DataGridColumnHeader.ForegroundProperty,
-                        System.Windows.Media.Brushes.White));
+                    var headerStyle = new System.Windows.Style(
+                        typeof(System.Windows.Controls.Primitives.DataGridColumnHeader)
+                    );
+                    headerStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System
+                                .Windows
+                                .Controls
+                                .Primitives
+                                .DataGridColumnHeader
+                                .BackgroundProperty,
+                            System.Windows.Media.Brushes.Black
+                        )
+                    );
+                    headerStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System
+                                .Windows
+                                .Controls
+                                .Primitives
+                                .DataGridColumnHeader
+                                .ForegroundProperty,
+                            System.Windows.Media.Brushes.White
+                        )
+                    );
                     dataGrid.ColumnHeaderStyle = headerStyle;
                 }
                 // Case 2: Eto.GridView is realized as a ListView with a GridView view.
-                else if (native is System.Windows.Controls.ListView listView &&
-                         listView.View is System.Windows.Controls.GridView listGridView)
+                else if (
+                    native is System.Windows.Controls.ListView listView
+                    && listView.View is System.Windows.Controls.GridView listGridView
+                )
                 {
-                    var headerStyle = new System.Windows.Style(typeof(System.Windows.Controls.GridViewColumnHeader));
-                    headerStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.GridViewColumnHeader.BackgroundProperty,
-                        System.Windows.Media.Brushes.Black));
-                    headerStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.GridViewColumnHeader.ForegroundProperty,
-                        System.Windows.Media.Brushes.White));
+                    var headerStyle = new System.Windows.Style(
+                        typeof(System.Windows.Controls.GridViewColumnHeader)
+                    );
+                    headerStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System.Windows.Controls.GridViewColumnHeader.BackgroundProperty,
+                            System.Windows.Media.Brushes.Black
+                        )
+                    );
+                    headerStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System.Windows.Controls.GridViewColumnHeader.ForegroundProperty,
+                            System.Windows.Media.Brushes.White
+                        )
+                    );
                     listGridView.ColumnHeaderContainerStyle = headerStyle;
                 }
             }

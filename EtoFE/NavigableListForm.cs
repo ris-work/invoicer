@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CommonUi;
 using Eto;
 using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
-using System.Threading;
 
 namespace EtoFE
 {
@@ -34,7 +34,6 @@ namespace EtoFE
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
-            
 
             var loadOncePanels = (
                 new List<(string, object)>()
@@ -47,7 +46,10 @@ namespace EtoFE
                                     new List<(string Label, object Content)>
                                     {
                                         // Core inventory panels
-                                        ("📝 Editor", new LoadOncePanel<Panel>(new CatalogueEditPanel())),
+                                        (
+                                            "📝 Editor",
+                                            new LoadOncePanel<Panel>(new CatalogueEditPanel())
+                                        ),
                                         ("📋 Batch Editor", new LoadOncePanel<Panel>()),
                                         ("🔧 Adjustments", new LoadOncePanel<Panel>()),
                                         ("📦 Items", new LoadOncePanel<Panel>()),
@@ -205,7 +207,6 @@ namespace EtoFE
                 Text = DateTime.UtcNow.ToString("O"),
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
-                
             };
             Label CurrentServerTimeLabel = new Label()
             {
@@ -231,11 +232,37 @@ namespace EtoFE
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
-            var TopPanel = new StackLayout(EnableAccessibilityButton, CurrentClientTimeLabel, CurrentServerTimeLabel) { Spacing = 10, Orientation = Orientation.Horizontal };
+            var TopPanel = new StackLayout(
+                EnableAccessibilityButton,
+                CurrentClientTimeLabel,
+                CurrentServerTimeLabel
+            )
+            {
+                Spacing = 10,
+                Orientation = Orientation.Horizontal,
+            };
             Content = new StackLayout(TopPanel, Inner);
             Padding = 10;
-            var LocalTimeRefresher = (new Thread(() => { while (true) { Application.Instance.Invoke(() => { CurrentClientTimeLabel.Text = $"Client time: {DateTime.Now.ToString("s")}"; }); Thread.Sleep(1000); } }));
-            var ServerTimeRefresher = (new Thread(() => { Application.Instance.Invoke(() => { }); }));
+            var LocalTimeRefresher = (
+                new Thread(() =>
+                {
+                    while (true)
+                    {
+                        Application.Instance.Invoke(() =>
+                        {
+                            CurrentClientTimeLabel.Text =
+                                $"Client time: {DateTime.Now.ToString("s")}";
+                        });
+                        Thread.Sleep(1000);
+                    }
+                })
+            );
+            var ServerTimeRefresher = (
+                new Thread(() =>
+                {
+                    Application.Instance.Invoke(() => { });
+                })
+            );
             LocalTimeRefresher.Start();
             ServerTimeRefresher.Start();
             //Position

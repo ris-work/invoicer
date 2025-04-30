@@ -2,7 +2,7 @@
     <PropertyGroup>
         <OutputType>Library</OutputType>
         <!--<TargetFrameworks>net9.0-windows10.0.17763.0;net9.0</TargetFrameworks>-->
-		<TargetFrameworks>net9.0-windows;net9.0</TargetFrameworks>
+        <TargetFrameworks>net9.0-windows;net9.0</TargetFrameworks>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <!-- Define a property that evaluates if '-windows' is found -->
@@ -41,7 +41,7 @@
             <CopyToOutputDirectory>Never</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-	<PropertyGroup Condition="'$(IsWindowsTarget)' == 'true'">
-		<DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(IsWindowsTarget)' == 'true'">
+        <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
 </Project>

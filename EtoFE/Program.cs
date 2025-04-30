@@ -168,7 +168,6 @@ public class MyForm : Form
         TextBox UsernameBox,
             TerminalBox;
         PasswordBox PasswordBox;
-        
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
@@ -227,31 +226,31 @@ public class MyForm : Form
             )
         );
         var LoginButton = new Button(
-                    (sender, e) =>
-                    {
-                        if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
-                        {
-                            MessageBox.Show("Cannot login: Network Error or Wrong Creds");
-                        }
-                        else
-                        {
-                            MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
-                            bool FullMode = (bool)
-                                Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
+            (sender, e) =>
+            {
+                if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
+                {
+                    MessageBox.Show("Cannot login: Network Error or Wrong Creds");
+                }
+                else
+                {
+                    MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
+                    bool FullMode = (bool)
+                        Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
 
-                            if (!FullMode)
-                            {
-                                (new NavigableListForm()).Show();
-                            }
-                            else
-                            {
-                                (new PosTerminal()).Show();
-                            }
-                            //(new PosTerminal()).Show();
-                        }
-                        ;
+                    if (!FullMode)
+                    {
+                        (new NavigableListForm()).Show();
                     }
-                )
+                    else
+                    {
+                        (new PosTerminal()).Show();
+                    }
+                    //(new PosTerminal()).Show();
+                }
+                ;
+            }
+        )
         {
             Text = "Login",
             Size = new Size(200, 50),
@@ -277,8 +276,16 @@ public class MyForm : Form
                 null
             )
         );
-        UsernameBox.KeyDown += (e, a) => { if(a.Key == Keys.Enter) PasswordBox.Focus(); };
-        PasswordBox.KeyDown += (e, a) => { if (a.Key == Keys.Enter) LoginButton.Focus(); };
+        UsernameBox.KeyDown += (e, a) =>
+        {
+            if (a.Key == Keys.Enter)
+                PasswordBox.Focus();
+        };
+        PasswordBox.KeyDown += (e, a) =>
+        {
+            if (a.Key == Keys.Enter)
+                LoginButton.Focus();
+        };
         layout.Rows.Add(null);
         Content = layout;
     }

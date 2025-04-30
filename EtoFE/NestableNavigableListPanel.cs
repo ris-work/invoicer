@@ -157,9 +157,10 @@ namespace EtoFE
                 {
                     if (a.Key == Keys.Enter || a.Key == Keys.Space)
                     {
-                        
                         Button ClickedLabel = ((Button)e);
-                        var CurrentButtonHolderPanel = ButtonsContainer[Buttons.IndexOf(ClickedLabel)];
+                        var CurrentButtonHolderPanel = ButtonsContainer[
+                            Buttons.IndexOf(ClickedLabel)
+                        ];
                         //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
                         CurrentPanel.Content = (Control)
@@ -267,10 +268,9 @@ namespace EtoFE
             {
                 Text = " X ",
                 Font = new Eto.Drawing.Font("Gourier", 10),
-                MinimumSize = new Eto.Drawing.Size (30, 30),
+                MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = Eto.Drawing.Colors.DarkRed,
                 TextColor = Eto.Drawing.Colors.Black,
-                
             };
             EnableAccessibilityButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Black);
             //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
@@ -304,8 +304,22 @@ namespace EtoFE
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
-            var TopPanel = new StackLayout(EnableAccessibilityButton, null, null, QuitCurrentPanelButton, null) { Spacing = 10, Orientation = Orientation.Horizontal, Padding = 10 };
-            Content = new StackLayout(TopPanel, Inner) { HorizontalContentAlignment = HorizontalAlignment.Stretch};
+            var TopPanel = new StackLayout(
+                EnableAccessibilityButton,
+                null,
+                null,
+                QuitCurrentPanelButton,
+                null
+            )
+            {
+                Spacing = 10,
+                Orientation = Orientation.Horizontal,
+                Padding = 10,
+            };
+            Content = new StackLayout(TopPanel, Inner)
+            {
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            };
             Padding = 10;
             //Position
         }

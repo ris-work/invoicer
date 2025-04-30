@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Eto.Forms;
 using Eto.Drawing;
+using Eto.Forms;
 using Microsoft.Maui.Platform;
 
 namespace CommonUi
-{/*
+{ /*
     public class FocusableLabel : Drawable
     {
         // The text to display.

@@ -16,7 +16,9 @@ namespace InvoicerBackend
     public static class RegisterEndpoint
     {
         public delegate object Del(object o);
+
         public readonly record struct LoginDetails(long? UserId, string TokenId, string Principal);
+
         public delegate object DelWithDetails(object o, LoginDetails Login);
 
         public static WebApplication AddEndpoint<T>(
@@ -42,7 +44,6 @@ namespace InvoicerBackend
                 .WithOpenApi();
             return app;
         }
-
 
         public static WebApplication AddEndpointWithBearerAuth<T>(
             this WebApplication app,
@@ -71,7 +72,18 @@ namespace InvoicerBackend
                             );
                             if (AuthenticatedInner != null)
                             {
-                                return (Results.Json<object>(D(AuthenticatedInner, new LoginDetails(VerificationResultAndMessage.UserID, VerificationResultAndMessage.Token, VerificationResultAndMessage.Username))));
+                                return (
+                                    Results.Json<object>(
+                                        D(
+                                            AuthenticatedInner,
+                                            new LoginDetails(
+                                                VerificationResultAndMessage.UserID,
+                                                VerificationResultAndMessage.Token,
+                                                VerificationResultAndMessage.Username
+                                            )
+                                        )
+                                    )
+                                );
                             }
                         }
                         throw new UnauthorizedAccessException();
@@ -81,6 +93,7 @@ namespace InvoicerBackend
                 .WithOpenApi();
             return app;
         }
+
         public static WebApplication AddEndpointWithBearerAuth<T>(
             this WebApplication app,
             string Name,
@@ -108,7 +121,10 @@ namespace InvoicerBackend
                             );
                             if (AuthenticatedInner != null)
                             {
-                                return Results.Content(JsonSerializer.Serialize(D(AuthenticatedInner)), "application/json");
+                                return Results.Content(
+                                    JsonSerializer.Serialize(D(AuthenticatedInner)),
+                                    "application/json"
+                                );
                             }
                         }
                         throw new UnauthorizedAccessException();

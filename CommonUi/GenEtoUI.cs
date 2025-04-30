@@ -196,7 +196,10 @@ namespace CommonUi
         }
 
         public GenEtoUI(
-            IReadOnlyDictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)> Inputs,
+            IReadOnlyDictionary<
+                string,
+                (string ControlName, object Value, string? LookupFunctionCallback)
+            > Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
             IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
@@ -249,8 +252,8 @@ namespace CommonUi
                 )
                 {
                     if (
-                        kv.Value.Item2 == null ||
-                        kv.Value.Item2.GetType() == typeof(long)
+                        kv.Value.Item2 == null
+                        || kv.Value.Item2.GetType() == typeof(long)
                         || kv.Value.Item2.GetType() == typeof(Int64)
                     )
                     {
@@ -267,7 +270,7 @@ namespace CommonUi
                             };
                             EInput = new TextBox()
                             {
-                                Text = (kv.Value.Item2?? 0).ToString(),
+                                Text = (kv.Value.Item2 ?? 0).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
                             ((TextBox)EInput).TextInput += ChangedIndication;
@@ -410,8 +413,10 @@ namespace CommonUi
                 EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
                 _ELegends.Add(kv.Key, ELegend);
-                if (CurrentNo < EMid) EControlsL.Add(EControl);
-                else EControlsR.Add(EControl);
+                if (CurrentNo < EMid)
+                    EControlsL.Add(EControl);
+                else
+                    EControlsR.Add(EControl);
                 CurrentNo++;
             }
             _EControlsL = EControlsL;
@@ -495,10 +500,11 @@ namespace CommonUi
             {
                 Padding = 10,
                 Spacing = new Eto.Drawing.Size(10, 3),
-            }; ;
+            };
+            ;
 
             var GeneratedControls = tableLayout;
-            
+
             Content = new StackLayout(ActionButtons, GeneratedControls)
             {
                 Orientation = Orientation.Vertical,

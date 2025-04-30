@@ -153,7 +153,6 @@ namespace CommonUi
                 Padding = 5,
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
-                
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
@@ -175,8 +174,18 @@ namespace CommonUi
             RBLSearchPosition.Items.Add("StartsWith [F4]");
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
-            CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White, };
-            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White, };
+            CheckBox CBNormalizeSpelling = new CheckBox()
+            {
+                Text = "Normalize spelling [END]",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
+            CheckBox CBAnythingAnywhere = new CheckBox()
+            {
+                Text = "Anything Anywhere [BRK]",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
@@ -570,9 +579,11 @@ namespace CommonUi
             };
             var OthersContainer = new StackLayout()
             {
-                Items = { SearchOptions, 
-                    //GBExportOptions, 
-                    //GBPrintOptions 
+                Items =
+                {
+                    SearchOptions,
+                    //GBExportOptions,
+                    //GBPrintOptions
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
