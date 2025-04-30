@@ -71,7 +71,7 @@ namespace InvoicerBackend
                             );
                             if (AuthenticatedInner != null)
                             {
-                                return (D(AuthenticatedInner, new LoginDetails(VerificationResultAndMessage.UserID, VerificationResultAndMessage.Token, VerificationResultAndMessage.Username)));
+                                return (Results.Json<object>(D(AuthenticatedInner, new LoginDetails(VerificationResultAndMessage.UserID, VerificationResultAndMessage.Token, VerificationResultAndMessage.Username))));
                             }
                         }
                         throw new UnauthorizedAccessException();
@@ -108,7 +108,7 @@ namespace InvoicerBackend
                             );
                             if (AuthenticatedInner != null)
                             {
-                                return D(AuthenticatedInner);
+                                return Results.Content(JsonSerializer.Serialize(D(AuthenticatedInner)), "application/json");
                             }
                         }
                         throw new UnauthorizedAccessException();

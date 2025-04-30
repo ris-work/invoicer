@@ -424,16 +424,18 @@ app.AddEndpointWithBearerAuth<string>(
     "VIEW_SERVER_TIME"
 );
 
-app.AddEndpointWithBearerAuth<object>(
+app.AddEndpointWithBearerAuth<long>(
     "CatalogueRead",
     (R) =>
     {
+        Console.WriteLine($"==== REQUESTED CATALOGUE ID {R}");
         //var SafeR = ((Catalogue)R).RemoveField("Id");
         Catalogue A;
         using (var ctx = new NewinvContext())
         {
             A = ctx.Catalogues.Where(a => a.Itemcode == (long)R).First();
         }
+        Console.WriteLine($"CATALOGUE: Got: {A.Itemcode}, {A.Description}, {JsonSerializer.Serialize(A)}");
 
         return A;
     },

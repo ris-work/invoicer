@@ -36,7 +36,8 @@ namespace CommonUi
         private bool _new = false;
         private SaveHandler _SaveNewHandler;
         private SaveHandler _SaveExistingHandler;
-        List<Eto.Forms.TableRow> _EControls = new();
+        List<Eto.Forms.TableRow> _EControlsL = new();
+        List<Eto.Forms.TableRow> _EControlsR = new();
         Dictionary<string, Eto.Forms.Control> _Einputs = new();
         Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, bool> _EChangeTracker = new();
@@ -195,7 +196,7 @@ namespace CommonUi
         }
 
         public GenEtoUI(
-            IReadOnlyDictionary<string, (string, object, string?)> Inputs,
+            IReadOnlyDictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)> Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
             IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
@@ -218,12 +219,17 @@ namespace CommonUi
             //ForegroundColor = Eto.Drawing.Colors.Black;
             //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
             //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
-            List<Eto.Forms.TableRow> EControls = new();
+            List<Eto.Forms.TableRow> EControlsL = new();
+            List<Eto.Forms.TableRow> EControlsR = new();
             _Inputs = Inputs;
 
             var E = Inputs.AsEnumerable();
+            var ECount = E.Count();
+            var EMid = ECount / 2;
+            var CurrentNo = 0;
             foreach (var kv in E)
             {
+                Console.WriteLine($"Attempt to construct with: {kv.Key}");
                 (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) =
                     GetThemeForComponent(kv.Key);
                 var BackgroundColor = BG;
@@ -233,14 +239,17 @@ namespace CommonUi
                 Eto.Forms.TableRow EControl;
                 Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput = new Label();
+                Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
                 if (
-                    kv.Value.Item2.GetType() == typeof(long)
+                    kv.Value.Item2 == null
+                    || kv.Value.Item2.GetType() == typeof(long)
                     || kv.Value.Item2.GetType() == typeof(int)
                     || kv.Value.Item2.GetType() == typeof(double)
                     || kv.Value.Item2.GetType() == typeof(float)
                 )
                 {
                     if (
+                        kv.Value.Item2 == null ||
                         kv.Value.Item2.GetType() == typeof(long)
                         || kv.Value.Item2.GetType() == typeof(Int64)
                     )
@@ -258,7 +267,7 @@ namespace CommonUi
                             };
                             EInput = new TextBox()
                             {
-                                Text = (kv.Value.Item2).ToString(),
+                                Text = (kv.Value.Item2?? 0).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
                             ((TextBox)EInput).TextInput += ChangedIndication;
@@ -401,9 +410,12 @@ namespace CommonUi
                 EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
                 _ELegends.Add(kv.Key, ELegend);
-                EControls.Add(EControl);
+                if (CurrentNo < EMid) EControlsL.Add(EControl);
+                else EControlsR.Add(EControl);
+                CurrentNo++;
             }
-            _EControls = EControls;
+            _EControlsL = EControlsL;
+            _EControlsR = EControlsR;
 
             Button NewButton = new Button() { Text = "New" };
             Button SaveButton = new Button() { Text = "Save" };
@@ -447,11 +459,46 @@ namespace CommonUi
             {
                 Orientation = Orientation.Horizontal,
             };
-            var GeneratedControls = new TableLayout(_EControls.ToArray())
+
+            // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
+            // where each TableRow contains one control (accessible via [0])
+            var leftList = new TableLayout(EControlsL.ToList());
+            var rightList = new TableLayout(EControlsR.ToList());
+            //int maxCount = Math.Max(leftList.Count, rightList.Count);
+
+            /*var combinedRows = new List<TableRow>();
+
+            for (int i = 0; i < maxCount; i++)
+            {
+                // Get the left control if available; otherwise, use an empty placeholder.
+                var leftControlLabel = i < leftList.Count
+                    ? leftList[i].Cells[0]
+                    : new Panel { Width = 0, Height = 0 };
+                var leftControlControl = i < leftList.Count
+                    ? leftList[i].Cells[1]
+                    : new Panel { Width = 0, Height = 0 };
+
+                // Get the right control if available; otherwise, use an empty placeholder.
+                var rightControlLabel = i < rightList.Count
+                    ? rightList[i]
+                    : new Panel { Width = 0, Height = 0 };
+                var rightControlControl = i < rightList.Count
+                    ? rightList[i]
+                    : new Panel { Width = 0, Height = 0 };
+
+                // Create a new row with two columns: left and right.
+                combinedRows.Add(new TableRow(leftControlLabel, leftControlControl, rightControlLabel, rightControlControl));
+            }*/
+
+            // Create the TableLayout and assign the combined rows.
+            var tableLayout = new TableLayout(new TableRow(leftList, rightList))
             {
                 Padding = 10,
                 Spacing = new Eto.Drawing.Size(10, 3),
-            };
+            }; ;
+
+            var GeneratedControls = tableLayout;
+            
             Content = new StackLayout(ActionButtons, GeneratedControls)
             {
                 Orientation = Orientation.Vertical,
