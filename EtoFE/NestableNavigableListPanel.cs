@@ -72,9 +72,9 @@ namespace EtoFE
                 Button B = new Button() { Text = LoadOncePanel.Item1 };
                 B.DisableHoverBackgroundChange(Eto.Drawing.Colors.PaleVioletRed);
                 //B.VerticalAlignment = VerticalAlignment.Center;
-                B.Height = 50;
+                B.Height = 35;
 
-                B.Font = new Eto.Drawing.Font("Gourier", 12) { };
+                B.Font = new Eto.Drawing.Font("Gourier", 10) { };
                 B.TextColor = Eto.Drawing.Colors.White;
                 B.Enabled = true;
                 B.BackgroundColor = Eto.Drawing.Colors.Black;

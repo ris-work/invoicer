@@ -19,6 +19,7 @@ namespace EtoFE
         {
             this.ApplyDarkThemeForScrollBarsAndGridView();
             this.ApplyDarkTheme();
+            this.MinimumSize = new Eto.Drawing.Size(1280,720);
             Title = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, 600);
@@ -39,7 +40,7 @@ namespace EtoFE
                 new List<(string, object)>()
                 {
                     (
-                        $" 🕸 Network Ping Stats 💾{Environment.NewLine}    (by decaseconds (10 sec)) ",
+                        $" 📦 Inventory ",
                         (
                             new LoadOncePanel<Panel>(
                                 new NestableNavigableListPanel(
@@ -74,10 +75,10 @@ namespace EtoFE
                             )
                         )
                     ),
-                    (" ⏱ Network Ping Stats (by hour) ", (new LoadOncePanel<Panel>())),
-                    (" 📃 Process Stats ", (new LoadOncePanel<Panel>())),
-                    (" ⚙ Process Stats (Advanced) ", (new LoadOncePanel<Panel>())),
-                    (" 🖥 Machine Stats ", (new LoadOncePanel<Panel>())),
+                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>())),
+                    ($" 👥 HR / {Environment.NewLine} Employees  ", (new LoadOncePanel<Panel>())),
+                    ($" 🤝 CRM {Environment.NewLine} (Customer Management)  ", (new LoadOncePanel<Panel>())),
+                    ($" ⚙️ Administration / {Environment.NewLine} Settings  ", (new LoadOncePanel<Panel>())),
                     (" 🎫 About ", (new LoadOncePanel<Panel>())),
                 }
             ).ToArray();
@@ -117,7 +118,7 @@ namespace EtoFE
             {
                 Label B = new Label() { Text = LoadOncePanel.Item1 };
                 B.VerticalAlignment = VerticalAlignment.Center;
-                B.Height = 50;
+                B.Height = 60;
 
                 B.Font = new Eto.Drawing.Font("Gourier", 12) { };
                 B.TextColor = Eto.Drawing.Colors.White;
@@ -222,14 +223,14 @@ namespace EtoFE
                 new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray())
                 {
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                    Spacing = 5,
+                    Spacing = 4,
                 },
                 new Button() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
                 new StackLayoutItem(CurrentPanel)
             )
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 10,
+                Spacing = 4,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
             };
             var TopPanel = new StackLayout(
