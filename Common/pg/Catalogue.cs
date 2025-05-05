@@ -36,4 +36,6 @@ public partial class Catalogue
     public long PermissionsCategory { get; set; }
 
     public long CategoriesBitmask { get; set; }
+
+    public bool ProcessDiscounts { get; set; }
 }

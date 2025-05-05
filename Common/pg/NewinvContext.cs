@@ -39,6 +39,12 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Inventory> Inventories { get; set; }
 
+    public virtual DbSet<IssuedInvoice> IssuedInvoices { get; set; }
+
+    public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
+
+    public virtual DbSet<LoyaltyPointsRedemption> LoyaltyPointsRedemptions { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<NotificationServicerType> NotificationServicerTypes { get; set; }
@@ -53,9 +59,13 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
 
+    public virtual DbSet<Receipt> Receipts { get; set; }
+
     public virtual DbSet<Request> Requests { get; set; }
 
     public virtual DbSet<RequestsBad> RequestsBads { get; set; }
+
+    public virtual DbSet<Sale> Sales { get; set; }
 
     public virtual DbSet<Sih> Sihs { get; set; }
 
@@ -67,12 +77,15 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<UserAuthorization> UserAuthorizations { get; set; }
 
+    public virtual DbSet<UsersFieldLevelAccessControlsDenyList> UsersFieldLevelAccessControlsDenyLists { get; set; }
+
     public virtual DbSet<VatCategory> VatCategories { get; set; }
 
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+
     {
         optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
@@ -234,6 +247,10 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("price_manual");
             entity
+                .Property(e => e.ProcessDiscounts)
+                .HasDefaultValue(true)
+                .HasColumnName("process_discounts");
+            entity
                 .Property(e => e.VatCategoryAdjustable)
                 .HasDefaultValue(false)
                 .HasColumnName("vat_category_adjustable");
@@ -349,6 +366,60 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("volume_discounts");
         });
 
+        modelBuilder.Entity<IssuedInvoice>(entity =>
+        {
+            entity.HasKey(e => e.InvoiceId).HasName("issued_invoices_pkey");
+
+            entity.ToTable("issued_invoices", tb => tb.HasComment("Issued invoices only"));
+
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.Customer).HasColumnName("customer");
+            entity.Property(e => e.InvoiceHumanFriendly).HasColumnName("invoice_human_friendly");
+            entity
+                .Property(e => e.InvoiceTime)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("invoice_time");
+            entity.Property(e => e.IsSettled).HasColumnName("is_settled");
+            entity.Property(e => e.IssuedValue).HasColumnName("issued_value");
+            entity.Property(e => e.PaidValue).HasColumnName("paid_value");
+        });
+
+        modelBuilder.Entity<LoyaltyPoint>(entity =>
+        {
+            entity.HasKey(e => e.PointsId).HasName("loyality_points_pkey");
+
+            entity.ToTable("loyalty_points");
+
+            entity
+                .Property(e => e.PointsId)
+                .HasDefaultValueSql("nextval('loyality_points_points_id_seq'::regclass)")
+                .HasColumnName("points_id");
+            entity.Property(e => e.CustId).HasColumnName("cust_id");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.ValidFrom)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("valid_from");
+            entity.Property(e => e.ValidUntil).HasColumnName("valid_until");
+        });
+
+        modelBuilder.Entity<LoyaltyPointsRedemption>(entity =>
+        {
+            entity.HasKey(e => e.RedemptionId).HasName("loyalty_points_redemption_pkey");
+
+            entity.ToTable("loyalty_points_redemption");
+
+            entity.Property(e => e.RedemptionId).HasColumnName("redemption_id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.CustId).HasColumnName("cust_id");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.TimeIssued)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("time_issued");
+        });
+
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.NotifId).HasName("notifications_pkey");
@@ -458,28 +529,103 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Categories).HasDefaultValue(0L).HasColumnName("categories");
         });
 
+        modelBuilder.Entity<Receipt>(entity =>
+        {
+            entity.HasKey(e => e.ReceiptId).HasName("receipts_pkey");
+
+            entity.ToTable("receipts");
+
+            entity.Property(e => e.ReceiptId).HasColumnName("receipt_id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.TimeReceived)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("time_received");
+        });
+
         modelBuilder.Entity<Request>(entity =>
         {
             entity.HasNoKey().ToTable("requests");
 
+            entity.Property(e => e.Endpoint).HasColumnName("endpoint");
             entity.Property(e => e.Principal).HasColumnName("principal");
+            entity
+                .Property(e => e.ProvidedPrivilegeLevels)
+                .HasColumnName("provided_privilege_levels");
             entity.Property(e => e.RequestBody).HasColumnName("request_body");
+            entity.Property(e => e.RequestedAction).HasColumnName("requested_action");
+            entity
+                .Property(e => e.RequestedPrivilegeLevel)
+                .HasColumnName("requested_privilege_level");
             entity
                 .Property(e => e.TimeTai)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("time with time zone")
                 .HasColumnName("time_tai");
             entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.Type).HasColumnName("type");
         });
 
         modelBuilder.Entity<RequestsBad>(entity =>
         {
             entity.HasNoKey().ToTable("requests_bad");
 
+            entity.Property(e => e.Endpoint).HasColumnName("endpoint");
             entity.Property(e => e.Principal).HasColumnName("principal");
+            entity
+                .Property(e => e.ProvidedPrivilegeLevels)
+                .HasColumnName("provided_privilege_levels");
             entity.Property(e => e.RequestBody).HasColumnName("request_body");
+            entity.Property(e => e.RequestedAction).HasColumnName("requested_action");
+            entity
+                .Property(e => e.RequestedPrivilegeLevel)
+                .HasColumnName("requested_privilege_level");
             entity.Property(e => e.TimeTai).HasDefaultValueSql("now()").HasColumnName("time_tai");
             entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.Type).HasColumnName("type");
+        });
+
+        modelBuilder.Entity<Sale>(entity =>
+        {
+            entity.HasKey(e => e.SaleId).HasName("sales_pkey");
+
+            entity.ToTable("sales", tb => tb.HasComment("Sales data go here"));
+
+            entity.Property(e => e.SaleId).HasColumnName("sale_id");
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity
+                .Property(e => e.ClientRecordedTimeClosing)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("client_recorded_time_closing");
+            entity
+                .Property(e => e.ClientRecordedTimeOpening)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("client_recorded_time_opening");
+            entity.Property(e => e.Discount).HasColumnName("discount");
+            entity.Property(e => e.DiscountRate).HasColumnName("discount_rate");
+            entity
+                .Property(e => e.EnteredAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("entered_at");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.LoyalityPointsIssued).HasColumnName("loyality_points_issued");
+            entity
+                .Property(e => e.LoyalityPointsPercentage)
+                .HasColumnName("loyality_points_percentage");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Remarks).HasColumnName("remarks");
+            entity.Property(e => e.SalesHumanFriendly).HasColumnName("sales_human_friendly");
+            entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
+            entity
+                .Property(e => e.TotalEffectiveSellingPrice)
+                .HasColumnName("total_effective_selling_price");
+            entity.Property(e => e.VatAsCharged).HasColumnName("vat_as_charged");
+            entity.Property(e => e.VatCategory).HasColumnName("vat_category");
+            entity.Property(e => e.VatRatePercentage).HasColumnName("vat_rate_percentage");
         });
 
         modelBuilder.Entity<Sih>(entity =>
@@ -565,6 +711,14 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.UserDefaultCap)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("user_default_cap");
+        });
+
+        modelBuilder.Entity<UsersFieldLevelAccessControlsDenyList>(entity =>
+        {
+            entity.HasNoKey().ToTable("users_field_level_access_controls_deny_list");
+
+            entity.Property(e => e.DeniedField).HasColumnName("denied_field");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
         modelBuilder.Entity<VatCategory>(entity =>

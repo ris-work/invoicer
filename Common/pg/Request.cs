@@ -12,4 +12,14 @@ public partial class Request
     public string Token { get; set; } = null!;
 
     public string RequestBody { get; set; } = null!;
+
+    public string? Type { get; set; }
+
+    public string? RequestedAction { get; set; }
+
+    public string? RequestedPrivilegeLevel { get; set; }
+
+    public string? Endpoint { get; set; }
+
+    public string? ProvidedPrivilegeLevels { get; set; }
 }
