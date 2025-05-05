@@ -129,6 +129,7 @@ namespace EtoFE
             };
 
             Content = new StackLayout(SearchBox, ScrollableLower);
+            //this.ApplyDarkTheme();
         }
     }
 }

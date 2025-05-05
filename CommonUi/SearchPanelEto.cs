@@ -132,6 +132,7 @@ namespace CommonUi
             bool Debug = true
         )
         {
+            
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
             OptimizedCatalogue = SC.Select(e =>
                     (
@@ -147,6 +148,10 @@ namespace CommonUi
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             GridView Results = new GridView();
+            Results.ApplyDarkThemeScrollBars();
+            Results.DisableLines();
+            Results.ApplyDarkGridHeaders();
+            //this.ApplyDark
             RadioButtonList RBLSearchCriteria = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
@@ -319,6 +324,11 @@ namespace CommonUi
 
             Results.Enabled = true;
             Results.ApplyDarkGridHeaders();
+            Results.ApplyDarkThemeScrollBars2();
+            Results.ForceDarkThemeScrollBarArrows();
+            Results.ForceDarkThemeScrollBarThumbs();
+            Results.ApplyScrollBarLineButtonStyle();
+            Results.ApplyScrollBarThumbStyle();
             Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(

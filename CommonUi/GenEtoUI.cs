@@ -75,28 +75,28 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "foreground_color",
-                Eto.Drawing.Colors.DarkBlue
+                Eto.Drawing.Colors.White
             );
             Color BG = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color",
-                Eto.Drawing.Colors.White
+                Eto.Drawing.Colors.DarkBlue
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "foreground_color_changed",
-                Eto.Drawing.Colors.DarkSlateGray
+                Eto.Drawing.Colors.LightYellow
             );
             Color BGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color_changed",
-                Eto.Drawing.Colors.LightYellow
+                Eto.Drawing.Colors.DarkSlateGray
             );
             Font EFont = EtoThemingUtilities.GetNestedFont(
                 Configuration,
@@ -230,6 +230,8 @@ namespace CommonUi
             var ECount = E.Count();
             var EMid = ECount / 2;
             var CurrentNo = 0;
+            (var LegendFG, var LegendBG, var LegendFGc, var LegendBGc, var LegendTFont, var LehendTSize, var LegendCSize) =
+                    GetThemeForComponent("Legend");
             foreach (var kv in E)
             {
                 Console.WriteLine($"Attempt to construct with: {kv.Key}");
@@ -410,8 +412,15 @@ namespace CommonUi
                     ((TextBox)EInput).Font = TFont;
                 }
                 EInput.Width = 300;
-                EControl = new TableRow(new Label() { Text = kv.Value.Item1 }, EInput, ELegend) { };
+                Label EFieldName = new Label() { Text = kv.Value.Item1, TextColor = Eto.Drawing.Colors.White };
+                EControl = new TableRow(EFieldName, EInput, ELegend) { };
                 _Einputs.Add(kv.Key, EInput);
+                if (EFieldName != null)
+                {
+                    EFieldName.BackgroundColor = LegendBG;
+                    EFieldName.TextColor = LegendFG;
+                    EFieldName.Font = LegendTFont;
+                }
                 _ELegends.Add(kv.Key, ELegend);
                 if (CurrentNo < EMid)
                     EControlsL.Add(EControl);

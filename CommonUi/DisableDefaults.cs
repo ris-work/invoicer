@@ -7,7 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Eto.Forms;
+
+
 #if WINDOWS
+using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
+
+
 using System.Windows.Controls;
 using System.Windows.Media;
 #endif
@@ -97,7 +103,7 @@ namespace CommonUi
                 WpfGW.GridLinesVisibility = DataGridGridLinesVisibility.None;
 
                 WpfGW.CellStyle = null;
-                WpfGW.Columns.First().CellStyle = null;
+                //WpfGW.Columns.First().CellStyle = null;
                 Setter setter = new Setter(
                     DataGridCell.BorderBrushProperty,
                     System.Windows.Media.Brushes.Transparent
@@ -383,5 +389,307 @@ namespace CommonUi
             }
 #endif
         }
+
+        public static void ApplyDarkThemeScrollBars(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // Check if we're running on the WPF backend.
+            var platformStr = Eto.Platform.Instance.ToString();
+            if (platformStr == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Convert Eto GridView to its native WPF DataGrid.
+                System.Windows.Controls.DataGrid wpfGrid =
+                    (System.Windows.Controls.DataGrid)(System.Windows.FrameworkElement)
+                    Eto.Forms.WpfHelpers.ToNative(gridView, false);
+
+                // Force the control to generate its template.
+                wpfGrid.ApplyTemplate();
+                wpfGrid.UpdateLayout();
+
+                // Use the Dispatcher to wait until the visual tree is loaded.
+                wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    System.Windows.Controls.ScrollViewer scrollViewer = null;
+                    // Safely retrieve the template.
+                    var template = wpfGrid.Template;
+                    if (template != null)
+                    {
+                        // Attempt to find the ScrollViewer by name.
+                        scrollViewer = template.FindName("DG_ScrollViewer", wpfGrid) as System.Windows.Controls.ScrollViewer;
+                    }
+
+                    // If found, apply dark theme styling to scrollbars.
+                    if (scrollViewer != null)
+                    {
+                        ApplyDarkScrollBars(scrollViewer);
+                    }
+                    else
+                    {
+                        // Fallback: search the entire visual tree.
+                        ApplyDarkScrollBars(wpfGrid);
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+#endif
+        }
+
+#if WINDOWS
+        private static void ApplyDarkScrollBars(System.Windows.DependencyObject d)
+        {
+            int childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(d);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(d, i);
+                if (child is System.Windows.Controls.Primitives.ScrollBar sb)
+                {
+                    // Adjust these brushes to your desired dark theme.
+                    sb.Background = System.Windows.Media.Brushes.DarkSlateGray;
+                    sb.Foreground = System.Windows.Media.Brushes.WhiteSmoke;
+                }
+                // Recurse through the visual tree.
+                ApplyDarkScrollBars(child);
+            }
+        }
+#endif
+
+        public static void ApplyDarkThemeScrollBars2(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // This code runs only when on the WPF backend.
+            var platformStr = Eto.Platform.Instance.ToString();
+            if (platformStr == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Get the native control from the Eto handle.
+                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
+                {
+                    // Create a style for the ScrollBar type.
+                    var scrollBarStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar));
+                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.Control.BackgroundProperty,
+                        System.Windows.Media.Brushes.DarkSlateGray));
+                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.Control.ForegroundProperty,
+                        System.Windows.Media.Brushes.WhiteSmoke));
+                    // Optionally, adjust the border colors or other properties.
+                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
+                        System.Windows.Controls.Control.BorderBrushProperty,
+                        System.Windows.Media.Brushes.Black));
+
+                    // Inject the style into the DataGrid's resources.
+                    // This way, when the grid creates its scrollbars (even later), they will pick up this style.
+                    wpfGrid.Resources[typeof(System.Windows.Controls.Primitives.ScrollBar)] = scrollBarStyle;
+                }
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Forcefully applies dark styling to the arrow buttons (WPF RepeatButton) used in scrollbars.
+        /// </summary>
+        public static void ForceDarkThemeScrollBarArrows(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // Ensure we're running with the WPF backend.
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Get the native control from the Eto handle.
+                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
+                {
+                    // Run when the visual tree has been loaded.
+                    wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        // Look for all RepeatButton controls (i.e. arrow buttons) within the grid.
+                        foreach (var arrow in FindVisualChildren<System.Windows.Controls.Primitives.RepeatButton>(wpfGrid))
+                        {
+                            // Create a new style for RepeatButton.
+                            var arrowStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton));
+                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BackgroundProperty, System.Windows.Media.Brushes.DimGray));
+                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BorderBrushProperty, System.Windows.Media.Brushes.Black));
+                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.ForegroundProperty, System.Windows.Media.Brushes.WhiteSmoke));
+
+                            // Directly assign the style.
+                            arrow.Style = arrowStyle;
+                            arrow.ApplyTemplate();
+                        }
+                    }), DispatcherPriority.Loaded);
+                }
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Forcefully applies dark styling to the thumb (WPF Thumb) used in scrollbars.
+        /// </summary>
+        public static void ForceDarkThemeScrollBarThumbs(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // Ensure that the backend is WPF.
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Get the native control from the Eto handle.
+                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
+                {
+                    // Use the Dispatcher to ensure the visual tree is complete.
+                    wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        // Find all Thumb controls (the draggable parts of scrollbars) in the visual tree.
+                        foreach (var thumb in FindVisualChildren<System.Windows.Controls.Primitives.Thumb>(wpfGrid))
+                        {
+                            // Create a new style for the Thumb.
+                            var thumbStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.Thumb));
+                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BackgroundProperty, System.Windows.Media.Brushes.Gray));
+                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BorderBrushProperty, System.Windows.Media.Brushes.Black));
+                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.ForegroundProperty, System.Windows.Media.Brushes.WhiteSmoke));
+
+                            // Directly assign the style.
+                            thumb.Style = thumbStyle;
+                            thumb.ApplyTemplate();
+                        }
+                    }), DispatcherPriority.Loaded);
+                }
+            }
+#endif
+        }
+
+#if WINDOWS
+        /// <summary>
+        /// Recursively finds all visual children of a given type.
+        /// </summary>
+        private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject depObj) where T : System.Windows.DependencyObject
+        {
+            if (depObj != null)
+            {
+                int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(depObj);
+                for (int i = 0; i < count; i++)
+                {
+                    System.Windows.DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(depObj, i);
+                    if (child is T typedChild)
+                    {
+                        yield return typedChild;
+                    }
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
+        }
+#endif
+    
+
+        /// <summary>
+    /// Applies a dark-themed Thumb style to the scrollbar by replacing its default ControlTemplate.
+    /// This replicates the XAML style defined by your "ScrollBarThumb" resource.
+    /// </summary>
+    public static void ApplyScrollBarThumbStyle(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // Execute only if running on the WPF backend.
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Retrieve the native WPF control from the Eto handle.
+                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
+                {
+                    // Create a new style for System.Windows.Controls.Primitives.Thumb.
+                    var thumbStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.Thumb));
+
+                    // Set basic properties.
+                    thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.UIElement.SnapsToDevicePixelsProperty, true));
+                    thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.OverridesDefaultStyleProperty, true));
+                    thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.IsTabStopProperty, false));
+                    thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.FocusableProperty, false));
+
+                    // Create the ControlTemplate that replicates:
+                    // <Border CornerRadius="2" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" />
+                    var thumbTemplate = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Primitives.Thumb));
+                    var borderFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
+                    borderFactory.SetValue(System.Windows.Controls.Border.CornerRadiusProperty, new System.Windows.CornerRadius(2));
+                    borderFactory.SetValue(System.Windows.Controls.Border.BackgroundProperty,
+                        new System.Windows.TemplateBindingExtension(System.Windows.Controls.Control.BackgroundProperty));
+                    borderFactory.SetValue(System.Windows.Controls.Border.BorderBrushProperty,
+                        new System.Windows.TemplateBindingExtension(System.Windows.Controls.Control.BorderBrushProperty));
+                    borderFactory.SetValue(System.Windows.Controls.Border.BorderThicknessProperty, new System.Windows.Thickness(1));
+                    thumbTemplate.VisualTree = borderFactory;
+
+                    thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.TemplateProperty, thumbTemplate));
+
+                    // Inject the style into the DataGrid's resource dictionary so that every Thumb will use it.
+                    wpfGrid.Resources[typeof(System.Windows.Controls.Primitives.Thumb)] = thumbStyle;
+                }
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Applies a dark-themed LineButton style to the scrollbar arrows by replacing their default ControlTemplate.
+        /// This replicates the XAML style defined by your "ScrollBarLineButton" resource.
+        /// </summary>
+        public static void ApplyScrollBarLineButtonStyle(this Eto.Forms.GridView gridView)
+        {
+#if WINDOWS
+            // Execute only on the WPF backend.
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                // Retrieve the native WPF control.
+                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
+                {
+                    // Create a new style for System.Windows.Controls.Primitives.RepeatButton.
+                    var lineButtonStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton));
+
+                    // Set the basic properties.
+                    lineButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.UIElement.SnapsToDevicePixelsProperty, true));
+                    lineButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.OverridesDefaultStyleProperty, true));
+                    lineButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.FocusableProperty, false));
+
+                    // Create the ControlTemplate.
+                    // This replicates:
+                    // <Border x:Name="Border" Margin="1" CornerRadius="2" BorderThickness="1">
+                    //   <Border.BorderBrush>
+                    //     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    //       <GradientStop Color="{DynamicResource BorderMediumColor}" Offset="0.0" />
+                    //       <!-- (Additional stops omitted for brevity) -->
+                    //     </LinearGradientBrush>
+                    //   </Border.BorderBrush>
+                    //   <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    // </Border>
+                    var buttonTemplate = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Primitives.RepeatButton));
+                    var borderFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
+                    borderFactory.SetValue(System.Windows.Controls.Border.MarginProperty, new System.Windows.Thickness(1));
+                    borderFactory.SetValue(System.Windows.Controls.Border.CornerRadiusProperty, new System.Windows.CornerRadius(2));
+                    borderFactory.SetValue(System.Windows.Controls.Border.BorderThicknessProperty, new System.Windows.Thickness(1));
+
+                    // Build a simple LinearGradientBrush (you could refine this further).
+                    var gradientBrush = new System.Windows.Media.LinearGradientBrush();
+                    gradientBrush.StartPoint = new System.Windows.Point(0, 0);
+                    gradientBrush.EndPoint = new System.Windows.Point(0, 1);
+                    // Using example colors from your XML:
+                    // ControlMediumColor: #FF7381F9 and ControlDarkColor: #FF211AA9.
+                    gradientBrush.GradientStops.Add(new System.Windows.Media.GradientStop(
+                        System.Windows.Media.Color.FromArgb(0xFF, 0x73, 0x81, 0xF9), 0.0));
+                    gradientBrush.GradientStops.Add(new System.Windows.Media.GradientStop(
+                        System.Windows.Media.Color.FromArgb(0xFF, 0x21, 0x1A, 0xA9), 1.0));
+                    borderFactory.SetValue(System.Windows.Controls.Border.BorderBrushProperty, gradientBrush);
+
+                    // Add a ContentPresenter so any arrow glyph is centered.
+                    var cpFactory = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.ContentPresenter));
+                    cpFactory.SetValue(System.Windows.Controls.ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+                    cpFactory.SetValue(System.Windows.Controls.ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
+                    borderFactory.AppendChild(cpFactory);
+
+                    buttonTemplate.VisualTree = borderFactory;
+
+                    lineButtonStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.TemplateProperty, buttonTemplate));
+
+                    // Inject the style.
+                    wpfGrid.Resources[typeof(System.Windows.Controls.Primitives.RepeatButton)] = lineButtonStyle;
+                }
+            }
+#endif
+        }
     }
-}
+    }

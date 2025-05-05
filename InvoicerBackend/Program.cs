@@ -461,6 +461,19 @@ app.AddEndpointWithBearerAuth<object>(
 );
 
 app.AddEndpointWithBearerAuth<string>(
+    "GetMyDenyList",
+    (AS, LoginInfo) => {
+        string [] DeniedList;
+        using (var ctx = new NewinvContext())
+        {
+            DeniedList = ctx.UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId).Select(e => e.DeniedField).ToArray();
+        }
+        return DeniedList;
+    },
+    "Refresh"
+    );
+
+app.AddEndpointWithBearerAuth<string>(
     "PosRefreshBearerAuth",
     (AS, LoginInfo) =>
     {
