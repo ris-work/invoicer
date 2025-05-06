@@ -19,6 +19,9 @@ namespace EtoFE
         {
             this.ApplyDarkThemeForScrollBarsAndGridView();
             this.ApplyDarkTheme();
+            //DisableDefaults.ApplyGlobalScrollBarArrowStyle();
+            //DisableDefaults.ApplyGlobalScrollBarThumbStyle();
+            //DisableDefaults.ApplyGlobalScrollBarPageButtonStyle();
             this.MinimumSize = new Eto.Drawing.Size(1280,720);
             Title = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };

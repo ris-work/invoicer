@@ -45,6 +45,7 @@ public class Program
     [STAThread]
     public static void Main()
     {
+
         var CH = new HttpClientHandler();
         CH.AutomaticDecompression = DecompressionMethods.All;
         client = new HttpClient(CH);
@@ -57,11 +58,17 @@ public class Program
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json")
         );
+        // For debugging: List all manifest resources:
+#if WINDOWS
+        ResourceDebugger.ListManifestResourceNames();
+        ResourceDebugger.ListGResources();
+#endif
         string CurrentUI = Eto.Platforms.Wpf;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
-        new Application(CurrentUI).Run(new MyForm());
+
+        (new Application(CurrentUI)).Run(new MyForm());
 
         if (EnableTUI)
         {
@@ -77,6 +84,8 @@ public class MyForm : Form
 {
     public bool Login(String Username, String Password, String Terminal)
     {
+        //CommonUi.DisableDefaults.ApplyGlobalScrollBarThumbStyle();
+        //CommonUi.DisableDefaults.ApplyGlobalScrollBarPageButtonStyle();
         LoginToken logint = null;
         LoginCredentials l = new(Username, Password, Terminal, null);
         try
@@ -134,6 +143,11 @@ public class MyForm : Form
 
     public MyForm()
     {
+#if WINDOWS
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml", UriKind.Absolute) });
+        //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml", UriKind.Absolute) });
+#endif
         Eto.Style.Add<Label>(
             "mono",
             label =>
@@ -288,5 +302,13 @@ public class MyForm : Form
         };
         layout.Rows.Add(null);
         Content = layout;
+        //var app = Application.Current;
+#if WINDOWS
+        ResourceHelper.PrintAllApplicationResourceDictionaries();
+#endif
+#if WINDOWS
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml", UriKind.Absolute) });
+        //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
+#endif
     }
 }

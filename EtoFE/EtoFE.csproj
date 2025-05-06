@@ -12,27 +12,66 @@
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
     </PropertyGroup>
+	<PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
     <ItemGroup>
         <Compile Remove="Themes\**" />
+        <Compile Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <Compile Remove="theming\WpfPlus\WpfPlus\Controls\**" />
+        <Compile Remove="theming\WpfPlus\WpfPlus\MvvmHelpers\**" />
+        <Compile Remove="theming\WpfPlus\WpfPlus\Properties\**" />
+
         <Compile Remove="WPFDarkTheme\**" />
         <EmbeddedResource Remove="Themes\**" />
+        <EmbeddedResource Remove="theming\WpfPlus\ToolkitDemo\**" />
+
         <EmbeddedResource Remove="WPFDarkTheme\**" />
         <MauiCss Remove="Themes\**" />
+        <MauiCss Remove="theming\WpfPlus\ToolkitDemo\**" />
         <MauiCss Remove="WPFDarkTheme\**" />
         <MauiXaml Remove="Themes\**" />
+        <MauiXaml Remove="theming\WpfPlus\ToolkitDemo\**" />
         <MauiXaml Remove="WPFDarkTheme\**" />
         <None Remove="Themes\**" />
+        <None Remove="theming\WpfPlus\ToolkitDemo\**" />
+
         <None Remove="WPFDarkTheme\**" />
+
+        <Page Remove="theming\WpfPlus\ToolkitDemo\**" />
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="DisableDefaults.cs" />
         <Compile Remove="SearchDialog.cs" />
+        <Compile Remove="theming\WpfPlus\WpfPlus\DarkTheme.xaml.cs" />
+        <Compile Remove="theming\WpfPlus\WpfPlus\LightTheme.xaml.cs" />
     </ItemGroup>
     <ItemGroup>
         <MauiXaml Remove="ControlColours.xaml" />
         <MauiXaml Remove="Controls.xaml" />
         <MauiXaml Remove="DarkTheme.xaml" />
+        <MauiXaml Remove="DT2.xaml" />
         <MauiXaml Remove="SoftDark.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Brushes\ThemeBrushes.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Colors\DarkColors.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Colors\LightColors.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\DarkTheme.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\LightTheme.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\ButtonStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\CheckBoxStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\ComboBoxStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\DataGridStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\GridSplitterStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\GroupBoxStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\Helpers.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\ListBoxStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\RadioButtonStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\ScrollBarStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\ScrollViewerStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\Styles.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\TabControlStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\TextBoxStyle.xaml" />
+        <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
@@ -78,5 +117,27 @@
             <Private>True</Private>
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+      <!--<Page Include="theming\WpfPlus\WpfPlus\Brushes\ThemeBrushes.xaml" />-->
+      <!--<Page Include="theming\WpfPlus\WpfPlus\Colors\DarkColors.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Colors\LightColors.xaml" />-->
+      <!--<Page Include="theming\WpfPlus\WpfPlus\DarkTheme.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\LightTheme.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\ButtonStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\CheckBoxStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\ComboBoxStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\DataGridStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\GridSplitterStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\GroupBoxStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\Helpers.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\ListBoxStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\RadioButtonStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\ScrollBarStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\ScrollViewerStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\Styles.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\TabControlStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\TextBoxStyle.xaml" />
+      <Page Include="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />-->
     </ItemGroup>
 </Project>

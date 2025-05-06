@@ -148,7 +148,7 @@ namespace CommonUi
             Label SL = new Label() { Text = "Search for: " };
             Label LabelResults = new Label() { Text = "Results: " };
             GridView Results = new GridView();
-            Results.ApplyDarkThemeScrollBars();
+            //Results.ApplyDarkThemeScrollBars();
             Results.DisableLines();
             Results.ApplyDarkGridHeaders();
             //this.ApplyDark
@@ -324,12 +324,12 @@ namespace CommonUi
 
             Results.Enabled = true;
             Results.ApplyDarkGridHeaders();
-            Results.ApplyDarkThemeScrollBars2();
-            Results.ForceDarkThemeScrollBarArrows();
-            Results.ForceDarkThemeScrollBarThumbs();
-            Results.ApplyScrollBarLineButtonStyle();
-            Results.ApplyScrollBarThumbStyle();
-            Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
+            //Results.ApplyDarkThemeScrollBars2();
+            //Results.ForceDarkThemeScrollBarArrows();
+            //Results.ForceDarkThemeScrollBarThumbs();
+            //ApplyScrollBarLineButtonStyle();
+            //ApplyScrollBarThumbStyle();
+            Results.BackgroundColor = Eto.Drawing.Colors.Black;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
