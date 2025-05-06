@@ -22,7 +22,7 @@ namespace EtoFE
             //DisableDefaults.ApplyGlobalScrollBarArrowStyle();
             //DisableDefaults.ApplyGlobalScrollBarThumbStyle();
             //DisableDefaults.ApplyGlobalScrollBarPageButtonStyle();
-            this.MinimumSize = new Eto.Drawing.Size(1280,720);
+            this.MinimumSize = new Eto.Drawing.Size(1280, 720);
             Title = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, 600);
@@ -80,8 +80,14 @@ namespace EtoFE
                     ),
                     (" 💰 Accounts  ", (new LoadOncePanel<Panel>())),
                     ($" 👥 HR / {Environment.NewLine} Employees  ", (new LoadOncePanel<Panel>())),
-                    ($" 🤝 CRM {Environment.NewLine} (Customer Management)  ", (new LoadOncePanel<Panel>())),
-                    ($" ⚙️ Administration / {Environment.NewLine} Settings  ", (new LoadOncePanel<Panel>())),
+                    (
+                        $" 🤝 CRM {Environment.NewLine} (Customer Management)  ",
+                        (new LoadOncePanel<Panel>())
+                    ),
+                    (
+                        $" ⚙️ Administration / {Environment.NewLine} Settings  ",
+                        (new LoadOncePanel<Panel>())
+                    ),
                     (" 🎫 About ", (new LoadOncePanel<Panel>())),
                 }
             ).ToArray();

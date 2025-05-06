@@ -45,7 +45,6 @@ public class Program
     [STAThread]
     public static void Main()
     {
-
         var CH = new HttpClientHandler();
         CH.AutomaticDecompression = DecompressionMethods.All;
         client = new HttpClient(CH);
@@ -144,9 +143,25 @@ public class MyForm : Form
     public MyForm()
     {
 #if WINDOWS
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml", UriKind.Absolute) });
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+            new System.Windows.ResourceDictionary
+            {
+                Source = new Uri(
+                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                    UriKind.Absolute
+                ),
+            }
+        );
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml", UriKind.Absolute) });
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+            new System.Windows.ResourceDictionary
+            {
+                Source = new Uri(
+                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml",
+                    UriKind.Absolute
+                ),
+            }
+        );
 #endif
         Eto.Style.Add<Label>(
             "mono",
@@ -307,7 +322,15 @@ public class MyForm : Form
         ResourceHelper.PrintAllApplicationResourceDictionaries();
 #endif
 #if WINDOWS
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml", UriKind.Absolute) });
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+            new System.Windows.ResourceDictionary
+            {
+                Source = new Uri(
+                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                    UriKind.Absolute
+                ),
+            }
+        );
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
 #endif
     }

@@ -12,20 +12,18 @@
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
     </PropertyGroup>
-	<PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
-		<UseWPF>true</UseWPF>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
     <ItemGroup>
         <Compile Remove="Themes\**" />
         <Compile Remove="theming\WpfPlus\ToolkitDemo\**" />
         <Compile Remove="theming\WpfPlus\WpfPlus\Controls\**" />
         <Compile Remove="theming\WpfPlus\WpfPlus\MvvmHelpers\**" />
         <Compile Remove="theming\WpfPlus\WpfPlus\Properties\**" />
-
         <Compile Remove="WPFDarkTheme\**" />
         <EmbeddedResource Remove="Themes\**" />
         <EmbeddedResource Remove="theming\WpfPlus\ToolkitDemo\**" />
-
         <EmbeddedResource Remove="WPFDarkTheme\**" />
         <MauiCss Remove="Themes\**" />
         <MauiCss Remove="theming\WpfPlus\ToolkitDemo\**" />
@@ -35,9 +33,7 @@
         <MauiXaml Remove="WPFDarkTheme\**" />
         <None Remove="Themes\**" />
         <None Remove="theming\WpfPlus\ToolkitDemo\**" />
-
         <None Remove="WPFDarkTheme\**" />
-
         <Page Remove="theming\WpfPlus\ToolkitDemo\**" />
     </ItemGroup>
     <ItemGroup>
@@ -119,10 +115,10 @@
         </ProjectReference>
     </ItemGroup>
     <ItemGroup>
-      <!--<Page Include="theming\WpfPlus\WpfPlus\Brushes\ThemeBrushes.xaml" />-->
-      <!--<Page Include="theming\WpfPlus\WpfPlus\Colors\DarkColors.xaml" />
+        <!--<Page Include="theming\WpfPlus\WpfPlus\Brushes\ThemeBrushes.xaml" />-->
+        <!--<Page Include="theming\WpfPlus\WpfPlus\Colors\DarkColors.xaml" />
       <Page Include="theming\WpfPlus\WpfPlus\Colors\LightColors.xaml" />-->
-      <!--<Page Include="theming\WpfPlus\WpfPlus\DarkTheme.xaml" />
+        <!--<Page Include="theming\WpfPlus\WpfPlus\DarkTheme.xaml" />
       <Page Include="theming\WpfPlus\WpfPlus\LightTheme.xaml" />
       <Page Include="theming\WpfPlus\WpfPlus\Styles\ButtonStyle.xaml" />
       <Page Include="theming\WpfPlus\WpfPlus\Styles\CheckBoxStyle.xaml" />
