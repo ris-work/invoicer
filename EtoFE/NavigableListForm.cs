@@ -10,6 +10,7 @@ using Eto;
 using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
+using RV.InvNew.Common;
 
 namespace EtoFE
 {
@@ -86,6 +87,10 @@ namespace EtoFE
                     ),
                     (
                         $" ⚙️ Administration / {Environment.NewLine} Settings  ",
+                        (new LoadOncePanel<Panel>())
+                    ),
+                    (
+                        $" ⚙️ Current {Environment.NewLine} Connection ",
                         (new LoadOncePanel<Panel>())
                     ),
                     (" 🎫 About ", (new LoadOncePanel<Panel>())),
@@ -217,12 +222,24 @@ namespace EtoFE
                 Text = DateTime.UtcNow.ToString("O"),
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
+                VerticalAlignment = VerticalAlignment.Center,
             };
             Label CurrentServerTimeLabel = new Label()
             {
                 Text = "TBD",
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
+                VerticalAlignment = VerticalAlignment.Center,
+
+            };
+            Label CurrentUserAndToken = new Label()
+            {
+                Text = $"{LoginTokens.Username} W {LoginTokens.token.TokenID}",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Font = new Eto.Drawing.Font("Gourier", 12 ),
             };
             EnableAccessibilityButton.Click += (sender, e) =>
             {
@@ -246,10 +263,12 @@ namespace EtoFE
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
                 CurrentClientTimeLabel,
-                CurrentServerTimeLabel
+                CurrentServerTimeLabel,
+                CurrentUserAndToken
             )
             {
                 Spacing = 10,
+                BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen,
                 Orientation = Orientation.Horizontal,
             };
             Content = new StackLayout(TopPanel, Inner);

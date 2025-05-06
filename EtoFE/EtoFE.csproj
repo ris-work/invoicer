@@ -11,6 +11,7 @@
         <Platforms>AnyCPU;x64</Platforms>
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
         <UseWPF>true</UseWPF>

@@ -382,9 +382,12 @@ namespace CommonUi
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
             };
+            Results.RowFormatting += (e, a) => {  };
+            Results.Border = BorderType.None;
+            Results.GridLines = GridLines.None;
 
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
-            TextBox SearchBox = new TextBox();
+            TextBox SearchBox = new TextBox() { BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
             if (Debug)
                 MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;

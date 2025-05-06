@@ -82,7 +82,7 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "background_color",
-                Eto.Drawing.Colors.DarkBlue
+                Eto.Drawing.Colors.Navy
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
@@ -222,7 +222,7 @@ namespace CommonUi
             //ForegroundColor = Eto.Drawing.Colors.Black;
             //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
             //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
-            List<Eto.Forms.TableRow> EControlsL = new();
+            List<Eto.Forms.TableRow> EControlsL = new() {};
             List<Eto.Forms.TableRow> EControlsR = new();
             _Inputs = Inputs;
 
@@ -431,10 +431,10 @@ namespace CommonUi
             _EControlsL = EControlsL;
             _EControlsR = EControlsR;
 
-            Button NewButton = new Button() { Text = "New" };
-            Button SaveButton = new Button() { Text = "Save" };
-            Button ViewButton = new Button() { Text = "View" };
-            Button CancelButton = new Button() { Text = "Cancel" };
+            Button NewButton = new Button() { Text = "New", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button SaveButton = new Button() { Text = "Save", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button ViewButton = new Button() { Text = "View", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button CancelButton = new Button() { Text = "Cancel", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
             NewButton.Font = NewButtonTheme.TFont;
             NewButton.BackgroundColor = NewButtonTheme.BG;
             SaveButton.Font = SaveButtonTheme.TFont;
@@ -472,12 +472,13 @@ namespace CommonUi
             var ActionButtons = new StackLayout(NewButton, SaveButton, ViewButton, CancelButton)
             {
                 Orientation = Orientation.Horizontal,
+                Spacing = 2,
             };
 
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
             // where each TableRow contains one control (accessible via [0])
-            var leftList = new TableLayout(EControlsL.ToList());
-            var rightList = new TableLayout(EControlsR.ToList());
+            var leftList = new TableLayout(EControlsL.ToList()) { Spacing = new Eto.Drawing.Size(2, 2),};
+            var rightList = new TableLayout(EControlsR.ToList()) { Spacing = new Eto.Drawing.Size(2, 2), };
             //int maxCount = Math.Max(leftList.Count, rightList.Count);
 
             /*var combinedRows = new List<TableRow>();

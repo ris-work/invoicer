@@ -29,6 +29,7 @@ public static class LoginTokens
 {
     public static LoginToken token;
     public static LoginToken ElevatedLoginToken;
+    public static string Username="";
 
     public static string LoginTokenForBearerAuth()
     {
@@ -62,6 +63,7 @@ public class Program
         ResourceDebugger.ListManifestResourceNames();
         ResourceDebugger.ListGResources();
 #endif
+        //string CurrentUI = Eto.Platforms.WinForms; //Eto.Platforms.Wpf;
         string CurrentUI = Eto.Platforms.Wpf;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
@@ -107,6 +109,7 @@ public class MyForm : Form
             else
             {
                 LoginTokens.token = logint;
+                LoginTokens.Username = Username;
                 return true;
             }
         }
@@ -143,25 +146,31 @@ public class MyForm : Form
     public MyForm()
     {
 #if WINDOWS
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-            new System.Windows.ResourceDictionary
-            {
-                Source = new Uri(
-                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
-                    UriKind.Absolute
-                ),
-            }
-        );
-        //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-            new System.Windows.ResourceDictionary
-            {
-                Source = new Uri(
-                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml",
-                    UriKind.Absolute
-                ),
-            }
-        );
+        try
+        {
+            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                new System.Windows.ResourceDictionary
+                {
+                    Source = new Uri(
+                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                        UriKind.Absolute
+                    ),
+                }
+            );
+            //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
+            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                new System.Windows.ResourceDictionary
+                {
+                    Source = new Uri(
+                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml",
+                        UriKind.Absolute
+                    ),
+                }
+            );
+        }
+        catch (Exception E) {
+            System.Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+        }
 #endif
         Eto.Style.Add<Label>(
             "mono",
@@ -209,14 +218,14 @@ public class MyForm : Form
         {
             Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
             System.Console.WriteLine(LogoUri.AbsoluteUri);
-            Logo.Image = new Eto.Drawing.Bitmap(LogoUri.AbsoluteUri);
+            Logo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
         }
 
         if (System.IO.File.Exists(TermLogoPath))
         {
             Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
             System.Console.WriteLine(TermLogoUri.AbsoluteUri);
-            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.AbsoluteUri);
+            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
         }
 
         layout.Rows.Add(null);
@@ -322,15 +331,22 @@ public class MyForm : Form
         ResourceHelper.PrintAllApplicationResourceDictionaries();
 #endif
 #if WINDOWS
-        System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-            new System.Windows.ResourceDictionary
-            {
-                Source = new Uri(
-                    "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
-                    UriKind.Absolute
-                ),
-            }
-        );
+        try
+        {
+            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                new System.Windows.ResourceDictionary
+                {
+                    Source = new Uri(
+                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                        UriKind.Absolute
+                    ),
+                }
+            );
+        }
+        catch (Exception E)
+        {
+            System.Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+        }
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
 #endif
     }

@@ -73,6 +73,7 @@ namespace EtoFE
                 B.DisableHoverBackgroundChange(Eto.Drawing.Colors.PaleVioletRed);
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 35;
+                B.MinimumSize = new Eto.Drawing.Size(0, 35);
 
                 B.Font = new Eto.Drawing.Font("Gourier", 10) { };
                 B.TextColor = Eto.Drawing.Colors.White;
