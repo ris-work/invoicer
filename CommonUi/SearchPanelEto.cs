@@ -337,17 +337,19 @@ namespace CommonUi
             )>();
             Results.CellFormatting += (e, a) =>
             {
+                a.BackgroundColor = Eto.Drawing.Colors.Black;
+                a.ForegroundColor = Eto.Drawing.Colors.White;
                 //Colour the column first
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
-                    a.BackgroundColor = Eto.Drawing.Colors.LightGreen;
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
+                    a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
+                    a.ForegroundColor = Eto.Drawing.Colors.White;
                 }
                 //Override with row colours
                 if (a.Row % 2 == 0)
                 {
-                    a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
+                    a.BackgroundColor = Eto.Drawing.Colors.DarkCyan;
+                    a.ForegroundColor = Eto.Drawing.Colors.White;
                 }
                 //Use color matrix now!
                 if (
@@ -377,10 +379,17 @@ namespace CommonUi
                 if (a.Row == Results.SelectedRow)
                 {
                     a.Column.AutoSize = true;
-                    a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
-                    a.ForegroundColor = Eto.Drawing.Colors.LightCoral;
+                    a.BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;
+                    a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
                     a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
                 }
+                
+            };
+            Results.KeyUp += (e, a) => {
+                Results.Invalidate(true);
+            };
+            Results.MouseUp += (e, a) => {
+                Results.Invalidate(true);
             };
             Results.RowFormatting += (e, a) => {  };
             Results.Border = BorderType.None;

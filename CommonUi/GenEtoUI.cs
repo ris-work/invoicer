@@ -82,7 +82,7 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "background_color",
-                Eto.Drawing.Colors.Navy
+                Eto.Drawing.Color.FromGrayscale(0.1f)
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
