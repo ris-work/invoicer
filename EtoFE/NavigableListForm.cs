@@ -136,7 +136,7 @@ namespace EtoFE
                 B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
 
-                B.Font = new Eto.Drawing.Font("Gourier", 12) { };
+                B.Font = new Eto.Drawing.Font("Gourier", 11) { };
                 B.TextColor = Eto.Drawing.Colors.White;
                 B.Enabled = true;
                 B.BackgroundColor = Eto.Drawing.Colors.Black;

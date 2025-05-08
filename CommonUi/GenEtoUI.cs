@@ -298,7 +298,7 @@ namespace CommonUi
                             ((TextBox)EInput).TextColor = FG;
                             ((TextBox)EInput).Font = TFont;
                             ((TextBox)EInput).Size = CSize;
-                            ((TextBox)EInput).KeyDown += GoToNext;
+                            ((TextBox)EInput).KeyUp += GoToNext;
                             if (DenyList.Contains(kv.Key)) ((TextBox)EInput).ReadOnly = true;
                             if (kv.Key == IdentityColumn)
                             {
@@ -354,7 +354,7 @@ namespace CommonUi
                         ((TextBox)EInput).TextColor = FG;
                         ((TextBox)EInput).Font = TFont;
                         ((TextBox)EInput).Size = CSize;
-                        ((TextBox)EInput).KeyDown += GoToNext;
+                        ((TextBox)EInput).KeyUp += GoToNext;
                     }
                     else if (kv.Value.Item2.GetType() == typeof(bool))
                     {
@@ -373,7 +373,7 @@ namespace CommonUi
                         ((CheckBox)EInput).BackgroundColor = BG;
                         ((CheckBox)EInput).Size = CSize;
                         ((CheckBox)EInput).Font = TFont;
-                        ((CheckBox)EInput).KeyDown += GoToNext;
+                        ((CheckBox)EInput).KeyUp += GoToNext;
                     }
                     else if (kv.Value.Item2.GetType() == typeof(string))
                     {
@@ -396,7 +396,7 @@ namespace CommonUi
                         ((TextBox)EInput).TextColor = FG;
                         ((TextBox)EInput).Font = TFont;
                         ((TextBox)EInput).Size = CSize;
-                        ((TextBox)EInput).KeyDown += GoToNext;
+                        ((TextBox)EInput).KeyUp += GoToNext;
                     }
                 }
                 else if (kv.Value.Item2.GetType() == typeof(bool))
@@ -417,7 +417,7 @@ namespace CommonUi
                     ((CheckBox)EInput).BackgroundColor = BG;
                     ((CheckBox)EInput).Size = CSize;
                     ((CheckBox)EInput).Font = TFont;
-                    ((CheckBox)EInput).KeyDown += GoToNext;
+                    ((CheckBox)EInput).KeyUp += GoToNext;
                 }
                 else
                 {
@@ -436,7 +436,7 @@ namespace CommonUi
                     ((TextBox)EInput).BackgroundColor = BG;
                     ((TextBox)EInput).Size = CSize;
                     ((TextBox)EInput).Font = TFont;
-                    ((TextBox)EInput).KeyDown += GoToNext;
+                    ((TextBox)EInput).KeyUp += GoToNext;
                 }
                 EInput.Width = 300;
                 Label EFieldName = new Label() { Text = kv.Value.Item1, TextColor = Eto.Drawing.Colors.White };
