@@ -29,7 +29,7 @@ public static class LoginTokens
 {
     public static LoginToken token;
     public static LoginToken ElevatedLoginToken;
-    public static string Username="";
+    public static string Username = "";
 
     public static string LoginTokenForBearerAuth()
     {
@@ -168,7 +168,8 @@ public class MyForm : Form
                 }
             );
         }
-        catch (Exception E) {
+        catch (Exception E)
+        {
             System.Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
         }
 #endif
