@@ -247,7 +247,7 @@ namespace CommonUi
             };
             GoToNext = (e, a) =>
             {
-                if (a.Key == Keys.Enter)
+                if (a.Key == Keys.Enter) // || a.Key == Keys.Down)
                 {
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
                     if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
@@ -255,6 +255,14 @@ namespace CommonUi
                     else
                         SaveButton.Focus();
                 }
+                /*if (a.Key == Keys.Up)
+                {
+                    //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
+                    if (EFocusableList.IndexOf((Eto.Forms.Control)e) > 0)
+                        EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) - 1].Focus();
+                    else
+                        SaveButton.Focus();
+                }*/
             };
             (
                 var LegendFG,
@@ -512,6 +520,10 @@ namespace CommonUi
             ViewButton.BackgroundColor = ViewButtonTheme.BG;
             CancelButton.Font = CancelButtonTheme.TFont;
             CancelButton.BackgroundColor = CancelButtonTheme.BG;
+            SaveButton.ConfigureForPlatform();
+            NewButton.ConfigureForPlatform();
+            ViewButton.ConfigureForPlatform();
+            CancelButton.ConfigureForPlatform();
 
             NewButton.Click += (_, _) =>
             {
