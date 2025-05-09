@@ -18,7 +18,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="Black" BorderThickness="0">
+                    <Border Background="#77000000" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Up arrow: triangle pointing up -->
@@ -39,7 +39,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="Black" BorderThickness="0">
+                    <Border Background="#77000000" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Down arrow: triangle pointing down -->
@@ -61,7 +61,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="Black" BorderThickness="0">
+                    <Border Background="#77000000" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Left arrow: triangle pointing left -->
@@ -82,7 +82,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="Black" BorderThickness="0">
+                    <Border Background="#77000000" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Right arrow: triangle pointing right -->
@@ -111,7 +111,7 @@
     <!-- Implicit ScrollBar Style with orientation-based templates -->
     <Style TargetType="{x:Type ScrollBar}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
-        <Setter Property="Background" Value="Black"/>
+        <Setter Property="Background" Value="#77000000"/>
         <Setter Property="Foreground" Value="SteelBlue"/>
         <Setter Property="MinWidth" Value="16"/>
         <Setter Property="MinHeight" Value="16"/>

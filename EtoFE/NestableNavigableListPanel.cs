@@ -54,7 +54,7 @@ namespace EtoFE
                 }
                 else
                 {
-                    a.ForegroundColor = Eto.Drawing.Colors.Wheat;
+                    a.ForegroundColor = ColorSettings.ForegroundColor;
                     a.BackgroundColor = ColorSettings.BackgroundColor;
                 }
                 a.Font = new Eto.Drawing.Font(

@@ -228,7 +228,7 @@ namespace EtoFE
             Label CurrentServerTimeLabel = new Label()
             {
                 Text = "TBD",
-                BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
@@ -236,7 +236,7 @@ namespace EtoFE
             Label CurrentUserAndToken = new Label()
             {
                 Text = $"{LoginTokens.Username}{Environment.NewLine}{LoginTokens.token.TokenID}",
-                BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.2f),
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
                 TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -253,14 +253,14 @@ namespace EtoFE
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Spacing = 4,
                 },
-                new Panel() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
+                new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor },
                 new StackLayoutItem(CurrentPanel)
             )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
-                BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.0f),
+                BackgroundColor = ColorSettings.BackgroundColor,
             };
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
@@ -270,7 +270,7 @@ namespace EtoFE
             )
             {
                 Spacing = 4,
-                BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.0f),
+                BackgroundColor = ColorSettings.BackgroundColor,
                 Orientation = Orientation.Horizontal,
                 Padding = 4,
             };

@@ -347,7 +347,7 @@ namespace CommonUi
                                 .Primitives
                                 .DataGridColumnHeader
                                 .BackgroundProperty,
-                            System.Windows.Media.Brushes.Black
+                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb((byte)ColorSettings.LesserBackgroundColor.Ab, (byte)ColorSettings.LesserBackgroundColor.Rb, (byte)ColorSettings.LesserBackgroundColor.Gb, (byte)ColorSettings.LesserBackgroundColor.Bb))
                         )
                     );
                     headerStyle.Setters.Add(
@@ -358,7 +358,7 @@ namespace CommonUi
                                 .Primitives
                                 .DataGridColumnHeader
                                 .ForegroundProperty,
-                            System.Windows.Media.Brushes.White
+                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb((byte)ColorSettings.ForegroundColor.Ab, (byte)ColorSettings.ForegroundColor.Rb, (byte)ColorSettings.ForegroundColor.Gb, (byte)ColorSettings.ForegroundColor.Bb))
                         )
                     );
                     dataGrid.ColumnHeaderStyle = headerStyle;
