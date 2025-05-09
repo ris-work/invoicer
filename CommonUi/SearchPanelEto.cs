@@ -443,7 +443,33 @@ namespace CommonUi
                 this.Invalidate();
                 //this.Title = $"Found {FilteredCount} ";
             };
-            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) =>
+            EventHandler<MouseEventArgs> SendSelected = (e, a) =>
+            {
+                ReverseSelection = ReverseSort;
+                SelectedOrder = SortBy;
+                _OutputList = Filtered.Select(a => a.Item1).ToList();
+                if (Results.SelectedItem != null)
+                {
+                    this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
+                    //this.Close();
+                    OnSelectionMade();
+                }
+                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
+                {
+                    this._Selected = (string[])((GridItem)Results.DataStore.First()).Values;
+                    //this.Close();
+                    OnSelectionMade();
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
+                        "Error",
+                        MessageBoxType.Warning
+                    );
+                }
+            };
+            EventHandler<KeyEventArgs> SendSelectedOnEnter = (e, a) =>
             {
                 ReverseSelection = ReverseSort;
                 SelectedOrder = SortBy;
@@ -498,6 +524,7 @@ namespace CommonUi
                 return;
             };
             Results.MouseDoubleClick += SendSelected;
+            Results.KeyUp += (e, a) => { if(a.Key == Keys.Enter) SendSelectedOnEnter(e, a); };
 
             var Search = () =>
             {

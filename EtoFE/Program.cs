@@ -19,6 +19,9 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 using RV.InvNew.Common;
 using Tomlyn;
 using Tomlyn.Model;
+#if WINDOWS
+using Eto.WinUI;
+#endif
 
 public static class Mock
 {
@@ -80,7 +83,7 @@ public class Program
         if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d"))
             CurrentUI = Eto.Platforms.Direct2D;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winui"))
-            CurrentUI = Eto.Platforms.WinForms;
+            CurrentUI = Eto.Platforms.Wpf;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);

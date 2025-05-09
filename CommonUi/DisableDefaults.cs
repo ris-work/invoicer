@@ -943,6 +943,9 @@ namespace CommonUi
                     gtkButton.HeadersVisible = true;
                     gtkButton.HeadersClickable = true;
                     gtkButton.ScrollEvent += (e, a) => { gtkButton.QueueDraw(); };
+                    gtkButton.KeyPressEvent += (e, a) => { gtkButton.QueueDraw(); };
+                    gtkButton.KeyReleaseEvent += (e, a) => { gtkButton.QueueDraw(); };
+                    gtkButton.RubberBanding = false;
 
                     var cssProvider = new Gtk.CssProvider();
                     cssProvider.LoadFromData(
