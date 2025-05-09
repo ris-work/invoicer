@@ -209,7 +209,8 @@ namespace CommonUi
             string[]? DenyList = null
         )
         {
-            if (DenyList == null) DenyList = new string[] { };
+            if (DenyList == null)
+                DenyList = new string[] { };
             InitializeConfiguration();
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
                 GetThemeForComponent("form");
@@ -225,7 +226,7 @@ namespace CommonUi
             //ForegroundColor = Eto.Drawing.Colors.Black;
             //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
             //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
-            List<Eto.Forms.TableRow> EControlsL = new() {};
+            List<Eto.Forms.TableRow> EControlsL = new() { };
             List<Eto.Forms.TableRow> EControlsR = new();
             List<Eto.Forms.Control> EFocusableList = new();
             _Inputs = Inputs;
@@ -234,22 +235,36 @@ namespace CommonUi
             var ECount = E.Count();
             var EMid = ECount / 2;
             var CurrentNo = 0;
-            System.EventHandler<Eto.Forms.KeyEventArgs> GoToNext = (object o, Eto.Forms.KeyEventArgs ea) => { 
-                
+            System.EventHandler<Eto.Forms.KeyEventArgs> GoToNext = (
+                object o,
+                Eto.Forms.KeyEventArgs ea
+            ) => { };
+            Button SaveButton = new Button()
+            {
+                Text = "Save",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
             };
-            Button SaveButton = new Button() { Text = "Save", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
-            GoToNext = (e, a) => {
+            GoToNext = (e, a) =>
+            {
                 if (a.Key == Keys.Enter)
                 {
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
-                    if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count()-1)
+                    if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
                         EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
                     else
                         SaveButton.Focus();
                 }
             };
-            (var LegendFG, var LegendBG, var LegendFGc, var LegendBGc, var LegendTFont, var LehendTSize, var LegendCSize) =
-                    GetThemeForComponent("Legend");
+            (
+                var LegendFG,
+                var LegendBG,
+                var LegendFGc,
+                var LegendBGc,
+                var LegendTFont,
+                var LehendTSize,
+                var LegendCSize
+            ) = GetThemeForComponent("Legend");
             foreach (var kv in E)
             {
                 Console.WriteLine($"Attempt to construct with: {kv.Key}");
@@ -299,7 +314,8 @@ namespace CommonUi
                             ((TextBox)EInput).Font = TFont;
                             ((TextBox)EInput).Size = CSize;
                             ((TextBox)EInput).KeyUp += GoToNext;
-                            if (DenyList.Contains(kv.Key)) ((TextBox)EInput).ReadOnly = true;
+                            if (DenyList.Contains(kv.Key))
+                                ((TextBox)EInput).ReadOnly = true;
                             if (kv.Key == IdentityColumn)
                             {
                                 ((TextBox)EInput).Enabled = false;
@@ -318,7 +334,8 @@ namespace CommonUi
                             };
                             EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
                             ELegend = new Label() { };
-                            if (DenyList.Contains(kv.Key)) ((Button)EInput).Enabled = false;
+                            if (DenyList.Contains(kv.Key))
+                                ((Button)EInput).Enabled = false;
                             ((Button)EInput).Click += (_, _) =>
                             {
                                 long? IHS = InputHandler[kv.Value.Item3].Item1();
@@ -443,7 +460,11 @@ namespace CommonUi
                 {
                     TB.Width = 200;
                 }
-                Label EFieldName = new Label() { Text = kv.Value.Item1, TextColor = Eto.Drawing.Colors.White };
+                Label EFieldName = new Label()
+                {
+                    Text = kv.Value.Item1,
+                    TextColor = Eto.Drawing.Colors.White,
+                };
                 EControl = new TableRow(EFieldName, EInput, ELegend) { };
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
@@ -454,8 +475,7 @@ namespace CommonUi
                     EFieldName.Font = LegendTFont;
                 }
                 _ELegends.Add(kv.Key, ELegend);
-                
-                
+
                 if (CurrentNo < EMid)
                     EControlsL.Add(EControl);
                 else
@@ -465,10 +485,25 @@ namespace CommonUi
             _EControlsL = EControlsL;
             _EControlsR = EControlsR;
 
-            Button NewButton = new Button() { Text = "New", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button NewButton = new Button()
+            {
+                Text = "New",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
             //Button SaveButton = new Button() { Text = "Save", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
-            Button ViewButton = new Button() { Text = "View", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
-            Button CancelButton = new Button() { Text = "Cancel", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            Button ViewButton = new Button()
+            {
+                Text = "View",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
+            Button CancelButton = new Button()
+            {
+                Text = "Cancel",
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
             NewButton.Font = NewButtonTheme.TFont;
             NewButton.BackgroundColor = NewButtonTheme.BG;
             SaveButton.Font = SaveButtonTheme.TFont;
@@ -477,8 +512,6 @@ namespace CommonUi
             ViewButton.BackgroundColor = ViewButtonTheme.BG;
             CancelButton.Font = CancelButtonTheme.TFont;
             CancelButton.BackgroundColor = CancelButtonTheme.BG;
-
-            
 
             NewButton.Click += (_, _) =>
             {
@@ -513,8 +546,14 @@ namespace CommonUi
 
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
             // where each TableRow contains one control (accessible via [0])
-            var leftList = new TableLayout(EControlsL.ToList()) { Spacing = new Eto.Drawing.Size(2, 2),};
-            var rightList = new TableLayout(EControlsR.ToList()) { Spacing = new Eto.Drawing.Size(2, 2), };
+            var leftList = new TableLayout(EControlsL.ToList())
+            {
+                Spacing = new Eto.Drawing.Size(2, 2),
+            };
+            var rightList = new TableLayout(EControlsR.ToList())
+            {
+                Spacing = new Eto.Drawing.Size(2, 2),
+            };
             //int maxCount = Math.Max(leftList.Count, rightList.Count);
 
             /*var combinedRows = new List<TableRow>();

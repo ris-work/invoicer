@@ -132,7 +132,6 @@ namespace CommonUi
             bool Debug = true
         )
         {
-            
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
             OptimizedCatalogue = SC.Select(e =>
                     (
@@ -384,22 +383,28 @@ namespace CommonUi
                     a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
                     a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
-                
             };
-            Results.KeyUp += (e, a) => {
+            Results.KeyUp += (e, a) =>
+            {
                 Results.Invalidate(true);
             };
-            Results.MouseUp += (e, a) => {
+            Results.MouseUp += (e, a) =>
+            {
                 Results.Invalidate(true);
             };
-            Results.RowFormatting += (e, a) => {
+            Results.RowFormatting += (e, a) =>
+            {
                 a.BackgroundColor = Eto.Drawing.Colors.Black;
             };
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.None;
 
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
-            TextBox SearchBox = new TextBox() { BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            TextBox SearchBox = new TextBox()
+            {
+                BackgroundColor = Eto.Drawing.Colors.Black,
+                TextColor = Eto.Drawing.Colors.White,
+            };
             if (Debug)
                 MessageBox.Show($"PC: {SC.Count()}");
             bool searching = false;

@@ -3,27 +3,21 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Eto.Forms;
 using Microsoft.Maui.Controls.PlatformConfiguration;
-using System.Security.Cryptography;
 //using System.Windows.Forms;
-
-
-
 
 #if WINDOWS
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using System.Windows.Forms;
-
-
 using System.Windows.Controls;
 using System.Windows.Media;
 #endif
-
 
 namespace CommonUi
 {
@@ -404,37 +398,41 @@ namespace CommonUi
             if (platformStr == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
                 // Convert Eto GridView to its native WPF DataGrid.
-                System.Windows.Controls.DataGrid wpfGrid =
-                    (System.Windows.Controls.DataGrid)(System.Windows.FrameworkElement)
-                    Eto.Forms.WpfHelpers.ToNative(gridView, false);
+                System.Windows.Controls.DataGrid wpfGrid = (System.Windows.Controls.DataGrid)
+                    (System.Windows.FrameworkElement)Eto.Forms.WpfHelpers.ToNative(gridView, false);
 
                 // Force the control to generate its template.
                 wpfGrid.ApplyTemplate();
                 wpfGrid.UpdateLayout();
 
                 // Use the Dispatcher to wait until the visual tree is loaded.
-                wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    System.Windows.Controls.ScrollViewer scrollViewer = null;
-                    // Safely retrieve the template.
-                    var template = wpfGrid.Template;
-                    if (template != null)
+                wpfGrid.Dispatcher.BeginInvoke(
+                    new Action(() =>
                     {
-                        // Attempt to find the ScrollViewer by name.
-                        scrollViewer = template.FindName("DG_ScrollViewer", wpfGrid) as System.Windows.Controls.ScrollViewer;
-                    }
+                        System.Windows.Controls.ScrollViewer scrollViewer = null;
+                        // Safely retrieve the template.
+                        var template = wpfGrid.Template;
+                        if (template != null)
+                        {
+                            // Attempt to find the ScrollViewer by name.
+                            scrollViewer =
+                                template.FindName("DG_ScrollViewer", wpfGrid)
+                                as System.Windows.Controls.ScrollViewer;
+                        }
 
-                    // If found, apply dark theme styling to scrollbars.
-                    if (scrollViewer != null)
-                    {
-                        ApplyDarkScrollBars(scrollViewer);
-                    }
-                    else
-                    {
-                        // Fallback: search the entire visual tree.
-                        ApplyDarkScrollBars(wpfGrid);
-                    }
-                }), System.Windows.Threading.DispatcherPriority.Loaded);
+                        // If found, apply dark theme styling to scrollbars.
+                        if (scrollViewer != null)
+                        {
+                            ApplyDarkScrollBars(scrollViewer);
+                        }
+                        else
+                        {
+                            // Fallback: search the entire visual tree.
+                            ApplyDarkScrollBars(wpfGrid);
+                        }
+                    }),
+                    System.Windows.Threading.DispatcherPriority.Loaded
+                );
             }
 #endif
         }
@@ -466,25 +464,39 @@ namespace CommonUi
             if (platformStr == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
                 // Get the native control from the Eto handle.
-                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                var nativeControl =
+                    Eto.Forms.WpfHelpers.ToNative(gridView, false)
+                    as System.Windows.FrameworkElement;
                 if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
                 {
                     // Create a style for the ScrollBar type.
-                    var scrollBarStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.ScrollBar));
-                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.Control.BackgroundProperty,
-                        System.Windows.Media.Brushes.DarkSlateGray));
-                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.Control.ForegroundProperty,
-                        System.Windows.Media.Brushes.WhiteSmoke));
+                    var scrollBarStyle = new System.Windows.Style(
+                        typeof(System.Windows.Controls.Primitives.ScrollBar)
+                    );
+                    scrollBarStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System.Windows.Controls.Control.BackgroundProperty,
+                            System.Windows.Media.Brushes.DarkSlateGray
+                        )
+                    );
+                    scrollBarStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System.Windows.Controls.Control.ForegroundProperty,
+                            System.Windows.Media.Brushes.WhiteSmoke
+                        )
+                    );
                     // Optionally, adjust the border colors or other properties.
-                    scrollBarStyle.Setters.Add(new System.Windows.Setter(
-                        System.Windows.Controls.Control.BorderBrushProperty,
-                        System.Windows.Media.Brushes.Black));
+                    scrollBarStyle.Setters.Add(
+                        new System.Windows.Setter(
+                            System.Windows.Controls.Control.BorderBrushProperty,
+                            System.Windows.Media.Brushes.Black
+                        )
+                    );
 
                     // Inject the style into the DataGrid's resources.
                     // This way, when the grid creates its scrollbars (even later), they will pick up this style.
-                    wpfGrid.Resources[typeof(System.Windows.Controls.Primitives.ScrollBar)] = scrollBarStyle;
+                    wpfGrid.Resources[typeof(System.Windows.Controls.Primitives.ScrollBar)] =
+                        scrollBarStyle;
                 }
             }
 #endif
@@ -500,26 +512,52 @@ namespace CommonUi
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
                 // Get the native control from the Eto handle.
-                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                var nativeControl =
+                    Eto.Forms.WpfHelpers.ToNative(gridView, false)
+                    as System.Windows.FrameworkElement;
                 if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
                 {
                     // Run when the visual tree has been loaded.
-                    wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        // Look for all RepeatButton controls (i.e. arrow buttons) within the grid.
-                        foreach (var arrow in FindVisualChildren<System.Windows.Controls.Primitives.RepeatButton>(wpfGrid))
+                    wpfGrid.Dispatcher.BeginInvoke(
+                        new Action(() =>
                         {
-                            // Create a new style for RepeatButton.
-                            var arrowStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.RepeatButton));
-                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BackgroundProperty, System.Windows.Media.Brushes.DimGray));
-                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BorderBrushProperty, System.Windows.Media.Brushes.Black));
-                            arrowStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.ForegroundProperty, System.Windows.Media.Brushes.WhiteSmoke));
+                            // Look for all RepeatButton controls (i.e. arrow buttons) within the grid.
+                            foreach (
+                                var arrow in FindVisualChildren<System.Windows.Controls.Primitives.RepeatButton>(
+                                    wpfGrid
+                                )
+                            )
+                            {
+                                // Create a new style for RepeatButton.
+                                var arrowStyle = new System.Windows.Style(
+                                    typeof(System.Windows.Controls.Primitives.RepeatButton)
+                                );
+                                arrowStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.BackgroundProperty,
+                                        System.Windows.Media.Brushes.DimGray
+                                    )
+                                );
+                                arrowStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.BorderBrushProperty,
+                                        System.Windows.Media.Brushes.Black
+                                    )
+                                );
+                                arrowStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.ForegroundProperty,
+                                        System.Windows.Media.Brushes.WhiteSmoke
+                                    )
+                                );
 
-                            // Directly assign the style.
-                            arrow.Style = arrowStyle;
-                            arrow.ApplyTemplate();
-                        }
-                    }), DispatcherPriority.Loaded);
+                                // Directly assign the style.
+                                arrow.Style = arrowStyle;
+                                arrow.ApplyTemplate();
+                            }
+                        }),
+                        DispatcherPriority.Loaded
+                    );
                 }
             }
 #endif
@@ -535,26 +573,52 @@ namespace CommonUi
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
                 // Get the native control from the Eto handle.
-                var nativeControl = Eto.Forms.WpfHelpers.ToNative(gridView, false) as System.Windows.FrameworkElement;
+                var nativeControl =
+                    Eto.Forms.WpfHelpers.ToNative(gridView, false)
+                    as System.Windows.FrameworkElement;
                 if (nativeControl is System.Windows.Controls.DataGrid wpfGrid)
                 {
                     // Use the Dispatcher to ensure the visual tree is complete.
-                    wpfGrid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        // Find all Thumb controls (the draggable parts of scrollbars) in the visual tree.
-                        foreach (var thumb in FindVisualChildren<System.Windows.Controls.Primitives.Thumb>(wpfGrid))
+                    wpfGrid.Dispatcher.BeginInvoke(
+                        new Action(() =>
                         {
-                            // Create a new style for the Thumb.
-                            var thumbStyle = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.Thumb));
-                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BackgroundProperty, System.Windows.Media.Brushes.Gray));
-                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.BorderBrushProperty, System.Windows.Media.Brushes.Black));
-                            thumbStyle.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Control.ForegroundProperty, System.Windows.Media.Brushes.WhiteSmoke));
+                            // Find all Thumb controls (the draggable parts of scrollbars) in the visual tree.
+                            foreach (
+                                var thumb in FindVisualChildren<System.Windows.Controls.Primitives.Thumb>(
+                                    wpfGrid
+                                )
+                            )
+                            {
+                                // Create a new style for the Thumb.
+                                var thumbStyle = new System.Windows.Style(
+                                    typeof(System.Windows.Controls.Primitives.Thumb)
+                                );
+                                thumbStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.BackgroundProperty,
+                                        System.Windows.Media.Brushes.Gray
+                                    )
+                                );
+                                thumbStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.BorderBrushProperty,
+                                        System.Windows.Media.Brushes.Black
+                                    )
+                                );
+                                thumbStyle.Setters.Add(
+                                    new System.Windows.Setter(
+                                        System.Windows.Controls.Control.ForegroundProperty,
+                                        System.Windows.Media.Brushes.WhiteSmoke
+                                    )
+                                );
 
-                            // Directly assign the style.
-                            thumb.Style = thumbStyle;
-                            thumb.ApplyTemplate();
-                        }
-                    }), DispatcherPriority.Loaded);
+                                // Directly assign the style.
+                                thumb.Style = thumbStyle;
+                                thumb.ApplyTemplate();
+                            }
+                        }),
+                        DispatcherPriority.Loaded
+                    );
                 }
             }
 #endif
@@ -564,14 +628,16 @@ namespace CommonUi
         /// <summary>
         /// Recursively finds all visual children of a given type.
         /// </summary>
-        private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject depObj) where T : System.Windows.DependencyObject
+        private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject depObj)
+            where T : System.Windows.DependencyObject
         {
             if (depObj != null)
             {
                 int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(depObj);
                 for (int i = 0; i < count; i++)
                 {
-                    System.Windows.DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(depObj, i);
+                    System.Windows.DependencyObject child =
+                        System.Windows.Media.VisualTreeHelper.GetChild(depObj, i);
                     if (child is T typedChild)
                     {
                         yield return typedChild;
@@ -599,28 +665,65 @@ namespace CommonUi
             // Execute only on the WPF backend.
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
-                if (_pageButtonStyleApplied) return; // Prevent re‑application.
+                if (_pageButtonStyleApplied)
+                    return; // Prevent re‑application.
 
                 // Create a new style for System.Windows.Controls.Primitives.RepeatButton.
-                var pageButtonStyle = new global::System.Windows.Style(typeof(global::System.Windows.Controls.Primitives.RepeatButton));
-                pageButtonStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.UIElement.SnapsToDevicePixelsProperty, true));
-                pageButtonStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.OverridesDefaultStyleProperty, true));
-                pageButtonStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.IsTabStopProperty, false));
-                pageButtonStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.FocusableProperty, false));
+                var pageButtonStyle = new global::System.Windows.Style(
+                    typeof(global::System.Windows.Controls.Primitives.RepeatButton)
+                );
+                pageButtonStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.UIElement.SnapsToDevicePixelsProperty,
+                        true
+                    )
+                );
+                pageButtonStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.OverridesDefaultStyleProperty,
+                        true
+                    )
+                );
+                pageButtonStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.IsTabStopProperty,
+                        false
+                    )
+                );
+                pageButtonStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.FocusableProperty,
+                        false
+                    )
+                );
 
                 // Build a ControlTemplate equivalent to:
                 //   <ControlTemplate TargetType="{x:Type RepeatButton}">
                 //     <Border Background="Transparent" />
                 //   </ControlTemplate>
-                var template = new global::System.Windows.Controls.ControlTemplate(typeof(global::System.Windows.Controls.Primitives.RepeatButton));
-                var borderFactory = new global::System.Windows.FrameworkElementFactory(typeof(global::System.Windows.Controls.Border));
-                borderFactory.SetValue(global::System.Windows.Controls.Border.BackgroundProperty, global::System.Windows.Media.Brushes.Transparent);
+                var template = new global::System.Windows.Controls.ControlTemplate(
+                    typeof(global::System.Windows.Controls.Primitives.RepeatButton)
+                );
+                var borderFactory = new global::System.Windows.FrameworkElementFactory(
+                    typeof(global::System.Windows.Controls.Border)
+                );
+                borderFactory.SetValue(
+                    global::System.Windows.Controls.Border.BackgroundProperty,
+                    global::System.Windows.Media.Brushes.Transparent
+                );
                 template.VisualTree = borderFactory;
-                pageButtonStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.TemplateProperty, template));
+                pageButtonStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.TemplateProperty,
+                        template
+                    )
+                );
 
                 // Insert the style into the Application's resources.
                 if (global::System.Windows.Application.Current != null)
-                    global::System.Windows.Application.Current.Resources[typeof(global::System.Windows.Controls.Primitives.RepeatButton)] = pageButtonStyle;
+                    global::System.Windows.Application.Current.Resources[
+                        typeof(global::System.Windows.Controls.Primitives.RepeatButton)
+                    ] = pageButtonStyle;
 
                 _pageButtonStyleApplied = true;
             }
@@ -635,14 +738,37 @@ namespace CommonUi
             // Execute only on the WPF backend.
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
             {
-                if (_thumbStyleApplied) return; // Prevent re‑application.
+                if (_thumbStyleApplied)
+                    return; // Prevent re‑application.
 
                 // Create a new style for System.Windows.Controls.Primitives.Thumb.
-                var thumbStyle = new global::System.Windows.Style(typeof(global::System.Windows.Controls.Primitives.Thumb));
-                thumbStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.UIElement.SnapsToDevicePixelsProperty, true));
-                thumbStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.OverridesDefaultStyleProperty, true));
-                thumbStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.IsTabStopProperty, false));
-                thumbStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.FocusableProperty, false));
+                var thumbStyle = new global::System.Windows.Style(
+                    typeof(global::System.Windows.Controls.Primitives.Thumb)
+                );
+                thumbStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.UIElement.SnapsToDevicePixelsProperty,
+                        true
+                    )
+                );
+                thumbStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.OverridesDefaultStyleProperty,
+                        true
+                    )
+                );
+                thumbStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.IsTabStopProperty,
+                        false
+                    )
+                );
+                thumbStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.FocusableProperty,
+                        false
+                    )
+                );
 
                 // Build a ControlTemplate equivalent to:
                 //   <ControlTemplate TargetType="{x:Type Thumb}">
@@ -651,29 +777,56 @@ namespace CommonUi
                 //             BorderBrush="{TemplateBinding BorderBrush}"
                 //             BorderThickness="1" />
                 //   </ControlTemplate>
-                var template = new global::System.Windows.Controls.ControlTemplate(typeof(global::System.Windows.Controls.Primitives.Thumb));
-                var borderFactory = new global::System.Windows.FrameworkElementFactory(typeof(global::System.Windows.Controls.Border));
-                borderFactory.SetValue(global::System.Windows.Controls.Border.CornerRadiusProperty, new global::System.Windows.CornerRadius(2));
-                borderFactory.SetValue(global::System.Windows.Controls.Border.BackgroundProperty,
-                    new global::System.Windows.TemplateBindingExtension(global::System.Windows.Controls.Control.BackgroundProperty));
-                borderFactory.SetValue(global::System.Windows.Controls.Border.BorderBrushProperty,
-                    new global::System.Windows.TemplateBindingExtension(global::System.Windows.Controls.Control.BorderBrushProperty));
-                borderFactory.SetValue(global::System.Windows.Controls.Border.BorderThicknessProperty, new global::System.Windows.Thickness(1));
+                var template = new global::System.Windows.Controls.ControlTemplate(
+                    typeof(global::System.Windows.Controls.Primitives.Thumb)
+                );
+                var borderFactory = new global::System.Windows.FrameworkElementFactory(
+                    typeof(global::System.Windows.Controls.Border)
+                );
+                borderFactory.SetValue(
+                    global::System.Windows.Controls.Border.CornerRadiusProperty,
+                    new global::System.Windows.CornerRadius(2)
+                );
+                borderFactory.SetValue(
+                    global::System.Windows.Controls.Border.BackgroundProperty,
+                    new global::System.Windows.TemplateBindingExtension(
+                        global::System.Windows.Controls.Control.BackgroundProperty
+                    )
+                );
+                borderFactory.SetValue(
+                    global::System.Windows.Controls.Border.BorderBrushProperty,
+                    new global::System.Windows.TemplateBindingExtension(
+                        global::System.Windows.Controls.Control.BorderBrushProperty
+                    )
+                );
+                borderFactory.SetValue(
+                    global::System.Windows.Controls.Border.BorderThicknessProperty,
+                    new global::System.Windows.Thickness(1)
+                );
                 template.VisualTree = borderFactory;
-                thumbStyle.Setters.Add(new global::System.Windows.Setter(global::System.Windows.Controls.Control.TemplateProperty, template));
+                thumbStyle.Setters.Add(
+                    new global::System.Windows.Setter(
+                        global::System.Windows.Controls.Control.TemplateProperty,
+                        template
+                    )
+                );
 
                 // Insert the style into the Application's resources.
                 if (global::System.Windows.Application.Current != null)
-                    global::System.Windows.Application.Current.Resources[typeof(global::System.Windows.Controls.Primitives.Thumb)] = thumbStyle;
+                    global::System.Windows.Application.Current.Resources[
+                        typeof(global::System.Windows.Controls.Primitives.Thumb)
+                    ] = thumbStyle;
 
                 _thumbStyleApplied = true;
             }
         }
 #else
-    // In non-Windows builds these methods do nothing.
-    public static void ApplyGlobalScrollBarPageButtonStyle() { }
-    public static void ApplyGlobalScrollBarThumbStyle() { }
+        // In non-Windows builds these methods do nothing.
+        public static void ApplyGlobalScrollBarPageButtonStyle() { }
+
+        public static void ApplyGlobalScrollBarThumbStyle() { }
 #endif
+
         /// <summary>
         /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
         /// Evaluates the provided variable P against the current Eto backend.
@@ -704,12 +857,14 @@ namespace CommonUi
                     // Disable borders by setting the Relief style to None.
                     gtkButton.Relief = Gtk.ReliefStyle.None;
                     var cssProvider = new Gtk.CssProvider();
-                    cssProvider.LoadFromData(@"
+                    cssProvider.LoadFromData(
+                        @"
     .black-bg {
         background-image: none;
         background-color: #000000;
     }
-");
+"
+                    );
                     Gtk.StyleContext.AddProviderForScreen(
                         gtkButton.Screen,
                         cssProvider,
@@ -754,16 +909,21 @@ namespace CommonUi
                         // Adjust the CSS as needed to further style the scrollbars.
                         cssProvider.LoadFromData("scrollbar { background-color: #2e2e2e; }");
                         // Apply the CSS style to the screen hosting the widget.
-                        Gtk.StyleContext.AddProviderForScreen(gtkWidget.Screen, cssProvider, Gtk.StyleProviderPriority.User);
+                        Gtk.StyleContext.AddProviderForScreen(
+                            gtkWidget.Screen,
+                            cssProvider,
+                            Gtk.StyleProviderPriority.User
+                        );
                     }
                     catch (System.Exception ex)
                     {
-                        System.Console.WriteLine("Error applying dark theme to GTK scrollbars: " + ex.Message);
+                        System.Console.WriteLine(
+                            "Error applying dark theme to GTK scrollbars: " + ex.Message
+                        );
                     }
                 }
             }
             // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
         }
     }
-
-    }
+}
