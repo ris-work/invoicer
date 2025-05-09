@@ -680,8 +680,9 @@ namespace CommonUi
         /// </summary>
         /// <param name="button">The Eto.Forms.Button to configure.</param>
         /// <param name="P">A string representing the current Eto backend platform.</param>
-        public static void ConfigureForPlatform(this Eto.Forms.Button button, string P)
+        public static void ConfigureForPlatform(this Eto.Forms.Button button)
         {
+            var P = Eto.Platform.Instance.ToString();
 #if WINDOWS
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
@@ -726,8 +727,9 @@ namespace CommonUi
         /// </summary>
         /// <param name="container">An Eto.Forms.Container hosting scrollable content.</param>
         /// <param name="P">A string representing the current Eto backend platform.</param>
-        public static void ApplyDarkScrollbarTheme(this Eto.Forms.Container container, string P)
+        public static void ApplyDarkScrollbarTheme(this Eto.Forms.Container container)
         {
+            var P = Eto.Platform.Instance.ToString();
 #if WINDOWS
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {

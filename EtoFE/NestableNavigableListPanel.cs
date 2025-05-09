@@ -70,6 +70,7 @@ namespace EtoFE
             foreach ((string, object) LoadOncePanel in loadOncePanels)
             {
                 Button B = new Button() { Text = LoadOncePanel.Item1 };
+                B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(Eto.Drawing.Colors.PaleVioletRed);
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 35;
@@ -274,6 +275,7 @@ namespace EtoFE
                 TextColor = Eto.Drawing.Colors.Black,
             };
             EnableAccessibilityButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Black);
+            EnableAccessibilityButton.ConfigureForPlatform();
             //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
             EnableAccessibilityButton.Click += (sender, e) =>
             {

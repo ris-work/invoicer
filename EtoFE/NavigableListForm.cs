@@ -133,6 +133,7 @@ namespace EtoFE
             foreach ((string, object) LoadOncePanel in loadOncePanels)
             {
                 Label B = new Label() { Text = LoadOncePanel.Item1 };
+
                 B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
 
@@ -244,6 +245,7 @@ namespace EtoFE
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font("Gourier", 10),
             };
+            EnableAccessibilityButton.ConfigureForPlatform();
             EnableAccessibilityButton.Click += (sender, e) =>
             {
                 (new ListPanelOptionsAsButtons(loadOncePanels)).Show();

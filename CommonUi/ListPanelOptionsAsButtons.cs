@@ -26,6 +26,7 @@ namespace CommonUi
                     BackgroundColor = Eto.Drawing.Colors.Black,
                     TextColor = Eto.Drawing.Colors.DarkGoldenrod,
                 };
+                B.ConfigureForPlatform();
                 B.MinimumSize = new Eto.Drawing.Size(30, 35);
 
                 B.Click += (_, _) =>

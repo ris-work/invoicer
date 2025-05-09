@@ -41,6 +41,7 @@ public static class LoginTokens
 
 public class Program
 {
+    public static FontFamily UIFont = null;
     public static bool IsWpf = false;
     public static HttpClient client; // = new HttpClient();
     public static Tomlyn.Model.TomlTable Config;
@@ -56,6 +57,7 @@ public class Program
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
         Console.WriteLine("Hello, World!");
+        
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(
@@ -73,6 +75,8 @@ public class Program
         string CurrentUIConfigured = (string)ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms")) CurrentUI = Eto.Platforms.WinForms;
         if (CurrentUIConfigured.ToLowerInvariant() == ("gtk")) CurrentUI = Eto.Platforms.Gtk;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d")) CurrentUI = Eto.Platforms.Direct2D;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("winui")) CurrentUI = Eto.Platforms.WinForms;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
@@ -153,6 +157,17 @@ public class MyForm : Form
 
     public MyForm()
     {
+        try
+        {
+            Program.UIFont = FontFamily.FromFiles("Gourier.ttf", "FluentEmoji.ttf");
+        }
+        catch (Exception E)
+        {
+            Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+            Program.UIFont = FontFamilies.Monospace;
+
+        }
+        
         var platform = Eto.Forms.Application.Instance.Platform;
         System.Console.WriteLine($"Platform: {platform}");
         if (platform != null && platform.ToString().Equals("Eto.Wpf.Platform", StringComparison.OrdinalIgnoreCase))
