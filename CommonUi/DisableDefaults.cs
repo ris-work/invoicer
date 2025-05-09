@@ -841,10 +841,12 @@ namespace CommonUi
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
                 var winButton = button.ControlObject as System.Windows.Forms.Button;
+                Console.WriteLine($"{button.ControlObject.GetType()}, winButton: {winButton}");
                 if (winButton != null)
                 {
                     winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
                     winButton.FlatAppearance.BorderSize = 0;
+                    
                 }
             }
 #endif
@@ -924,6 +926,42 @@ namespace CommonUi
                 }
             }
             // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
+        }
+        public static void ConfigureForPlatform(this Eto.Forms.GridView targetGridView)
+        {
+            var P = Eto.Platform.Instance.ToString();
+
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                Console.WriteLine(targetGridView.ControlObject);
+                // Access the native Gtk.Button control using ControlObject.
+                var gtkButton = targetGridView.ControlObject as Gtk.TreeView;
+                if (gtkButton != null)
+                {
+                    // Disable borders by setting the Relief style to None.
+                    Gtk.Adjustment vadjustment = gtkButton.Vadjustment;
+                    gtkButton.HeadersVisible = true;
+                    gtkButton.HeadersClickable = true;
+                    gtkButton.ScrollEvent += (e, a) => { gtkButton.QueueDraw(); };
+
+                    var cssProvider = new Gtk.CssProvider();
+                    cssProvider.LoadFromData(
+                        @"
+    .black-bg {
+        background-image: none;
+        background-color: #000000;
+    }
+"
+                    );
+                    Gtk.StyleContext.AddProviderForScreen(
+                        gtkButton.Screen,
+                        cssProvider,
+                        Gtk.StyleProviderPriority.Application
+                    );
+                    gtkButton.StyleContext.AddClass("black-bg");
+                }
+            }
+            // No modifications are required for WPF or other backends.
         }
     }
 }

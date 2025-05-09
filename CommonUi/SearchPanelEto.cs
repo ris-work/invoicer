@@ -150,6 +150,7 @@ namespace CommonUi
             //Results.ApplyDarkThemeScrollBars();
             Results.DisableLines();
             Results.ApplyDarkGridHeaders();
+            Results.ConfigureForPlatform();
             //this.ApplyDark
             RadioButtonList RBLSearchCriteria = new RadioButtonList()
             {
