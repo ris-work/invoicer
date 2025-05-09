@@ -117,7 +117,7 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "control_size",
-                new Eto.Drawing.Size(12, 24)
+                new Eto.Drawing.Size(10, 24)
             );
             return (FG, BG, FGc, BGc, EFont, TSize, CSize);
         }
@@ -438,7 +438,11 @@ namespace CommonUi
                     ((TextBox)EInput).Font = TFont;
                     ((TextBox)EInput).KeyUp += GoToNext;
                 }
-                EInput.Width = 300;
+                EInput.Width = 200;
+                if (EInput is TextBox TB)
+                {
+                    TB.Width = 200;
+                }
                 Label EFieldName = new Label() { Text = kv.Value.Item1, TextColor = Eto.Drawing.Colors.White };
                 EControl = new TableRow(EFieldName, EInput, ELegend) { };
                 EFocusableList.Add(EInput);
@@ -450,6 +454,7 @@ namespace CommonUi
                     EFieldName.Font = LegendTFont;
                 }
                 _ELegends.Add(kv.Key, ELegend);
+                
                 
                 if (CurrentNo < EMid)
                     EControlsL.Add(EControl);

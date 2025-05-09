@@ -292,6 +292,7 @@ namespace EtoFE
                     {
                         HorizontalContentAlignment = HorizontalAlignment.Stretch,
                         Spacing = 2,
+                        
                     },
                     Height = 100,
                     Border = BorderType.None,

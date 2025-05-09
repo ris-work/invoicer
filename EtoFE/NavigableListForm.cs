@@ -55,7 +55,7 @@ namespace EtoFE
                                         // Core inventory panels
                                         (
                                             "📝 Editor",
-                                            new LoadOncePanel<Panel>(new CatalogueEditPanel())
+                                            new LoadOncePanel<CatalogueEditPanel>()
                                         ),
                                         ("📋 Batch Editor", new LoadOncePanel<Panel>()),
                                         ("🔧 Adjustments", new LoadOncePanel<Panel>()),

@@ -10,9 +10,11 @@ using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+
 using EtoFE;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using RV.InvNew.Common;
@@ -39,6 +41,7 @@ public static class LoginTokens
 
 public class Program
 {
+    public static bool IsWpf = false;
     public static HttpClient client; // = new HttpClient();
     public static Tomlyn.Model.TomlTable Config;
     public static IReadOnlyDictionary<string, object?> ConfigDict;
@@ -65,6 +68,10 @@ public class Program
 #endif
         //string CurrentUI = Eto.Platforms.WinForms; //Eto.Platforms.Wpf;
         string CurrentUI = Eto.Platforms.Wpf;
+        Console.WriteLine(Eto.Platforms.WinForms);
+        Console.WriteLine(Eto.Platforms.Wpf);
+        string CurrentUIConfigured = (string)ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
+        if (CurrentUIConfigured.ToLowerInvariant() == ("winforms")) CurrentUI = Eto.Platforms.WinForms;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
@@ -145,28 +152,42 @@ public class MyForm : Form
 
     public MyForm()
     {
+        var platform = Eto.Forms.Application.Instance.Platform;
+        System.Console.WriteLine($"Platform: {platform}");
+        if (platform != null && platform.ToString().Equals("Eto.Wpf.Platform", StringComparison.OrdinalIgnoreCase))
+        {
+            Program.IsWpf = true;
+            // Execute WPF-specific logic here.
+        }
 #if WINDOWS
         try
         {
-            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-                new System.Windows.ResourceDictionary
-                {
-                    Source = new Uri(
-                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
-                        UriKind.Absolute
-                    ),
-                }
-            );
-            //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
-            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-                new System.Windows.ResourceDictionary
-                {
-                    Source = new Uri(
-                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml",
-                        UriKind.Absolute
-                    ),
-                }
-            );
+            if (Program.IsWpf)
+            {
+                System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                    new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri(
+                            "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                            UriKind.Absolute
+                        ),
+                    }
+                );
+                //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
+                System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                    new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri(
+                            "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/Colors/DarkColors.xaml",
+                            UriKind.Absolute
+                        ),
+                    }
+                );
+            }
+            else
+            {
+                Console.WriteLine("Not WPF");
+            }
         }
         catch (Exception E)
         {
@@ -207,6 +228,8 @@ public class MyForm : Form
         TextBox UsernameBox,
             TerminalBox;
         PasswordBox PasswordBox;
+        BackgroundColor = Eto.Drawing.Colors.Black;
+        
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
@@ -224,9 +247,11 @@ public class MyForm : Form
 
         if (System.IO.File.Exists(TermLogoPath))
         {
+            Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
             Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
             System.Console.WriteLine(TermLogoUri.AbsoluteUri);
-            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
+            //TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
+            TermLogo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
         }
 
         layout.Rows.Add(null);
@@ -236,23 +261,26 @@ public class MyForm : Form
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Username : ", Style = "mono" },
-                UsernameBox = new TextBox() { PlaceholderText = "Username", Style = "mono" },
+                new Label() { Text = "Username : ", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f) },
+                UsernameBox = new TextBox() { PlaceholderText = "Username", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f), ShowBorder = false },
                 null
             )
         );
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Password : ", Style = "mono" },
-                PasswordBox = new PasswordBox() { Style = "mono" },
+                new Label() { Text = "Password : ", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f) },
+                PasswordBox = new PasswordBox() { Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f), },
                 null
             )
         );
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Terminal : ", Style = "mono" },
+                new Label() { Text = "Terminal : ", Style = "mono", Width = 20,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    TextColor = Eto.Drawing.Colors.White,
+                },
                 TerminalBox = new TextBox()
                 {
                     PlaceholderText = "1",
@@ -260,6 +288,9 @@ public class MyForm : Form
                     Text = "1",
                     Style = "mono",
                     TextAlignment = TextAlignment.Right,
+                    Width = 20,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    TextColor = Eto.Drawing.Colors.White,
                 },
                 null
             )
@@ -334,15 +365,22 @@ public class MyForm : Form
 #if WINDOWS
         try
         {
-            System.Windows.Application.Current.Resources.MergedDictionaries.Add(
-                new System.Windows.ResourceDictionary
-                {
-                    Source = new Uri(
-                        "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
-                        UriKind.Absolute
-                    ),
-                }
-            );
+            if (Program.IsWpf)
+            {
+                System.Windows.Application.Current.Resources.MergedDictionaries.Add(
+                    new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri(
+                            "pack://application:,,,/EtoFE;component/theming/WpfPlus/WpfPlus/DarkTheme.xaml",
+                            UriKind.Absolute
+                        ),
+                    }
+                );
+            }
+            else
+            {
+                Console.WriteLine("Not WPF");
+            }
         }
         catch (Exception E)
         {
@@ -350,5 +388,14 @@ public class MyForm : Form
         }
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
 #endif
+        Shown += (_, _) => { this.Invalidate(true); this.UpdateLayout(); this.Invalidate(); };
+        layout.Invalidate();
+        layout.UpdateLayout();
+        MinimumSize = new Eto.Drawing.Size(1280, 720);
+        Size = new Eto.Drawing.Size(1280, 720);
+        //BackgroundColor = Eto.Drawing.Colors.White;
+        (new Thread(() => { Thread.Sleep(200); Application.Instance.Invoke(() => { this.UpdateLayout(); this.Invalidate(true); }); })).Start();
+        
+        this.Invalidate(true);
     }
 }

@@ -337,6 +337,7 @@ namespace CommonUi
             )>();
             Results.CellFormatting += (e, a) =>
             {
+                a.Font = Eto.Drawing.Fonts.Monospace(11);
                 a.BackgroundColor = Eto.Drawing.Colors.Black;
                 a.ForegroundColor = Eto.Drawing.Colors.White;
                 //Colour the column first
@@ -374,14 +375,14 @@ namespace CommonUi
                     a.ForegroundColor = ReverseSort
                         ? Eto.Drawing.Colors.BlueViolet
                         : Eto.Drawing.Colors.LightGoldenrodYellow;
-                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
+                    a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
                 if (a.Row == Results.SelectedRow)
                 {
                     a.Column.AutoSize = true;
                     a.BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;
                     a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
-                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
+                    a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
                 
             };
@@ -391,7 +392,9 @@ namespace CommonUi
             Results.MouseUp += (e, a) => {
                 Results.Invalidate(true);
             };
-            Results.RowFormatting += (e, a) => {  };
+            Results.RowFormatting += (e, a) => {
+                a.BackgroundColor = Eto.Drawing.Colors.Black;
+            };
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.None;
 

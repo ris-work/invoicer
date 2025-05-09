@@ -15,6 +15,7 @@ namespace EtoFE
     {
         public CatalogueEditPanel()
         {
+            
             PosRefresh PR;
             while (true)
             {
@@ -37,10 +38,10 @@ namespace EtoFE
             {
                 ("Itemcode", TextAlignment.Right, true),
                 ("Name", TextAlignment.Left, false),
-                ("Split 1", TextAlignment.Right, false),
-                ("Split 2", TextAlignment.Center, false),
-                ("Split 3", TextAlignment.Right, false),
-                ("Split 4", TextAlignment.Left, true),
+                //("Split 1", TextAlignment.Right, false),
+                //("Split 2", TextAlignment.Center, false),
+                //("Split 3", TextAlignment.Right, false),
+                //("Split 4", TextAlignment.Left, true),
             };
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue = PR
                 .Catalogue.Select<PosCatalogue, (string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>

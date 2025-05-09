@@ -59,10 +59,10 @@ namespace RV.InvNew.Common
                 itemcode.ToString(),
                 itemdesc,
                 DefaultVatCategory.ToString(),
-                itemdesc.Split(" ")[0],
-                itemdesc.Split(" ")[1],
-                itemdesc.Split(" ")[2],
-                r.NextInt64().ToString(),
+                //itemdesc.Split(" ")[0],
+                //itemdesc.Split(" ")[1],
+                //itemdesc.Split(" ")[2],
+                //r.NextInt64().ToString(),
             };
         }
     }
