@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
@@ -59,6 +60,8 @@ public class Program
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
         Console.WriteLine("Hello, World!");
+        CommonUi.ColorSettings.Initialize(ConfigDict);
+        ColorSettings.Dump();
 
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();
