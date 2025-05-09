@@ -83,21 +83,21 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "background_color",
-                Eto.Drawing.Color.FromGrayscale(0.1f)
+                ColorSettings.BackgroundColor
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "foreground_color_changed",
-                Eto.Drawing.Colors.LightYellow
+                ColorSettings.LesserForegroundColor
             );
             Color BGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color_changed",
-                Eto.Drawing.Colors.DarkSlateGray
+                ColorSettings.LesserBackgroundColor
             );
             Font EFont = EtoThemingUtilities.GetNestedFont(
                 Configuration,

@@ -294,7 +294,7 @@ public class MyForm : Form
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                 },
                 UsernameBox = new TextBox()
                 {
@@ -302,7 +302,7 @@ public class MyForm : Form
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                     ShowBorder = false,
                 },
                 null
@@ -317,14 +317,14 @@ public class MyForm : Form
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                 },
                 PasswordBox = new PasswordBox()
                 {
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                 },
                 null
             )
@@ -337,7 +337,7 @@ public class MyForm : Form
                     Text = "Terminal : ",
                     Style = "mono",
                     Width = 20,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                     TextColor = ColorSettings.ForegroundColor,
                 },
                 TerminalBox = new TextBox()
@@ -348,7 +348,7 @@ public class MyForm : Form
                     Style = "mono",
                     TextAlignment = TextAlignment.Right,
                     Width = 20,
-                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
                     TextColor = ColorSettings.ForegroundColor,
                 },
                 null
@@ -384,6 +384,8 @@ public class MyForm : Form
             Text = "Login",
             Size = new Size(200, 50),
             Style = "large",
+            BackgroundColor = ColorSettings.BackgroundColor,
+            TextColor = ColorSettings.LesserForegroundColor,
         };
         layout.Rows.Add(
             new TableRow(
@@ -400,6 +402,8 @@ public class MyForm : Form
                         Text = "Exit",
                         Style = "large",
                         Size = new Size(300, 50),
+                        BackgroundColor = ColorSettings.BackgroundColor,
+                        TextColor = ColorSettings.LesserForegroundColor,
                     }
                 ),
                 null

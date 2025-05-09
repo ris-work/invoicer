@@ -115,7 +115,7 @@ namespace EtoFE
                 }
                 else
                 {
-                    a.ForegroundColor = Eto.Drawing.Colors.Wheat;
+                    a.ForegroundColor = ColorSettings.LesserForegroundColor;
                     a.BackgroundColor = ColorSettings.BackgroundColor;
                 }
                 a.Font = new Eto.Drawing.Font(
@@ -144,8 +144,8 @@ namespace EtoFE
                     Label CurrentLabel = ((Label)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
-                        B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                        B.TextColor = ColorSettings.SelectedColumnColor;
+                        B.BackgroundColor = ColorSettings.ForegroundColor;
                     }
                 };
                 B.MouseLeave += (e, a) =>

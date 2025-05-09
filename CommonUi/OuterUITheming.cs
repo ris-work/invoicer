@@ -18,6 +18,8 @@ namespace CommonUi
         public static Color ForegroundColor { get; private set; }
         public static Color BackgroundColor { get; private set; }
         public static Color SelectedColumnColor { get; private set; }
+        public static Color LesserBackgroundColor { get; private set; }
+        public static Color LesserForegroundColor { get; private set; }
 
         /// <summary>
         /// Initializes the global color settings from the provided configuration dictionary.
@@ -30,13 +32,15 @@ namespace CommonUi
             ForegroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("ForegroundColor", "White"));
             BackgroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("BackgroundColor", "Black"));
             SelectedColumnColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("SelectedColumnColor", "SlateBlue"));
+            LesserBackgroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("LesserBackgroundColor", "SlateBlue"));
+            LesserForegroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("LesserForegroundColor", "SlateBlue"));
         }
 
         ///<summary>
         ///Dump universal settings
         ///</summary>
         public static void Dump(){
-            System.Console.WriteLine($"Alt1: {AlternatingColor1}, Alt2: {AlternatingColor2}, Sel: {SelectedColumnColor}, FG: {ForegroundColor}, BG: {BackgroundColor}.");
+            System.Console.WriteLine($"Alt1: {AlternatingColor1}, Alt2: {AlternatingColor2}, Sel: {SelectedColumnColor}, FG: {ForegroundColor}, BG: {BackgroundColor}, LFG: {LesserForegroundColor}, LBG: {LesserBackgroundColor}.");
         }
 
         /// <summary>
@@ -113,7 +117,7 @@ namespace CommonUi
                 {
                     a = int.Parse(parts[3].Trim());
                 }
-                return Color.FromArgb(a, r, g, b);
+                return Color.FromArgb(r, g, b, a);
             }
 
             // Hex format (starting with #)
@@ -128,7 +132,7 @@ namespace CommonUi
                     int r = int.Parse(rHex, NumberStyles.HexNumber);
                     int g = int.Parse(gHex, NumberStyles.HexNumber);
                     int b = int.Parse(bHex, NumberStyles.HexNumber);
-                    return Color.FromArgb(255, r, g, b);
+                    return Color.FromArgb(r, g, b, 255);
                 }
                 if (hex.Length == 4) // #rgba
                 {
@@ -140,14 +144,14 @@ namespace CommonUi
                     int g = int.Parse(gHex, NumberStyles.HexNumber);
                     int b = int.Parse(bHex, NumberStyles.HexNumber);
                     int a = int.Parse(aHex, NumberStyles.HexNumber);
-                    return Color.FromArgb(a, r, g, b);
+                    return Color.FromArgb(r, g, b, a);
                 }
                 if (hex.Length == 6) // #rrggbb
                 {
                     int r = int.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
                     int g = int.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
                     int b = int.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
-                    return Color.FromArgb(255, r, g, b);
+                    return Color.FromArgb(r, g, b, 255);
                 }
                 if (hex.Length == 8) // #rrggbbaa
                 {
@@ -155,7 +159,7 @@ namespace CommonUi
                     int g = int.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
                     int b = int.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
                     int a = int.Parse(hex.Substring(6, 2), NumberStyles.HexNumber);
-                    return Color.FromArgb(a, r, g, b);
+                    return Color.FromArgb(r, g, b, a);
                 }
                 throw new FormatException("Invalid hex color format.");
             }

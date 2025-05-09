@@ -343,13 +343,13 @@ namespace CommonUi
                 //Colour the column first
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
-                    a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
+                    a.BackgroundColor = ColorSettings.AlternatingColor2;
                     a.ForegroundColor = ColorSettings.ForegroundColor;
                 }
                 //Override with row colours
                 if (a.Row % 2 == 0)
                 {
-                    a.BackgroundColor = Eto.Drawing.Colors.DarkCyan;
+                    a.BackgroundColor = ColorSettings.AlternatingColor1;
                     a.ForegroundColor = ColorSettings.ForegroundColor;
                 }
                 //Use color matrix now!
@@ -370,18 +370,18 @@ namespace CommonUi
                 {
                     a.Column.AutoSize = true;
                     a.BackgroundColor = ReverseSort
-                        ? Eto.Drawing.Colors.LightGoldenrodYellow
-                        : Eto.Drawing.Colors.BlueViolet;
+                        ? ColorSettings.ForegroundColor
+                        : ColorSettings.SelectedColumnColor;
                     a.ForegroundColor = ReverseSort
-                        ? Eto.Drawing.Colors.BlueViolet
-                        : Eto.Drawing.Colors.LightGoldenrodYellow;
+                        ? ColorSettings.SelectedColumnColor
+                        : ColorSettings.ForegroundColor;
                     a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
                 if (a.Row == Results.SelectedRow)
                 {
                     a.Column.AutoSize = true;
-                    a.BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;
-                    a.ForegroundColor = Eto.Drawing.Colors.LightGoldenrodYellow;
+                    a.BackgroundColor = ColorSettings.SelectedColumnColor;
+                    a.ForegroundColor = ColorSettings.ForegroundColor;
                     a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
             };

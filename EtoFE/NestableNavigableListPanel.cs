@@ -71,7 +71,7 @@ namespace EtoFE
             {
                 Button B = new Button() { Text = LoadOncePanel.Item1 };
                 B.ConfigureForPlatform();
-                B.DisableHoverBackgroundChange(Eto.Drawing.Colors.PaleVioletRed);
+                B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 35;
                 B.MinimumSize = new Eto.Drawing.Size(0, 35);
@@ -86,8 +86,8 @@ namespace EtoFE
                     Button CurrentLabel = ((Button)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
-                        B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                        B.TextColor = ColorSettings.SelectedColumnColor;
+                        B.BackgroundColor = ColorSettings.ForegroundColor;
                     }
                 };
                 B.GotFocus += (e, a) =>
@@ -95,8 +95,8 @@ namespace EtoFE
                     Button CurrentLabel = ((Button)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.DarkGoldenrod;
-                        B.BackgroundColor = Eto.Drawing.Colors.Purple;
+                        B.TextColor = ColorSettings.SelectedColumnColor;
+                        B.BackgroundColor = ColorSettings.ForegroundColor;
                     }
                 };
                 B.LostFocus += (e, a) =>
