@@ -134,7 +134,7 @@ namespace EtoFE
                 B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
 
-                B.Font = new Eto.Drawing.Font("Gourier", 11) { };
+                B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
                 B.TextColor = Eto.Drawing.Colors.White;
                 B.Enabled = true;
                 B.BackgroundColor = Eto.Drawing.Colors.Black;
@@ -212,7 +212,7 @@ namespace EtoFE
             Button EnableAccessibilityButton = new Button()
             {
                 Text = " Enable Accessibility... ♿👓 ",
-                Font = new Eto.Drawing.Font("Gourier", 10),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = Eto.Drawing.Colors.Black,
                 TextColor = Eto.Drawing.Colors.White,
@@ -223,7 +223,7 @@ namespace EtoFE
                 BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
                 TextColor = Eto.Drawing.Colors.White,
                 VerticalAlignment = VerticalAlignment.Center,
-                Font = new Eto.Drawing.Font("Gourier", 10),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
             Label CurrentServerTimeLabel = new Label()
             {
@@ -231,7 +231,7 @@ namespace EtoFE
                 BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
                 TextColor = Eto.Drawing.Colors.White,
                 VerticalAlignment = VerticalAlignment.Center,
-                Font = new Eto.Drawing.Font("Gourier", 10),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
             Label CurrentUserAndToken = new Label()
             {
@@ -240,7 +240,7 @@ namespace EtoFE
                 TextColor = Eto.Drawing.Colors.White,
                 TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Font = new Eto.Drawing.Font("Gourier", 10),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
             EnableAccessibilityButton.ConfigureForPlatform();
             EnableAccessibilityButton.Click += (sender, e) =>
