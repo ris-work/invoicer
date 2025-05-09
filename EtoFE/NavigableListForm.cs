@@ -53,10 +53,7 @@ namespace EtoFE
                                     new List<(string Label, object Content)>
                                     {
                                         // Core inventory panels
-                                        (
-                                            "📝 Editor",
-                                            new LoadOncePanel<CatalogueEditPanel>()
-                                        ),
+                                        ("📝 Editor", new LoadOncePanel<CatalogueEditPanel>()),
                                         ("📋 Batch Editor", new LoadOncePanel<Panel>()),
                                         ("🔧 Adjustments", new LoadOncePanel<Panel>()),
                                         ("📦 Items", new LoadOncePanel<Panel>()),
@@ -312,14 +309,16 @@ namespace EtoFE
                             if (req.Error == false)
                             {
                                 TR = req.Out;
-                                Application.Instance.Invoke(() => { CurrentServerTimeLabel.Text = $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}"; });
+                                Application.Instance.Invoke(() =>
+                                {
+                                    CurrentServerTimeLabel.Text =
+                                        $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}";
+                                });
                             }
-
                         }
                         catch (Exception E) { }
                         Thread.Sleep(1000);
                     }
-                    
                 })
             );
             LocalTimeRefresher.Start();

@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
-
 using EtoFE;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using RV.InvNew.Common;
@@ -57,7 +56,7 @@ public class Program
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
         Console.WriteLine("Hello, World!");
-        
+
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(
@@ -72,11 +71,16 @@ public class Program
         string CurrentUI = Eto.Platforms.Wpf;
         Console.WriteLine(Eto.Platforms.WinForms);
         Console.WriteLine(Eto.Platforms.Wpf);
-        string CurrentUIConfigured = (string)ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
-        if (CurrentUIConfigured.ToLowerInvariant() == ("winforms")) CurrentUI = Eto.Platforms.WinForms;
-        if (CurrentUIConfigured.ToLowerInvariant() == ("gtk")) CurrentUI = Eto.Platforms.Gtk;
-        if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d")) CurrentUI = Eto.Platforms.Direct2D;
-        if (CurrentUIConfigured.ToLowerInvariant() == ("winui")) CurrentUI = Eto.Platforms.WinForms;
+        string CurrentUIConfigured = (string)
+            ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
+        if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
+            CurrentUI = Eto.Platforms.WinForms;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("gtk"))
+            CurrentUI = Eto.Platforms.Gtk;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d"))
+            CurrentUI = Eto.Platforms.Direct2D;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("winui"))
+            CurrentUI = Eto.Platforms.WinForms;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
@@ -165,12 +169,14 @@ public class MyForm : Form
         {
             Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
             Program.UIFont = FontFamilies.Monospace;
-
         }
-        
+
         var platform = Eto.Forms.Application.Instance.Platform;
         System.Console.WriteLine($"Platform: {platform}");
-        if (platform != null && platform.ToString().Equals("Eto.Wpf.Platform", StringComparison.OrdinalIgnoreCase))
+        if (
+            platform != null
+            && platform.ToString().Equals("Eto.Wpf.Platform", StringComparison.OrdinalIgnoreCase)
+        )
         {
             Program.IsWpf = true;
             // Execute WPF-specific logic here.
@@ -245,7 +251,6 @@ public class MyForm : Form
             TerminalBox;
         PasswordBox PasswordBox;
         BackgroundColor = Eto.Drawing.Colors.Black;
-        
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
@@ -277,23 +282,55 @@ public class MyForm : Form
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Username : ", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f) },
-                UsernameBox = new TextBox() { PlaceholderText = "Username", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f), ShowBorder = false },
+                new Label()
+                {
+                    Text = "Username : ",
+                    Style = "mono",
+                    Width = 20,
+                    TextColor = Eto.Drawing.Colors.White,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                },
+                UsernameBox = new TextBox()
+                {
+                    PlaceholderText = "Username",
+                    Style = "mono",
+                    Width = 20,
+                    TextColor = Eto.Drawing.Colors.White,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                    ShowBorder = false,
+                },
                 null
             )
         );
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Password : ", Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f) },
-                PasswordBox = new PasswordBox() { Style = "mono", Width = 20, TextColor = Eto.Drawing.Colors.White, BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f), },
+                new Label()
+                {
+                    Text = "Password : ",
+                    Style = "mono",
+                    Width = 20,
+                    TextColor = Eto.Drawing.Colors.White,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                },
+                PasswordBox = new PasswordBox()
+                {
+                    Style = "mono",
+                    Width = 20,
+                    TextColor = Eto.Drawing.Colors.White,
+                    BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
+                },
                 null
             )
         );
         layout.Rows.Add(
             new TableRow(
                 null,
-                new Label() { Text = "Terminal : ", Style = "mono", Width = 20,
+                new Label()
+                {
+                    Text = "Terminal : ",
+                    Style = "mono",
+                    Width = 20,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
                     TextColor = Eto.Drawing.Colors.White,
                 },
@@ -404,14 +441,29 @@ public class MyForm : Form
         }
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
 #endif
-        Shown += (_, _) => { this.Invalidate(true); this.UpdateLayout(); this.Invalidate(); };
+        Shown += (_, _) =>
+        {
+            this.Invalidate(true);
+            this.UpdateLayout();
+            this.Invalidate();
+        };
         layout.Invalidate();
         layout.UpdateLayout();
         MinimumSize = new Eto.Drawing.Size(1280, 720);
         Size = new Eto.Drawing.Size(1280, 720);
         //BackgroundColor = Eto.Drawing.Colors.White;
-        (new Thread(() => { Thread.Sleep(200); Application.Instance.Invoke(() => { this.UpdateLayout(); this.Invalidate(true); }); })).Start();
-        
+        (
+            new Thread(() =>
+            {
+                Thread.Sleep(200);
+                Application.Instance.Invoke(() =>
+                {
+                    this.UpdateLayout();
+                    this.Invalidate(true);
+                });
+            })
+        ).Start();
+
         this.Invalidate(true);
     }
 }

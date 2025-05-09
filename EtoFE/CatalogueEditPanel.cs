@@ -15,7 +15,6 @@ namespace EtoFE
     {
         public CatalogueEditPanel()
         {
-            
             PosRefresh PR;
             while (true)
             {
