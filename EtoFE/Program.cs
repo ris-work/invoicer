@@ -72,6 +72,7 @@ public class Program
         Console.WriteLine(Eto.Platforms.Wpf);
         string CurrentUIConfigured = (string)ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms")) CurrentUI = Eto.Platforms.WinForms;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("gtk")) CurrentUI = Eto.Platforms.Gtk;
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);

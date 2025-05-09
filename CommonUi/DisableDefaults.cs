@@ -7,11 +7,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Eto.Forms;
+using Microsoft.Maui.Controls.PlatformConfiguration;
+using System.Security.Cryptography;
+//using System.Windows.Forms;
+
+
 
 
 #if WINDOWS
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
+using System.Windows.Forms;
 
 
 using System.Windows.Controls;
@@ -238,7 +244,7 @@ namespace CommonUi
 #endif
         }
 
-        public static void ApplyDarkThemeForScrollBarsAndGridView(this Form form)
+        public static void ApplyDarkThemeForScrollBarsAndGridView(this Eto.Forms.Form form)
         {
 #if WINDOWS
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
@@ -289,7 +295,7 @@ namespace CommonUi
 #endif
         }
 
-        public static void ApplyDarkTheme(this Form form)
+        public static void ApplyDarkTheme(this Eto.Forms.Form form)
         {
 #if WINDOWS
             if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
@@ -668,6 +674,94 @@ namespace CommonUi
     public static void ApplyGlobalScrollBarPageButtonStyle() { }
     public static void ApplyGlobalScrollBarThumbStyle() { }
 #endif
+        /// <summary>
+        /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
+        /// Evaluates the provided variable P against the current Eto backend.
+        /// </summary>
+        /// <param name="button">The Eto.Forms.Button to configure.</param>
+        /// <param name="P">A string representing the current Eto backend platform.</param>
+        public static void ConfigureForPlatform(this Eto.Forms.Button button, string P)
+        {
+#if WINDOWS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                // Access the native System.Windows.Forms.Button control via ControlObject.
+                var winButton = button.ControlObject as System.Windows.Forms.Button;
+                if (winButton != null)
+                {
+                    winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                    winButton.FlatAppearance.BorderSize = 0;
+                }
+            }
+#endif
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                // Access the native Gtk.Button control using ControlObject.
+                var gtkButton = button.ControlObject as Gtk.Button;
+                if (gtkButton != null)
+                {
+                    // Disable borders by setting the Relief style to None.
+                    gtkButton.Relief = Gtk.ReliefStyle.None;
+                    var cssProvider = new Gtk.CssProvider();
+                    cssProvider.LoadFromData(@"
+    .black-bg {
+        background-image: none;
+        background-color: #000000;
+    }
+");
+                    Gtk.StyleContext.AddProviderForScreen(
+                        gtkButton.Screen,
+                        cssProvider,
+                        Gtk.StyleProviderPriority.Application
+                    );
+                    gtkButton.StyleContext.AddClass("black-bg");
+                }
+            }
+            // No modifications are required for WPF or other backends.
+        }
+
+        /// <summary>
+        /// Extension method to apply a dark theme for scrollbars on an Eto.Forms.Container.
+        /// Uses custom logic for WinForms (placeholder) and a GTK CSS provider for GTK.
+        /// </summary>
+        /// <param name="container">An Eto.Forms.Container hosting scrollable content.</param>
+        /// <param name="P">A string representing the current Eto backend platform.</param>
+        public static void ApplyDarkScrollbarTheme(this Eto.Forms.Container container, string P)
+        {
+#if WINDOWS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                // For WinForms, the native control is often a System.Windows.Forms.Panel when using auto-scrolling.
+                // Standard OS-rendered scrollbars are not easily themed, so a custom owner-drawn implementation is typically needed.
+                var winControl = container.ControlObject as System.Windows.Forms.Panel;
+                if (winControl != null)
+                {
+                    // Insert your custom owner-drawn scrollbar painting logic here.
+                }
+            }
+#endif
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                // For GTK, apply a dark theme for scrollbars using a CSS provider.
+                var gtkWidget = container.ControlObject as Gtk.Widget;
+                if (gtkWidget != null)
+                {
+                    try
+                    {
+                        var cssProvider = new Gtk.CssProvider();
+                        // Adjust the CSS as needed to further style the scrollbars.
+                        cssProvider.LoadFromData("scrollbar { background-color: #2e2e2e; }");
+                        // Apply the CSS style to the screen hosting the widget.
+                        Gtk.StyleContext.AddProviderForScreen(gtkWidget.Screen, cssProvider, Gtk.StyleProviderPriority.User);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Console.WriteLine("Error applying dark theme to GTK scrollbars: " + ex.Message);
+                    }
+                }
+            }
+            // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
+        }
     }
 
     }
