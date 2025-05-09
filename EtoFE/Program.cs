@@ -256,7 +256,7 @@ public class MyForm : Form
         TextBox UsernameBox,
             TerminalBox;
         PasswordBox PasswordBox;
-        BackgroundColor = Eto.Drawing.Colors.Black;
+        BackgroundColor = ColorSettings.BackgroundColor;
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
@@ -293,7 +293,7 @@ public class MyForm : Form
                     Text = "Username : ",
                     Style = "mono",
                     Width = 20,
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
                 },
                 UsernameBox = new TextBox()
@@ -301,7 +301,7 @@ public class MyForm : Form
                     PlaceholderText = "Username",
                     Style = "mono",
                     Width = 20,
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
                     ShowBorder = false,
                 },
@@ -316,14 +316,14 @@ public class MyForm : Form
                     Text = "Password : ",
                     Style = "mono",
                     Width = 20,
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
                 },
                 PasswordBox = new PasswordBox()
                 {
                     Style = "mono",
                     Width = 20,
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
                 },
                 null
@@ -338,7 +338,7 @@ public class MyForm : Form
                     Style = "mono",
                     Width = 20,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                 },
                 TerminalBox = new TextBox()
                 {
@@ -349,7 +349,7 @@ public class MyForm : Form
                     TextAlignment = TextAlignment.Right,
                     Width = 20,
                     BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.1f),
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                 },
                 null
             )
@@ -457,7 +457,7 @@ public class MyForm : Form
         layout.UpdateLayout();
         MinimumSize = new Eto.Drawing.Size(1280, 720);
         Size = new Eto.Drawing.Size(1280, 720);
-        //BackgroundColor = Eto.Drawing.Colors.White;
+        //BackgroundColor = ColorSettings.ForegroundColor;
         (
             new Thread(() =>
             {

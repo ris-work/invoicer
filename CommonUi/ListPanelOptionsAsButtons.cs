@@ -23,7 +23,7 @@ namespace CommonUi
                 Button B = new Button()
                 {
                     Text = panel.Item1,
-                    BackgroundColor = Eto.Drawing.Colors.Black,
+                    BackgroundColor = ColorSettings.BackgroundColor,
                     TextColor = Eto.Drawing.Colors.DarkGoldenrod,
                 };
                 B.ConfigureForPlatform();
@@ -58,7 +58,7 @@ namespace CommonUi
             };
             Title = "RV Accessibility Services ♿👓";
             Content = ButtonsListLayout;
-            BackgroundColor = Eto.Drawing.Colors.Black;
+            BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
             Resizable = false;
             BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;

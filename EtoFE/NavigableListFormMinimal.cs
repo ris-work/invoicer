@@ -8,6 +8,7 @@ using System.Windows;
 using Eto;
 using Eto.Containers;
 using Eto.Forms;
+using CommonUi;
 
 namespace EtoFE
 {
@@ -24,8 +25,8 @@ namespace EtoFE
                     DataCell = new TextBoxCell(0) { },
                 }
             );
-            LB.BackgroundColor = Eto.Drawing.Colors.Black;
-            //LB.TextColor = Eto.Drawing.Colors.White;
+            LB.BackgroundColor = ColorSettings.BackgroundColor;
+            //LB.TextColor = ColorSettings.ForegroundColor;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel();
@@ -50,13 +51,13 @@ namespace EtoFE
             {
                 if (a.Row == LB.SelectedRow)
                 {
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
-                    a.BackgroundColor = Eto.Drawing.Colors.White;
+                    a.ForegroundColor = ColorSettings.BackgroundColor;
+                    a.BackgroundColor = ColorSettings.ForegroundColor;
                 }
                 else
                 {
                     a.ForegroundColor = Eto.Drawing.Colors.Wheat;
-                    a.BackgroundColor = Eto.Drawing.Colors.Black;
+                    a.BackgroundColor = ColorSettings.BackgroundColor;
                 }
                 a.Font = new Eto.Drawing.Font(
                     "Segoe UI",
@@ -65,7 +66,7 @@ namespace EtoFE
                     Eto.Drawing.FontDecoration.None
                 );
             };
-            BackgroundColor = Eto.Drawing.Colors.Black;
+            BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
         }
     }

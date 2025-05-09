@@ -36,8 +36,8 @@ namespace EtoFE
                     DataCell = new TextBoxCell(0) { },
                 }
             );
-            LB.BackgroundColor = Eto.Drawing.Colors.Black;
-            //LB.TextColor = Eto.Drawing.Colors.White;
+            LB.BackgroundColor = ColorSettings.BackgroundColor;
+            //LB.TextColor = ColorSettings.ForegroundColor;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
@@ -110,13 +110,13 @@ namespace EtoFE
             {
                 if (a.Row == LB.SelectedRow)
                 {
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
-                    a.BackgroundColor = Eto.Drawing.Colors.White;
+                    a.ForegroundColor = ColorSettings.BackgroundColor;
+                    a.BackgroundColor = ColorSettings.ForegroundColor;
                 }
                 else
                 {
                     a.ForegroundColor = Eto.Drawing.Colors.Wheat;
-                    a.BackgroundColor = Eto.Drawing.Colors.Black;
+                    a.BackgroundColor = ColorSettings.BackgroundColor;
                 }
                 a.Font = new Eto.Drawing.Font(
                     "Segoe UI",
@@ -135,9 +135,9 @@ namespace EtoFE
                 B.Height = 60;
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
-                B.TextColor = Eto.Drawing.Colors.White;
+                B.TextColor = ColorSettings.ForegroundColor;
                 B.Enabled = true;
-                B.BackgroundColor = Eto.Drawing.Colors.Black;
+                B.BackgroundColor = ColorSettings.BackgroundColor;
                 //B.Click += (e, a) => { };
                 B.MouseEnter += (e, a) =>
                 {
@@ -153,8 +153,8 @@ namespace EtoFE
                     Label CurrentLabel = ((Label)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.White;
-                        B.BackgroundColor = Eto.Drawing.Colors.Black;
+                        B.TextColor = ColorSettings.ForegroundColor;
+                        B.BackgroundColor = ColorSettings.BackgroundColor;
                     }
                     this.Invalidate();
                 };
@@ -175,12 +175,12 @@ namespace EtoFE
                     SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
                     foreach (Label L in Buttons)
                     {
-                        L.TextColor = Eto.Drawing.Colors.White;
-                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.TextColor = ColorSettings.ForegroundColor;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
                         L.Invalidate(true);
                     }
-                    ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
-                    ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
+                    ClickedLabel.TextColor = ColorSettings.BackgroundColor;
+                    ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
                     this.Size = new Eto.Drawing.Size(-1, -1);
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
@@ -207,21 +207,21 @@ namespace EtoFE
             };
             LB.DisableLines();
             //LB.DisableGridViewEnterKey();
-            BackgroundColor = Eto.Drawing.Colors.Black;
+            BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
             Button EnableAccessibilityButton = new Button()
             {
                 Text = " Enable Accessibility... ♿👓 ",
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             Label CurrentClientTimeLabel = new Label()
             {
                 Text = DateTime.UtcNow.ToString("O"),
                 BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
-                TextColor = Eto.Drawing.Colors.White,
+                TextColor = ColorSettings.ForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
@@ -229,7 +229,7 @@ namespace EtoFE
             {
                 Text = "TBD",
                 BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
-                TextColor = Eto.Drawing.Colors.White,
+                TextColor = ColorSettings.ForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
@@ -237,7 +237,7 @@ namespace EtoFE
             {
                 Text = $"{LoginTokens.Username}{Environment.NewLine}{LoginTokens.token.TokenID}",
                 BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.2f),
-                TextColor = Eto.Drawing.Colors.White,
+                TextColor = ColorSettings.ForegroundColor,
                 TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),

@@ -315,13 +315,13 @@ namespace CommonUi
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.LightGreen;
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
+                    a.ForegroundColor = ColorSettings.BackgroundColor;
                 }
                 //Override with row colours
                 if (a.Row % 2 == 0)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
+                    a.ForegroundColor = ColorSettings.BackgroundColor;
                 }
                 //Use color matrix now!
                 if (

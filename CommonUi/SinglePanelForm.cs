@@ -13,7 +13,7 @@ namespace CommonUi
         {
             Title = TupleIn.Item1;
             Content = (Control)(((ILoadOncePanel<object>)TupleIn.Item2).GetInnerAsObject());
-            BackgroundColor = Eto.Drawing.Colors.Black;
+            BackgroundColor = ColorSettings.BackgroundColor;
             Padding = new Eto.Drawing.Padding(20);
         }
     }

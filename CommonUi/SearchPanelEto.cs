@@ -156,22 +156,22 @@ namespace CommonUi
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             RadioButtonList RBLSearchPosition = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
             RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
@@ -182,14 +182,14 @@ namespace CommonUi
             CheckBox CBNormalizeSpelling = new CheckBox()
             {
                 Text = "Normalize spelling [END]",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             CheckBox CBAnythingAnywhere = new CheckBox()
             {
                 Text = "Anything Anywhere [BRK]",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
@@ -209,15 +209,15 @@ namespace CommonUi
             {
                 Text = "Case sensitivity setting",
                 Content = RBLSearchCaseSensitivity,
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchCasePosition = new()
             {
                 Text = "Search Position",
                 Content = RBLSearchPosition,
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchSpellingNormalization = new()
             {
@@ -226,8 +226,8 @@ namespace CommonUi
                 {
                     Orientation = Eto.Forms.Orientation.Vertical,
                 },
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
 
             StackLayout SearchOptions = new StackLayout()
@@ -329,7 +329,7 @@ namespace CommonUi
             //Results.ForceDarkThemeScrollBarThumbs();
             //ApplyScrollBarLineButtonStyle();
             //ApplyScrollBarThumbStyle();
-            Results.BackgroundColor = Eto.Drawing.Colors.Black;
+            Results.BackgroundColor = ColorSettings.BackgroundColor;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
@@ -338,19 +338,19 @@ namespace CommonUi
             Results.CellFormatting += (e, a) =>
             {
                 a.Font = Eto.Drawing.Fonts.Monospace(11);
-                a.BackgroundColor = Eto.Drawing.Colors.Black;
-                a.ForegroundColor = Eto.Drawing.Colors.White;
+                a.BackgroundColor = ColorSettings.BackgroundColor;
+                a.ForegroundColor = ColorSettings.ForegroundColor;
                 //Colour the column first
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
-                    a.ForegroundColor = Eto.Drawing.Colors.White;
+                    a.ForegroundColor = ColorSettings.ForegroundColor;
                 }
                 //Override with row colours
                 if (a.Row % 2 == 0)
                 {
                     a.BackgroundColor = Eto.Drawing.Colors.DarkCyan;
-                    a.ForegroundColor = Eto.Drawing.Colors.White;
+                    a.ForegroundColor = ColorSettings.ForegroundColor;
                 }
                 //Use color matrix now!
                 if (
@@ -395,7 +395,7 @@ namespace CommonUi
             };
             Results.RowFormatting += (e, a) =>
             {
-                a.BackgroundColor = Eto.Drawing.Colors.Black;
+                a.BackgroundColor = ColorSettings.BackgroundColor;
             };
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.None;
@@ -403,8 +403,8 @@ namespace CommonUi
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
             TextBox SearchBox = new TextBox()
             {
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             if (Debug)
                 MessageBox.Show($"PC: {SC.Count()}");

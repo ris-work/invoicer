@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Eto.Forms;
 using RV.InvNew.Common;
+using CommonUi;
 
 namespace EtoFE
 {
@@ -65,7 +66,7 @@ namespace EtoFE
             Button MarkAllAsRead = new Button()
             {
                 BackgroundColor = Eto.Drawing.Colors.DarkRed,
-                TextColor = Eto.Drawing.Colors.White,
+                TextColor = ColorSettings.ForegroundColor,
                 Text = "Mark as read",
             };
             Button Exit = new Button() { Text = "Exit" };

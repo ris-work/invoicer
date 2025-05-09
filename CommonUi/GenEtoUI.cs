@@ -76,7 +76,7 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "foreground_color",
-                Eto.Drawing.Colors.White
+                ColorSettings.ForegroundColor
             );
             Color BG = EtoThemingUtilities.GetNestedColor(
                 Configuration,
@@ -222,8 +222,8 @@ namespace CommonUi
 
             this.ChangesOnly = ChangesOnly;
             //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
-            //BackgroundColor = Eto.Drawing.Colors.White;
-            //ForegroundColor = Eto.Drawing.Colors.Black;
+            //BackgroundColor = ColorSettings.ForegroundColor;
+            //ForegroundColor = ColorSettings.BackgroundColor;
             //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
             //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
             List<Eto.Forms.TableRow> EControlsL = new() { };
@@ -242,8 +242,8 @@ namespace CommonUi
             Button SaveButton = new Button()
             {
                 Text = "Save",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             GoToNext = (e, a) =>
             {
@@ -471,7 +471,7 @@ namespace CommonUi
                 Label EFieldName = new Label()
                 {
                     Text = kv.Value.Item1,
-                    TextColor = Eto.Drawing.Colors.White,
+                    TextColor = ColorSettings.ForegroundColor,
                 };
                 EControl = new TableRow(EFieldName, EInput, ELegend) { };
                 EFocusableList.Add(EInput);
@@ -496,21 +496,21 @@ namespace CommonUi
             Button NewButton = new Button()
             {
                 Text = "New",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
-            //Button SaveButton = new Button() { Text = "Save", BackgroundColor = Eto.Drawing.Colors.Black, TextColor = Eto.Drawing.Colors.White };
+            //Button SaveButton = new Button() { Text = "Save", BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
             Button ViewButton = new Button()
             {
                 Text = "View",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             Button CancelButton = new Button()
             {
                 Text = "Cancel",
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             NewButton.Font = NewButtonTheme.TFont;
             NewButton.BackgroundColor = NewButtonTheme.BG;

@@ -28,8 +28,8 @@ namespace EtoFE
                     DataCell = new TextBoxCell(0) { },
                 }
             );
-            LB.BackgroundColor = Eto.Drawing.Colors.Black;
-            //LB.TextColor = Eto.Drawing.Colors.White;
+            LB.BackgroundColor = ColorSettings.BackgroundColor;
+            //LB.TextColor = ColorSettings.ForegroundColor;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
@@ -49,13 +49,13 @@ namespace EtoFE
             {
                 if (a.Row == LB.SelectedRow)
                 {
-                    a.ForegroundColor = Eto.Drawing.Colors.Black;
-                    a.BackgroundColor = Eto.Drawing.Colors.White;
+                    a.ForegroundColor = ColorSettings.BackgroundColor;
+                    a.BackgroundColor = ColorSettings.ForegroundColor;
                 }
                 else
                 {
                     a.ForegroundColor = Eto.Drawing.Colors.Wheat;
-                    a.BackgroundColor = Eto.Drawing.Colors.Black;
+                    a.BackgroundColor = ColorSettings.BackgroundColor;
                 }
                 a.Font = new Eto.Drawing.Font(
                     "Segoe UI",
@@ -77,9 +77,9 @@ namespace EtoFE
                 B.MinimumSize = new Eto.Drawing.Size(0, 35);
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 10) { };
-                B.TextColor = Eto.Drawing.Colors.White;
+                B.TextColor = ColorSettings.ForegroundColor;
                 B.Enabled = true;
-                B.BackgroundColor = Eto.Drawing.Colors.Black;
+                B.BackgroundColor = ColorSettings.BackgroundColor;
                 //B.Click += (e, a) => { };
                 B.MouseEnter += (e, a) =>
                 {
@@ -104,8 +104,8 @@ namespace EtoFE
                     Button CurrentLabel = ((Button)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.White;
-                        B.BackgroundColor = Eto.Drawing.Colors.Black;
+                        B.TextColor = ColorSettings.ForegroundColor;
+                        B.BackgroundColor = ColorSettings.BackgroundColor;
                     }
                 };
                 B.MouseLeave += (e, a) =>
@@ -113,8 +113,8 @@ namespace EtoFE
                     Button CurrentLabel = ((Button)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
-                        B.TextColor = Eto.Drawing.Colors.White;
-                        B.BackgroundColor = Eto.Drawing.Colors.Black;
+                        B.TextColor = ColorSettings.ForegroundColor;
+                        B.BackgroundColor = ColorSettings.BackgroundColor;
                     }
                     this.Invalidate();
                 };
@@ -136,18 +136,18 @@ namespace EtoFE
                     SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
                     foreach (Button L in Buttons)
                     {
-                        L.TextColor = Eto.Drawing.Colors.White;
-                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.TextColor = ColorSettings.ForegroundColor;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
                         L.Invalidate(true);
                     }
                     foreach (Panel L in ButtonsContainer)
                     {
-                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
                         L.Invalidate(true);
                     }
-                    ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
-                    ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
-                    CurrentButtonHolderPanel.BackgroundColor = Eto.Drawing.Colors.White;
+                    ClickedLabel.TextColor = ColorSettings.BackgroundColor;
+                    ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
+                    CurrentButtonHolderPanel.BackgroundColor = ColorSettings.ForegroundColor;
                     this.Size = new Eto.Drawing.Size(-1, -1);
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
@@ -176,18 +176,18 @@ namespace EtoFE
                         SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
                         foreach (Button L in Buttons)
                         {
-                            L.TextColor = Eto.Drawing.Colors.White;
-                            L.BackgroundColor = Eto.Drawing.Colors.Black;
+                            L.TextColor = ColorSettings.ForegroundColor;
+                            L.BackgroundColor = ColorSettings.BackgroundColor;
                             L.Invalidate(true);
                         }
                         foreach (Panel L in ButtonsContainer)
                         {
-                            L.BackgroundColor = Eto.Drawing.Colors.Black;
+                            L.BackgroundColor = ColorSettings.BackgroundColor;
                             L.Invalidate(true);
                         }
-                        ClickedLabel.TextColor = Eto.Drawing.Colors.Black;
-                        ClickedLabel.BackgroundColor = Eto.Drawing.Colors.White;
-                        CurrentButtonHolderPanel.BackgroundColor = Eto.Drawing.Colors.White;
+                        ClickedLabel.TextColor = ColorSettings.BackgroundColor;
+                        ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
+                        CurrentButtonHolderPanel.BackgroundColor = ColorSettings.ForegroundColor;
                         this.Size = new Eto.Drawing.Size(-1, -1);
                         this.Invalidate(true);
                         this.TriggerStyleChanged();
@@ -217,18 +217,18 @@ namespace EtoFE
                     SelectedButtonIndex = Buttons.IndexOf(TargetButton);
                     foreach (Button L in Buttons)
                     {
-                        L.TextColor = Eto.Drawing.Colors.White;
-                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.TextColor = ColorSettings.ForegroundColor;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
                         L.Invalidate(true);
                     }
                     foreach (Panel L in ButtonsContainer)
                     {
-                        L.BackgroundColor = Eto.Drawing.Colors.Black;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
                         L.Invalidate(true);
                     }
-                    TargetButton.TextColor = Eto.Drawing.Colors.Black;
-                    TargetButton.BackgroundColor = Eto.Drawing.Colors.White;
-                    ClickedPanel.BackgroundColor = Eto.Drawing.Colors.White;
+                    TargetButton.TextColor = ColorSettings.BackgroundColor;
+                    TargetButton.BackgroundColor = ColorSettings.ForegroundColor;
+                    ClickedPanel.BackgroundColor = ColorSettings.ForegroundColor;
                     this.Size = new Eto.Drawing.Size(-1, -1);
                     this.Invalidate(true);
                     this.TriggerStyleChanged();
@@ -256,15 +256,15 @@ namespace EtoFE
             };
             LB.DisableLines();
             //LB.DisableGridViewEnterKey();
-            BackgroundColor = Eto.Drawing.Colors.Black;
+            BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
             Button EnableAccessibilityButton = new Button()
             {
                 Text = " Enable Accessibility... ♿👓 ",
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
-                BackgroundColor = Eto.Drawing.Colors.Black,
-                TextColor = Eto.Drawing.Colors.White,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             Button QuitCurrentPanelButton = new Button()
             {
@@ -272,9 +272,9 @@ namespace EtoFE
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = Eto.Drawing.Colors.DarkRed,
-                TextColor = Eto.Drawing.Colors.Black,
+                TextColor = ColorSettings.BackgroundColor,
             };
-            EnableAccessibilityButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Black);
+            EnableAccessibilityButton.DisableHoverBackgroundChange(ColorSettings.BackgroundColor);
             EnableAccessibilityButton.ConfigureForPlatform();
             //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
             EnableAccessibilityButton.Click += (sender, e) =>
@@ -297,7 +297,7 @@ namespace EtoFE
                     },
                     Height = 100,
                     Border = BorderType.None,
-                    //BackgroundColor = Eto.Drawing.Colors.Black,
+                    //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
                 new Panel() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
@@ -307,7 +307,7 @@ namespace EtoFE
                 Orientation = Orientation.Horizontal,
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
-                BackgroundColor = Eto.Drawing.Colors.Black,
+                BackgroundColor = ColorSettings.BackgroundColor,
             };
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
