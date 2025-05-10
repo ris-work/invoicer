@@ -283,8 +283,8 @@ namespace EtoFE
                 Text = " X ",
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
-                BackgroundColor = Eto.Drawing.Colors.DarkRed,
-                TextColor = ColorSettings.BackgroundColor,
+                BackgroundColor = ColorSettings.SelectedColumnColor,
+                TextColor = ColorSettings.ForegroundColor,
             };
             EnableAccessibilityButton.DisableHoverBackgroundChange(ColorSettings.BackgroundColor);
             EnableAccessibilityButton.ConfigureForPlatform();
@@ -295,7 +295,18 @@ namespace EtoFE
             };
             QuitCurrentPanelButton.Click += (sender, e) =>
             {
-                (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
+                //(new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
+                //this.Content = new Panel() { };
+                if (CurrentPanel.Content is ILoadOncePanel<Panel> P)
+                {
+                    P.Destroy();
+                    CurrentPanel = new Panel() { };
+                    Console.WriteLine("Destroying the current panel.");
+                }
+                else
+                {
+                    Console.WriteLine($"Unable to destroy panel of type: {CurrentPanel.GetType()}, {CurrentPanel.Content.GetType()}");
+                }
             };
             var Inner = new StackLayout(
                 new Scrollable()

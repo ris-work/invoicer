@@ -76,6 +76,7 @@
         <None Remove="FluentEmoji.ttf" />
         <None Remove="Gourier.ttf" />
         <None Remove="logo.png" />
+        <None Remove="Terminal.toml" />
         <None Remove="translations.toml" />
     </ItemGroup>
     <ItemGroup>
@@ -92,6 +93,9 @@
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="logo.png">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
+        <EmbeddedResource Include="terminal.toml">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="translations.toml">

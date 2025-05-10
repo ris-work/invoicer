@@ -54,9 +54,9 @@ namespace CommonUi
                         // Each language section (like "si", "ta", etc.) should be a dictionary.
                         if (langEntry.Value is TomlTable langTranslations)
                         {
-                            var keyValues = new Dictionary<string, string>(
+                            var keyValues = _translations.GetValueOrDefault(langEntry.Key, new Dictionary<string, string>(
                                 StringComparer.OrdinalIgnoreCase
-                            );
+                            ));
                             foreach (var kv in langTranslations)
                             {
                                 keyValues[kv.Key] = (string)kv.Value ?? "";

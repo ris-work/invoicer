@@ -2,7 +2,15 @@ BaseAddress = "http://127.0.0.1:5062"
 Terminal = "10"
 EnableFulLMode = true
 EtoBackend = "Wpf"
-Language = "en"
+Language = "ta"
+
+ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast
+BackgroundColor       = "#F0F7ED"  # Light minty background for a fresh feel
+LesserForegroundColor = "#485C3E"  # Muted forest green for secondary text
+LesserBackgroundColor = "#D5E2D0"  # Soft light greenish tone for alternative UI areas
+AlternatingColor1     = "#F2B69E"  # Approx. from Lab(65, 40, 20): warm apricot accent
+AlternatingColor2     = "#8FA9A3"  # Approx. from Lab(65, -40, 20): cool, muted teal accent
+SelectedColumnColor   = "#E1CDAF"  # Approx. from Lab(65, 0, 20): balanced neutral highlight
 
 #DARK
 #ForegroundColor = "White"

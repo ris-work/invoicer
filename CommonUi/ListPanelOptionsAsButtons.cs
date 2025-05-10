@@ -24,7 +24,7 @@ namespace CommonUi
                 {
                     Text = panel.Item1,
                     BackgroundColor = ColorSettings.BackgroundColor,
-                    TextColor = Eto.Drawing.Colors.DarkGoldenrod,
+                    TextColor = ColorSettings.ForegroundColor,
                 };
                 B.ConfigureForPlatform();
                 B.MinimumSize = new Eto.Drawing.Size(30, 35);
@@ -61,7 +61,7 @@ namespace CommonUi
             BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
             Resizable = false;
-            BackgroundColor = Eto.Drawing.Colors.DarkSlateGray;
+            BackgroundColor = ColorSettings.LesserBackgroundColor;
             //(Control)((ILoadOncePanel<object>)ROD.GetValueOrDefault<string, object?>((string)((string)ClickedLabel.Text), null)).GetInnerAsObject();
         }
     }

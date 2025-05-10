@@ -1,0 +1,48 @@
+﻿[en]
+Username = "Username"
+Password = "Password"
+Login = "Login"
+Cancel = "Cancel"
+Terminal = "Terminal"
+
+[fr]
+Username = "Nom d'utilisateur"
+Password = "Mot de passe"
+Login = "Connexion"
+Cancel = "Annuler"
+Terminal = "Terminal"
+
+[ta]
+Username = "பயனர் பெயர்"
+Password = "கடவுச்சொல்"
+Login = "உள்நுழைவு"
+Cancel = "ரத்து"
+Terminal = "டெர்மினல்"
+
+[si]
+Username = "පරිශීලක නාමය"
+Password = "මුරපදය"
+Login = "පිවිසුම"
+Cancel = "අවලංගු කරන්න"
+Terminal = "ටර්මිනල්"
+
+[ja]
+Username = "ユーザー名"
+Password = "パスワード"
+Login = "ログイン"
+Cancel = "キャンセル"
+Terminal = "ターミナル"
+
+[zh]
+Username = "用户名"
+Password = "密码"
+Login = "登录"
+Cancel = "取消"
+Terminal = "终端"
+
+[hi]
+Username = "उपयोगकर्ता नाम"
+Password = "पासवर्ड"
+Login = "लॉगिन"
+Cancel = "रद्द करें"
+Terminal = "टर्मिनल"

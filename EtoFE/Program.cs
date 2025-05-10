@@ -118,6 +118,7 @@ public class Program
         Console.WriteLine(Eto.Platforms.WinForms);
         Console.WriteLine(Eto.Platforms.Wpf);
         TranslationHelper.LoadTranslations("translations.toml");
+        TranslationHelper.LoadTranslations("terminal.toml");
         Program.lang = (string)ConfigDict.GetValueOrDefault("Language", "en");
         TranslationHelper.Lang = Program.lang;
         string CurrentUIConfigured = (string)
@@ -334,7 +335,7 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = "Username : ",
+                    Text = TranslationHelper.Translate("Username", "Username", TranslationHelper.Lang),
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
@@ -357,7 +358,7 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = "Password : ",
+                    Text = TranslationHelper.Translate("Password", "Password", TranslationHelper.Lang),
                     Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
@@ -378,7 +379,7 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = "Terminal : ",
+                    Text = TranslationHelper.Translate("Terminal", "Terminal", TranslationHelper.Lang),
                     Style = "mono",
                     Width = 20,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,

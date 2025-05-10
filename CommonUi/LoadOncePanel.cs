@@ -12,6 +12,7 @@ namespace CommonUi
     {
         public object GetInnerAsObject();
         public T GetInner();
+        void Destroy();
     }
 
     public class LoadOncePanel<T> : ILoadOncePanel<T>
@@ -44,6 +45,11 @@ namespace CommonUi
         public LoadOncePanel(object A)
         {
             _Inner = (T)A;
+        }
+
+        public void Destroy()
+        {
+            _Inner = new T();
         }
 
         public static explicit operator LoadOncePanel<object>(LoadOncePanel<T> instance)
