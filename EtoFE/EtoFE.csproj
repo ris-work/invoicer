@@ -71,6 +71,7 @@
         <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />
     </ItemGroup>
     <ItemGroup>
+        <None Remove="config.toml" />
         <None Remove="logo.png" />
         <None Remove="translations.toml" />
     </ItemGroup>
@@ -78,6 +79,9 @@
         <Content Include="icons\pos_exe.ico" />
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="config.toml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
         <EmbeddedResource Include="logo.png">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
@@ -128,9 +132,6 @@
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
     <ItemGroup>
-        <None Update="config.toml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="FluentEmoji.ttf">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

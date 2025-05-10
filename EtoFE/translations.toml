@@ -15,6 +15,10 @@ PermissionsCategory = "Permissions Category"
 PriceManual = "Manual Price"
 VatCategoryAdjustable = "VAT Category Adjustable"
 VatDependsOnUser = "VAT Depends on User"
+New = "New"
+Save = "Save"
+View = "View"
+Cancel = "Cancel"
 
 [si]
 "Editor" = "📝 සංස්කාරක"
@@ -79,6 +83,10 @@ PermissionsCategory = "අවසර ප්‍රවර්ගය"
 PriceManual = "මැනුවල් මිල"
 VatCategoryAdjustable = "VAT ප්‍රවර්ගය වෙනස් කළ හැකි"
 VatDependsOnUser = "VAT පරිශීලකයා මත රඳා පවතියි"
+New = "නව"
+Save = "සුරකින්න"
+View = "බලන්න"
+Cancel = "අවලංගු කරන්න"
 
 
 [ta]
@@ -144,6 +152,10 @@ PermissionsCategory = "அனுமதி வகை"
 PriceManual = "கைமுறை விலை"
 VatCategoryAdjustable = "வரி வகை மாற்றக்கூடியது"
 VatDependsOnUser = "வரி பயனரை சார்ந்தது"
+New = "புதிய"
+Save = "சேமிக்கவும்"
+View = "காண்க"
+Cancel = "ரத்து செய்யவும்"
 
 
 [hi]
@@ -209,6 +221,10 @@ PermissionsCategory = "अनुमति श्रेणी"
 PriceManual = "मैनुअल मूल्य"
 VatCategoryAdjustable = "वैट श्रेणी समायोज्य"
 VatDependsOnUser = "वैट उपयोगकर्ता पर निर्भर"
+New = "नया"
+Save = "सहेजें"
+View = "देखें"
+Cancel = "रद्द करें"
 
 [fr]
 "Editor" = "📝 Éditeur"
@@ -273,3 +289,7 @@ PermissionsCategory = "Catégorie de permissions"
 PriceManual = "Prix manuel"
 VatCategoryAdjustable = "Catégorie de TVA ajustable"
 VatDependsOnUser = "TVA dépend de l’utilisateur"
+New = "Nouveau"
+Save = "Enregistrer"
+View = "Voir"
+Cancel = "Annuler"
