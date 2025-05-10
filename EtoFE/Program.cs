@@ -49,6 +49,7 @@ public class Program
     public static HttpClient client; // = new HttpClient();
     public static Tomlyn.Model.TomlTable Config;
     public static IReadOnlyDictionary<string, object?> ConfigDict;
+    public static string lang = "en";
 
     [STAThread]
     public static void Main()
