@@ -60,9 +60,36 @@ public class Program
         Assembly currentAssembly = Assembly.GetExecutingAssembly();
         string[] resourceNames = currentAssembly.GetManifestResourceNames();
         Console.WriteLine("Embedded resources found:");
+        // Loop through all embedded resources
         foreach (string resourceName in resourceNames)
         {
-            Console.WriteLine(resourceName);
+            // Strip the assembly prefix from resource name if present.
+            string prefix = currentAssembly.GetName().Name + ".";
+            string fileName = resourceName.StartsWith(prefix)
+                ? resourceName.Substring(prefix.Length)
+                : resourceName;
+
+            // Only extract if file doesn't exist in the current working directory.
+            if (File.Exists(fileName))
+            {
+                Console.WriteLine($"Skipping {fileName}; already exists.");
+                continue;
+            }
+
+            using (Stream stream = currentAssembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    Console.WriteLine($"ERROR: Could not load {resourceName}.");
+                    continue;
+                }
+
+                using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+                {
+                    stream.CopyTo(fs);
+                }
+            }
+            Console.WriteLine($"Extracted {fileName}.");
         }
         var CH = new HttpClientHandler();
         CH.AutomaticDecompression = DecompressionMethods.All;
@@ -278,12 +305,13 @@ public class MyForm : Form
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
         string TermLogoPath = (string)
             ModelDict.GetValueOrDefault("TermLogo", "posprogram_export.png");
+        static Uri GetCwdX() => new Uri("file:///" + System.IO.Directory.GetCurrentDirectory().Replace("\\", "/") + "/");
 
         Eto.Forms.ImageView Logo = new ImageView();
         Eto.Forms.ImageView TermLogo = new ImageView();
         if (System.IO.File.Exists(LogoPath))
         {
-            Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
+            Uri LogoUri = new Uri(GetCwdX(), LogoPath);
             System.Console.WriteLine(LogoUri.AbsoluteUri);
             Logo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
         }
@@ -291,10 +319,10 @@ public class MyForm : Form
         if (System.IO.File.Exists(TermLogoPath))
         {
             Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
-            Uri TermLogoUri = new Uri(new Uri(Config.GetCWD()), TermLogoPath);
+            Uri TermLogoUri = new Uri(GetCwdX(), TermLogoPath);
             System.Console.WriteLine(TermLogoUri.AbsoluteUri);
             //TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
-            TermLogo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
+            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
         }
 
         layout.Rows.Add(null);
