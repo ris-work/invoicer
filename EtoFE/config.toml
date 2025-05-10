@@ -1,0 +1,145 @@
+BaseAddress = "http://127.0.0.1:5062"
+Terminal = "10"
+EnableFulLMode = true
+EtoBackend = "Wpf"
+Language = "en"
+
+#DARK
+#ForegroundColor = "White"
+#BackgroundColor = "Black"
+#AlternatingColor1 = "BlueViolet"
+#AlternatingColor2 = "DarkBlue"
+#SelectedColumnColor = "#000"
+#LesserBackgroundColor = "#222"
+#LesserForegroundColor = "#ddd"
+
+#LIGHT
+ForegroundColor = "Black"
+BackgroundColor = "White"
+AlternatingColor1 = "LightGreen"
+AlternatingColor2 = "Cyan"
+SelectedColumnColor = "#ddd"
+LesserBackgroundColor = "#aaa"
+LesserForegroundColor = "#333"
+
+#95
+#ForegroundColor = "Black"
+#BackgroundColor = "#c3c3c3"
+#AlternatingColor1 = "LightGreen"
+#AlternatingColor2 = "Cyan"
+#SelectedColumnColor = "#ddd"
+#LesserBackgroundColor = "#eee"
+#LesserForegroundColor = "#333"
+
+#2000ish
+#ForegroundColor = "Black"
+#BackgroundColor = "#d7d7d7"
+#AlternatingColor1 = "LightGreen"
+#AlternatingColor2 = "Cyan"
+#SelectedColumnColor = "#ddd"
+#LesserBackgroundColor = "#eee"
+#LesserForegroundColor = "#333"
+
+#Glass-Gtk-Only
+#ForegroundColor = "#000"
+#BackgroundColor = "#fffb"
+#AlternatingColor1 = "#afaf"
+#AlternatingColor2 = "#afff"
+#SelectedColumnColor = "#dddf"
+#LesserBackgroundColor = "#eeed"
+#LesserForegroundColor = "#333d"
+
+#Unreasonably-Glass-Gtk-Only
+#ForegroundColor = "#000"
+#BackgroundColor = "#fff3"
+#AlternatingColor1 = "#afaf"
+#AlternatingColor2 = "#afff"
+#SelectedColumnColor = "#dddf"
+#LesserBackgroundColor = "#eeef"
+#LesserForegroundColor = "#777f"
+
+["Editor"]
+#ForegroundColor       = "DarkSlateGray"  # A deep, muted tone that stands out on light backgrounds.
+# Alternative Color Configuration (Cool Pastel Theme)
+#BackgroundColor       = "#FAF9F6"        # An off-white with a warm tint to soften the interface.
+
+ForegroundColor       = "#002147"  # Deep Navy Blue for primary text
+# Cool Modern Theme Configuration
+BackgroundColor       = "#E6F0FA"  # A very pale blue, offering a cool and open feel
+AlternatingColor1     = "#D0E3FA"  # A soft powder-blue for alternating rows
+AlternatingColor2     = "#C5D8F5"  # A complementary pastel blue, slightly different from AlternatingColor1
+SelectedColumnColor   = "#A9C9FF"  # A light periwinkle to clearly indicate selection
+LesserBackgroundColor = "#DBE9F4"  # A mid-tone light blue used for secondary sections
+LesserForegroundColor = "#3B4856"  # A dark grey-blue that contrasts neatly with both the main and lesser backgrounds
+
+
+
+# Theme 1: Constant L (fix L = 70; vary a* and b*)
+#[ThemeConstantL]
+#ForegroundColor       = "#1A1A1A"  # Very dark text for optimal contrast
+#BackgroundColor       = "#F7F3E9"  # Warm, off‑white background
+#LesserForegroundColor = "#4A4A4A"  # Secondary dark grey text
+#LesserBackgroundColor = "#E0E0E0"  # Light grey background for subtle differentiation
+#AlternatingColor1     = "#F1A05B"  # Approx. from Lab(70, 40, 30): a warm light orange accent
+#AlternatingColor2     = "#8ED2D1"  # Approx. from Lab(70, -40, -30): a cool light cyan/teal accent
+#SelectedColumnColor   = "#F7E07A"  # Approx. from Lab(70, 0, 50): a light yellowish column highlight
+
+# -------------------------------------------------------
+
+# Theme 2: Constant A (fix A = 20; vary L and B)
+#[ThemeConstantA]
+#ForegroundColor       = "#1A1A1A"  # Dark text for clear readability
+#BackgroundColor       = "#F7F3E9"  # Consistent creamy background
+#LesserForegroundColor = "#4A4A4A"  # Secondary text colour in dark grey
+#LesserBackgroundColor = "#E0E0E0"  # Subtle light grey background
+#AlternatingColor1     = "#FFE7C1"  # Approx. from Lab(85, 20, 15): a very light peach accent
+#AlternatingColor2     = "#AFC0C8"  # Approx. from Lab(65, 20, -25): a slightly cooler, pastel tone
+#SelectedColumnColor   = "#FAD78E"  # Approx. from Lab(75, 20, 45): a warm highlight with extra vibrancy
+
+# -------------------------------------------------------
+
+# Theme 3: Constant B (fix B = 0; vary L and A)
+#[ThemeConstantB]
+#ForegroundColor       = "#1A1A1A"  # Dark, high‐contrast text colour
+#BackgroundColor       = "#F7F3E9"  # Off‑white background ensures readability
+#LesserForegroundColor = "#4A4A4A"  # Secondary dark grey for lesser emphasis text
+#LesserBackgroundColor = "#E0E0E0"  # Light grey used for subtle background differences
+#AlternatingColor1     = "#F6B1A8"  # Approx. from Lab(80, 30, 0): a bright tone with a red hint
+#AlternatingColor2     = "#8DBFAF"  # Approx. from Lab(60, -30, 0): a cooler, greenish variant
+#SelectedColumnColor   = "#B3B3B3"  # Approx. from Lab(70, 0, 0): a neutral grey highlight
+
+# -------------------------------------------------------
+
+# Theme 4: Varying L (keep A = 0 and B = 40 constant; only L varies)
+#[ThemeVaryingL]
+#ForegroundColor       = "#1A1A1A"  # Dark text ensures excellent legibility
+#BackgroundColor       = "#F7F3E9"  # Warm off‑white background for overall clarity
+#LesserForegroundColor = "#4A4A4A"  # Secondary text colour in dark grey
+#LesserBackgroundColor = "#E0E0E0"  # Light grey used to support UI hierarchy
+#AlternatingColor1     = "#FFF3AA"  # Approx. from Lab(90, 0, 40): a vibrant, very light yellow accent
+#AlternatingColor2     = "#F8DB7E"  # Approx. from Lab(75, 0, 40): a mid‐tone yellow for alternating rows
+#SelectedColumnColor   = "#F1C34D"  # Approx. from Lab(60, 0, 40): a moderately darker yellow highlight
+
+# -------------------------------------------------------
+
+# Theme 5: Varying A (keep L = 70 and B = 10 constant; only A varies)
+#[ThemeVaryingA]
+#ForegroundColor       = "#1A1A1A"  # Dark text for superior contrast
+#BackgroundColor       = "#F7F3E9"  # Consistent, bright off‑white background
+#LesserForegroundColor = "#4A4A4A"  # Secondary dark grey for softer textual emphasis
+#LesserBackgroundColor = "#E0E0E0"  # Subdued light grey background layer
+#AlternatingColor1     = "#F2A87C"  # Approx. from Lab(70, 40, 10): a brighter shift toward red
+#AlternatingColor2     = "#8EC4D0"  # Approx. from Lab(70, -40, 10): a cooler shift toward green/blue
+#SelectedColumnColor   = "#F7EBA0"  # Approx. from Lab(70, 0, 10): a balanced, neutral accent
+
+# -------------------------------------------------------
+
+# Theme 6: Varying B (keep L = 70 and A = 20 constant; only B varies)
+#[ThemeVaryingB]
+#ForegroundColor       = "#1A1A1A"  # Dark text guaranteeing clear legibility
+#BackgroundColor       = "#F7F3E9"  # Bright off‑white background for stability
+#LesserForegroundColor = "#4A4A4A"  # Secondary text colour in dark grey for nuance
+#LesserBackgroundColor = "#E0E0E0"  # Complementary light grey backdrop
+#AlternatingColor1     = "#FDE67F"  # Approx. from Lab(70, 20, 60): a bright and warm accent with high B (yellow)
+#AlternatingColor2     = "#F8C583"  # Approx. from Lab(70, 20, 30): a moderate warm tone with reduced B
+#SelectedColumnColor   = "#A3C0D5"  # Approx. from Lab(70, 20, -30): a cool, contrasting blue–green highlight

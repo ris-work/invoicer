@@ -25,7 +25,7 @@ namespace CommonUi
 
     public class GenEtoUI : Eto.Forms.Panel
     {
-        public PanelSettings LocalColor = null;
+        public PanelSettings? LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
         public bool ChangesOnly = false;
         public string Context = "default";
@@ -91,14 +91,14 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "foreground_color_changed",
-                ColorSettings.LesserForegroundColor
+                LocalColor?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor
             );
             Color BGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color_changed",
-                ColorSettings.LesserBackgroundColor
+                LocalColor?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor
             );
             Font EFont = EtoThemingUtilities.GetNestedFont(
                 Configuration,
@@ -214,13 +214,6 @@ namespace CommonUi
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
-            (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
-                GetThemeForComponent("form");
-            var SaveButtonTheme = GetThemeForComponent("save");
-            var NewButtonTheme = GetThemeForComponent("new");
-            var ViewButtonTheme = GetThemeForComponent("view");
-            var CancelButtonTheme = GetThemeForComponent("cancel");
-            BackgroundColor = BGF;
             PanelSettings CurrentPanelColours = new PanelSettings() { BackgroundColor = ColorSettings.BackgroundColor, ForegroundColor = ColorSettings.ForegroundColor };
             if (PanelColours != null)
             {
@@ -228,6 +221,16 @@ namespace CommonUi
                 CurrentPanelColours.ForegroundColor = PanelColours.ForegroundColor;
                 LocalColor = PanelColours;
             }
+            
+            (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
+                GetThemeForComponent("form");
+            BackgroundColor = BGF;
+            var SaveButtonTheme = GetThemeForComponent("save");
+            var NewButtonTheme = GetThemeForComponent("new");
+            var ViewButtonTheme = GetThemeForComponent("view");
+            var CancelButtonTheme = GetThemeForComponent("cancel");
+            
+            
 
             this.ChangesOnly = ChangesOnly;
             //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
