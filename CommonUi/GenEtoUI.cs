@@ -241,7 +241,7 @@ namespace CommonUi
             ) => { };
             Button SaveButton = new Button()
             {
-                Text = "Save",
+                Text = TranslationHelper.Translate("Save", "Save", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
@@ -495,20 +495,20 @@ namespace CommonUi
 
             Button NewButton = new Button()
             {
-                Text = "New",
+                Text = TranslationHelper.Translate("New", "New", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             //Button SaveButton = new Button() { Text = "Save", BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
             Button ViewButton = new Button()
             {
-                Text = "View",
+                Text = TranslationHelper.Translate("View", "View", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             Button CancelButton = new Button()
             {
-                Text = "Cancel",
+                Text = TranslationHelper.Translate("Cancel", "Cancel", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
