@@ -128,6 +128,12 @@
         <None Update="config.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="FluentEmoji.ttf">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Gourier.ttf">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="icons\posprogram_export.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

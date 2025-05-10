@@ -7,24 +7,23 @@ namespace CommonUi
     public static class ResourceExtractor
     {
         /// <summary>
-        /// Ensures that the translations.toml file exists in the specified output path.
-        /// If not, it extracts the file from the embedded resources.
+        /// Extracts the specified embedded resource if the target file does not exist.
         /// </summary>
-        /// <param name="outputPath">The full file path where translations.toml should reside.</param>
-        public static void EnsureTranslationsFile(string outputPath = "translations.toml")
+        /// <param name="resourceFilename">The name of the resource file (e.g., "translations.toml", "Gourier.ttf").</param>
+        public static void EnsureResource(string resourceFilename)
         {
-            if (File.Exists(outputPath))
+            if (File.Exists(resourceFilename))
             {
-                Console.WriteLine($"[ResourceExtractor] {outputPath} already exists.");
+                Console.WriteLine($"[ResourceExtractor] {resourceFilename} already exists.");
                 return;
             }
 
             // Get the current assembly.
             var assembly = Assembly.GetExecutingAssembly();
 
-            // The resource name is usually the default namespace plus the file name.
-            // For example, if your default namespace is "MyApp", the resource name is "MyApp.translations.toml".
-            string resourceName = $"{assembly.GetName().Name}.translations.toml";
+            // Construct the resource name based on the assembly's default namespace.
+            // If your embedded resources are organized in subfolders, adjust this to include the folder path.
+            string resourceName = $"{assembly.GetName().Name}.{resourceFilename}";
             Console.WriteLine($"[ResourceExtractor] Looking for embedded resource: {resourceName}");
 
             using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
@@ -35,14 +34,37 @@ namespace CommonUi
                     return;
                 }
 
-                // Create the output file and copy the contents.
-                using (var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                // Create and write the output file.
+                using (var fileStream = new FileStream(resourceFilename, FileMode.Create, FileAccess.Write))
                 {
                     resourceStream.CopyTo(fileStream);
                 }
             }
 
-            Console.WriteLine($"[ResourceExtractor] {outputPath} extracted successfully.");
+            Console.WriteLine($"[ResourceExtractor] {resourceFilename} extracted successfully.");
+        }
+
+        /// <summary>
+        /// Backwards compatibility polyfill for older code that directly calls EnsureTranslationsFile.
+        /// This method redirects to the generic EnsureResource method.
+        /// </summary>
+        /// <param name="outputPath">The full file path where translations.toml should reside.</param>
+        [Obsolete("Use EnsureResource instead. This method is maintained for backwards compatibility.")]
+        public static void EnsureTranslationsFile(string outputPath = "translations.toml")
+        {
+            EnsureResource(outputPath);
+        }
+
+        /// <summary>
+        /// Ensures that all required embedded resources are extracted.
+        /// </summary>
+        public static void EnsureAllResources()
+        {
+            // Using the polyfilled method for translations.toml.
+            EnsureTranslationsFile();
+            // Extract additional resources.
+            EnsureResource("Gourier.ttf");
+            EnsureResource("FluentEmoji.ttf");
         }
     }
 }
