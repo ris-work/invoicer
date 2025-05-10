@@ -38,7 +38,7 @@ namespace EtoFE
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
-                Panels.Add(panel.Item1, panel.Item2);
+                Panels.Add(TranslationHelper.Translate(panel.Name, panel.Title, Program.lang), panel.Item2);
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1 }).ToList();
 
@@ -69,7 +69,7 @@ namespace EtoFE
             int i = 0;
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
-                Button B = new Button() { Text = LoadOncePanel.Item1 };
+                Button B = new Button() { Text = TranslationHelper.Translate(LoadOncePanel.Item3, LoadOncePanel.Item3, Program.lang) };
                 B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
                 //B.VerticalAlignment = VerticalAlignment.Center;
