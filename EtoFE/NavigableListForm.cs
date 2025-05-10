@@ -281,7 +281,7 @@ namespace EtoFE
                 {
                     while (true)
                     {
-                        Application.Instance.Invoke(() =>
+                        if (Application.Instance != null) Application.Instance.Invoke(() =>
                         {
                             CurrentClientTimeLabel.Text =
                                 $"Client time: {Environment.NewLine}{DateTime.Now.ToString("s")}";
@@ -309,7 +309,7 @@ namespace EtoFE
                             if (req.Error == false)
                             {
                                 TR = req.Out;
-                                Application.Instance.Invoke(() =>
+                                if(Application.Instance != null) Application.Instance.Invoke(() =>
                                 {
                                     CurrentServerTimeLabel.Text =
                                         $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}";

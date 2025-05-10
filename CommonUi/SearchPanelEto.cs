@@ -124,7 +124,7 @@ namespace CommonUi
         }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
-        public string ReportSelectedButtonText = "Report Selected";
+        public string ReportSelectedButtonText = TranslationHelper.Translate("ReportSelected", "Report Selected", TranslationHelper.Lang);
 
         public SearchPanelEto(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
@@ -144,8 +144,8 @@ namespace CommonUi
                 )
                 .ToArray();
             TableLayout TL = new TableLayout();
-            Label SL = new Label() { Text = "Search for: " };
-            Label LabelResults = new Label() { Text = "Results: " };
+            Label SL = new Label() { Text = TranslationHelper.Translate("SearchFor", "Search for: ", TranslationHelper.Lang) };
+            Label LabelResults = new Label() { Text = TranslationHelper.Translate("Results", "Results: ", TranslationHelper.Lang) };
             GridView Results = new GridView();
             //Results.ApplyDarkThemeScrollBars();
             Results.DisableLines();
@@ -173,21 +173,21 @@ namespace CommonUi
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
-            RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
-            RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
-            RBLSearchPosition.Items.Add("Contains [F3]");
-            RBLSearchPosition.Items.Add("StartsWith [F4]");
+            RBLSearchCaseSensitivity.Items.Add(TranslationHelper.Translate("CaseInsensitiveF1", "Case-insensitive [F1]", TranslationHelper.Lang));
+            RBLSearchCaseSensitivity.Items.Add(TranslationHelper.Translate("CaseSensitiveF2", "Case-sensitive [F2]", TranslationHelper.Lang));
+            RBLSearchPosition.Items.Add(TranslationHelper.Translate("ContainsF3","Contains [F3]", TranslationHelper.Lang));
+            RBLSearchPosition.Items.Add(TranslationHelper.Translate("StartsWithF4", "StartsWith [F4]", TranslationHelper.Lang));
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
             CheckBox CBNormalizeSpelling = new CheckBox()
             {
-                Text = "Normalize spelling [END]",
+                Text = TranslationHelper.Translate("NormalizeSpellingEND", "Normalize spelling [END]", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             CheckBox CBAnythingAnywhere = new CheckBox()
             {
-                Text = "Anything Anywhere [BRK]",
+                Text = TranslationHelper.Translate("AnythingAnywhereBRK", "Anything Anywhere [BRK]", TranslationHelper.Lang),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
@@ -204,24 +204,24 @@ namespace CommonUi
                 AnythingAnywhere = CBAnythingAnywhere.Checked ?? false;
             };
 
-            GroupBox SearchCriteria = new() { Text = "Search in...", Content = RBLSearchCriteria };
+            GroupBox SearchCriteria = new() { Text = TranslationHelper.Translate("SearchIn", "Search in...", TranslationHelper.Lang), Content = RBLSearchCriteria };
             GroupBox SearchCaseSensitivity = new()
             {
-                Text = "Case sensitivity setting",
+                Text = TranslationHelper.Translate("CaseSensitivitySetting", "Case sensitivity setting", TranslationHelper.Lang),
                 Content = RBLSearchCaseSensitivity,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchCasePosition = new()
             {
-                Text = "Search Position",
+                Text = TranslationHelper.Translate("SearchPosition", "Search Position", TranslationHelper.Lang),
                 Content = RBLSearchPosition,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchSpellingNormalization = new()
             {
-                Text = "Advanced...",
+                Text = TranslationHelper.Translate("Advanced", "Advanced...", TranslationHelper.Lang),
                 Content = new StackLayout(CBNormalizeSpelling, CBAnythingAnywhere)
                 {
                     Orientation = Eto.Forms.Orientation.Vertical,
@@ -244,9 +244,9 @@ namespace CommonUi
                 Padding = 5,
             };
 
-            Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
-            Button ExportAllAsCsv = new Button() { Text = "Export Everything..." };
-            Button ExportShownAsCsv = new Button() { Text = "Export Displayed..." };
+            Button ExportAllResultsAsCsv = new Button() { Text = TranslationHelper.Translate("ExportResults", "Export Results...", TranslationHelper.Lang) };
+            Button ExportAllAsCsv = new Button() { Text = TranslationHelper.Translate("ExportEverything", "Export Everything...", TranslationHelper.Lang) };
+            Button ExportShownAsCsv = new Button() { Text = TranslationHelper.Translate("ExportDisplayed", "Export Displayed...", TranslationHelper.Lang) };
             Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText };
 
             StackLayout ExportOptions = new StackLayout()
@@ -265,11 +265,11 @@ namespace CommonUi
 
             GroupBox GBExportOptions = new GroupBox()
             {
-                Text = "Export options...",
+                Text = TranslationHelper.Translate("ExportDisplayed", "Export options...", TranslationHelper.Lang),
                 Content = ExportOptions,
             };
 
-            Button PrintAllDisplayed = new Button() { Text = "Print Displayed Results..." };
+            Button PrintAllDisplayed = new Button() { Text = TranslationHelper.Translate("PrintDisplayed", "Print Displayed Results...", TranslationHelper.Lang) };
 
             StackLayout PrintOptions = new StackLayout()
             {
@@ -281,7 +281,7 @@ namespace CommonUi
 
             GroupBox GBPrintOptions = new GroupBox()
             {
-                Text = "Printing options...",
+                Text = TranslationHelper.Translate("PrintDisplayed", "Printing options...", TranslationHelper.Lang) ,
                 Content = PrintOptions,
             };
 

@@ -9,6 +9,8 @@ namespace CommonUi
 {
     public static class TranslationHelper
     {
+
+        public static string Lang = "en";
         // Holds the translations organized by language (e.g., "si", "ta", "hi", "fr")
         // and then by key (Item3 of your tuple)
         private static readonly Dictionary<string, Dictionary<string, string>> _translations =
