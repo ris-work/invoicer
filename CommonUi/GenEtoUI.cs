@@ -25,6 +25,7 @@ namespace CommonUi
 
     public class GenEtoUI : Eto.Forms.Panel
     {
+        public PanelSettings LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
         public bool ChangesOnly = false;
         public string Context = "default";
@@ -76,14 +77,14 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "foreground_color",
-                ColorSettings.ForegroundColor
+                LocalColor?.ForegroundColor ?? ColorSettings.ForegroundColor
             );
             Color BG = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color",
-                ColorSettings.BackgroundColor
+                LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
@@ -206,7 +207,8 @@ namespace CommonUi
             IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
             string? IdentityColumn,
             bool ChangesOnly = false,
-            string[]? DenyList = null
+            string[]? DenyList = null,
+            PanelSettings PanelColours = null
         )
         {
             if (DenyList == null)
@@ -219,11 +221,18 @@ namespace CommonUi
             var ViewButtonTheme = GetThemeForComponent("view");
             var CancelButtonTheme = GetThemeForComponent("cancel");
             BackgroundColor = BGF;
+            PanelSettings CurrentPanelColours = new PanelSettings() { BackgroundColor = ColorSettings.BackgroundColor, ForegroundColor = ColorSettings.ForegroundColor };
+            if (PanelColours != null)
+            {
+                CurrentPanelColours.BackgroundColor = PanelColours.BackgroundColor;
+                CurrentPanelColours.ForegroundColor = PanelColours.ForegroundColor;
+                LocalColor = PanelColours;
+            }
 
             this.ChangesOnly = ChangesOnly;
             //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
-            //BackgroundColor = ColorSettings.ForegroundColor;
-            //ForegroundColor = ColorSettings.BackgroundColor;
+            //BackgroundColor = CurrentPanelColours.ForegroundColor;
+            //ForegroundColor = CurrentPanelColours.BackgroundColor;
             //ChangedBackgroundColor = Eto.Drawing.Colors.LightCyan;
             //ChangedForegroundColor = Eto.Drawing.Colors.DarkGoldenrod;
             List<Eto.Forms.TableRow> EControlsL = new() { };
@@ -242,8 +251,8 @@ namespace CommonUi
             Button SaveButton = new Button()
             {
                 Text = TranslationHelper.Translate("Save", "Save", TranslationHelper.Lang),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = CurrentPanelColours.BackgroundColor,
+                TextColor = CurrentPanelColours.ForegroundColor,
             };
             GoToNext = (e, a) =>
             {
@@ -471,7 +480,7 @@ namespace CommonUi
                 Label EFieldName = new Label()
                 {
                     Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
-                    TextColor = ColorSettings.ForegroundColor,
+                    TextColor = CurrentPanelColours.ForegroundColor,
                 };
                 EControl = new TableRow(EFieldName, EInput, ELegend) { };
                 EFocusableList.Add(EInput);
@@ -496,21 +505,21 @@ namespace CommonUi
             Button NewButton = new Button()
             {
                 Text = TranslationHelper.Translate("New", "New", TranslationHelper.Lang),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = CurrentPanelColours.BackgroundColor,
+                TextColor = CurrentPanelColours.ForegroundColor,
             };
-            //Button SaveButton = new Button() { Text = "Save", BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
+            //Button SaveButton = new Button() { Text = "Save", BackgroundColor = CurrentPanelColours.BackgroundColor, TextColor = CurrentPanelColours.ForegroundColor };
             Button ViewButton = new Button()
             {
                 Text = TranslationHelper.Translate("View", "View", TranslationHelper.Lang),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = CurrentPanelColours.BackgroundColor,
+                TextColor = CurrentPanelColours.ForegroundColor,
             };
             Button CancelButton = new Button()
             {
                 Text = TranslationHelper.Translate("Cancel", "Cancel", TranslationHelper.Lang),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = CurrentPanelColours.BackgroundColor,
+                TextColor = CurrentPanelColours.ForegroundColor,
             };
             NewButton.Font = NewButtonTheme.TFont;
             NewButton.BackgroundColor = NewButtonTheme.BG;

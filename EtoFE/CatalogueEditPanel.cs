@@ -15,6 +15,8 @@ namespace EtoFE
     {
         public CatalogueEditPanel()
         {
+            var LocalColor = ColorSettings.GetPanelSettings("Editor", (IReadOnlyDictionary<string, object>)Program.ConfigDict);
+            BackgroundColor = LocalColor.BackgroundColor;
             PosRefresh PR;
             while (true)
             {
@@ -99,7 +101,8 @@ namespace EtoFE
                 },
                 new Dictionary<string, (CommonUi.ShowAndGetValue, CommonUi.LookupValue)>(),
                 "id",
-                true
+                true,
+                PanelColours: LocalColor
             );
             //MessageBox.Show(JsonSerializer.Serialize(LowerPanelContent));
             var ScrollableLower = new Scrollable() { Content = LowerPanel, Height = 300 };

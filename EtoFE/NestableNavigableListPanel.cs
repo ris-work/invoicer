@@ -78,7 +78,7 @@ namespace EtoFE
                 {
                     Text = TranslationHelper.Translate(
                         LoadOncePanel.Item3,
-                        LoadOncePanel.Item3,
+                        LoadOncePanel.Item1,
                         Program.lang
                     ),
                 };

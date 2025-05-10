@@ -74,7 +74,7 @@ namespace CommonUi
         /// <returns>A PanelSettings instance with parsed colors, or null if the panel is not defined.</returns>
         public static PanelSettings GetPanelSettings(
             string panelName,
-            IDictionary<string, object> configDict
+            IReadOnlyDictionary<string, object> configDict
         )
         {
             if (
@@ -90,11 +90,69 @@ namespace CommonUi
                         panelConfig["ForegroundColor"].ToString()
                     );
                 }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} ForegroundColor not found");
+                }
                 if (panelConfig.ContainsKey("BackgroundColor"))
                 {
                     panelSettings.BackgroundColor = ColorParser.ParseColor(
                         panelConfig["BackgroundColor"].ToString()
                     );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} BackgroundColor not found");
+                }
+                if (panelConfig.ContainsKey("LesserBackgroundColor"))
+                {
+                    panelSettings.LesserBackgroundColor = ColorParser.ParseColor(
+                        panelConfig["LesserBackgroundColor"].ToString()
+                    );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} LesserBackgroundColor not found");
+                }
+                if (panelConfig.ContainsKey("LesserForegroundColor"))
+                {
+                    panelSettings.LesserForegroundColor = ColorParser.ParseColor(
+                        panelConfig["LesserForegroundColor"].ToString()
+                    );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} LesserForegroundColor not found");
+                }
+                if (panelConfig.ContainsKey("AlternatingColor1"))
+                {
+                    panelSettings.AlternatingColor1 = ColorParser.ParseColor(
+                        panelConfig["AlternatingColor1"].ToString()
+                    );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} AlternatingColor1 not found");
+                }
+                if (panelConfig.ContainsKey("AlternatingColor2"))
+                {
+                    panelSettings.AlternatingColor2 = ColorParser.ParseColor(
+                        panelConfig["AlternatingColor2"].ToString()
+                    );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} AlternatingColor2 not found");
+                }
+                if (panelConfig.ContainsKey("SelectedColumnColor"))
+                {
+                    panelSettings.SelectedColumnColor = ColorParser.ParseColor(
+                        panelConfig["SelectedColumnColor"].ToString()
+                    );
+                }
+                else
+                {
+                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} SelectedColumnColor not found");
                 }
                 return panelSettings;
             }
@@ -109,6 +167,11 @@ namespace CommonUi
     {
         public Color ForegroundColor { get; set; }
         public Color BackgroundColor { get; set; }
+        public Color AlternatingColor1 { get; set; }
+        public Color AlternatingColor2 { get; set; }
+        public Color SelectedColumnColor { get; set; }
+        public Color LesserBackgroundColor { get; set; }
+        public Color LesserForegroundColor { get; set; }
     }
 
     /// <summary>

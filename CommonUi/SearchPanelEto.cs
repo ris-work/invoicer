@@ -133,9 +133,20 @@ namespace CommonUi
         public SearchPanelEto(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
             List<(string, TextAlignment, bool)> HeaderEntries,
-            bool Debug = true
+            bool Debug = true,
+            PanelSettings? LocalColors = null
         )
         {
+            var Colors = new PanelSettings()
+            {
+                AlternatingColor1 = LocalColors?.AlternatingColor1 ?? ColorSettings.AlternatingColor1,
+                AlternatingColor2 = LocalColors?.AlternatingColor2 ?? ColorSettings.AlternatingColor2,
+                SelectedColumnColor = LocalColors?.SelectedColumnColor ?? ColorSettings.SelectedColumnColor,
+                LesserForegroundColor = LocalColors?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor,
+                LesserBackgroundColor = LocalColors?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor,
+                ForegroundColor = LocalColors?.ForegroundColor ?? ColorSettings.ForegroundColor,
+                BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
+            };
             IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> OptimizedCatalogue;
             OptimizedCatalogue = SC.Select(e =>
                     (
