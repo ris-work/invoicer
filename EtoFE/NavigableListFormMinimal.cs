@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using CommonUi;
 using Eto;
 using Eto.Containers;
 using Eto.Forms;
-using CommonUi;
 
 namespace EtoFE
 {

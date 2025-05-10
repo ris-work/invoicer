@@ -80,8 +80,7 @@ public class Program
         Console.WriteLine(Eto.Platforms.WinForms);
         Console.WriteLine(Eto.Platforms.Wpf);
         TranslationHelper.LoadTranslations("translations.toml");
-        Program.lang = (string)
-            ConfigDict.GetValueOrDefault("Language", "en");
+        Program.lang = (string)ConfigDict.GetValueOrDefault("Language", "en");
         TranslationHelper.Lang = Program.lang;
         string CurrentUIConfigured = (string)
             ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);

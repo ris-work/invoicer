@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using Eto.Drawing;
-using System.Collections.Generic;
 
 namespace CommonUi
 {
     /// <summary>
-    /// A universal class for the application’s color settings. It reads from the deserialized TOML configuration 
+    /// A universal class for the application’s color settings. It reads from the deserialized TOML configuration
     /// (for example, Program.ConfigDict) and exposes Eto.Drawing.Color properties for the entire program lifecycle.
     /// </summary>
     public static class ColorSettings
@@ -27,48 +27,74 @@ namespace CommonUi
         /// <param name="configDict">The deserialized TOML configuration as a dictionary.</param>
         public static void Initialize(IReadOnlyDictionary<string, object> configDict)
         {
-            AlternatingColor1 = ColorParser.ParseColor((string)configDict.GetValueOrDefault("AlternatingColor1", "Brown"));
-            AlternatingColor2 = ColorParser.ParseColor((string)configDict.GetValueOrDefault("AlternatingColor2", "Purple"));
-            ForegroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("ForegroundColor", "White"));
-            BackgroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("BackgroundColor", "Black"));
-            SelectedColumnColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("SelectedColumnColor", "SlateBlue"));
-            LesserBackgroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("LesserBackgroundColor", "SlateBlue"));
-            LesserForegroundColor = ColorParser.ParseColor((string)configDict.GetValueOrDefault("LesserForegroundColor", "SlateBlue"));
+            AlternatingColor1 = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("AlternatingColor1", "Brown")
+            );
+            AlternatingColor2 = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("AlternatingColor2", "Purple")
+            );
+            ForegroundColor = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("ForegroundColor", "White")
+            );
+            BackgroundColor = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("BackgroundColor", "Black")
+            );
+            SelectedColumnColor = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("SelectedColumnColor", "SlateBlue")
+            );
+            LesserBackgroundColor = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("LesserBackgroundColor", "SlateBlue")
+            );
+            LesserForegroundColor = ColorParser.ParseColor(
+                (string)configDict.GetValueOrDefault("LesserForegroundColor", "SlateBlue")
+            );
         }
 
         ///<summary>
         ///Dump universal settings
         ///</summary>
-        public static void Dump(){
-            System.Console.WriteLine($"Alt1: {AlternatingColor1}, Alt2: {AlternatingColor2}, Sel: {SelectedColumnColor}, FG: {ForegroundColor}, BG: {BackgroundColor}, LFG: {LesserForegroundColor}, LBG: {LesserBackgroundColor}.");
+        public static void Dump()
+        {
+            System.Console.WriteLine(
+                $"Alt1: {AlternatingColor1}, Alt2: {AlternatingColor2}, Sel: {SelectedColumnColor}, FG: {ForegroundColor}, BG: {BackgroundColor}, LFG: {LesserForegroundColor}, LBG: {LesserBackgroundColor}."
+            );
         }
 
         /// <summary>
         /// Retrieves panel-specific color settings.
         /// Expects a section in the TOML like:
-        /// 
+        ///
         /// [panel1]
         /// ForegroundColor=xxx
         /// BackgroundColor=xxx
-        /// 
+        ///
         /// </summary>
         /// <param name="panelName">The panel’s section name.</param>
         /// <param name="configDict">The root configuration dictionary.</param>
         /// <returns>A PanelSettings instance with parsed colors, or null if the panel is not defined.</returns>
-        public static PanelSettings GetPanelSettings(string panelName, IDictionary<string, object> configDict)
+        public static PanelSettings GetPanelSettings(
+            string panelName,
+            IDictionary<string, object> configDict
+        )
         {
-            if (configDict.TryGetValue(panelName, out object panelConfigObj) &&
-                panelConfigObj is IDictionary<string, object> panelConfig)
+            if (
+                configDict.TryGetValue(panelName, out object panelConfigObj)
+                && panelConfigObj is IDictionary<string, object> panelConfig
+            )
             {
                 PanelSettings panelSettings = new PanelSettings();
 
                 if (panelConfig.ContainsKey("ForegroundColor"))
                 {
-                    panelSettings.ForegroundColor = ColorParser.ParseColor(panelConfig["ForegroundColor"].ToString());
+                    panelSettings.ForegroundColor = ColorParser.ParseColor(
+                        panelConfig["ForegroundColor"].ToString()
+                    );
                 }
                 if (panelConfig.ContainsKey("BackgroundColor"))
                 {
-                    panelSettings.BackgroundColor = ColorParser.ParseColor(panelConfig["BackgroundColor"].ToString());
+                    panelSettings.BackgroundColor = ColorParser.ParseColor(
+                        panelConfig["BackgroundColor"].ToString()
+                    );
                 }
                 return panelSettings;
             }
@@ -107,7 +133,9 @@ namespace CommonUi
                 string inner = input.Substring(1, input.Length - 2);
                 var parts = inner.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length < 3 || parts.Length > 4)
-                    throw new FormatException("Invalid tuple format for color. Expected (r,g,b) or (r,g,b,a).");
+                    throw new FormatException(
+                        "Invalid tuple format for color. Expected (r,g,b) or (r,g,b,a)."
+                    );
 
                 int r = int.Parse(parts[0].Trim());
                 int g = int.Parse(parts[1].Trim());
@@ -166,8 +194,10 @@ namespace CommonUi
 
             // Assume the input is a named color from Eto.Drawing.Colors.
             // This uses reflection to find a matching public static property for the color.
-            PropertyInfo colorProperty = typeof(Colors).GetProperty(input,
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+            PropertyInfo colorProperty = typeof(Colors).GetProperty(
+                input,
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase
+            );
             if (colorProperty != null)
             {
                 return (Color)colorProperty.GetValue(null, null);

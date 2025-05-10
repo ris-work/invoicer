@@ -1,7 +1,7 @@
-﻿using MyAOTFriendlyExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using MyAOTFriendlyExtensions;
 using Tomlyn;
 using Tomlyn.Model;
 
@@ -9,8 +9,8 @@ namespace CommonUi
 {
     public static class TranslationHelper
     {
-
         public static string Lang = "en";
+
         // Holds the translations organized by language (e.g., "si", "ta", "hi", "fr")
         // and then by key (Item3 of your tuple)
         private static readonly Dictionary<string, Dictionary<string, string>> _translations =
@@ -54,7 +54,9 @@ namespace CommonUi
                         // Each language section (like "si", "ta", etc.) should be a dictionary.
                         if (langEntry.Value is TomlTable langTranslations)
                         {
-                            var keyValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            var keyValues = new Dictionary<string, string>(
+                                StringComparer.OrdinalIgnoreCase
+                            );
                             foreach (var kv in langTranslations)
                             {
                                 keyValues[kv.Key] = (string)kv.Value ?? "";
@@ -65,7 +67,9 @@ namespace CommonUi
                         }
                         else
                         {
-                            Console.WriteLine($"Casting failed: {langEntry.Key}: {langEntry.Value}");
+                            Console.WriteLine(
+                                $"Casting failed: {langEntry.Key}: {langEntry.Value}"
+                            );
                         }
                     }
                     Console.WriteLine("[Translation] Translations loaded successfully.");
@@ -92,20 +96,28 @@ namespace CommonUi
 
             if (_translations.TryGetValue(language, out var langDict))
             {
-                if (langDict.TryGetValue(key, out var translatedValue) &&
-                    !string.IsNullOrWhiteSpace(translatedValue))
+                if (
+                    langDict.TryGetValue(key, out var translatedValue)
+                    && !string.IsNullOrWhiteSpace(translatedValue)
+                )
                 {
                     result = translatedValue;
-                    Console.WriteLine($"[Translation] Lookup: key='{key}', language='{language}' → Found translation: '{result}'");
+                    Console.WriteLine(
+                        $"[Translation] Lookup: key='{key}', language='{language}' → Found translation: '{result}'"
+                    );
                 }
                 else
                 {
-                    Console.WriteLine($"[Translation] Lookup: key='{key}', language='{language}' → Entry not found. Using default: '{defaultText}'");
+                    Console.WriteLine(
+                        $"[Translation] Lookup: key='{key}', language='{language}' → Entry not found. Using default: '{defaultText}'"
+                    );
                 }
             }
             else
             {
-                Console.WriteLine($"[Translation] Lookup: key='{key}', language='{language}' → Language not loaded. Using default: '{defaultText}'");
+                Console.WriteLine(
+                    $"[Translation] Lookup: key='{key}', language='{language}' → Language not loaded. Using default: '{defaultText}'"
+                );
             }
 
             return result;

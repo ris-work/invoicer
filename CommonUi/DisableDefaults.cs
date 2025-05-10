@@ -347,7 +347,14 @@ namespace CommonUi
                                 .Primitives
                                 .DataGridColumnHeader
                                 .BackgroundProperty,
-                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb((byte)ColorSettings.LesserBackgroundColor.Ab, (byte)ColorSettings.LesserBackgroundColor.Rb, (byte)ColorSettings.LesserBackgroundColor.Gb, (byte)ColorSettings.LesserBackgroundColor.Bb))
+                            new System.Windows.Media.SolidColorBrush(
+                                System.Windows.Media.Color.FromArgb(
+                                    (byte)ColorSettings.LesserBackgroundColor.Ab,
+                                    (byte)ColorSettings.LesserBackgroundColor.Rb,
+                                    (byte)ColorSettings.LesserBackgroundColor.Gb,
+                                    (byte)ColorSettings.LesserBackgroundColor.Bb
+                                )
+                            )
                         )
                     );
                     headerStyle.Setters.Add(
@@ -358,7 +365,14 @@ namespace CommonUi
                                 .Primitives
                                 .DataGridColumnHeader
                                 .ForegroundProperty,
-                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb((byte)ColorSettings.ForegroundColor.Ab, (byte)ColorSettings.ForegroundColor.Rb, (byte)ColorSettings.ForegroundColor.Gb, (byte)ColorSettings.ForegroundColor.Bb))
+                            new System.Windows.Media.SolidColorBrush(
+                                System.Windows.Media.Color.FromArgb(
+                                    (byte)ColorSettings.ForegroundColor.Ab,
+                                    (byte)ColorSettings.ForegroundColor.Rb,
+                                    (byte)ColorSettings.ForegroundColor.Gb,
+                                    (byte)ColorSettings.ForegroundColor.Bb
+                                )
+                            )
                         )
                     );
                     dataGrid.ColumnHeaderStyle = headerStyle;
@@ -846,7 +860,6 @@ namespace CommonUi
                 {
                     winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
                     winButton.FlatAppearance.BorderSize = 0;
-                    
                 }
             }
 #endif
@@ -927,6 +940,7 @@ namespace CommonUi
             }
             // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
         }
+
         public static void ConfigureForPlatform(this Eto.Forms.GridView targetGridView)
         {
             var P = Eto.Platform.Instance.ToString();
@@ -942,9 +956,18 @@ namespace CommonUi
                     Gtk.Adjustment vadjustment = gtkButton.Vadjustment;
                     gtkButton.HeadersVisible = true;
                     gtkButton.HeadersClickable = true;
-                    gtkButton.ScrollEvent += (e, a) => { gtkButton.QueueDraw(); };
-                    gtkButton.KeyPressEvent += (e, a) => { gtkButton.QueueDraw(); };
-                    gtkButton.KeyReleaseEvent += (e, a) => { gtkButton.QueueDraw(); };
+                    gtkButton.ScrollEvent += (e, a) =>
+                    {
+                        gtkButton.QueueDraw();
+                    };
+                    gtkButton.KeyPressEvent += (e, a) =>
+                    {
+                        gtkButton.QueueDraw();
+                    };
+                    gtkButton.KeyReleaseEvent += (e, a) =>
+                    {
+                        gtkButton.QueueDraw();
+                    };
                     gtkButton.RubberBanding = false;
 
                     var cssProvider = new Gtk.CssProvider();

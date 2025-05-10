@@ -16,7 +16,9 @@ namespace EtoFE
     {
         public string CurrentPanelName = "";
 
-        public NestableNavigableListPanel(List<(string Title, object InnerPanel, string Name)> loadOncePanels)
+        public NestableNavigableListPanel(
+            List<(string Title, object InnerPanel, string Name)> loadOncePanels
+        )
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
@@ -38,7 +40,10 @@ namespace EtoFE
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
-                Panels.Add(TranslationHelper.Translate(panel.Name, panel.Title, Program.lang), panel.Item2);
+                Panels.Add(
+                    TranslationHelper.Translate(panel.Name, panel.Title, Program.lang),
+                    panel.Item2
+                );
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1 }).ToList();
 
@@ -69,7 +74,14 @@ namespace EtoFE
             int i = 0;
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
-                Button B = new Button() { Text = TranslationHelper.Translate(LoadOncePanel.Item3, LoadOncePanel.Item3, Program.lang) };
+                Button B = new Button()
+                {
+                    Text = TranslationHelper.Translate(
+                        LoadOncePanel.Item3,
+                        LoadOncePanel.Item3,
+                        Program.lang
+                    ),
+                };
                 B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
                 //B.VerticalAlignment = VerticalAlignment.Center;
@@ -300,7 +312,7 @@ namespace EtoFE
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
-                new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor},
+                new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor },
                 new StackLayoutItem(CurrentPanel)
             )
             {

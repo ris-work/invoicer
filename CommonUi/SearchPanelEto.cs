@@ -124,7 +124,11 @@ namespace CommonUi
         }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
-        public string ReportSelectedButtonText = TranslationHelper.Translate("ReportSelected", "Report Selected", TranslationHelper.Lang);
+        public string ReportSelectedButtonText = TranslationHelper.Translate(
+            "ReportSelected",
+            "Report Selected",
+            TranslationHelper.Lang
+        );
 
         public SearchPanelEto(
             List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
@@ -144,8 +148,18 @@ namespace CommonUi
                 )
                 .ToArray();
             TableLayout TL = new TableLayout();
-            Label SL = new Label() { Text = TranslationHelper.Translate("SearchFor", "Search for: ", TranslationHelper.Lang) };
-            Label LabelResults = new Label() { Text = TranslationHelper.Translate("Results", "Results: ", TranslationHelper.Lang) };
+            Label SL = new Label()
+            {
+                Text = TranslationHelper.Translate(
+                    "SearchFor",
+                    "Search for: ",
+                    TranslationHelper.Lang
+                ),
+            };
+            Label LabelResults = new Label()
+            {
+                Text = TranslationHelper.Translate("Results", "Results: ", TranslationHelper.Lang),
+            };
             GridView Results = new GridView();
             //Results.ApplyDarkThemeScrollBars();
             Results.DisableLines();
@@ -173,21 +187,49 @@ namespace CommonUi
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
-            RBLSearchCaseSensitivity.Items.Add(TranslationHelper.Translate("CaseInsensitiveF1", "Case-insensitive [F1]", TranslationHelper.Lang));
-            RBLSearchCaseSensitivity.Items.Add(TranslationHelper.Translate("CaseSensitiveF2", "Case-sensitive [F2]", TranslationHelper.Lang));
-            RBLSearchPosition.Items.Add(TranslationHelper.Translate("ContainsF3","Contains [F3]", TranslationHelper.Lang));
-            RBLSearchPosition.Items.Add(TranslationHelper.Translate("StartsWithF4", "StartsWith [F4]", TranslationHelper.Lang));
+            RBLSearchCaseSensitivity.Items.Add(
+                TranslationHelper.Translate(
+                    "CaseInsensitiveF1",
+                    "Case-insensitive [F1]",
+                    TranslationHelper.Lang
+                )
+            );
+            RBLSearchCaseSensitivity.Items.Add(
+                TranslationHelper.Translate(
+                    "CaseSensitiveF2",
+                    "Case-sensitive [F2]",
+                    TranslationHelper.Lang
+                )
+            );
+            RBLSearchPosition.Items.Add(
+                TranslationHelper.Translate("ContainsF3", "Contains [F3]", TranslationHelper.Lang)
+            );
+            RBLSearchPosition.Items.Add(
+                TranslationHelper.Translate(
+                    "StartsWithF4",
+                    "StartsWith [F4]",
+                    TranslationHelper.Lang
+                )
+            );
             bool SearchCaseSensitive = false;
             bool SearchContains = true;
             CheckBox CBNormalizeSpelling = new CheckBox()
             {
-                Text = TranslationHelper.Translate("NormalizeSpellingEND", "Normalize spelling [END]", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "NormalizeSpellingEND",
+                    "Normalize spelling [END]",
+                    TranslationHelper.Lang
+                ),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             CheckBox CBAnythingAnywhere = new CheckBox()
             {
-                Text = TranslationHelper.Translate("AnythingAnywhereBRK", "Anything Anywhere [BRK]", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "AnythingAnywhereBRK",
+                    "Anything Anywhere [BRK]",
+                    TranslationHelper.Lang
+                ),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
@@ -204,24 +246,44 @@ namespace CommonUi
                 AnythingAnywhere = CBAnythingAnywhere.Checked ?? false;
             };
 
-            GroupBox SearchCriteria = new() { Text = TranslationHelper.Translate("SearchIn", "Search in...", TranslationHelper.Lang), Content = RBLSearchCriteria };
+            GroupBox SearchCriteria = new()
+            {
+                Text = TranslationHelper.Translate(
+                    "SearchIn",
+                    "Search in...",
+                    TranslationHelper.Lang
+                ),
+                Content = RBLSearchCriteria,
+            };
             GroupBox SearchCaseSensitivity = new()
             {
-                Text = TranslationHelper.Translate("CaseSensitivitySetting", "Case sensitivity setting", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "CaseSensitivitySetting",
+                    "Case sensitivity setting",
+                    TranslationHelper.Lang
+                ),
                 Content = RBLSearchCaseSensitivity,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchCasePosition = new()
             {
-                Text = TranslationHelper.Translate("SearchPosition", "Search Position", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "SearchPosition",
+                    "Search Position",
+                    TranslationHelper.Lang
+                ),
                 Content = RBLSearchPosition,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             GroupBox SearchSpellingNormalization = new()
             {
-                Text = TranslationHelper.Translate("Advanced", "Advanced...", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "Advanced",
+                    "Advanced...",
+                    TranslationHelper.Lang
+                ),
                 Content = new StackLayout(CBNormalizeSpelling, CBAnythingAnywhere)
                 {
                     Orientation = Eto.Forms.Orientation.Vertical,
@@ -244,9 +306,30 @@ namespace CommonUi
                 Padding = 5,
             };
 
-            Button ExportAllResultsAsCsv = new Button() { Text = TranslationHelper.Translate("ExportResults", "Export Results...", TranslationHelper.Lang) };
-            Button ExportAllAsCsv = new Button() { Text = TranslationHelper.Translate("ExportEverything", "Export Everything...", TranslationHelper.Lang) };
-            Button ExportShownAsCsv = new Button() { Text = TranslationHelper.Translate("ExportDisplayed", "Export Displayed...", TranslationHelper.Lang) };
+            Button ExportAllResultsAsCsv = new Button()
+            {
+                Text = TranslationHelper.Translate(
+                    "ExportResults",
+                    "Export Results...",
+                    TranslationHelper.Lang
+                ),
+            };
+            Button ExportAllAsCsv = new Button()
+            {
+                Text = TranslationHelper.Translate(
+                    "ExportEverything",
+                    "Export Everything...",
+                    TranslationHelper.Lang
+                ),
+            };
+            Button ExportShownAsCsv = new Button()
+            {
+                Text = TranslationHelper.Translate(
+                    "ExportDisplayed",
+                    "Export Displayed...",
+                    TranslationHelper.Lang
+                ),
+            };
             Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText };
 
             StackLayout ExportOptions = new StackLayout()
@@ -265,11 +348,22 @@ namespace CommonUi
 
             GroupBox GBExportOptions = new GroupBox()
             {
-                Text = TranslationHelper.Translate("ExportOptions", "Export options...", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate(
+                    "ExportOptions",
+                    "Export options...",
+                    TranslationHelper.Lang
+                ),
                 Content = ExportOptions,
             };
 
-            Button PrintAllDisplayed = new Button() { Text = TranslationHelper.Translate("PrintDisplayed", "Print Displayed Results...", TranslationHelper.Lang) };
+            Button PrintAllDisplayed = new Button()
+            {
+                Text = TranslationHelper.Translate(
+                    "PrintDisplayed",
+                    "Print Displayed Results...",
+                    TranslationHelper.Lang
+                ),
+            };
 
             StackLayout PrintOptions = new StackLayout()
             {
@@ -281,7 +375,11 @@ namespace CommonUi
 
             GroupBox GBPrintOptions = new GroupBox()
             {
-                Text = TranslationHelper.Translate("PrintingOptions", "Printing options...", TranslationHelper.Lang) ,
+                Text = TranslationHelper.Translate(
+                    "PrintingOptions",
+                    "Printing options...",
+                    TranslationHelper.Lang
+                ),
                 Content = PrintOptions,
             };
 
@@ -524,7 +622,11 @@ namespace CommonUi
                 return;
             };
             Results.MouseDoubleClick += SendSelected;
-            Results.KeyUp += (e, a) => { if(a.Key == Keys.Enter) SendSelectedOnEnter(e, a); };
+            Results.KeyUp += (e, a) =>
+            {
+                if (a.Key == Keys.Enter)
+                    SendSelectedOnEnter(e, a);
+            };
 
             var Search = () =>
             {

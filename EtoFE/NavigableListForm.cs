@@ -53,44 +53,100 @@ namespace EtoFE
                                     new List<(string Label, object Content, string Name)>
                                     {
                                         // Core inventory panels
-                                        ("📝 Editor", new LoadOncePanel<CatalogueEditPanel>(), "Editor"),
-                                        ("📋 Batch Editor", new LoadOncePanel<Panel>(), "BatchEditor"),
-                                        ("🔧 Adjustments", new LoadOncePanel<Panel>(), "Adjustments"),
+                                        (
+                                            "📝 Editor",
+                                            new LoadOncePanel<CatalogueEditPanel>(),
+                                            "Editor"
+                                        ),
+                                        (
+                                            "📋 Batch Editor",
+                                            new LoadOncePanel<Panel>(),
+                                            "BatchEditor"
+                                        ),
+                                        (
+                                            "🔧 Adjustments",
+                                            new LoadOncePanel<Panel>(),
+                                            "Adjustments"
+                                        ),
                                         ("📦 Items", new LoadOncePanel<Panel>(), "Items"),
-                                        ("📊 Stock Overview", new LoadOncePanel<Panel>(), "StockOverview"),
+                                        (
+                                            "📊 Stock Overview",
+                                            new LoadOncePanel<Panel>(),
+                                            "StockOverview"
+                                        ),
                                         ("📍 Locations", new LoadOncePanel<Panel>(), "Locations"),
                                         ("🔄 Transfers", new LoadOncePanel<Panel>(), "Transfers"),
                                         ("📈 Reports", new LoadOncePanel<Panel>(), "Reports"),
                                         ("⛑ Alerts", new LoadOncePanel<Panel>(), "Alerts"),
                                         ("🔍 Search", new LoadOncePanel<Panel>(), "Search"),
                                         // Additional standardized ERP modules
-                                        ("🗃 Material Master", new LoadOncePanel<Panel>(), "MaterialMaster"),
-                                        ("📥 Goods Receipt", new LoadOncePanel<Panel>(), "GoodsReceipt"),
-                                        ("📤 Goods Issue", new LoadOncePanel<Panel>(), "GoodsIssued"),
-                                        ("🧮 Cycle Count", new LoadOncePanel<Panel>(), "CycleCount"),
-                                        ("🏭 Warehouse Management", new LoadOncePanel<Panel>(), "Warehouse"),
-                                        ("🔢 Serial & Lot Control", new LoadOncePanel<Panel>(), "SerialControl"),
-                                        ("🔄 Replenishment", new LoadOncePanel<Panel>(), "Replenishment"),
+                                        (
+                                            "🗃 Material Master",
+                                            new LoadOncePanel<Panel>(),
+                                            "MaterialMaster"
+                                        ),
+                                        (
+                                            "📥 Goods Receipt",
+                                            new LoadOncePanel<Panel>(),
+                                            "GoodsReceipt"
+                                        ),
+                                        (
+                                            "📤 Goods Issue",
+                                            new LoadOncePanel<Panel>(),
+                                            "GoodsIssued"
+                                        ),
+                                        (
+                                            "🧮 Cycle Count",
+                                            new LoadOncePanel<Panel>(),
+                                            "CycleCount"
+                                        ),
+                                        (
+                                            "🏭 Warehouse Management",
+                                            new LoadOncePanel<Panel>(),
+                                            "Warehouse"
+                                        ),
+                                        (
+                                            "🔢 Serial & Lot Control",
+                                            new LoadOncePanel<Panel>(),
+                                            "SerialControl"
+                                        ),
+                                        (
+                                            "🔄 Replenishment",
+                                            new LoadOncePanel<Panel>(),
+                                            "Replenishment"
+                                        ),
                                         // Barcode printing section
-                                        ("🖨️ Barcode Print", new LoadOncePanel<Panel>(), "BarcodePrint"),
+                                        (
+                                            "🖨️ Barcode Print",
+                                            new LoadOncePanel<Panel>(),
+                                            "BarcodePrint"
+                                        ),
                                     }
                                 )
                             )
-                        ), "Inventory"
+                        ),
+                        "Inventory"
                     ),
                     (" 💰 Accounts  ", (new LoadOncePanel<Panel>()), "Accounts"),
-                    ($" 👥 HR / {Environment.NewLine} Employees  ", (new LoadOncePanel<Panel>()), "HR"),
+                    (
+                        $" 👥 HR / {Environment.NewLine} Employees  ",
+                        (new LoadOncePanel<Panel>()),
+                        "HR"
+                    ),
                     (
                         $" 🤝 CRM {Environment.NewLine} (Customer Management)  ",
-                        (new LoadOncePanel<Panel>()), "CRM"
+                        (new LoadOncePanel<Panel>()),
+                        "CRM"
                     ),
                     (
                         $" ⚙️ Administration / {Environment.NewLine} Settings  ",
-                        (new LoadOncePanel<Panel>()), "Settings"
+                        (new LoadOncePanel<Panel>()),
+                        "Settings"
                     ),
                     (
                         $" ⚙️ Current {Environment.NewLine} Connection ",
-                        (new LoadOncePanel<Panel>()), "Connection"
+                        (new LoadOncePanel<Panel>()),
+                        "Connection"
                     ),
                     (" 🎫 About ", (new LoadOncePanel<Panel>()), "About"),
                 }
@@ -99,7 +155,10 @@ namespace EtoFE
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
-                Panels.Add(TranslationHelper.Translate(panel.Item3, panel.Item1, Program.lang), panel.Item2);
+                Panels.Add(
+                    TranslationHelper.Translate(panel.Item3, panel.Item1, Program.lang),
+                    panel.Item2
+                );
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1 }).ToList();
 
@@ -129,7 +188,14 @@ namespace EtoFE
             int i = 0;
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
-                Label B = new Label() { Text = TranslationHelper.Translate( LoadOncePanel.Item3, LoadOncePanel.Item1, Program.lang) };
+                Label B = new Label()
+                {
+                    Text = TranslationHelper.Translate(
+                        LoadOncePanel.Item3,
+                        LoadOncePanel.Item1,
+                        Program.lang
+                    ),
+                };
 
                 B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
@@ -281,11 +347,12 @@ namespace EtoFE
                 {
                     while (true)
                     {
-                        if (Application.Instance != null) Application.Instance.Invoke(() =>
-                        {
-                            CurrentClientTimeLabel.Text =
-                                $"Client time: {Environment.NewLine}{DateTime.Now.ToString("s")}";
-                        });
+                        if (Application.Instance != null)
+                            Application.Instance.Invoke(() =>
+                            {
+                                CurrentClientTimeLabel.Text =
+                                    $"Client time: {Environment.NewLine}{DateTime.Now.ToString("s")}";
+                            });
                         Thread.Sleep(1000);
                     }
                 })
@@ -309,11 +376,12 @@ namespace EtoFE
                             if (req.Error == false)
                             {
                                 TR = req.Out;
-                                if(Application.Instance != null) Application.Instance.Invoke(() =>
-                                {
-                                    CurrentServerTimeLabel.Text =
-                                        $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}";
-                                });
+                                if (Application.Instance != null)
+                                    Application.Instance.Invoke(() =>
+                                    {
+                                        CurrentServerTimeLabel.Text =
+                                            $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}";
+                                    });
                             }
                         }
                         catch (Exception E) { }

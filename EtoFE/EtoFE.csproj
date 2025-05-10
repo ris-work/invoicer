@@ -71,17 +71,17 @@
         <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />
     </ItemGroup>
     <ItemGroup>
-      <None Remove="translations.toml" />
+        <None Remove="translations.toml" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
     </ItemGroup>
     <ItemGroup>
-      <EmbeddedResource Include="translations.toml">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </EmbeddedResource>
+        <EmbeddedResource Include="translations.toml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
     </ItemGroup>
-	<!--<PropertyGroup>
+    <!--<PropertyGroup>
 		Target net9.0, but claim Windows 7 as the base.
 		<TargetFramework>net9.0-windows</TargetFramework>
 
@@ -91,8 +91,7 @@
 		Optionally define the platform minimum for clarity
 		<TargetPlatformMinVersion>7.0</TargetPlatformMinVersion>
 	</PropertyGroup>-->
-
-	<ItemGroup>
+    <ItemGroup>
         <PackageReference Include="CsvHelper" Version="33.0.1" />
         <PackageReference Include="Eto.Containers" Version="1.1.0" />
         <PackageReference Include="Eto.Forms" Version="2.9.0" />
@@ -113,7 +112,7 @@
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0">
+        <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0">
 			Suppress warnings (for example, NU1701 warns about unsupported target frameworks)
 			<NoWarn>$(NoWarn);NU1701</NoWarn>
 		</PackageReference>-->
@@ -129,10 +128,10 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="FluentEmoji.ttf">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Gourier.ttf">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="icons\posprogram_export.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

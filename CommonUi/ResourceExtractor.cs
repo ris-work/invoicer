@@ -30,12 +30,20 @@ namespace CommonUi
             {
                 if (resourceStream == null)
                 {
-                    Console.WriteLine($"[ResourceExtractor] ERROR: Embedded resource not found: {resourceName}");
+                    Console.WriteLine(
+                        $"[ResourceExtractor] ERROR: Embedded resource not found: {resourceName}"
+                    );
                     return;
                 }
 
                 // Create and write the output file.
-                using (var fileStream = new FileStream(resourceFilename, FileMode.Create, FileAccess.Write))
+                using (
+                    var fileStream = new FileStream(
+                        resourceFilename,
+                        FileMode.Create,
+                        FileAccess.Write
+                    )
+                )
                 {
                     resourceStream.CopyTo(fileStream);
                 }
@@ -49,7 +57,9 @@ namespace CommonUi
         /// This method redirects to the generic EnsureResource method.
         /// </summary>
         /// <param name="outputPath">The full file path where translations.toml should reside.</param>
-        [Obsolete("Use EnsureResource instead. This method is maintained for backwards compatibility.")]
+        [Obsolete(
+            "Use EnsureResource instead. This method is maintained for backwards compatibility."
+        )]
         public static void EnsureTranslationsFile(string outputPath = "translations.toml")
         {
             EnsureResource(outputPath);
