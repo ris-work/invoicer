@@ -6,6 +6,7 @@ namespace CommonUi
 {
     public static class ResourceExtractor
     {
+        public static string? MainAssemblyName = null;
         /// <summary>
         /// Extracts the specified embedded resource if the target file does not exist.
         /// </summary>
@@ -23,7 +24,7 @@ namespace CommonUi
 
             // Construct the resource name based on the assembly's default namespace.
             // If your embedded resources are organized in subfolders, adjust this to include the folder path.
-            string resourceName = $"{assembly.GetName().Name}.{resourceFilename}";
+            string resourceName = $"{MainAssemblyName ?? assembly.GetName().Name}.{resourceFilename}";
             Console.WriteLine($"[ResourceExtractor] Looking for embedded resource: {resourceName}");
 
             using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))

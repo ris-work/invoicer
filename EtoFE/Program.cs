@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 using RV.InvNew.Common;
 using Tomlyn;
 using Tomlyn.Model;
+using System.Reflection;
 #if WINDOWS
 //using Eto.WinUI;
 #endif
@@ -54,6 +55,15 @@ public class Program
     [STAThread]
     public static void Main()
     {
+        ResourceExtractor.MainAssemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+        ResourceExtractor.EnsureAllResources();
+        Assembly currentAssembly = Assembly.GetExecutingAssembly();
+        string[] resourceNames = currentAssembly.GetManifestResourceNames();
+        Console.WriteLine("Embedded resources found:");
+        foreach (string resourceName in resourceNames)
+        {
+            Console.WriteLine(resourceName);
+        }
         var CH = new HttpClientHandler();
         CH.AutomaticDecompression = DecompressionMethods.All;
         client = new HttpClient(CH);
@@ -64,7 +74,7 @@ public class Program
         CommonUi.ColorSettings.Initialize(ConfigDict);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
-        ResourceExtractor.EnsureAllResources();
+        
 
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();

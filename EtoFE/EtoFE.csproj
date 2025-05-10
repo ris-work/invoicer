@@ -72,6 +72,8 @@
     </ItemGroup>
     <ItemGroup>
         <None Remove="config.toml" />
+        <None Remove="FluentEmoji.ttf" />
+        <None Remove="Gourier.ttf" />
         <None Remove="logo.png" />
         <None Remove="translations.toml" />
     </ItemGroup>
@@ -80,6 +82,12 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="config.toml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
+        <EmbeddedResource Include="FluentEmoji.ttf">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Gourier.ttf">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="logo.png">
@@ -132,12 +140,6 @@
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
     <ItemGroup>
-        <None Update="FluentEmoji.ttf">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Gourier.ttf">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="icons\posprogram_export.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
