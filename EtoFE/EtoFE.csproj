@@ -71,7 +71,15 @@
         <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />
     </ItemGroup>
     <ItemGroup>
+      <None Remove="translations.toml" />
+    </ItemGroup>
+    <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="translations.toml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 	<!--<PropertyGroup>
 		Target net9.0, but claim Windows 7 as the base.
@@ -126,36 +134,11 @@
         <None Update="logo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="translations.toml">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\commonui\CommonUi.csproj">
             <Private>True</Private>
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
-    </ItemGroup>
-    <ItemGroup>
-        <!--<Page Include="theming\WpfPlus\WpfPlus\Brushes\ThemeBrushes.xaml" />-->
-        <!--<Page Include="theming\WpfPlus\WpfPlus\Colors\DarkColors.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Colors\LightColors.xaml" />-->
-        <!--<Page Include="theming\WpfPlus\WpfPlus\DarkTheme.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\LightTheme.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\ButtonStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\CheckBoxStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\ComboBoxStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\DataGridStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\GridSplitterStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\GroupBoxStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\Helpers.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\ListBoxStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\RadioButtonStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\ScrollBarStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\ScrollViewerStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\Styles.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\TabControlStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\TextBoxStyle.xaml" />
-      <Page Include="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />-->
     </ItemGroup>
 </Project>

@@ -35,8 +35,8 @@ namespace EtoFE
             }
             List<(string, TextAlignment, bool)> HeaderEntries = new()
             {
-                ("Itemcode", TextAlignment.Right, true),
-                ("Name", TextAlignment.Left, false),
+                (TranslationHelper.Translate("Itemcode", "Itemcode", Program.lang), TextAlignment.Right, true),
+                (TranslationHelper.Translate("Name", "Name", Program.lang), TextAlignment.Left, false),
                 //("Split 1", TextAlignment.Right, false),
                 //("Split 2", TextAlignment.Center, false),
                 //("Split 3", TextAlignment.Right, false),

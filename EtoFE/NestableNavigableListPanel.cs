@@ -300,7 +300,7 @@ namespace EtoFE
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
-                new Panel() { Width = 3, BackgroundColor = Eto.Drawing.Colors.Beige },
+                new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor},
                 new StackLayoutItem(CurrentPanel)
             )
             {

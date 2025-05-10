@@ -63,6 +63,7 @@ public class Program
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
         ColorSettings.Dump();
+        ResourceExtractor.EnsureTranslationsFile("translations.toml");
 
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();

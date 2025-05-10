@@ -220,8 +220,8 @@ namespace EtoFE
             Label CurrentClientTimeLabel = new Label()
             {
                 Text = DateTime.UtcNow.ToString("O"),
-                BackgroundColor = Eto.Drawing.Color.FromGrayscale(0.35f),
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.LesserForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
