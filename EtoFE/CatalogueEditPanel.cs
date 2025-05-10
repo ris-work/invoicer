@@ -60,7 +60,7 @@ namespace EtoFE
                     return (e.ToStringArray(), null, null);
                 })
                 .ToList();
-            var SearchBox = new SearchPanelEto(SearchCatalogue, HeaderEntries, false);
+            var SearchBox = new SearchPanelEto(SearchCatalogue, HeaderEntries, false, LocalColor);
             var LowerPanelContent = SimpleJsonToUISerialization.ConvertToUISerialization(
                 JsonSerializer.Serialize(
                     new Catalogue()
@@ -136,6 +136,7 @@ namespace EtoFE
                     "id",
                     true
                 );
+                ScrollableLower.BackgroundColor = LocalColor.BackgroundColor;
                 ScrollableLower.Invalidate();
             };
 

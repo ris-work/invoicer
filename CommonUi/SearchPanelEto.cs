@@ -181,22 +181,22 @@ namespace CommonUi
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             RadioButtonList RBLSearchPosition = new RadioButtonList()
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
                 Padding = 5,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             RBLSearchCaseSensitivity.Items.Add(
                 TranslationHelper.Translate(
@@ -231,8 +231,8 @@ namespace CommonUi
                     "Normalize spelling [END]",
                     TranslationHelper.Lang
                 ),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             CheckBox CBAnythingAnywhere = new CheckBox()
             {
@@ -241,8 +241,8 @@ namespace CommonUi
                     "Anything Anywhere [BRK]",
                     TranslationHelper.Lang
                 ),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
@@ -274,8 +274,8 @@ namespace CommonUi
                     TranslationHelper.Lang
                 ),
                 Content = RBLSearchCaseSensitivity,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             GroupBox SearchCasePosition = new()
             {
@@ -285,8 +285,8 @@ namespace CommonUi
                     TranslationHelper.Lang
                 ),
                 Content = RBLSearchPosition,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             GroupBox SearchSpellingNormalization = new()
             {
@@ -299,8 +299,8 @@ namespace CommonUi
                 {
                     Orientation = Eto.Forms.Orientation.Vertical,
                 },
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
 
             StackLayout SearchOptions = new StackLayout()
@@ -438,7 +438,7 @@ namespace CommonUi
             //Results.ForceDarkThemeScrollBarThumbs();
             //ApplyScrollBarLineButtonStyle();
             //ApplyScrollBarThumbStyle();
-            Results.BackgroundColor = ColorSettings.BackgroundColor;
+            Results.BackgroundColor = Colors.BackgroundColor;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
@@ -447,19 +447,19 @@ namespace CommonUi
             Results.CellFormatting += (e, a) =>
             {
                 a.Font = Eto.Drawing.Fonts.Monospace(11);
-                a.BackgroundColor = ColorSettings.BackgroundColor;
-                a.ForegroundColor = ColorSettings.ForegroundColor;
+                a.BackgroundColor = Colors.BackgroundColor;
+                a.ForegroundColor = Colors.ForegroundColor;
                 //Colour the column first
                 if (a.Column.DisplayIndex % 2 == 1)
                 {
-                    a.BackgroundColor = ColorSettings.AlternatingColor2;
-                    a.ForegroundColor = ColorSettings.ForegroundColor;
+                    a.BackgroundColor = Colors.AlternatingColor2;
+                    a.ForegroundColor = Colors.ForegroundColor;
                 }
                 //Override with row colours
                 if (a.Row % 2 == 0)
                 {
-                    a.BackgroundColor = ColorSettings.AlternatingColor1;
-                    a.ForegroundColor = ColorSettings.ForegroundColor;
+                    a.BackgroundColor = Colors.AlternatingColor1;
+                    a.ForegroundColor = Colors.ForegroundColor;
                 }
                 //Use color matrix now!
                 if (
@@ -479,18 +479,18 @@ namespace CommonUi
                 {
                     a.Column.AutoSize = true;
                     a.BackgroundColor = ReverseSort
-                        ? ColorSettings.ForegroundColor
-                        : ColorSettings.SelectedColumnColor;
+                        ? Colors.ForegroundColor
+                        : Colors.SelectedColumnColor;
                     a.ForegroundColor = ReverseSort
-                        ? ColorSettings.SelectedColumnColor
-                        : ColorSettings.ForegroundColor;
+                        ? Colors.SelectedColumnColor
+                        : Colors.ForegroundColor;
                     a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
                 if (a.Row == Results.SelectedRow)
                 {
                     a.Column.AutoSize = true;
-                    a.BackgroundColor = ColorSettings.SelectedColumnColor;
-                    a.ForegroundColor = ColorSettings.ForegroundColor;
+                    a.BackgroundColor = Colors.SelectedColumnColor;
+                    a.ForegroundColor = Colors.ForegroundColor;
                     a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
                 }
             };
@@ -504,7 +504,7 @@ namespace CommonUi
             };
             Results.RowFormatting += (e, a) =>
             {
-                a.BackgroundColor = ColorSettings.BackgroundColor;
+                a.BackgroundColor = Colors.BackgroundColor;
             };
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.None;
@@ -512,8 +512,8 @@ namespace CommonUi
             RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
             TextBox SearchBox = new TextBox()
             {
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
+                BackgroundColor = Colors.BackgroundColor,
+                TextColor = Colors.ForegroundColor,
             };
             if (Debug)
                 MessageBox.Show($"PC: {SC.Count()}");
