@@ -43,56 +43,56 @@ namespace EtoFE
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
 
             var loadOncePanels = (
-                new List<(string, object)>()
+                new List<(string Label, object Content, string Name)>()
                 {
                     (
                         $" 📦 Inventory ",
                         (
                             new LoadOncePanel<Panel>(
                                 new NestableNavigableListPanel(
-                                    new List<(string Label, object Content)>
+                                    new List<(string Label, object Content, string Name)>
                                     {
                                         // Core inventory panels
-                                        ("📝 Editor", new LoadOncePanel<CatalogueEditPanel>()),
-                                        ("📋 Batch Editor", new LoadOncePanel<Panel>()),
-                                        ("🔧 Adjustments", new LoadOncePanel<Panel>()),
-                                        ("📦 Items", new LoadOncePanel<Panel>()),
-                                        ("📊 Stock Overview", new LoadOncePanel<Panel>()),
-                                        ("📍 Locations", new LoadOncePanel<Panel>()),
-                                        ("🔄 Transfers", new LoadOncePanel<Panel>()),
-                                        ("📈 Reports", new LoadOncePanel<Panel>()),
-                                        ("⛑ Alerts", new LoadOncePanel<Panel>()),
-                                        ("🔍 Search", new LoadOncePanel<Panel>()),
+                                        ("📝 Editor", new LoadOncePanel<CatalogueEditPanel>(), "Editor"),
+                                        ("📋 Batch Editor", new LoadOncePanel<Panel>(), "BatchEditor"),
+                                        ("🔧 Adjustments", new LoadOncePanel<Panel>(), "Adjustments"),
+                                        ("📦 Items", new LoadOncePanel<Panel>(), "Items"),
+                                        ("📊 Stock Overview", new LoadOncePanel<Panel>(), "StockOverview"),
+                                        ("📍 Locations", new LoadOncePanel<Panel>(), "Locations"),
+                                        ("🔄 Transfers", new LoadOncePanel<Panel>(), "Transfers"),
+                                        ("📈 Reports", new LoadOncePanel<Panel>(), "Reports"),
+                                        ("⛑ Alerts", new LoadOncePanel<Panel>(), "Alerts"),
+                                        ("🔍 Search", new LoadOncePanel<Panel>(), "Search"),
                                         // Additional standardized ERP modules
-                                        ("🗃 Material Master", new LoadOncePanel<Panel>()),
-                                        ("📥 Goods Receipt", new LoadOncePanel<Panel>()),
-                                        ("📤 Goods Issue", new LoadOncePanel<Panel>()),
-                                        ("🧮 Cycle Count", new LoadOncePanel<Panel>()),
-                                        ("🏭 Warehouse Management", new LoadOncePanel<Panel>()),
-                                        ("🔢 Serial & Lot Control", new LoadOncePanel<Panel>()),
-                                        ("🔄 Replenishment", new LoadOncePanel<Panel>()),
+                                        ("🗃 Material Master", new LoadOncePanel<Panel>(), "MaterialMaster"),
+                                        ("📥 Goods Receipt", new LoadOncePanel<Panel>(), "GoodsReceipt"),
+                                        ("📤 Goods Issue", new LoadOncePanel<Panel>(), "GoodsIssued"),
+                                        ("🧮 Cycle Count", new LoadOncePanel<Panel>(), "CycleCount"),
+                                        ("🏭 Warehouse Management", new LoadOncePanel<Panel>(), "Warehouse"),
+                                        ("🔢 Serial & Lot Control", new LoadOncePanel<Panel>(), "SerialControl"),
+                                        ("🔄 Replenishment", new LoadOncePanel<Panel>(), "Replenishment"),
                                         // Barcode printing section
-                                        ("🖨️ Barcode Print", new LoadOncePanel<Panel>()),
+                                        ("🖨️ Barcode Print", new LoadOncePanel<Panel>(), "BarcodePrint"),
                                     }
                                 )
                             )
-                        )
+                        ), "Inventory"
                     ),
-                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>())),
-                    ($" 👥 HR / {Environment.NewLine} Employees  ", (new LoadOncePanel<Panel>())),
+                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>()), "Accounts"),
+                    ($" 👥 HR / {Environment.NewLine} Employees  ", (new LoadOncePanel<Panel>()), "HR"),
                     (
                         $" 🤝 CRM {Environment.NewLine} (Customer Management)  ",
-                        (new LoadOncePanel<Panel>())
+                        (new LoadOncePanel<Panel>()), "CRM"
                     ),
                     (
                         $" ⚙️ Administration / {Environment.NewLine} Settings  ",
-                        (new LoadOncePanel<Panel>())
+                        (new LoadOncePanel<Panel>()), "Settings"
                     ),
                     (
                         $" ⚙️ Current {Environment.NewLine} Connection ",
-                        (new LoadOncePanel<Panel>())
+                        (new LoadOncePanel<Panel>()), "Connection"
                     ),
-                    (" 🎫 About ", (new LoadOncePanel<Panel>())),
+                    (" 🎫 About ", (new LoadOncePanel<Panel>()), "About"),
                 }
             ).ToArray();
             int SelectedButtonIndex = -1;
@@ -127,7 +127,7 @@ namespace EtoFE
             };
             List<Label> Buttons = new();
             int i = 0;
-            foreach ((string, object) LoadOncePanel in loadOncePanels)
+            foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
                 Label B = new Label() { Text = LoadOncePanel.Item1 };
 

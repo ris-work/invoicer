@@ -9,7 +9,7 @@ namespace CommonUi
 {
     public class ListPanelOptionsAsButtons : Form
     {
-        public ListPanelOptionsAsButtons((string, object)[] A)
+        public ListPanelOptionsAsButtons((string, object, string)[] A)
         {
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in A)

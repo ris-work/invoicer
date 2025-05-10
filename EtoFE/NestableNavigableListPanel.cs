@@ -16,7 +16,7 @@ namespace EtoFE
     {
         public string CurrentPanelName = "";
 
-        public NestableNavigableListPanel(List<(string Title, object InnerPanel)> loadOncePanels)
+        public NestableNavigableListPanel(List<(string Title, object InnerPanel, string Name)> loadOncePanels)
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
@@ -67,7 +67,7 @@ namespace EtoFE
             List<Button> Buttons = new();
             List<Panel> ButtonsContainer = new();
             int i = 0;
-            foreach ((string, object) LoadOncePanel in loadOncePanels)
+            foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
                 Button B = new Button() { Text = LoadOncePanel.Item1 };
                 B.ConfigureForPlatform();
