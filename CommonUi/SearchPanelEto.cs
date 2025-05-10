@@ -265,7 +265,7 @@ namespace CommonUi
 
             GroupBox GBExportOptions = new GroupBox()
             {
-                Text = TranslationHelper.Translate("ExportDisplayed", "Export options...", TranslationHelper.Lang),
+                Text = TranslationHelper.Translate("ExportOptions", "Export options...", TranslationHelper.Lang),
                 Content = ExportOptions,
             };
 
@@ -281,7 +281,7 @@ namespace CommonUi
 
             GroupBox GBPrintOptions = new GroupBox()
             {
-                Text = TranslationHelper.Translate("PrintDisplayed", "Printing options...", TranslationHelper.Lang) ,
+                Text = TranslationHelper.Translate("PrintingOptions", "Printing options...", TranslationHelper.Lang) ,
                 Content = PrintOptions,
             };
 

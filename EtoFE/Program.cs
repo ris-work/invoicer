@@ -81,6 +81,7 @@ public class Program
         TranslationHelper.LoadTranslations("translations.toml");
         Program.lang = (string)
             ConfigDict.GetValueOrDefault("Language", "en");
+        TranslationHelper.Lang = Program.lang;
         string CurrentUIConfigured = (string)
             ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
