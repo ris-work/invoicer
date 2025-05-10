@@ -78,6 +78,9 @@ public class Program
         string CurrentUI = Eto.Platforms.Wpf;
         Console.WriteLine(Eto.Platforms.WinForms);
         Console.WriteLine(Eto.Platforms.Wpf);
+        TranslationHelper.LoadTranslations("translations.toml");
+        Program.lang = (string)
+            ConfigDict.GetValueOrDefault("Language", "en");
         string CurrentUIConfigured = (string)
             ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))

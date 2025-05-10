@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Tomlyn;
+using Tomlyn.Model;
 
 namespace CommonUi
 {
@@ -43,20 +44,26 @@ namespace CommonUi
                 }
 
                 // Convert the parsed TOML model into a dictionary for easier lookup.
-                var model = parseResult.ToModel().ToDictionary();
+                var model = parseResult.ToModel();
                 if (model != null)
                 {
                     foreach (var langEntry in model)
                     {
                         // Each language section (like "si", "ta", etc.) should be a dictionary.
-                        if (langEntry.Value is Dictionary<string, object> langTranslations)
+                        if (langEntry.Value is TomlTable langTranslations)
                         {
                             var keyValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                             foreach (var kv in langTranslations)
                             {
-                                keyValues[kv.Key] = kv.Value?.ToString() ?? "";
+                                keyValues[kv.Key] = (string)kv.Value ?? "";
+                                System.Console.WriteLine($"Added: {kv.Key} => {kv.Value}");
                             }
+                            System.Console.WriteLine($"Added: {langEntry.Key}");
                             _translations[langEntry.Key] = keyValues;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Casting failed: {langEntry.Key}: {langEntry.Value}");
                         }
                     }
                     Console.WriteLine("[Translation] Translations loaded successfully.");
