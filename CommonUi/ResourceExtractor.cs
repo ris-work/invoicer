@@ -75,6 +75,7 @@ namespace CommonUi
             // Extract additional resources.
             EnsureResource("Gourier.ttf");
             EnsureResource("FluentEmoji.ttf");
+            EnsureResource("logo.png");
         }
     }
 }

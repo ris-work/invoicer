@@ -64,6 +64,7 @@ public class Program
         CommonUi.ColorSettings.Initialize(ConfigDict);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
+        ResourceExtractor.EnsureAllResources();
 
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();

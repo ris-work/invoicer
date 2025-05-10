@@ -470,7 +470,7 @@ namespace CommonUi
                 }
                 Label EFieldName = new Label()
                 {
-                    Text = kv.Value.Item1,
+                    Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
                     TextColor = ColorSettings.ForegroundColor,
                 };
                 EControl = new TableRow(EFieldName, EInput, ELegend) { };

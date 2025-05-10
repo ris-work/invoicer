@@ -71,12 +71,16 @@
         <MauiXaml Remove="theming\WpfPlus\WpfPlus\Styles\WindowStyle.xaml" />
     </ItemGroup>
     <ItemGroup>
+        <None Remove="logo.png" />
         <None Remove="translations.toml" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="logo.png">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
         <EmbeddedResource Include="translations.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
@@ -134,9 +138,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="icons\posprogram_export.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="logo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

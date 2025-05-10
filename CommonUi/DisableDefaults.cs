@@ -863,7 +863,7 @@ namespace CommonUi
                 }
             }
 #endif
-            if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk)?.ToString())
             {
                 // Access the native Gtk.Button control using ControlObject.
                 var gtkButton = button.ControlObject as Gtk.Button;
