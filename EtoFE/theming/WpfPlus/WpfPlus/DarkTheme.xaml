@@ -1,6 +1,8 @@
 ﻿<ResourceDictionary 
                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:commonui="clr-namespace:CommonUi;assembly=CommonUi"
+    >
     <ResourceDictionary.MergedDictionaries>
         <!--x:Class="WpfPlus.DarkTheme"-->
         <ResourceDictionary Source="Colors/DarkColors.xaml" />
@@ -8,6 +10,12 @@
 
         <ResourceDictionary Source="Styles/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
+
+    <!-- Now reference the brush properties directly -->
+    <x:Static x:Key="CustomBackgroundBrush" Member="commonui:ColorSettings.BackgroundBrush"/>
+    <x:Static x:Key="CustomForegroundBrush" Member="commonui:ColorSettings.ForegroundBrush"/>
+
     <!-- Vertical RepeatButton Styles -->
     <Style x:Key="DarkVerticalScrollBarUpRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -22,7 +30,7 @@
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Up arrow: triangle pointing up -->
-                                <Path Fill="DarkSeaGreen" Data="M 0 10 L 5 0 L 10 10 Z" />
+                                <Path Fill="{DynamicResource CustomForegroundBrush}" Data="M 0 10 L 5 0 L 10 10 Z" />
                             </Canvas>
                         </Viewbox>
                     </Border>
@@ -43,7 +51,7 @@
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Down arrow: triangle pointing down -->
-                                <Path Fill="DarkSeaGreen" Data="M 0 0 L 10 0 L 5 10 Z" />
+                                <Path Fill="{DynamicResource CustomForegroundBrush}" Data="M 0 0 L 10 0 L 5 10 Z" />
                             </Canvas>
                         </Viewbox>
                     </Border>
@@ -65,7 +73,7 @@
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Left arrow: triangle pointing left -->
-                                <Path Fill="DarkSeaGreen" Data="M 10 0 L 0 5 L 10 10 Z"/>
+                                <Path Fill="{DynamicResource CustomForegroundBrush}" Data="M 10 0 L 0 5 L 10 10 Z"/>
                             </Canvas>
                         </Viewbox>
                     </Border>
@@ -86,7 +94,7 @@
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Right arrow: triangle pointing right -->
-                                <Path Fill="DarkSeaGreen" Data="M 0 0 L 10 5 L 0 10 Z"/>
+                                <Path Fill="{DynamicResource CustomForegroundBrush}" Data="M 0 0 L 10 5 L 0 10 Z"/>
                             </Canvas>
                         </Viewbox>
                     </Border>
@@ -197,7 +205,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <!-- When selected, the overlay paints the background -->
-                            <Setter TargetName="SelectionOverlay" Property="Background" Value="Rebeccapurple" />
+                            <Setter TargetName="SelectionOverlay" Property="Background" Value="RebeccaPurple" />
                             <!-- Ensure the row's inherited Foreground remains white -->
                             <Setter Property="Foreground" Value="White" />
                         </Trigger>

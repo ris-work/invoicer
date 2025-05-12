@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using Eto.Drawing;
+#if WINDOWS
+using System.Windows;
+#endif
 
 namespace CommonUi
 {
@@ -20,6 +23,24 @@ namespace CommonUi
         public static Color SelectedColumnColor { get; private set; }
         public static Color LesserBackgroundColor { get; private set; }
         public static Color LesserForegroundColor { get; private set; }
+#if WINDOWS
+        // New properties that return WPF brushes directly
+        public static System.Windows.Media.SolidColorBrush BackgroundBrush
+            => new System.Windows.Media.SolidColorBrush(BackgroundColor.ToMediaColor());
+
+        public static System.Windows.Media.SolidColorBrush ForegroundBrush
+            => new System.Windows.Media.SolidColorBrush(ForegroundColor.ToMediaColor());
+        public static System.Windows.Media.SolidColorBrush LesserBackgroundBrush
+            => new System.Windows.Media.SolidColorBrush(LesserBackgroundColor.ToMediaColor());
+
+        public static System.Windows.Media.SolidColorBrush LesserForegroundBrush
+            => new System.Windows.Media.SolidColorBrush(LesserForegroundColor.ToMediaColor());
+
+        public static System.Windows.Media.Color ToMediaColor(this Eto.Drawing.Color color)
+        {
+            return System.Windows.Media.Color.FromArgb((byte)color.Ab, (byte)color.Rb, (byte)color.Gb, (byte)color.Bb);
+        }
+#endif
 
         /// <summary>
         /// Initializes the global color settings from the provided configuration dictionary.

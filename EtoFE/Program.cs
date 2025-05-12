@@ -330,7 +330,7 @@ public class MyForm : Form
         }
         catch(Exception E)
         {
-            Console.WriteLine($"{E.ToString(), E.StackTrace}");
+            Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
         }
 
         try
@@ -346,7 +346,7 @@ public class MyForm : Form
         }
         catch (Exception E)
         {
-            Console.WriteLine($"{E.ToString(),E.StackTrace}");
+            Console.WriteLine($"{E.ToString()},{E.StackTrace}");
         }
 
         layout.Rows.Add(null);
