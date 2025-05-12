@@ -136,7 +136,7 @@ namespace EtoFE
                     "id",
                     true
                 );
-                ScrollableLower.BackgroundColor = LocalColor.BackgroundColor;
+                ScrollableLower.BackgroundColor = LocalColor?.BackgroundColor ?? CommonUi.ColorSettings.BackgroundColor;
                 ScrollableLower.Invalidate();
             };
 

@@ -52,7 +52,7 @@ namespace CommonUi
                 (string)configDict.GetValueOrDefault("AlternatingColor1", "Brown")
             );
             AlternatingColor2 = ColorParser.ParseColor(
-                (string)configDict.GetValueOrDefault("AlternatingColor2", "Purple")
+                (string)configDict.GetValueOrDefault("AlternatingColor2", "Black")
             );
             ForegroundColor = ColorParser.ParseColor(
                 (string)configDict.GetValueOrDefault("ForegroundColor", "White")

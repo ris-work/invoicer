@@ -112,7 +112,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border Background="Indigo" BorderThickness="0"/>
+                    <Border Background="{DynamicResource CustomLesserForegroundBrush}" BorderThickness="0"/>
+                    
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

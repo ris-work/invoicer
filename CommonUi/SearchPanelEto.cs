@@ -438,7 +438,7 @@ namespace CommonUi
             //Results.ForceDarkThemeScrollBarThumbs();
             //ApplyScrollBarLineButtonStyle();
             //ApplyScrollBarThumbStyle();
-            Results.BackgroundColor = Colors.BackgroundColor;
+            Results.BackgroundColor = Colors.LesserBackgroundColor;
             Results.Size = new Size(600, 300);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
@@ -504,7 +504,7 @@ namespace CommonUi
             };
             Results.RowFormatting += (e, a) =>
             {
-                a.BackgroundColor = Colors.BackgroundColor;
+                a.BackgroundColor = Colors.LesserBackgroundColor;
             };
             Results.Border = BorderType.None;
             Results.GridLines = GridLines.None;
