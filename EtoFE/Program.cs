@@ -21,6 +21,7 @@ using RV.InvNew.Common;
 using Tomlyn;
 using Tomlyn.Model;
 using System.Reflection;
+//using SharpDX.Direct2D1.Effects;
 #if WINDOWS
 //using Eto.WinUI;
 #endif
@@ -105,8 +106,10 @@ public class Program
         var ConfigFile = System.IO.File.ReadAllText("config.toml");
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
+        double HueRotationDegrees = (double)ConfigDict.GetValueOrDefault("HueRotationDegrees", 0.0d);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
+        ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
         
@@ -143,6 +146,7 @@ public class Program
             CurrentUI = Eto.Platforms.Wpf;
         
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
+        
 
         (new Application(CurrentUI)).Run(new MyForm());
 

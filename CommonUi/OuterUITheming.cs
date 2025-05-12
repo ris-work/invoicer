@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using Eto.Drawing;
+using MyExtensions;
+
 #if WINDOWS
 using System.Windows;
 #endif
@@ -23,6 +25,17 @@ namespace CommonUi
         public static Color SelectedColumnColor { get; private set; }
         public static Color LesserBackgroundColor { get; private set; }
         public static Color LesserForegroundColor { get; private set; }
+
+        public static void RotateAll(double degrees)
+        {
+            AlternatingColor1 = AlternatingColor1.HueRotate(degrees);
+            AlternatingColor2 = AlternatingColor2.HueRotate(degrees);
+            ForegroundColor = ForegroundColor.HueRotate(degrees);
+            LesserForegroundColor = LesserForegroundColor.HueRotate(degrees);
+            BackgroundColor = BackgroundColor.HueRotate(degrees);
+            LesserBackgroundColor = LesserBackgroundColor.HueRotate(degrees);
+            SelectedColumnColor = SelectedColumnColor.HueRotate(degrees);
+        }
 #if WINDOWS
         // New properties that return WPF brushes directly
         public static System.Windows.Media.SolidColorBrush BackgroundBrush
