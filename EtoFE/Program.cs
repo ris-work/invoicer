@@ -131,6 +131,8 @@ public class Program
         TranslationHelper.Lang = Program.lang;
         string CurrentUIConfigured = (string)
             ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            CurrentUI = Eto.Platforms.Gtk;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
             CurrentUI = Eto.Platforms.WinForms;
         if (CurrentUIConfigured.ToLowerInvariant() == ("gtk"))
@@ -139,8 +141,7 @@ public class Program
             CurrentUI = Eto.Platforms.Direct2D;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winui"))
             CurrentUI = Eto.Platforms.Wpf;
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            CurrentUI = Eto.Platforms.Gtk;
+        
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
 
         (new Application(CurrentUI)).Run(new MyForm());
@@ -318,20 +319,34 @@ public class MyForm : Form
 
         Eto.Forms.ImageView Logo = new ImageView();
         Eto.Forms.ImageView TermLogo = new ImageView();
-        if (System.IO.File.Exists(LogoPath))
+        try
         {
-            Uri LogoUri = new Uri(GetCwdX(), LogoPath);
-            System.Console.WriteLine(LogoUri.AbsoluteUri);
-            Logo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
+            if (System.IO.File.Exists(LogoPath))
+            {
+                Uri LogoUri = new Uri(GetCwdX(), LogoPath);
+                System.Console.WriteLine(LogoUri.LocalPath);
+                Logo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
+            }
+        }
+        catch(Exception E)
+        {
+            Console.WriteLine($"{E.ToString(), E.StackTrace}");
         }
 
-        if (System.IO.File.Exists(TermLogoPath))
+        try
         {
-            Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
-            Uri TermLogoUri = new Uri(GetCwdX(), TermLogoPath);
-            System.Console.WriteLine(TermLogoUri.AbsoluteUri);
-            //TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
-            TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
+            if (System.IO.File.Exists(TermLogoPath))
+            {
+                Uri LogoUri = new Uri(new Uri(Config.GetCWD()), LogoPath);
+                Uri TermLogoUri = new Uri(GetCwdX(), TermLogoPath);
+                System.Console.WriteLine(TermLogoUri.LocalPath);
+                //TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
+                TermLogo.Image = new Eto.Drawing.Bitmap(TermLogoUri.LocalPath);
+            }
+        }
+        catch (Exception E)
+        {
+            Console.WriteLine($"{E.ToString(),E.StackTrace}");
         }
 
         layout.Rows.Add(null);

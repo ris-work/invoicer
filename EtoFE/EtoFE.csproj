@@ -129,7 +129,7 @@
     </ItemGroup>
     <!-- On Windows, include Windows and WPF platforms -->
     <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
-        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Direct2D" Version="2.9.0" />
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
@@ -140,11 +140,15 @@
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
+	<PropertyGroup>
+		<!-- Set to true/false or even override it via command-line -->
+		<IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
+	</PropertyGroup>
     <!-- On non-Windows platforms, include only the GTK platform -->
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
 		<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
     <ItemGroup>
@@ -167,4 +171,19 @@
 			<TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
 		</ItemGroup>
 	</Target>
+	<PropertyGroup>
+		<IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
+	</PropertyGroup>
+
+
+	<!-- When true, include the experimental project reference -->
+	<ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' == 'true'">
+		<ProjectReference Include="..\..\source\repos\eto\src\Eto.WinForms\Eto.WinForms.Csproj" />
+	</ItemGroup>
+
+	<!-- When false, include the Eto.Platform.Windows package reference -->
+	<ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' != 'true'">
+		<!-- Replace the version below with the appropriate package version you wish to target -->
+		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+	</ItemGroup>
 </Project>
