@@ -81,6 +81,7 @@ namespace EtoFE
                         LoadOncePanel.Item1,
                         Program.lang
                     ),
+                    
                 };
                 B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
@@ -312,12 +313,13 @@ namespace EtoFE
                 new Scrollable()
                 {
                     Content = new StackLayout(
-                        ButtonsContainer.Select(b => new StackLayoutItem(b)).ToArray()
+                        ButtonsContainer.SelectMany(b => new[] { new StackLayoutItem(b) , new StackLayoutItem ( new Panel() { Height = 1, BackgroundColor = ColorSettings.LesserBackgroundColor } ) }).ToArray()
                     )
                     {
                         HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                        Spacing = 2,
+                        Spacing = 0,
                     },
+                    Padding= new Eto.Drawing.Padding(),
                     Height = 100,
                     Border = BorderType.None,
                     //BackgroundColor = ColorSettings.BackgroundColor,
@@ -336,17 +338,17 @@ namespace EtoFE
                 EnableAccessibilityButton,
                 null,
                 null,
-                QuitCurrentPanelButton,
-                null
+                QuitCurrentPanelButton
             )
             {
                 Spacing = 10,
                 Orientation = Orientation.Horizontal,
                 Padding = 10,
             };
-            Content = new StackLayout(TopPanel, Inner)
+            Content = new StackLayout(TopPanel, new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height=1 }, Inner)
             {
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Spacing = 1,
             };
             Padding = 10;
             //Position

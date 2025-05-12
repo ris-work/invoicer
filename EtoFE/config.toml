@@ -11,7 +11,7 @@ LesserBackgroundColor = "#D5E2D0"  # Soft light greenish tone for alternative UI
 AlternatingColor1     = "#F2B69E88"  # Approx. from Lab(65, 40, 20): warm apricot accent
 AlternatingColor2     = "#8FA9A388"  # Approx. from Lab(65, -40, 20): cool, muted teal accent
 SelectedColumnColor   = "#E1CDAF"  # Approx. from Lab(65, 0, 20): balanced neutral highlight
-HueRotationDegrees=-120.0
+HueRotationDegrees=0.0
 
 #DARK
 #ForegroundColor = "White"

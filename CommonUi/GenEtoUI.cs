@@ -84,21 +84,21 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "background_color",
-                LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor
+                LocalColor?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor
             );
             Color FGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "foreground_color_changed",
-                LocalColor?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor
+                LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor
             );
             Color BGc = EtoThemingUtilities.GetNestedColor(
                 Configuration,
                 Context,
                 ControlName,
                 "background_color_changed",
-                LocalColor?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor
+                LocalColor?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor
             );
             Font EFont = EtoThemingUtilities.GetNestedFont(
                 Configuration,
@@ -120,7 +120,10 @@ namespace CommonUi
                 "control_size",
                 new Eto.Drawing.Size(10, 24)
             );
-            return (FG, BG, FGc, BGc, EFont, TSize, CSize);
+            if(ControlName == "Legend")
+            return (FG, LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor, FGc, BGc, EFont, TSize, CSize);
+            else
+                return (FG, BG, FGc, BGc, EFont, TSize, CSize);
         }
 
         //public delegate long SaveExistingHandler(IReadOnlyDictionary<string, object> UserInput);
@@ -225,6 +228,7 @@ namespace CommonUi
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
                 GetThemeForComponent("form");
             BackgroundColor = BGF;
+            BackgroundColor = LocalColor?.BackgroundColor??ColorSettings.BackgroundColor;
             var SaveButtonTheme = GetThemeForComponent("save");
             var NewButtonTheme = GetThemeForComponent("new");
             var ViewButtonTheme = GetThemeForComponent("view");
