@@ -15,6 +15,8 @@
     <!-- Now reference the brush properties directly -->
     <x:Static x:Key="CustomBackgroundBrush" Member="commonui:ColorSettings.BackgroundBrush"/>
     <x:Static x:Key="CustomForegroundBrush" Member="commonui:ColorSettings.ForegroundBrush"/>
+    <x:Static x:Key="CustomLesserBackgroundBrush" Member="commonui:ColorSettings.LesserBackgroundBrush"/>
+    <x:Static x:Key="CustomLesserForegroundBrush" Member="commonui:ColorSettings.LesserForegroundBrush"/>
 
     <!-- Vertical RepeatButton Styles -->
     <Style x:Key="DarkVerticalScrollBarUpRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
@@ -26,7 +28,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="#77000000" BorderThickness="0">
+                    <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Up arrow: triangle pointing up -->
@@ -47,7 +49,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="#77000000" BorderThickness="0">
+                    <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Down arrow: triangle pointing down -->
@@ -69,7 +71,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="#77000000" BorderThickness="0">
+                    <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Left arrow: triangle pointing left -->
@@ -90,7 +92,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border Background="#77000000" BorderThickness="0">
+                    <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
                             <Canvas Width="10" Height="10">
                                 <!-- Right arrow: triangle pointing right -->
@@ -119,8 +121,8 @@
     <!-- Implicit ScrollBar Style with orientation-based templates -->
     <Style TargetType="{x:Type ScrollBar}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
-        <Setter Property="Background" Value="#77000000"/>
-        <Setter Property="Foreground" Value="SteelBlue"/>
+        <Setter Property="Background" Value="{DynamicResource CustomLesserBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CustomForegroundBrush}"/>
         <Setter Property="MinWidth" Value="16"/>
         <Setter Property="MinHeight" Value="16"/>
         <Setter Property="Template">
@@ -205,7 +207,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <!-- When selected, the overlay paints the background -->
-                            <Setter TargetName="SelectionOverlay" Property="Background" Value="RebeccaPurple" />
+                            <Setter TargetName="SelectionOverlay" Property="Background" Value="Indigo" />
                             <!-- Ensure the row's inherited Foreground remains white -->
                             <Setter Property="Foreground" Value="White" />
                         </Trigger>
