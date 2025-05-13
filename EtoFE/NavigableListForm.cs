@@ -199,7 +199,8 @@ namespace EtoFE
 
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
-                B.Width = 100;
+                B.Width = 300;
+                
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
                 B.TextColor = ColorSettings.ForegroundColor;

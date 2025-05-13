@@ -492,7 +492,17 @@ namespace CommonUi
                     Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
                     TextColor = CurrentPanelColours.ForegroundColor,
                 };
-                EControl = new TableRow(EFieldName, new RoundedDrawable<Panel>() {InnerControl = EInput }, ELegend) { };
+                if (EInput is Eto.Forms.TextBox T)
+                {
+                    T.ShowBorder = false;
+
+                    //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
+                    EControl = new TableRow(EFieldName, T, ELegend) { };
+                }
+                else
+                {
+                    EControl = new TableRow(EFieldName, EInput, ELegend) { };
+                }
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
                 if (EFieldName != null)

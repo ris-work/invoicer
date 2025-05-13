@@ -1,6 +1,9 @@
 ﻿using System;
 using Eto.Forms;
 using Eto.Drawing;
+using Microsoft.Maui.Platform;
+using System.Collections.Generic;
+using System.Collections;
 namespace CommonUi
 {
 
@@ -204,6 +207,8 @@ namespace CommonUi
                 var textSize = e.Graphics.MeasureString(Font, Text);
                 float x = (rect.Width - textSize.Width) / 2;
                 float y = (rect.Height - textSize.Height) / 2;
+                x = 0;
+                //y = 0;
                 using (var brush = new SolidBrush(TextColor))
                 {
                     e.Graphics.DrawText(Font, TextColor, x, y, Text);
@@ -253,13 +258,13 @@ namespace CommonUi
         /// <summary>
         /// Gets the wrapped inner control. (This won’t be auto‐hosted in this Drawable—you must add it manually.)
         /// </summary>
-        public T InnerControl { get; private set; }
+        public T InnerControl { get; set; }
 
         /// <summary>
         /// Extra space between the outer border and the inner control.
         /// When manually positioning the inner control, leave room for this padding.
         /// </summary>
-        public Padding ContentPadding { get; set; } = new Padding(3);
+        public Padding ContentPadding { get; set; } = new Padding(0);
 
         /// <summary>
         /// Corner radius for the rounded border.
@@ -310,6 +315,9 @@ namespace CommonUi
                 IsHovered = false;
                 Invalidate();
             };
+            Content = InnerControl;
+            InnerControl.Width = Width;
+            
         }
 
         /// <summary>
@@ -418,4 +426,7 @@ namespace CommonUi
         }
 
     }
+
+
+
 }
