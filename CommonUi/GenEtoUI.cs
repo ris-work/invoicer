@@ -10,6 +10,7 @@ using Eto.Forms;
 using Microsoft.Maui.Platform;
 using Microsoft.Win32.SafeHandles;
 using Tomlyn;
+//using static System.Net.Mime.MediaTypeNames;
 
 //using Xceed.Wpf.Toolkit.Converters;
 
@@ -332,6 +333,8 @@ namespace CommonUi
                                 Text = (kv.Value.Item2 ?? 0).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
+                            /*((TextBox)EInput).Text = (kv.Value.Item2 ?? 0).ToString();
+                                ((TextBox)EInput).TextAlignment = TextAlignment.Right;*/
                             ((TextBox)EInput).TextInput += ChangedIndication;
                             ((TextBox)EInput).BackgroundColor = BG;
                             ((TextBox)EInput).TextColor = FG;
@@ -489,7 +492,7 @@ namespace CommonUi
                     Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
                     TextColor = CurrentPanelColours.ForegroundColor,
                 };
-                EControl = new TableRow(EFieldName, EInput, ELegend) { };
+                EControl = new TableRow(EFieldName, new RoundedDrawable<Panel>() {InnerControl = EInput }, ELegend) { };
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
                 if (EFieldName != null)
