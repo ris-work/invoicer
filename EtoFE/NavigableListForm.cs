@@ -40,7 +40,10 @@ namespace EtoFE
             //LB.TextColor = ColorSettings.ForegroundColor;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
-            Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
+            Panel CurrentPanel = new Panel() { 
+                //MinimumSize = new Eto.Drawing.Size(1100, 700),
+                Size = new Eto.Drawing.Size (-1, -1) 
+            };
 
             var loadOncePanels = (
                 new List<(string Label, object Content, string Name)>()
@@ -197,15 +200,16 @@ namespace EtoFE
                     ),
                     CornerRadius = 2,
                     HoverBorderColor = ColorSettings.LesserForegroundColor,
+                    BorderColor = ColorSettings.LesserBackgroundColor,
                 };
 
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
-                B.Width = 300;
+                B.Width = 150;
                 
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
-                B.TextColor = ColorSettings.ForegroundColor;
+                B.TextColor = ColorSettings.LesserForegroundColor;
                 B.Enabled = true;
                 B.BackgroundColor = ColorSettings.BackgroundColor;
                 //B.Click += (e, a) => { };
@@ -322,15 +326,17 @@ namespace EtoFE
                 {
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Spacing = 4,
+                    VerticalContentAlignment = VerticalAlignment.Stretch
                 },
                 new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor },
-                new StackLayoutItem(CurrentPanel)
+                new StackLayoutItem(CurrentPanel, true)
             )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
                 BackgroundColor = ColorSettings.BackgroundColor,
+                Size = new Eto.Drawing.Size(-1, -1),
             };
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
@@ -344,7 +350,9 @@ namespace EtoFE
                 Orientation = Orientation.Horizontal,
                 Padding = 4,
             };
-            Content = new StackLayout(TopPanel, Inner);
+            var A = new StackLayout(new StackLayoutItem(TopPanel), new StackLayoutItem(new Panel(){ BackgroundColor = ColorSettings.ForegroundColor, Height = 1 }), new StackLayoutItem( Inner, true)) {VerticalContentAlignment = VerticalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+            
+            Content = A;
             Padding = 10;
             var LocalTimeRefresher = (
                 new Thread(() =>
@@ -361,6 +369,7 @@ namespace EtoFE
                     }
                 })
             );
+            //SizeChanged += (e, a) => { this.UpdateLayout(); this.Invalidate(true); };
             var ServerTimeRefresher = (
                 new Thread(() =>
                 {

@@ -105,7 +105,7 @@ namespace CommonUi
                 Configuration,
                 Context,
                 ControlName,
-                Eto.Drawing.Fonts.Monospace(12)
+                new Eto.Drawing.Font(ColorSettings.UIFont, 12 ) ?? Eto.Drawing.Fonts.Monospace(12)
             );
             Size TSize = EtoThemingUtilities.GetNestedSize(
                 Configuration,

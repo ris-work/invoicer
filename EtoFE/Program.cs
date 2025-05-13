@@ -226,13 +226,25 @@ public class MyForm : Form
     {
         try
         {
-            Program.UIFont = FontFamily.FromFiles("Gourier.ttf", "FluentEmoji.ttf");
+            Program.UIFont = FontFamily.FromFiles("Gourier.ttf");
+            Program.UIFont = FontFamily.FromFiles("FluentEmoji.ttf");
         }
         catch (Exception E)
         {
             Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
             Program.UIFont = FontFamilies.Monospace;
         }
+        try
+        {
+            Program.UIFont = FontFamily.FromFiles("NotoSans-Regular.ttf");
+        }
+        catch (Exception E)
+        {
+            Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+            Program.UIFont = FontFamilies.Monospace;
+        }
+        ColorSettings.UIFont = Program.UIFont;
+        ColorSettings.UIFontMono = Eto.Drawing.FontFamilies.Monospace;
 
         var platform = Eto.Forms.Application.Instance.Platform;
         System.Console.WriteLine($"Platform: {platform}");
@@ -367,6 +379,7 @@ public class MyForm : Form
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    Font = new Font(Program.UIFont, 14),
                 },
                 UsernameBox = new TextBox()
                 {
@@ -376,6 +389,7 @@ public class MyForm : Form
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
                     ShowBorder = false,
+                    Font = new Font(Program.UIFont, 14),
                 },
                 null
             )
@@ -390,6 +404,7 @@ public class MyForm : Form
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    Font = new Font(Program.UIFont, 14)
                 },
                 PasswordBox = new PasswordBox()
                 {
@@ -397,6 +412,7 @@ public class MyForm : Form
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    Font = new Font(Program.UIFont, 14),
                 },
                 null
             )
@@ -411,6 +427,7 @@ public class MyForm : Form
                     Width = 20,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
                     TextColor = ColorSettings.ForegroundColor,
+                    Font = new Font(Program.UIFont, 14),
                 },
                 TerminalBox = new TextBox()
                 {
@@ -422,6 +439,7 @@ public class MyForm : Form
                     Width = 20,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
                     TextColor = ColorSettings.ForegroundColor,
+                    Font = new Font(Program.UIFont, 14),
                 },
                 null
             )
@@ -458,6 +476,7 @@ public class MyForm : Form
             Style = "large",
             BackgroundColor = ColorSettings.BackgroundColor,
             TextColor = ColorSettings.LesserForegroundColor,
+            Font = new Font(Program.UIFont, 14),
         };
         layout.Rows.Add(
             new TableRow(
@@ -476,6 +495,7 @@ public class MyForm : Form
                         Size = new Size(300, 50),
                         BackgroundColor = ColorSettings.BackgroundColor,
                         TextColor = ColorSettings.LesserForegroundColor,
+                        Font = new Font(Program.UIFont, 14),
                     }
                 ),
                 null

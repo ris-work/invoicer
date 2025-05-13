@@ -25,6 +25,8 @@ namespace CommonUi
         public static Color SelectedColumnColor { get; private set; }
         public static Color LesserBackgroundColor { get; private set; }
         public static Color LesserForegroundColor { get; private set; }
+        public static FontFamily? UIFont = null;// = Eto.Drawing.FontFamilies.Sans;
+        public static FontFamily? UIFontMono = null;// = Eto.Drawing.FontFamilies.Monospace;
 
         public static void RotateAll(double degrees)
         {

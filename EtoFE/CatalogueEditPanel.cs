@@ -16,7 +16,7 @@ namespace EtoFE
         public CatalogueEditPanel()
         {
             var LocalColor = ColorSettings.GetPanelSettings("Editor", (IReadOnlyDictionary<string, object>)Program.ConfigDict);
-            LocalColor = ColorSettings.RotateAllToPanelSettings(60);
+            LocalColor = ColorSettings.RotateAllToPanelSettings(0);
             BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
             PosRefresh PR;
             while (true)

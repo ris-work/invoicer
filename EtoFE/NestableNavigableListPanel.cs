@@ -24,7 +24,7 @@ namespace EtoFE
             var EmptyPanel =  new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor };
             var EmptyPanelOuter = new Panel() { Width = 3, BackgroundColor = ColorSettings.BackgroundColor, Content = EmptyPanel, Padding = 10 };
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
-            LB.Size = new Eto.Drawing.Size(200, 600);
+            LB.Size = new Eto.Drawing.Size(200, -1);
             LB.Columns.Add(
                 new GridColumn()
                 {
@@ -39,7 +39,7 @@ namespace EtoFE
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
 
             int SelectedButtonIndex = -1;
-            var UpdateTheme = () => { CurrentPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * (1+SelectedButtonIndex)).BackgroundColor; EmptyPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).LesserForegroundColor; EmptyPanelOuter.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).BackgroundColor; };
+            var UpdateTheme = () => { CurrentPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * (1+SelectedButtonIndex)).BackgroundColor; EmptyPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * SelectedButtonIndex).LesserForegroundColor; EmptyPanelOuter.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).BackgroundColor; };
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
@@ -330,7 +330,7 @@ namespace EtoFE
                         Spacing = 0,
                     },
                     Padding= new Eto.Drawing.Padding(),
-                    Height = 100,
+                    Height = -1,
                     Border = BorderType.None,
                     //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
@@ -357,10 +357,12 @@ namespace EtoFE
                 Padding = 10,
             };
             
-            Content = new StackLayout(TopPanel, new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height = 1 }, Inner)
+            Content = new StackLayout(new StackLayoutItem(TopPanel), new StackLayoutItem(new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height = 1 }), new StackLayoutItem( Inner, true))
             {
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Spacing = 1,
+                VerticalContentAlignment = VerticalAlignment.Stretch,
+                Height = -1,
             };
             Padding = 10;
             //Position
