@@ -22,7 +22,7 @@ namespace EtoFE
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
             var EmptyPanel =  new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor };
-            var EmptyPanelOuter = new Panel() { Width = 3, BackgroundColor = ColorSettings.BackgroundColor, Content = EmptyPanel, Padding = 10 };
+            var EmptyPanelOuter = new StackLayout(new StackLayoutItem(EmptyPanel, true)) { BackgroundColor = ColorSettings.BackgroundColor, Padding = 3, Orientation = Orientation.Horizontal, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Stretch};
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, -1);
             LB.Columns.Add(
@@ -36,7 +36,7 @@ namespace EtoFE
             //LB.TextColor = ColorSettings.ForegroundColor;
             //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
-            Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
+            Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(900, 700) };
 
             int SelectedButtonIndex = -1;
             var UpdateTheme = () => { CurrentPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * (1+SelectedButtonIndex)).BackgroundColor; EmptyPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * SelectedButtonIndex).LesserForegroundColor; EmptyPanelOuter.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).BackgroundColor; };
@@ -218,7 +218,7 @@ namespace EtoFE
                 };
 
                 Buttons.Add(B);
-                var BC = new Panel() { Content = new StackLayout(B, null) };
+                var BC = new Panel() { Content = new StackLayout(B, null) { Padding = 5 } };
                 BC.MouseDown += (e, a) =>
                 {
                     //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);
@@ -335,9 +335,10 @@ namespace EtoFE
                     //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
+                    
                 },
-                EmptyPanel,
-                new StackLayoutItem(CurrentPanel)
+                EmptyPanelOuter,
+                new StackLayoutItem(CurrentPanel, true)
             )
             {
                 Orientation = Orientation.Horizontal,
