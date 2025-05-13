@@ -184,11 +184,11 @@ namespace EtoFE
                     Eto.Drawing.FontDecoration.None
                 );
             };
-            List<Label> Buttons = new();
+            List<RoundedLabel> Buttons = new();
             int i = 0;
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
-                Label B = new Label()
+                RoundedLabel B = new RoundedLabel()
                 {
                     Text = TranslationHelper.Translate(
                         LoadOncePanel.Item3,
@@ -197,8 +197,9 @@ namespace EtoFE
                     ),
                 };
 
-                B.VerticalAlignment = VerticalAlignment.Center;
+                //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
+                B.Width = 100;
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
                 B.TextColor = ColorSettings.ForegroundColor;
@@ -207,7 +208,7 @@ namespace EtoFE
                 //B.Click += (e, a) => { };
                 B.MouseEnter += (e, a) =>
                 {
-                    Label CurrentLabel = ((Label)e);
+                    RoundedLabel CurrentLabel = ((RoundedLabel)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
                         B.TextColor = ColorSettings.SelectedColumnColor;
@@ -216,7 +217,7 @@ namespace EtoFE
                 };
                 B.MouseLeave += (e, a) =>
                 {
-                    Label CurrentLabel = ((Label)e);
+                    RoundedLabel CurrentLabel = ((RoundedLabel)e);
                     if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
                     {
                         B.TextColor = ColorSettings.ForegroundColor;
@@ -227,7 +228,7 @@ namespace EtoFE
                 B.TabIndex = i;
                 B.MouseDown += (e, a) =>
                 {
-                    Label ClickedLabel = ((Label)e);
+                    RoundedLabel ClickedLabel = ((RoundedLabel)e);
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
 
                     CurrentPanel.Content = (Control)
@@ -239,7 +240,7 @@ namespace EtoFE
                                 )
                         ).GetInnerAsObject();
                     SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
-                    foreach (Label L in Buttons)
+                    foreach (RoundedLabel L in Buttons)
                     {
                         L.TextColor = ColorSettings.ForegroundColor;
                         L.BackgroundColor = ColorSettings.BackgroundColor;
