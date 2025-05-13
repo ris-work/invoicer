@@ -2,7 +2,7 @@ BaseAddress = "http://127.0.0.1:5062"
 Terminal = "10"
 EnableFulLMode = true
 EtoBackend = "Wpf"
-Language = "ta"
+Language = "en"
 
 ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast
 BackgroundColor       = "#F0F7ED"  # Light minty background for a fresh feel

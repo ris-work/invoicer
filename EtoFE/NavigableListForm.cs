@@ -195,6 +195,8 @@ namespace EtoFE
                         LoadOncePanel.Item1,
                         Program.lang
                     ),
+                    CornerRadius = 2,
+                    HoverBorderColor = ColorSettings.LesserForegroundColor,
                 };
 
                 //B.VerticalAlignment = VerticalAlignment.Center;

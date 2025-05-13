@@ -21,6 +21,8 @@ namespace EtoFE
         )
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
+            var EmptyPanel =  new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor };
+            var EmptyPanelOuter = new Panel() { Width = 3, BackgroundColor = ColorSettings.BackgroundColor, Content = EmptyPanel, Padding = 10 };
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, 600);
             LB.Columns.Add(
@@ -37,6 +39,7 @@ namespace EtoFE
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(1100, 700) };
 
             int SelectedButtonIndex = -1;
+            var UpdateTheme = () => { CurrentPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * (1+SelectedButtonIndex)).BackgroundColor; EmptyPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).LesserForegroundColor; EmptyPanelOuter.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).BackgroundColor; };
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
@@ -72,6 +75,7 @@ namespace EtoFE
             List<Button> Buttons = new();
             List<Panel> ButtonsContainer = new();
             int i = 0;
+            int SelectedItemIndex = 0;
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
                 Button B = new Button()
@@ -147,6 +151,7 @@ namespace EtoFE
                                 )
                         ).GetInnerAsObject();
                     SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
+                    SelectedItemIndex = SelectedButtonIndex;
                     foreach (Button L in Buttons)
                     {
                         L.TextColor = ColorSettings.ForegroundColor;
@@ -166,6 +171,7 @@ namespace EtoFE
                     this.TriggerStyleChanged();
                     CurrentPanelName =
                         $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
+                    UpdateTheme();
                 };
 
                 B.KeyDown += (e, a) =>
@@ -187,6 +193,7 @@ namespace EtoFE
                                     )
                             ).GetInnerAsObject();
                         SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
+                        SelectedItemIndex = SelectedButtonIndex;
                         foreach (Button L in Buttons)
                         {
                             L.TextColor = ColorSettings.ForegroundColor;
@@ -207,6 +214,7 @@ namespace EtoFE
                         CurrentPanelName =
                             $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
                     }
+                    UpdateTheme();
                 };
 
                 Buttons.Add(B);
@@ -228,6 +236,7 @@ namespace EtoFE
                                 )
                         ).GetInnerAsObject();
                     SelectedButtonIndex = Buttons.IndexOf(TargetButton);
+                    SelectedItemIndex = SelectedButtonIndex;
                     foreach (Button L in Buttons)
                     {
                         L.TextColor = ColorSettings.ForegroundColor;
@@ -247,6 +256,7 @@ namespace EtoFE
                     this.TriggerStyleChanged();
                     CurrentPanelName =
                         $"\u300e{TargetButton.Text}\u300f RV InvNew Inventory Manager";
+                    UpdateTheme();
                 };
                 ButtonsContainer.Add(BC);
 
@@ -269,7 +279,7 @@ namespace EtoFE
             };
             LB.DisableLines();
             //LB.DisableGridViewEnterKey();
-            BackgroundColor = ColorSettings.BackgroundColor;
+            BackgroundColor = ColorSettings.RotateAllToPanelSettings(0).BackgroundColor;
             Padding = 10;
             Button EnableAccessibilityButton = new Button()
             {
@@ -322,15 +332,16 @@ namespace EtoFE
                     Padding= new Eto.Drawing.Padding(),
                     Height = 100,
                     Border = BorderType.None,
+                    //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
                 },
-                new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor },
+                EmptyPanel,
                 new StackLayoutItem(CurrentPanel)
             )
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 10,
+                Spacing = 0,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
                 BackgroundColor = ColorSettings.BackgroundColor,
             };
@@ -345,7 +356,8 @@ namespace EtoFE
                 Orientation = Orientation.Horizontal,
                 Padding = 10,
             };
-            Content = new StackLayout(TopPanel, new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height=1 }, Inner)
+            
+            Content = new StackLayout(TopPanel, new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height = 1 }, Inner)
             {
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Spacing = 1,

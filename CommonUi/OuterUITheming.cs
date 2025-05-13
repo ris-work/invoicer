@@ -36,6 +36,19 @@ namespace CommonUi
             LesserBackgroundColor = LesserBackgroundColor.HueRotate(degrees);
             SelectedColumnColor = SelectedColumnColor.HueRotate(degrees);
         }
+
+        public static PanelSettings RotateAllToPanelSettings(double degrees)
+        {
+            return new PanelSettings() {
+                AlternatingColor1 = AlternatingColor1.HueRotate(degrees),
+                AlternatingColor2 = AlternatingColor2.HueRotate(degrees),
+                ForegroundColor = ForegroundColor.HueRotate(degrees),
+                LesserForegroundColor = LesserForegroundColor.HueRotate(degrees),
+                BackgroundColor = BackgroundColor.HueRotate(degrees),
+                LesserBackgroundColor = LesserBackgroundColor.HueRotate(degrees),
+                SelectedColumnColor = SelectedColumnColor.HueRotate(degrees),
+            };
+        }
 #if WINDOWS
         // New properties that return WPF brushes directly
         public static System.Windows.Media.SolidColorBrush BackgroundBrush
