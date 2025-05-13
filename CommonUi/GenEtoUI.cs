@@ -497,11 +497,11 @@ namespace CommonUi
                     T.ShowBorder = false;
 
                     //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                    EControl = new TableRow(EFieldName, T, ELegend) { };
+                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend) { };
                 }
                 else
                 {
-                    EControl = new TableRow(EFieldName, EInput, ELegend) { };
+                    EControl = new TableRow(EFieldName, new TableCell( EInput, true), ELegend) { };
                 }
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
@@ -579,10 +579,11 @@ namespace CommonUi
                     MessageBoxType.Information
                 );
             };
-            var ActionButtons = new StackLayout(NewButton, SaveButton, ViewButton, CancelButton)
+            var ActionButtons = new StackLayout(null, NewButton, SaveButton, ViewButton, CancelButton, null)
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 2,
+                HorizontalContentAlignment = HorizontalAlignment.Center
             };
 
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
@@ -622,7 +623,7 @@ namespace CommonUi
             }*/
 
             // Create the TableLayout and assign the combined rows.
-            var tableLayout = new TableLayout(new TableRow(leftList, rightList))
+            var tableLayout = new TableLayout(new TableRow(new TableCell(leftList, true), new TableCell(rightList, true)))
             {
                 Padding = 5,
                 Spacing = new Eto.Drawing.Size(10, 3),
@@ -631,10 +632,10 @@ namespace CommonUi
 
             var GeneratedControls = tableLayout;
 
-            Content = new StackLayout(ActionButtons, GeneratedControls)
+            Content = new StackLayout(ActionButtons, new StackLayoutItem( GeneratedControls, true))
             {
                 Orientation = Orientation.Vertical,
-                HorizontalContentAlignment = HorizontalAlignment.Center,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
             };
         }
 

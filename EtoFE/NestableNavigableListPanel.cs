@@ -218,7 +218,7 @@ namespace EtoFE
                 };
 
                 Buttons.Add(B);
-                var BC = new Panel() { Content = new StackLayout(B, null) { Padding = 5 } };
+                var BC = new Panel() { Content = new StackLayout(B, null) { Padding = new Eto.Drawing.Padding(5, 0) } };
                 BC.MouseDown += (e, a) =>
                 {
                     //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);
