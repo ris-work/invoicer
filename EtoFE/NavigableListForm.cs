@@ -12,6 +12,7 @@ using Eto;
 using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
+using MyExtensions;
 using RV.InvNew.Common;
 
 namespace EtoFE
@@ -20,6 +21,7 @@ namespace EtoFE
     {
         public NavigableListForm()
         {
+            Location = new Eto.Drawing.Point(200, 150);
             this.ApplyDarkThemeForScrollBarsAndGridView();
             this.ApplyDarkTheme();
             //DisableDefaults.ApplyGlobalScrollBarArrowStyle();
@@ -307,6 +309,33 @@ namespace EtoFE
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
+            Label HueRotateLabel = new Label()
+            {
+                Text = $"Rotate{Environment.NewLine}Colours{Environment.NewLine}by 15{Environment.NewLine}degrees",
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                TextAlignment = TextAlignment.Center,
+                
+                
+                Font = new Eto.Drawing.Font(Program.UIFont, 5),
+                
+            };
+            
+            HueRotateLabel.MouseDown += (_, _) => {
+                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.HueRotate(15);
+                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.HueRotate(15);
+                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.HueRotate(15);
+                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.HueRotate(15);
+                ColorSettings.LesserForegroundColor = ColorSettings.LesserForegroundColor.HueRotate(15);
+                ColorSettings.LesserBackgroundColor = ColorSettings.LesserBackgroundColor.HueRotate(15);
+                ColorSettings.SelectedColumnColor = ColorSettings.SelectedColumnColor.HueRotate(15);
+                this.UpdateLayout();
+                (new NavigableListForm()).Show();
+                this.Close();
+                this.Invalidate(true);
+                
+            };
             Label CurrentUserAndToken = new Label()
             {
                 Text = $"{LoginTokens.Username}{Environment.NewLine}{LoginTokens.token.TokenID}",
@@ -342,7 +371,8 @@ namespace EtoFE
                 EnableAccessibilityButton,
                 CurrentClientTimeLabel,
                 CurrentServerTimeLabel,
-                CurrentUserAndToken
+                CurrentUserAndToken,
+                HueRotateLabel
             )
             {
                 Spacing = 4,

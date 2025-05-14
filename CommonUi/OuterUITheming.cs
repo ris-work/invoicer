@@ -18,13 +18,13 @@ namespace CommonUi
     /// </summary>
     public static class ColorSettings
     {
-        public static Color AlternatingColor1 { get; private set; }
-        public static Color AlternatingColor2 { get; private set; }
-        public static Color ForegroundColor { get; private set; }
-        public static Color BackgroundColor { get; private set; }
-        public static Color SelectedColumnColor { get; private set; }
-        public static Color LesserBackgroundColor { get; private set; }
-        public static Color LesserForegroundColor { get; private set; }
+        public static Color AlternatingColor1 { get; set; }
+        public static Color AlternatingColor2 { get; set; }
+        public static Color ForegroundColor { get; set; }
+        public static Color BackgroundColor { get; set; }
+        public static Color SelectedColumnColor { get; set; }
+        public static Color LesserBackgroundColor { get; set; }
+        public static Color LesserForegroundColor { get; set; }
         public static FontFamily? UIFont = null;// = Eto.Drawing.FontFamilies.Sans;
         public static FontFamily? UIFontMono = null;// = Eto.Drawing.FontFamilies.Monospace;
 
