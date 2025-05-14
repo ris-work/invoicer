@@ -70,6 +70,7 @@ public class Program
         string[] resourceNames = currentAssembly.GetManifestResourceNames();
         Console.WriteLine("Embedded resources found:");
         // Loop through all embedded resources
+        
         foreach (string resourceName in resourceNames)
         {
             // Strip the assembly prefix from resource name if present.
@@ -134,6 +135,7 @@ public class Program
         TranslationHelper.Lang = Program.lang;
         string CurrentUIConfigured = (string)
             ConfigDict.GetValueOrDefault("EtoBackend", Eto.Platforms.Wpf);
+        ColorSettings.Dump();
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
