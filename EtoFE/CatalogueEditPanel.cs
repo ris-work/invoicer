@@ -141,7 +141,7 @@ namespace EtoFE
                 ScrollableLower.Invalidate();
             };
 
-            Content = new StackLayout(new StackLayoutItem(SearchBox, true), ScrollableLower) { VerticalContentAlignment = VerticalAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+            Content = new StackLayout(new StackLayoutItem(SearchBox, true), new StackLayoutItem( ScrollableLower, true)) { VerticalContentAlignment = VerticalAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Stretch };
             //this.ApplyDarkTheme();
         }
     }

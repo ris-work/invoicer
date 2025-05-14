@@ -23,14 +23,14 @@
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <!-- Use a reasonable default size -->
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+        <Setter Property="Width" Value="13" />
+        <Setter Property="Height" Value="13" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
                     <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
-                            <Canvas Width="10" Height="10">
+                            <Canvas Width="11" Height="11">
                                 <!-- Up arrow: triangle pointing up -->
                                 <Path Fill="{DynamicResource CustomLesserForegroundBrush}" Data="M 0 10 L 5 0 L 10 10 Z" />
                             </Canvas>
@@ -44,14 +44,14 @@
     <Style x:Key="DarkVerticalScrollBarDownRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+        <Setter Property="Width" Value="13" />
+        <Setter Property="Height" Value="13" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
                     <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
-                            <Canvas Width="10" Height="10">
+                            <Canvas Width="11" Height="11">
                                 <!-- Down arrow: triangle pointing down -->
                                 <Path Fill="{DynamicResource CustomLesserForegroundBrush}" Data="M 0 0 L 10 0 L 5 10 Z" />
                             </Canvas>
@@ -66,14 +66,14 @@
     <Style x:Key="DarkHorizontalScrollBarLeftRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="Width" Value="12"/>
-        <Setter Property="Height" Value="12"/>
+        <Setter Property="Width" Value="13"/>
+        <Setter Property="Height" Value="13"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
                     <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
-                            <Canvas Width="10" Height="10">
+                            <Canvas Width="11" Height="11">
                                 <!-- Left arrow: triangle pointing left -->
                                 <Path Fill="{DynamicResource CustomLesserForegroundBrush}" Data="M 10 0 L 0 5 L 10 10 Z"/>
                             </Canvas>
@@ -87,14 +87,14 @@
     <Style x:Key="DarkHorizontalScrollBarRightRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="Width" Value="12"/>
-        <Setter Property="Height" Value="12"/>
+        <Setter Property="Width" Value="13"/>
+        <Setter Property="Height" Value="13"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
                     <Border Background="{DynamicResource CustomLesserBackgroundBrush}" BorderThickness="0">
                         <Viewbox Stretch="Uniform">
-                            <Canvas Width="10" Height="10">
+                            <Canvas Width="11" Height="11">
                                 <!-- Right arrow: triangle pointing right -->
                                 <Path Fill="{DynamicResource CustomLesserForegroundBrush}" Data="M 0 0 L 10 5 L 0 10 Z"/>
                             </Canvas>
@@ -124,8 +124,8 @@
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Background" Value="{DynamicResource CustomLesserBackgroundColor}"/>
         <Setter Property="Foreground" Value="{DynamicResource CustomLesserForegroundBrush}"/>
-        <Setter Property="MinWidth" Value="14"/>
-        <Setter Property="MinHeight" Value="14"/>
+        <Setter Property="MinWidth" Value="13"/>
+        <Setter Property="MinHeight" Value="13"/>
         <Setter Property="Template">
             <!-- Default template: assume vertical -->
             <Setter.Value>

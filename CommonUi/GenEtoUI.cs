@@ -623,10 +623,11 @@ namespace CommonUi
             }*/
 
             // Create the TableLayout and assign the combined rows.
-            var tableLayout = new TableLayout(new TableRow(new TableCell(leftList, true), new TableCell(rightList, true)))
+            var tableLayout = new TableLayout(false, new TableRow(new TableCell(leftList, true), new TableCell(rightList, true)))
             {
                 Padding = 5,
                 Spacing = new Eto.Drawing.Size(10, 3),
+                
             };
             ;
 
