@@ -130,8 +130,17 @@ namespace CommonUi
         }
 
         //public delegate long SaveExistingHandler(IReadOnlyDictionary<string, object> UserInput);
-        public void ValidateInputs()
+        public bool ValidateInputs()
         {
+            (
+                var LegendFG,
+                var LegendBG,
+                var LegendFGc,
+                var LegendBGc,
+                var LegendTFont,
+                var LehendTSize,
+                var LegendCSize
+            ) = GetThemeForComponent("Legend");
             bool CumulativeSuccess = true;
             foreach (var e in _Inputs)
             {
@@ -209,12 +218,13 @@ namespace CommonUi
                     }
                     else
                     {
-                        _EFieldNames[e.Key].BackgroundColor = LocalColor.BackgroundColor;
-                        _EFieldNames[e.Key].TextColor = LocalColor.ForegroundColor;
+                        _EFieldNames[e.Key].BackgroundColor = LocalColor?.BackgroundColor ?? LegendBG;
+                        _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
                     }
                         ;
                 }
             }
+            return CumulativeSuccess;
         }
         public void ConvertInputs()
         {
@@ -391,7 +401,7 @@ namespace CommonUi
                 Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput = new Label();
                 Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
-                OriginalTypes.Add(kv.Key, kv.Value.GetType());
+                OriginalTypes.Add(kv.Key, kv.Value.Value.GetType());
                 if (
                     kv.Value.Item2 == null
                     || kv.Value.Item2.GetType() == typeof(long)
@@ -648,28 +658,39 @@ namespace CommonUi
 
             NewButton.Click += (_, _) =>
             {
+                if(ValidateInputs())
                 ConvertInputs();
+                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
             };
             SaveButton.Click += (_, _) =>
             {
-                ConvertInputs();
-                if (_new)
+                if (ValidateInputs())
                 {
-                    SaveNewHandler(ConvertedInputs);
+                    ConvertInputs();
+                    if (_new)
+                    {
+                        SaveNewHandler(ConvertedInputs);
+                    }
+                    else
+                    {
+                        SaveExistingHandler(ConvertedInputs);
+                    }
+                    
                 }
-                else
-                {
-                    SaveExistingHandler(ConvertedInputs);
-                }
+                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
             };
             ViewButton.Click += (_, _) =>
             {
-                ConvertInputs();
-                MessageBox.Show(
-                    $"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}",
-                    "Serialized",
-                    MessageBoxType.Information
-                );
+                if (ValidateInputs())
+                {
+                    ConvertInputs();
+                    MessageBox.Show(
+                        $"New: {_new.ToString()}, Serialized: {JsonSerializer.Serialize(ConvertedInputs)}",
+                        "Serialized",
+                        MessageBoxType.Information
+                    );
+                }
+                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
             };
             var ActionButtons = new StackLayout(null, NewButton, SaveButton, ViewButton, CancelButton, null)
             {
