@@ -112,6 +112,12 @@ namespace CommonUi
         public Action OnSelectionMade;
         private string[] _Selected = null;
         private List<string[]> _OutputList = new List<string[]>() { };
+        public bool ShowExportOptions = false;
+        public bool ShowSearchLocationInString = true;
+        public bool ShowSearchLocation = true;
+        public bool ShowSearchNormalization = false;
+        public bool ShowSearchCaseSensitivity = false;
+        public bool ShowPrintOptions = false;
         public string[] Selected
         {
             get => _Selected;
@@ -307,10 +313,10 @@ namespace CommonUi
             {
                 Items =
                 {
-                    //SearchCaseSensitivity,
-                    SearchCasePosition,
-                    SearchCriteria,
-                    SearchSpellingNormalization,
+                    ShowSearchCaseSensitivity ? SearchCaseSensitivity : null,
+                    ShowSearchLocationInString ? SearchCasePosition : null,
+                    ShowSearchLocation ? SearchCriteria : null,
+                    ShowSearchNormalization ? SearchSpellingNormalization : null,
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -753,8 +759,8 @@ namespace CommonUi
                 Items =
                 {
                     SearchOptions,
-                    //GBExportOptions,
-                    //GBPrintOptions
+                    ShowExportOptions ? GBExportOptions: null,
+                    ShowPrintOptions? GBPrintOptions: null
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,

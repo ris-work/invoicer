@@ -91,7 +91,7 @@ namespace EtoFE
                 B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
                 //B.VerticalAlignment = VerticalAlignment.Center;
-                B.Height = 35;
+                B.Height = Program.InnerPanelButtonHeight ?? -1;
                 B.MinimumSize = new Eto.Drawing.Size(0, 35);
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 10) { };
@@ -219,7 +219,7 @@ namespace EtoFE
                 };
 
                 Buttons.Add(B);
-                var BC = new Panel() { Content = new StackLayout(B, null) { Padding = new Eto.Drawing.Padding(5, 0) } };
+                var BC = new Panel() { Height = Program.InnerPanelButtonContainerHeight ?? -1, Width = Program.InnerPanelButtonContainerWidth ?? -1, Content = new StackLayout(B, null) { Padding = new Eto.Drawing.Padding(5, 0) } };
                 BC.MouseDown += (e, a) =>
                 {
                     //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);

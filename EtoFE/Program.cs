@@ -56,6 +56,11 @@ public class Program
     public static bool UseCustomFonts = false;
     public static int? PanelWidth = null;
     public static int? InnerPanelButtonWidth = null;
+    public static int? InnerPanelButtonHeight = null;
+    public static int? InnerPanelButtonContainerHeight = null;
+    public static int? InnerPanelButtonContainerWidth = null;
+    public static int? InnerLabelHeight = null;
+    public static int? InnerLabelWidth = null;
 
     [STAThread]
     public static void Main()
@@ -115,8 +120,15 @@ public class Program
         UseCustomFonts = (bool)ConfigDict.GetValueOrDefault("UseCustomFonts", false);
         PanelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelWidth", null);
         InnerPanelButtonWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonWidth", null);
+        InnerPanelButtonHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonHeight", null);
+        InnerPanelButtonContainerWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerWidth", null);
+        InnerPanelButtonContainerHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerHeight", null);
+        InnerLabelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelWidth", null);
+        InnerLabelHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelHeight", null);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
+        CommonUi.ColorSettings.InnerLabelWidth = InnerLabelWidth;
+        CommonUi.ColorSettings.InnerLabelHeight = InnerLabelHeight;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");

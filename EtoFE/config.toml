@@ -1,11 +1,17 @@
 BaseAddress = "http://127.0.0.1:5062"
 Terminal = "10"
 EnableFulLMode = true
-EtoBackend = "WinForms"
+EtoBackend = "Wpf"
 Language = "en"
 CustomFonts=false
-#InnerPanelWidth=200 #Use with WinForms Native Port only
-#InnerPanelButtonWidth=150 #Use with WinForms Native Port only
+InnerPanelWidth=200 #Use with WinForms Native Port only
+InnerPanelButtonWidth=150 #Use with WinForms Native Port only
+InnerPanelButtonHeight=50 #Use with WinForms Native Port only
+InnerPanelButtonContainerWidth=200 #Use with WinForms Native Port only
+InnerPanelButtonContainerHeight=50 #Use with WinForms Native Port only
+#InnerLabelWidth =300 #Use with WinForms Native Port only
+#InnerLabelHeight =50 #Use with WinForms Native Port only
+
 
 ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast
 BackgroundColor       = "#F0F7ED"  # Light minty background for a fresh feel

@@ -45,6 +45,8 @@ namespace CommonUi
         Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, bool> _EChangeTracker = new();
         Dictionary<string, object> ConvertedInputs = new();
+        Dictionary<string, Label> _EFieldNames = new();
+        Dictionary<string, Type> OriginalTypes = new();
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
@@ -105,7 +107,7 @@ namespace CommonUi
                 Configuration,
                 Context,
                 ControlName,
-                new Eto.Drawing.Font(ColorSettings.UIFont, 12 ) ?? Eto.Drawing.Fonts.Monospace(12)
+                new Eto.Drawing.Font(ColorSettings.UIFont?? Eto.Drawing.FontFamilies.Monospace, 12 ) 
             );
             Size TSize = EtoThemingUtilities.GetNestedSize(
                 Configuration,
@@ -128,6 +130,92 @@ namespace CommonUi
         }
 
         //public delegate long SaveExistingHandler(IReadOnlyDictionary<string, object> UserInput);
+        public void ValidateInputs()
+        {
+            bool CumulativeSuccess = true;
+            foreach (var e in _Inputs)
+            {
+                bool Success = false;
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
+                {
+                    Type T = OriginalTypes[e.Key];
+                    if (T == typeof(long))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            
+                            Success = long.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
+
+                        }
+                        else
+                        {
+                            
+                            Success = long.TryParse(((Button)_Einputs[e.Key]).Text, out _);
+                        }
+                    }
+                    else if (T == typeof(int))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            
+                            Success = int.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
+                        }
+                        else
+                        {
+                            
+                            Success = int.TryParse(((Button)_Einputs[e.Key]).Text, out _);
+                        }
+                    }
+                    else if (T == typeof(float))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            
+                            Success = float.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
+                        }
+                        else
+                        {
+                            
+                            Success = float.TryParse(((Button)_Einputs[e.Key]).Text, out _);
+                        }
+                    }
+                    else if (T == typeof(double))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            
+                            Success = double.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
+                        }
+                        else
+                        {
+                            
+                            Success = double.TryParse(((Button)_Einputs[e.Key]).Text, out _);
+                        }
+                    }
+                    else if (T == typeof(string))
+                    {
+                        
+                        Success = true;
+                    }
+                    else if (T == typeof(bool))
+                    {
+                        
+                        Success = true;
+                    }
+                    if (!Success) {
+                        CumulativeSuccess = false;
+                        _EFieldNames[e.Key].BackgroundColor = ColorSettings.AlternatingColor1;
+                        _EFieldNames[e.Key].TextColor = ColorSettings.AlternatingColor2;
+                    }
+                    else
+                    {
+                        _EFieldNames[e.Key].BackgroundColor = LocalColor.BackgroundColor;
+                        _EFieldNames[e.Key].TextColor = LocalColor.ForegroundColor;
+                    }
+                        ;
+                }
+            }
+        }
         public void ConvertInputs()
         {
             ConvertedInputs = new();
@@ -303,6 +391,7 @@ namespace CommonUi
                 Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput = new Label();
                 Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
+                OriginalTypes.Add(kv.Key, kv.Value.GetType());
                 if (
                     kv.Value.Item2 == null
                     || kv.Value.Item2.GetType() == typeof(long)
@@ -489,6 +578,8 @@ namespace CommonUi
                 }
                 Label EFieldName = new Label()
                 {
+                    Width  = ColorSettings.InnerLabelWidth ?? -1,
+                    Height = ColorSettings.InnerLabelHeight ?? -1,
                     Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
                     TextColor = CurrentPanelColours.ForegroundColor,
                 };
@@ -511,6 +602,7 @@ namespace CommonUi
                     EFieldName.TextColor = LegendFG;
                     EFieldName.Font = LegendTFont;
                 }
+                _EFieldNames.Add(kv.Key, EFieldName);
                 _ELegends.Add(kv.Key, ELegend);
 
                 if (CurrentNo < EMid)

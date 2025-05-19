@@ -27,6 +27,8 @@ namespace CommonUi
         public static Color LesserForegroundColor { get; set; }
         public static FontFamily? UIFont = null;// = Eto.Drawing.FontFamilies.Sans;
         public static FontFamily? UIFontMono = null;// = Eto.Drawing.FontFamilies.Monospace;
+        public static int? InnerLabelHeight = null;
+            public static int? InnerLabelWidth = null;
 
         public static void RotateAll(double degrees)
         {
