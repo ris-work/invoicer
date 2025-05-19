@@ -451,34 +451,33 @@ namespace MyAOTFriendlyExtensions
         /// <param name="json">A JSON string representing the update dictionary.</param>
         /// <param name="logger">The logger to use for logging events.</param>
         /// <returns>The updated object of type T.</returns>
-        public static T ApplyChangesExceptFiltered<T>(
+        public static T ApplyChangesExceptFilteredFromJson<T>(
     this T target,
     string[] removalFilter,
-    T updatePatch,
+    string patchJson,
     Logger? logger = null)
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (removalFilter == null)
                 throw new ArgumentNullException(nameof(removalFilter));
-            if (updatePatch == null)
-                throw new ArgumentNullException(nameof(updatePatch));
             if (logger == null)
-                logger = LogHelper.DefaultLogger; // Assumes DefaultLogger (of type Logger) is defined elsewhere
+                logger = LogHelper.DefaultLogger; // Assumes DefaultLogger is defined elsewhere
+            if (string.IsNullOrWhiteSpace(patchJson))
+                return target;
 
-            // Convert the update patch to a dictionary using JSON serialization (AOT friendly).
-            string updateJson = JsonSerializer.Serialize(updatePatch);
-            var patchDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(updateJson);
+            // Deserialize the patch JSON into a dictionary.
+            Dictionary<string, JsonElement>? patchDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(patchJson);
             if (patchDict == null)
-                throw new InvalidOperationException("Failed to deserialize update patch.");
+                throw new InvalidOperationException("Failed to deserialize update patch JSON.");
 
-            // Remove any fields from the patch that are disallowed per ACL restrictions.
+            // Remove any disallowed fields from the patch (case‑insensitively).
             foreach (string field in removalFilter)
             {
                 if (string.IsNullOrWhiteSpace(field))
                     continue;
-                string keyToRemove = null;
-                // Use an explicit loop for case‑insensitive comparison (avoiding LINQ for AOT compatibility)
+
+                string? keyToRemove = null;
                 foreach (string key in patchDict.Keys)
                 {
                     if (string.Equals(key, field, StringComparison.OrdinalIgnoreCase))
@@ -496,20 +495,30 @@ namespace MyAOTFriendlyExtensions
 
             // Convert the target object to a dictionary.
             string targetJson = JsonSerializer.Serialize(target);
-            var targetDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(targetJson);
+            Dictionary<string, JsonElement>? targetDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(targetJson);
             if (targetDict == null)
                 throw new InvalidOperationException("Failed to deserialize target object.");
 
-            // Merge the filtered update patch into the target dictionary.
+            // Merge the filtered patch into the target dictionary.
             foreach (var kvp in patchDict)
-            {
                 targetDict[kvp.Key] = kvp.Value;
-            }
 
-            // Convert the merged dictionary back into the target object.
+            // Convert the merged dictionary back to an object of type T.
             string mergedJson = JsonSerializer.Serialize(targetDict);
             return JsonSerializer.Deserialize<T>(mergedJson);
         }
+
+        public static T ApplyChangesExceptFiltered<T>(
+            this T target,
+            string[] removalFilter,
+            T updatePatch,
+            Logger? logger = null)
+        {
+            // Serialize the update patch to JSON and delegate to the JSON-based version.
+            string patchJson = JsonSerializer.Serialize(updatePatch);
+            return target.ApplyChangesExceptFilteredFromJson(removalFilter, patchJson, logger);
+        }
+
 
         public static T ApplyFilteredUpdate<T>(
             this T target,

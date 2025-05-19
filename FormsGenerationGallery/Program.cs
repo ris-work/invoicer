@@ -156,9 +156,9 @@ var invoiceItems = new List<string[]>
     new string[] { "Item3 பெயர், नमस्ते 3", "5", "$50.00" },
 };
 var fieldRemovalTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeRemoved1 = "You should not see this", ShouldBeRemoved2 = "You should not see this!" };
-Eto.Forms.MessageBox.Show($"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1").RemoveFieldIfPresent("ShouldBeRemoved2"))}", "Field Removal Test");
-var fieldUpdateTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeUpdated1 = "You should not see this", ShouldBeUpdated2 = "You should not see this!" };
-Eto.Forms.MessageBox.Show($"Field update: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldUpdateTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldUpdateTestObjectInput.ApplyChangesExceptFiltered([],JsonSerializer.Serialize( new {a = "You should not see this", ShouldBeUpdated1 = "This is correct", ShouldBeUpdated2 = "This is correct"})))}", "Field Update Test");
+Eto.Forms.MessageBox.Show($"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1").RemoveFieldIfPresent("ShouldBeremoved2"))}", "Field Removal Test");
+var fieldUpdateTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeUpdated1 = "You should not see this", ShouldBeUpdated2 = "You should not see this!", ShouldNotBeUpdated1 = "You should see this" };
+Eto.Forms.MessageBox.Show($"Field update: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldUpdateTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldUpdateTestObjectInput.ApplyChangesExceptFilteredFromJson(["a", "ShouldNotbeupdated1"],JsonSerializer.Serialize( new {a = "You should not see this", ShouldBeUpdated1 = "This is correct", ShouldBeUpdated2 = "This is correct", ShouldNotBeUpdated1 = "You should not see this" })))}", "Field Update Test");
 var receiptPrinter = new ReceiptPrinter(invoiceItems, config);
 receiptPrinter.PrintReceipt();
 
