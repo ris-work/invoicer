@@ -253,8 +253,10 @@ namespace EtoFE
                     {
                         L.TextColor = ColorSettings.ForegroundColor;
                         L.BackgroundColor = ColorSettings.BackgroundColor;
-                        L.Invalidate(true);
+                        System.Console.WriteLine($"Adding button: {L.Text}");
+                        //L.Invalidate(true);
                     }
+                    
                     ClickedLabel.TextColor = ColorSettings.BackgroundColor;
                     ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
                     this.Size = new Eto.Drawing.Size(-1, -1);
@@ -321,7 +323,31 @@ namespace EtoFE
                 Font = new Eto.Drawing.Font(Program.UIFont, 5),
                 
             };
-            
+            Label IncreaseLightnessLabel = new Label()
+            {
+                Text = $"Increase{Environment.NewLine}Lightness{Environment.NewLine}by 10{Environment.NewLine}percentage",
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                TextAlignment = TextAlignment.Center,
+
+
+                Font = new Eto.Drawing.Font(Program.UIFont, 5),
+
+            };
+            Label IncreaseContrastLabel = new Label()
+            {
+                Text = $"Increase{Environment.NewLine}Contrast{Environment.NewLine}by 10{Environment.NewLine}percentage",
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                TextAlignment = TextAlignment.Center,
+
+
+                Font = new Eto.Drawing.Font(Program.UIFont, 5),
+
+            };
+
             HueRotateLabel.MouseDown += (_, _) => {
                 ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.HueRotate(15);
                 ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.HueRotate(15);
@@ -335,6 +361,35 @@ namespace EtoFE
                 this.Close();
                 this.Invalidate(true);
                 
+            };
+
+            IncreaseContrastLabel.MouseDown += (_, _) => {
+                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.AdjustContrast(10);
+                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.AdjustContrast(10);
+                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.AdjustContrast(10);
+                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.AdjustContrast(10);
+                ColorSettings.LesserForegroundColor = ColorSettings.LesserForegroundColor.AdjustContrast(10);
+                ColorSettings.LesserBackgroundColor = ColorSettings.LesserBackgroundColor.AdjustContrast(10);
+                ColorSettings.SelectedColumnColor = ColorSettings.SelectedColumnColor.AdjustContrast(10);
+                this.UpdateLayout();
+                (new NavigableListForm()).Show();
+                this.Close();
+                this.Invalidate(true);
+
+            };
+            IncreaseLightnessLabel.MouseDown += (_, _) => {
+                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.AdjustLightness(10);
+                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.AdjustLightness(10);
+                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.AdjustLightness(10);
+                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.AdjustLightness(10);
+                ColorSettings.LesserForegroundColor = ColorSettings.LesserForegroundColor.AdjustLightness(10);
+                ColorSettings.LesserBackgroundColor = ColorSettings.LesserBackgroundColor.AdjustLightness(10);
+                ColorSettings.SelectedColumnColor = ColorSettings.SelectedColumnColor.AdjustLightness(10);
+                this.UpdateLayout();
+                (new NavigableListForm()).Show();
+                this.Close();
+                this.Invalidate(true);
+
             };
             Label CurrentUserAndToken = new Label()
             {
@@ -372,7 +427,9 @@ namespace EtoFE
                 CurrentClientTimeLabel,
                 CurrentServerTimeLabel,
                 CurrentUserAndToken,
-                HueRotateLabel
+                HueRotateLabel,
+                IncreaseContrastLabel,
+                IncreaseLightnessLabel
             )
             {
                 Spacing = 4,

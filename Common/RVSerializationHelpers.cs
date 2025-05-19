@@ -184,6 +184,12 @@ namespace MyAOTFriendlyExtensions
             return targetDict.FromDictionary<T>();
         }
 
+        public static T ApplyChangesFromFiltered<T>(this T target, string[] filter, T jsonSerializableObject)
+        {
+            return target.ApplyChangesFromFiltered(filter, JsonSerializer.Serialize(jsonSerializableObject));
+            
+        }
+
         #endregion
 
         #region Create Default Object JSON

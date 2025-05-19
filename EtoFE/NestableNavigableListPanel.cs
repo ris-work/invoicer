@@ -85,6 +85,7 @@ namespace EtoFE
                         LoadOncePanel.Item1,
                         Program.lang
                     ),
+                    Width = Program.InnerPanelButtonWidth ?? -1,
                     
                 };
                 B.ConfigureForPlatform();
@@ -133,7 +134,7 @@ namespace EtoFE
                         B.TextColor = ColorSettings.ForegroundColor;
                         B.BackgroundColor = ColorSettings.BackgroundColor;
                     }
-                    this.Invalidate();
+                    this.Invalidate(true);
                 };
                 B.TabIndex = i;
                 B.MouseDown += (e, a) =>
@@ -319,6 +320,7 @@ namespace EtoFE
                     Console.WriteLine($"Unable to destroy panel of type: {CurrentPanel.GetType()}, {CurrentPanel.Content.GetType()}");
                 }
             };
+            this.SuspendLayout();
             var Inner = new StackLayout(
                 new Scrollable()
                 {
@@ -332,6 +334,7 @@ namespace EtoFE
                     Padding= new Eto.Drawing.Padding(),
                     Height = -1,
                     Border = BorderType.None,
+                    Width = Program.PanelWidth ?? -1,
                     //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
@@ -365,6 +368,7 @@ namespace EtoFE
                 VerticalContentAlignment = VerticalAlignment.Stretch,
                 Height = -1,
             };
+            this.ResumeLayout();
             Padding = 10;
             //Position
         }

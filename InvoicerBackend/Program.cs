@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using MyAOTFriendlyExtensions;
 using RV.InvNew.Common;
+using Tomlyn.Syntax;
 
 static bool IsTokenValid(LoginToken T, string AccessLevel)
 {
@@ -444,11 +445,36 @@ app.AddEndpointWithBearerAuth<long>(
     "Refresh"
 );
 
+app.AddEndpointWithBearerAuth<Catalogue>(
+    "CatalogueEdit",
+    (R) =>
+    {
+        Console.WriteLine($"==== REQUESTED EDIT CATALOGUE ID {R}");
+        //var SafeR = ((Catalogue)R).RemoveField("Id");
+
+        Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode");
+        Catalogue A;
+        
+        using (var ctx = new NewinvContext())
+        {
+            A = ctx.Catalogues.Where(a => a.Itemcode == SafeR.Itemcode).First();
+            A.ApplyChangesFromFiltered([], JsonSerializer.Serialize(SafeR));
+            ctx.SaveChanges();
+        }
+        Console.WriteLine(
+            $"CATALOGUE: Got: {A.Itemcode}, {A.Description}, {JsonSerializer.Serialize(A)}"
+        );
+
+        return A;
+    },
+    "Refresh"
+);
+
 app.AddEndpointWithBearerAuth<object>(
     "CatalogueAdd",
     (R) =>
     {
-        var SafeR = ((Catalogue)R).RemoveField("Id");
+        var SafeR = ((Catalogue)R).RemoveField("Itemcode");
         using (var ctx = new NewinvContext())
         {
             ctx.Catalogues.Add(SafeR);
@@ -469,6 +495,37 @@ app.AddEndpointWithBearerAuth<string>(
             DeniedList = ctx.UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId).Select(e => e.DeniedField).ToArray();
         }
         return DeniedList;
+    },
+    "Refresh"
+    );
+
+app.AddEndpointWithBearerAuth<string>("BatchRead",
+    (AS, LoginInfo) =>
+    {
+        List<Inventory> Batches;
+        using (var ctx = new NewinvContext())
+        {
+            Batches = ctx.Inventories.Where(e => e.Itemcode == long.Parse((string)AS)).ToList();
+        }
+        return Batches;
+    },
+    "Refresh"
+    );
+
+app.AddEndpointWithBearerAuth<Inventory>("BatchEdit",
+    (AS, LoginInfo) =>
+    {
+        var Batch = (Inventory)AS;
+        var SafeBatch = Batch.RemoveField("Itemcode").RemoveField("Batchcode");
+        
+        using (var ctx = new NewinvContext())
+        {
+            var BatchCurrent = ctx.Inventories.Where(e => e.Itemcode == Batch.Itemcode && e.Batchcode == Batch.Itemcode).First();
+            BatchCurrent.ApplyChangesFromFiltered([], JsonSerializer.Serialize(Batch));
+            ctx.SaveChanges();
+            Batch = BatchCurrent;
+        }
+        return Batch;
     },
     "Refresh"
     );

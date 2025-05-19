@@ -46,12 +46,16 @@ public static class LoginTokens
 
 public class Program
 {
-    public static FontFamily UIFont = null;
+    public static FontFamily UIFont = null;//= FontFamilies.Serif; //Don't do this before platform init!
+    public static FontFamily UIFontMono = null;
     public static bool IsWpf = false;
     public static HttpClient client; // = new HttpClient();
     public static Tomlyn.Model.TomlTable Config;
     public static IReadOnlyDictionary<string, object?> ConfigDict;
     public static string lang = "en";
+    public static bool UseCustomFonts = false;
+    public static int? PanelWidth = null;
+    public static int? InnerPanelButtonWidth = null;
 
     [STAThread]
     public static void Main()
@@ -108,6 +112,9 @@ public class Program
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
         double HueRotationDegrees = (double)ConfigDict.GetValueOrDefault("HueRotationDegrees", 0.0d);
+        UseCustomFonts = (bool)ConfigDict.GetValueOrDefault("UseCustomFonts", false);
+        PanelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelWidth", null);
+        InnerPanelButtonWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonWidth", null);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
         ColorSettings.RotateAll(HueRotationDegrees);
@@ -226,27 +233,41 @@ public class MyForm : Form
 
     public MyForm()
     {
-        try
+        if (Program.UseCustomFonts)
         {
-            Program.UIFont = FontFamily.FromFiles("Gourier.ttf");
-            Program.UIFont = FontFamily.FromFiles("FluentEmoji.ttf");
+            try
+            {
+                Program.UIFontMono = FontFamily.FromFiles("Gourier.ttf");
+                Program.UIFontMono = FontFamily.FromFiles("FluentEmoji.ttf");
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+                Program.UIFont = FontFamilies.Serif;
+            }
+            try
+            {
+                Program.UIFont = FontFamily.FromFiles("NotoSans-Regular.ttf");
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
+                Program.UIFontMono = FontFamilies.Monospace;
+            }
+            Console.WriteLine("Font initialization is complete!");
         }
-        catch (Exception E)
+        else
         {
-            Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
-            Program.UIFont = FontFamilies.Monospace;
+            Console.WriteLine("Custom fonts are disabled");
+            Program.UIFont = FontFamilies.Sans;
+            
+            Program.UIFontMono = FontFamilies.Monospace;
+
         }
-        try
-        {
-            Program.UIFont = FontFamily.FromFiles("NotoSans-Regular.ttf");
-        }
-        catch (Exception E)
-        {
-            Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
-            Program.UIFont = FontFamilies.Monospace;
-        }
+
         ColorSettings.UIFont = Program.UIFont;
         ColorSettings.UIFontMono = Eto.Drawing.FontFamilies.Monospace;
+        Console.WriteLine($"Fonts: {ColorSettings.UIFont.Name}, {ColorSettings.UIFontMono.Name}!");
 
         var platform = Eto.Forms.Application.Instance.Platform;
         System.Console.WriteLine($"Platform: {platform}");
@@ -377,16 +398,16 @@ public class MyForm : Form
                 new Label()
                 {
                     Text = TranslationHelper.Translate("Username", "Username", TranslationHelper.Lang),
-                    Style = "mono",
+                    //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    BackgroundColor = ColorSettings.BackgroundColor,
                     Font = new Font(Program.UIFont, 14),
                 },
                 UsernameBox = new TextBox()
                 {
                     PlaceholderText = "Username",
-                    Style = "mono",
+                    //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
@@ -402,15 +423,15 @@ public class MyForm : Form
                 new Label()
                 {
                     Text = TranslationHelper.Translate("Password", "Password", TranslationHelper.Lang),
-                    Style = "mono",
+                    //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
-                    BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    BackgroundColor = ColorSettings.BackgroundColor,
                     Font = new Font(Program.UIFont, 14)
                 },
                 PasswordBox = new PasswordBox()
                 {
-                    Style = "mono",
+                    //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,
@@ -425,9 +446,9 @@ public class MyForm : Form
                 new Label()
                 {
                     Text = TranslationHelper.Translate("Terminal", "Terminal", TranslationHelper.Lang),
-                    Style = "mono",
+                    //Style = "mono",
                     Width = 20,
-                    BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    BackgroundColor = ColorSettings.BackgroundColor,
                     TextColor = ColorSettings.ForegroundColor,
                     Font = new Font(Program.UIFont, 14),
                 },
@@ -436,7 +457,7 @@ public class MyForm : Form
                     PlaceholderText = "1",
                     Enabled = false,
                     Text = "1",
-                    Style = "mono",
+                    //Style = "mono",
                     TextAlignment = TextAlignment.Right,
                     Width = 20,
                     BackgroundColor = ColorSettings.LesserBackgroundColor,

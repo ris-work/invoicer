@@ -497,11 +497,11 @@ namespace CommonUi
                     T.ShowBorder = false;
 
                     //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend) { };
+                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend) { ScaleHeight = false, };
                 }
                 else
                 {
-                    EControl = new TableRow(EFieldName, new TableCell( EInput, true), ELegend) { };
+                    EControl = new TableRow(EFieldName, new TableCell( EInput, true), ELegend) { ScaleHeight = false, };
                 }
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
@@ -585,17 +585,20 @@ namespace CommonUi
                 Spacing = 2,
                 HorizontalContentAlignment = HorizontalAlignment.Center
             };
-
+            //BorderType = BorderType.None;
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
             // where each TableRow contains one control (accessible via [0])
-            var leftList = new TableLayout(EControlsL.ToList())
+            var leftList = new TableLayout(false, EControlsL.ToArray())
             {
                 Spacing = new Eto.Drawing.Size(2, 2),
             };
-            var rightList = new TableLayout(EControlsR.ToList())
+            var rightList = new TableLayout(yscale: false, EControlsR.ToArray())
             {
                 Spacing = new Eto.Drawing.Size(2, 2),
+                
             };
+            leftList.Rows.Add(new TableRow(new TableCell(new Panel() { Width = 100, Height = 1, BackgroundColor = ColorSettings.ForegroundColor }), new TableCell(new Panel() { Width = 100, Height = 2, BackgroundColor = ColorSettings.ForegroundColor })) { ScaleHeight = true });
+            rightList.Rows.Add(new TableRow(new TableCell(new Panel() { Width = 100, Height = 1, BackgroundColor=ColorSettings.ForegroundColor }), new TableCell(new Panel() { Width = 100, Height = 2, BackgroundColor = ColorSettings.ForegroundColor })) {ScaleHeight = true });
             //int maxCount = Math.Max(leftList.Count, rightList.Count);
 
             /*var combinedRows = new List<TableRow>();
@@ -628,16 +631,20 @@ namespace CommonUi
                 Padding = 5,
                 Spacing = new Eto.Drawing.Size(10, 3),
                 
+                
             };
             ;
 
             var GeneratedControls = tableLayout;
 
-            Content = new StackLayout(ActionButtons, new StackLayoutItem( GeneratedControls, true))
+            Content = new StackLayout(ActionButtons, new StackLayoutItem( new Scrollable() { Content =  GeneratedControls , Border = BorderType.None}, false))
             {
                 Orientation = Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                VerticalContentAlignment = VerticalAlignment.Top
+                
             };
+            
         }
 
         public long Save()
