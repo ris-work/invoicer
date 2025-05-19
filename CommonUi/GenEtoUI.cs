@@ -214,7 +214,7 @@ namespace CommonUi
                     if (!Success) {
                         CumulativeSuccess = false;
                         _EFieldNames[e.Key].BackgroundColor = ColorSettings.AlternatingColor1;
-                        _EFieldNames[e.Key].TextColor = ColorSettings.AlternatingColor2;
+                        _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
                     }
                     else
                     {

@@ -5,6 +5,21 @@ using System.Text.Json;
 
 namespace MyAOTFriendlyExtensions
 {
+    // Define the Logger delegate.
+    /// <summary>
+    /// 
+    /// Debug logging, set it to no-op in production
+    /// 
+    /// </summary>
+    public delegate void Logger(string message);
+
+    // A helper class to hold the default logger.
+    public static class LogHelper
+    {
+        // The default logger writes messages to the console.
+        public static Logger DefaultLogger = message => Console.WriteLine(message);
+    }
+    
     /// <summary>
     /// A record struct representing field metadata for UI rendering.
     /// Description is a friendly label, Value is the current property value,
@@ -300,6 +315,201 @@ namespace MyAOTFriendlyExtensions
                 );
             dict.Remove(fieldName);
             return dict;
+        }
+
+        #endregion
+        #region AOT-Friendly Conversion Methods
+
+        /// <summary>
+        /// Converts an object to a Dictionary&lt;string, JsonElement&gt; by serializing it to JSON 
+        /// and then deserializing that JSON. This avoids reflection and is AOT friendly.
+        /// </summary>
+        /// <typeparam name="T">The type of the object.</typeparam>
+        /// <param name="obj">The object to convert.</param>
+        /// <returns>A dictionary representing the JSON properties of the object.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when obj is null.</exception>
+        public static Dictionary<string, JsonElement> ToJsonDictionary<T>(this T obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+
+            string json = JsonSerializer.Serialize(obj);
+            return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+        }
+
+        /// <summary>
+        /// Converts a Dictionary&lt;string, JsonElement&gt; back into an object of type T by serializing
+        /// the dictionary to JSON and deserializing the JSON.
+        /// </summary>
+        /// <typeparam name="T">The target type.</typeparam>
+        /// <param name="dict">The dictionary representing the object.</param>
+        /// <returns>An object of type T.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when dict is null.</exception>
+        public static T FromJsonDictionary<T>(this Dictionary<string, JsonElement> dict)
+        {
+            if (dict == null)
+                throw new ArgumentNullException(nameof(dict));
+
+            string json = JsonSerializer.Serialize(dict);
+            return JsonSerializer.Deserialize<T>(json);
+        }
+
+        #endregion
+
+        #region Dictionary Removal Helper
+
+        /// <summary>
+        /// Removes the specified field from the dictionary if it exists, using a case‑insensitive comparison.
+        /// Logs the removal using the provided Logger.
+        /// </summary>
+        /// <param name="dict">The dictionary from which to remove the field.</param>
+        /// <param name="fieldName">The field name to remove.</param>
+        /// <param name="logger">The logger to use for logging.</param>
+        /// <returns>The updated dictionary.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when dict or logger is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when fieldName is null or whitespace.</exception>
+        public static Dictionary<string, JsonElement> RemoveFieldFromDictionaryIfPresent(
+            this Dictionary<string, JsonElement> dict,
+            string fieldName,
+            Logger logger)
+        {
+            if (dict == null)
+                throw new ArgumentNullException(nameof(dict));
+            if (string.IsNullOrWhiteSpace(fieldName))
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+            if (logger == null)
+                logger = LogHelper.DefaultLogger;
+
+
+
+            string keyToRemove = null;
+            // Use an explicit loop to ensure AOT compatibility (avoiding LINQ)
+            foreach (var key in dict.Keys)
+            {
+                if (string.Equals(key, fieldName, StringComparison.OrdinalIgnoreCase))
+                {
+                    keyToRemove = key;
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(keyToRemove))
+            {
+                dict.Remove(keyToRemove);
+                logger($"Removed field: '{keyToRemove}'");
+            }
+
+            return dict;
+        }
+
+        #endregion
+
+        #region Object Extension: RemoveFieldIfPresent
+
+        /// <summary>
+        /// Removes the specified field from the target object by serializing it to JSON, 
+        /// converting to a dictionary, removing the field (case‑insensitively),
+        /// and then deserializing the modified dictionary back into the target type.
+        /// This method is AOT friendly assuming that serializer code generation is present.
+        /// </summary>
+        /// <typeparam name="T">The type of the target object.</typeparam>
+        /// <param name="target">The target object.</param>
+        /// <param name="fieldName">The field to remove.</param>
+        /// <param name="logger">The logger to use for logging events.</param>
+        /// <returns>The updated object of type T.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when target or logger is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when fieldName is null or whitespace.</exception>
+        public static T RemoveFieldIfPresent<T>(this T target, string fieldName, Logger logger)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+            if (string.IsNullOrWhiteSpace(fieldName))
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+            if (logger == null)
+                logger = LogHelper.DefaultLogger;
+
+            // Convert the target object to a dictionary.
+            var dict = target.ToJsonDictionary();
+            dict.RemoveFieldFromDictionaryIfPresent(fieldName, logger);
+
+            // Convert the modified dictionary back into an object of type T.
+            return dict.FromJsonDictionary<T>();
+        }
+
+        #endregion
+
+        #region JSON Update Method
+
+        /// <summary>
+        /// Updates the target object by removing fields specified in the removalFilter.
+        /// For each key in the removalFilter that exists in both the JSON update dictionary
+        /// and the target object, the field is removed. Each removal event is logged using the provided Logger.
+        /// </summary>
+        /// <typeparam name="T">The type of the target object.</typeparam>
+        /// <param name="target">The object to update.</param>
+        /// <param name="removalFilter">An array of field names to remove.</param>
+        /// <param name="json">A JSON string representing the update dictionary.</param>
+        /// <param name="logger">The logger to use for logging events.</param>
+        /// <returns>The updated object of type T.</returns>
+        public static T ApplyChangesExceptFiltered<T>(
+            this T target,
+            string[] removalFilter,
+            string json,
+            Logger logger)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+            if (removalFilter == null)
+                throw new ArgumentNullException(nameof(removalFilter));
+            if (logger == null)
+                logger = LogHelper.DefaultLogger;
+            if (string.IsNullOrWhiteSpace(json))
+                return target;
+
+            // Deserialize the JSON update dictionary.
+            Dictionary<string, JsonElement> updateDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            if (updateDict == null)
+                return target;
+
+            // Convert the target object into a dictionary.
+            Dictionary<string, JsonElement> targetDict = target.ToJsonDictionary();
+
+            // For each key in the removal filter, check if it's present in both the update and target.
+            foreach (string key in removalFilter)
+            {
+                bool updateContains = false;
+                // Explicit loop for AOT friendliness.
+                foreach (var updateKey in updateDict.Keys)
+                {
+                    if (string.Equals(updateKey, key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        updateContains = true;
+                        break;
+                    }
+                }
+
+                if (updateContains)
+                {
+                    bool targetContains = false;
+                    foreach (var targetKey in targetDict.Keys)
+                    {
+                        if (string.Equals(targetKey, key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetContains = true;
+                            break;
+                        }
+                    }
+
+                    if (targetContains)
+                    {
+                        logger($"Removing field '{key}' from target object.");
+                        targetDict.RemoveFieldFromDictionaryIfPresent(key, logger);
+                    }
+                }
+            }
+
+            // Convert the updated dictionary back into the target object.
+            return targetDict.FromJsonDictionary<T>();
         }
 
         #endregion

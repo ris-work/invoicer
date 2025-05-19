@@ -6,7 +6,9 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using RV.InvNew.Common;
+using System.Text.Json;
 using Terminal.Gui;
+using MyAOTFriendlyExtensions;
 
 Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
 Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
@@ -153,9 +155,11 @@ var invoiceItems = new List<string[]>
     new string[] { "Item2 பெயர், नमस्ते 2", "1", "$10.00" },
     new string[] { "Item3 பெயர், नमस्ते 3", "5", "$50.00" },
 };
-
+var fieldRemovalTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeRemoved1 = "You should not see this", ShouldBeRemoved2 = "You should not see this!" };
+Eto.Forms.MessageBox.Show($"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1"))}", "Field Removal Test");
 var receiptPrinter = new ReceiptPrinter(invoiceItems, config);
 receiptPrinter.PrintReceipt();
+
 
 Terminal.Gui.Application.Init();
 
@@ -217,3 +221,4 @@ Terminal.Gui.Application.Run(
         null
     )
 );
+
