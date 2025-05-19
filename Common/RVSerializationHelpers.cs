@@ -371,7 +371,7 @@ namespace MyAOTFriendlyExtensions
         public static Dictionary<string, JsonElement> RemoveFieldFromDictionaryIfPresent(
             this Dictionary<string, JsonElement> dict,
             string fieldName,
-            Logger logger)
+            Logger? logger = null)
         {
             if (dict == null)
                 throw new ArgumentNullException(nameof(dict));
@@ -419,7 +419,7 @@ namespace MyAOTFriendlyExtensions
         /// <returns>The updated object of type T.</returns>
         /// <exception cref="ArgumentNullException">Thrown when target or logger is null.</exception>
         /// <exception cref="ArgumentException">Thrown when fieldName is null or whitespace.</exception>
-        public static T RemoveFieldIfPresent<T>(this T target, string fieldName, Logger logger)
+        public static T RemoveFieldIfPresent<T>(this T target, string fieldName, Logger? logger = null)
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
@@ -452,65 +452,75 @@ namespace MyAOTFriendlyExtensions
         /// <param name="logger">The logger to use for logging events.</param>
         /// <returns>The updated object of type T.</returns>
         public static T ApplyChangesExceptFiltered<T>(
-            this T target,
-            string[] removalFilter,
-            string json,
-            Logger logger)
+    this T target,
+    string[] removalFilter,
+    T updatePatch,
+    Logger? logger = null)
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (removalFilter == null)
                 throw new ArgumentNullException(nameof(removalFilter));
+            if (updatePatch == null)
+                throw new ArgumentNullException(nameof(updatePatch));
             if (logger == null)
-                logger = LogHelper.DefaultLogger;
-            if (string.IsNullOrWhiteSpace(json))
-                return target;
+                logger = LogHelper.DefaultLogger; // Assumes DefaultLogger (of type Logger) is defined elsewhere
 
-            // Deserialize the JSON update dictionary.
-            Dictionary<string, JsonElement> updateDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-            if (updateDict == null)
-                return target;
+            // Convert the update patch to a dictionary using JSON serialization (AOT friendly).
+            string updateJson = JsonSerializer.Serialize(updatePatch);
+            var patchDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(updateJson);
+            if (patchDict == null)
+                throw new InvalidOperationException("Failed to deserialize update patch.");
 
-            // Convert the target object into a dictionary.
-            Dictionary<string, JsonElement> targetDict = target.ToJsonDictionary();
-
-            // For each key in the removal filter, check if it's present in both the update and target.
-            foreach (string key in removalFilter)
+            // Remove any fields from the patch that are disallowed per ACL restrictions.
+            foreach (string field in removalFilter)
             {
-                bool updateContains = false;
-                // Explicit loop for AOT friendliness.
-                foreach (var updateKey in updateDict.Keys)
+                if (string.IsNullOrWhiteSpace(field))
+                    continue;
+                string keyToRemove = null;
+                // Use an explicit loop for case‑insensitive comparison (avoiding LINQ for AOT compatibility)
+                foreach (string key in patchDict.Keys)
                 {
-                    if (string.Equals(updateKey, key, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(key, field, StringComparison.OrdinalIgnoreCase))
                     {
-                        updateContains = true;
+                        keyToRemove = key;
                         break;
                     }
                 }
-
-                if (updateContains)
+                if (!string.IsNullOrEmpty(keyToRemove))
                 {
-                    bool targetContains = false;
-                    foreach (var targetKey in targetDict.Keys)
-                    {
-                        if (string.Equals(targetKey, key, StringComparison.OrdinalIgnoreCase))
-                        {
-                            targetContains = true;
-                            break;
-                        }
-                    }
-
-                    if (targetContains)
-                    {
-                        logger($"Removing field '{key}' from target object.");
-                        targetDict.RemoveFieldFromDictionaryIfPresent(key, logger);
-                    }
+                    logger($"Filtering out field '{keyToRemove}' from update patch due to ACL restrictions.");
+                    patchDict.Remove(keyToRemove);
                 }
             }
 
-            // Convert the updated dictionary back into the target object.
-            return targetDict.FromJsonDictionary<T>();
+            // Convert the target object to a dictionary.
+            string targetJson = JsonSerializer.Serialize(target);
+            var targetDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(targetJson);
+            if (targetDict == null)
+                throw new InvalidOperationException("Failed to deserialize target object.");
+
+            // Merge the filtered update patch into the target dictionary.
+            foreach (var kvp in patchDict)
+            {
+                targetDict[kvp.Key] = kvp.Value;
+            }
+
+            // Convert the merged dictionary back into the target object.
+            string mergedJson = JsonSerializer.Serialize(targetDict);
+            return JsonSerializer.Deserialize<T>(mergedJson);
         }
+
+        public static T ApplyFilteredUpdate<T>(
+            this T target,
+            T updateObject,
+            string[] removalFilter,
+            Logger? logger = null)
+        {
+            // This helper simply calls the above method.
+            return target.ApplyChangesExceptFiltered(removalFilter, updateObject, logger);
+        }
+
 
         #endregion
     }
