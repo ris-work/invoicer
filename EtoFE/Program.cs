@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,7 +21,6 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 using RV.InvNew.Common;
 using Tomlyn;
 using Tomlyn.Model;
-using System.Reflection;
 //using SharpDX.Direct2D1.Effects;
 #if WINDOWS
 //using Eto.WinUI;
@@ -46,7 +46,7 @@ public static class LoginTokens
 
 public class Program
 {
-    public static FontFamily UIFont = null;//= FontFamilies.Serif; //Don't do this before platform init!
+    public static FontFamily UIFont = null; //= FontFamilies.Serif; //Don't do this before platform init!
     public static FontFamily UIFontMono = null;
     public static bool IsWpf = false;
     public static HttpClient client; // = new HttpClient();
@@ -79,7 +79,7 @@ public class Program
         string[] resourceNames = currentAssembly.GetManifestResourceNames();
         Console.WriteLine("Embedded resources found:");
         // Loop through all embedded resources
-        
+
         foreach (string resourceName in resourceNames)
         {
             // Strip the assembly prefix from resource name if present.
@@ -116,13 +116,18 @@ public class Program
         var ConfigFile = System.IO.File.ReadAllText("config.toml");
         Config = Toml.ToModel(ConfigFile);
         ConfigDict = Config.ToDictionary();
-        double HueRotationDegrees = (double)ConfigDict.GetValueOrDefault("HueRotationDegrees", 0.0d);
+        double HueRotationDegrees = (double)
+            ConfigDict.GetValueOrDefault("HueRotationDegrees", 0.0d);
         UseCustomFonts = (bool)ConfigDict.GetValueOrDefault("UseCustomFonts", false);
         PanelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelWidth", null);
-        InnerPanelButtonWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonWidth", null);
-        InnerPanelButtonHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonHeight", null);
-        InnerPanelButtonContainerWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerWidth", null);
-        InnerPanelButtonContainerHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerHeight", null);
+        InnerPanelButtonWidth = (int?)
+            (long?)ConfigDict.GetValueOrDefault("InnerPanelButtonWidth", null);
+        InnerPanelButtonHeight = (int?)
+            (long?)ConfigDict.GetValueOrDefault("InnerPanelButtonHeight", null);
+        InnerPanelButtonContainerWidth = (int?)
+            (long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerWidth", null);
+        InnerPanelButtonContainerHeight = (int?)
+            (long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerHeight", null);
         InnerLabelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelWidth", null);
         InnerLabelHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelHeight", null);
         Console.WriteLine("Hello, World!");
@@ -132,7 +137,6 @@ public class Program
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
-        
 
         client.BaseAddress = new Uri((string)Config["BaseAddress"]);
         client.DefaultRequestHeaders.Accept.Clear();
@@ -165,9 +169,8 @@ public class Program
             CurrentUI = Eto.Platforms.Direct2D;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winui"))
             CurrentUI = Eto.Platforms.Wpf;
-        
+
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
-        
 
         (new Application(CurrentUI)).Run(new MyForm());
 
@@ -272,9 +275,8 @@ public class MyForm : Form
         {
             Console.WriteLine("Custom fonts are disabled");
             Program.UIFont = FontFamilies.Sans;
-            
-            Program.UIFontMono = FontFamilies.Monospace;
 
+            Program.UIFontMono = FontFamilies.Monospace;
         }
 
         ColorSettings.UIFont = Program.UIFont;
@@ -366,7 +368,10 @@ public class MyForm : Form
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
         string TermLogoPath = (string)
             ModelDict.GetValueOrDefault("TermLogo", "posprogram_export.png");
-        static Uri GetCwdX() => new Uri("file:///" + System.IO.Directory.GetCurrentDirectory().Replace("\\", "/") + "/");
+        static Uri GetCwdX() =>
+            new Uri(
+                "file:///" + System.IO.Directory.GetCurrentDirectory().Replace("\\", "/") + "/"
+            );
 
         Eto.Forms.ImageView Logo = new ImageView();
         Eto.Forms.ImageView TermLogo = new ImageView();
@@ -379,7 +384,7 @@ public class MyForm : Form
                 Logo.Image = new Eto.Drawing.Bitmap(LogoUri.LocalPath);
             }
         }
-        catch(Exception E)
+        catch (Exception E)
         {
             Console.WriteLine($"{E.ToString()}, {E.StackTrace}");
         }
@@ -409,7 +414,11 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = TranslationHelper.Translate("Username", "Username", TranslationHelper.Lang),
+                    Text = TranslationHelper.Translate(
+                        "Username",
+                        "Username",
+                        TranslationHelper.Lang
+                    ),
                     //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
@@ -434,12 +443,16 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = TranslationHelper.Translate("Password", "Password", TranslationHelper.Lang),
+                    Text = TranslationHelper.Translate(
+                        "Password",
+                        "Password",
+                        TranslationHelper.Lang
+                    ),
                     //Style = "mono",
                     Width = 20,
                     TextColor = ColorSettings.ForegroundColor,
                     BackgroundColor = ColorSettings.BackgroundColor,
-                    Font = new Font(Program.UIFont, 14)
+                    Font = new Font(Program.UIFont, 14),
                 },
                 PasswordBox = new PasswordBox()
                 {
@@ -457,7 +470,11 @@ public class MyForm : Form
                 null,
                 new Label()
                 {
-                    Text = TranslationHelper.Translate("Terminal", "Terminal", TranslationHelper.Lang),
+                    Text = TranslationHelper.Translate(
+                        "Terminal",
+                        "Terminal",
+                        TranslationHelper.Lang
+                    ),
                     //Style = "mono",
                     Width = 20,
                     BackgroundColor = ColorSettings.BackgroundColor,

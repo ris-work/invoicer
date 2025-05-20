@@ -12,7 +12,6 @@
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-		
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
         <UseWPF>true</UseWPF>
@@ -85,20 +84,20 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="config.toml">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="FluentEmoji.ttf">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="Gourier.ttf">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="logo.png">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="NotoSans-Regular.ttf" />
         <EmbeddedResource Include="terminal.toml">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="translations.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -142,15 +141,15 @@
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
-	<PropertyGroup>
-		<!-- Set to true/false or even override it via command-line -->
-		<IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
-	</PropertyGroup>
+    <PropertyGroup>
+        <!-- Set to true/false or even override it via command-line -->
+        <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
+    </PropertyGroup>
     <!-- On non-Windows platforms, include only the GTK platform -->
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
-		<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
+        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
     <ItemGroup>
@@ -164,26 +163,27 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-	<Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
-		<ItemGroup>
-			<TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
-			<TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
-			<TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
-		</ItemGroup>
-	</Target>
-	<PropertyGroup>
-		<IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
-	</PropertyGroup>
-
-
-	<!-- When true, include the experimental project reference -->
-	<ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' == 'true'">
-		<ProjectReference Include="..\..\source\repos\eto\src\Eto.WinForms\Eto.WinForms.Csproj" />
-	</ItemGroup>
-
-	<!-- When false, include the Eto.Platform.Windows package reference -->
-	<ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' != 'true'">
-		<!-- Replace the version below with the appropriate package version you wish to target -->
-		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
-	</ItemGroup>
+    <Target
+        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
+        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
+        Condition="'$(IsWindowsTarget)' != 'true'"
+    >
+        <ItemGroup>
+            <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
+            <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
+            <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
+        </ItemGroup>
+    </Target>
+    <PropertyGroup>
+        <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
+    </PropertyGroup>
+    <!-- When true, include the experimental project reference -->
+    <ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' == 'true'">
+        <ProjectReference Include="..\..\source\repos\eto\src\Eto.WinForms\Eto.WinForms.Csproj" />
+    </ItemGroup>
+    <!-- When false, include the Eto.Platform.Windows package reference -->
+    <ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' != 'true'">
+        <!-- Replace the version below with the appropriate package version you wish to target -->
+        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+    </ItemGroup>
 </Project>

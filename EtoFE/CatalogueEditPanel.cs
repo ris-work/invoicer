@@ -15,7 +15,10 @@ namespace EtoFE
     {
         public CatalogueEditPanel()
         {
-            var LocalColor = ColorSettings.GetPanelSettings("Editor", (IReadOnlyDictionary<string, object>)Program.ConfigDict);
+            var LocalColor = ColorSettings.GetPanelSettings(
+                "Editor",
+                (IReadOnlyDictionary<string, object>)Program.ConfigDict
+            );
             LocalColor = ColorSettings.RotateAllToPanelSettings(0);
             BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
             PosRefresh PR;
@@ -137,11 +140,19 @@ namespace EtoFE
                     "id",
                     true
                 );
-                ScrollableLower.BackgroundColor = LocalColor?.BackgroundColor ?? CommonUi.ColorSettings.BackgroundColor;
+                ScrollableLower.BackgroundColor =
+                    LocalColor?.BackgroundColor ?? CommonUi.ColorSettings.BackgroundColor;
                 ScrollableLower.Invalidate();
             };
 
-            Content = new StackLayout(new StackLayoutItem(SearchBox, true), new StackLayoutItem( ScrollableLower, true)) { VerticalContentAlignment = VerticalAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+            Content = new StackLayout(
+                new StackLayoutItem(SearchBox, true),
+                new StackLayoutItem(ScrollableLower, true)
+            )
+            {
+                VerticalContentAlignment = VerticalAlignment.Center,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            };
             //this.ApplyDarkTheme();
         }
     }

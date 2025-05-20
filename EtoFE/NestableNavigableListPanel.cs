@@ -21,8 +21,19 @@ namespace EtoFE
         )
         {
             CurrentPanelName = $"RV InvNew Inventory Manager";
-            var EmptyPanel =  new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor };
-            var EmptyPanelOuter = new StackLayout(new StackLayoutItem(EmptyPanel, true)) { BackgroundColor = ColorSettings.BackgroundColor, Padding = 3, Orientation = Orientation.Horizontal, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Stretch};
+            var EmptyPanel = new Panel()
+            {
+                Width = 3,
+                BackgroundColor = ColorSettings.ForegroundColor,
+            };
+            var EmptyPanelOuter = new StackLayout(new StackLayoutItem(EmptyPanel, true))
+            {
+                BackgroundColor = ColorSettings.BackgroundColor,
+                Padding = 3,
+                Orientation = Orientation.Horizontal,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Stretch,
+            };
             GridView LB = new GridView() { ShowHeader = false, GridLines = GridLines.None };
             LB.Size = new Eto.Drawing.Size(200, -1);
             LB.Columns.Add(
@@ -39,7 +50,18 @@ namespace EtoFE
             Panel CurrentPanel = new Panel() { MinimumSize = new Eto.Drawing.Size(900, 700) };
 
             int SelectedButtonIndex = -1;
-            var UpdateTheme = () => { CurrentPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * (1+SelectedButtonIndex)).BackgroundColor; EmptyPanel.BackgroundColor = ColorSettings.RotateAllToPanelSettings(0 * SelectedButtonIndex).LesserForegroundColor; EmptyPanelOuter.BackgroundColor = ColorSettings.RotateAllToPanelSettings(60 * SelectedButtonIndex).BackgroundColor; };
+            var UpdateTheme = () =>
+            {
+                CurrentPanel.BackgroundColor = ColorSettings
+                    .RotateAllToPanelSettings(0 * (1 + SelectedButtonIndex))
+                    .BackgroundColor;
+                EmptyPanel.BackgroundColor = ColorSettings
+                    .RotateAllToPanelSettings(0 * SelectedButtonIndex)
+                    .LesserForegroundColor;
+                EmptyPanelOuter.BackgroundColor = ColorSettings
+                    .RotateAllToPanelSettings(60 * SelectedButtonIndex)
+                    .BackgroundColor;
+            };
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
@@ -86,7 +108,6 @@ namespace EtoFE
                         Program.lang
                     ),
                     Width = Program.InnerPanelButtonWidth ?? -1,
-                    
                 };
                 B.ConfigureForPlatform();
                 B.DisableHoverBackgroundChange(ColorSettings.SelectedColumnColor);
@@ -220,7 +241,12 @@ namespace EtoFE
                 };
 
                 Buttons.Add(B);
-                var BC = new Panel() { Height = Program.InnerPanelButtonContainerHeight ?? -1, Width = Program.InnerPanelButtonContainerWidth ?? -1, Content = new StackLayout(B, null) { Padding = new Eto.Drawing.Padding(5, 0) } };
+                var BC = new Panel()
+                {
+                    Height = Program.InnerPanelButtonContainerHeight ?? -1,
+                    Width = Program.InnerPanelButtonContainerWidth ?? -1,
+                    Content = new StackLayout(B, null) { Padding = new Eto.Drawing.Padding(5, 0) },
+                };
                 BC.MouseDown += (e, a) =>
                 {
                     //MessageBox.Show("Event", "Clicked", MessageBoxType.Information);
@@ -318,7 +344,9 @@ namespace EtoFE
                 }
                 else
                 {
-                    Console.WriteLine($"Unable to destroy panel of type: {CurrentPanel.GetType()}, {CurrentPanel.Content.GetType()}");
+                    Console.WriteLine(
+                        $"Unable to destroy panel of type: {CurrentPanel.GetType()}, {CurrentPanel.Content.GetType()}"
+                    );
                 }
             };
             this.SuspendLayout();
@@ -326,20 +354,33 @@ namespace EtoFE
                 new Scrollable()
                 {
                     Content = new StackLayout(
-                        ButtonsContainer.SelectMany(b => new[] { new StackLayoutItem(b) , new StackLayoutItem ( new Panel() { Height = 1, BackgroundColor = ColorSettings.LesserBackgroundColor } ) }).ToArray()
+                        ButtonsContainer
+                            .SelectMany(b =>
+                                new[]
+                                {
+                                    new StackLayoutItem(b),
+                                    new StackLayoutItem(
+                                        new Panel()
+                                        {
+                                            Height = 1,
+                                            BackgroundColor = ColorSettings.LesserBackgroundColor,
+                                        }
+                                    ),
+                                }
+                            )
+                            .ToArray()
                     )
                     {
                         HorizontalContentAlignment = HorizontalAlignment.Stretch,
                         Spacing = 0,
                     },
-                    Padding= new Eto.Drawing.Padding(),
+                    Padding = new Eto.Drawing.Padding(),
                     Height = -1,
                     Border = BorderType.None,
                     Width = Program.PanelWidth ?? -1,
                     //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),
-                    
                 },
                 EmptyPanelOuter,
                 new StackLayoutItem(CurrentPanel, true)
@@ -361,8 +402,18 @@ namespace EtoFE
                 Orientation = Orientation.Horizontal,
                 Padding = 10,
             };
-            
-            Content = new StackLayout(new StackLayoutItem(TopPanel), new StackLayoutItem(new Panel() { BackgroundColor = ColorSettings.LesserForegroundColor, Height = 1 }), new StackLayoutItem( Inner, true))
+
+            Content = new StackLayout(
+                new StackLayoutItem(TopPanel),
+                new StackLayoutItem(
+                    new Panel()
+                    {
+                        BackgroundColor = ColorSettings.LesserForegroundColor,
+                        Height = 1,
+                    }
+                ),
+                new StackLayoutItem(Inner, true)
+            )
             {
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Spacing = 1,
