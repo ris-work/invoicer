@@ -93,6 +93,7 @@ namespace EtoFE
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = Program.InnerPanelButtonHeight ?? -1;
                 B.MinimumSize = new Eto.Drawing.Size(0, 35);
+                B.RemoveBorder();
 
                 B.Font = new Eto.Drawing.Font(Program.UIFont, 10) { };
                 B.TextColor = ColorSettings.ForegroundColor;

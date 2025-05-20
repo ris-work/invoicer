@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define WINFORMS
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -17,6 +18,10 @@ using System.Windows.Threading;
 using System.Windows.Forms;
 using System.Windows.Controls;
 using System.Windows.Media;
+#endif
+
+#if WINFORMS
+using System.Windows.Forms;
 #endif
 
 namespace CommonUi
@@ -850,7 +855,7 @@ namespace CommonUi
         public static void ConfigureForPlatform(this Eto.Forms.Button button)
         {
             var P = Eto.Platform.Instance.ToString();
-#if WINDOWS
+#if WINDOWS || WINFORMS
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
@@ -900,7 +905,7 @@ namespace CommonUi
         public static void ApplyDarkScrollbarTheme(this Eto.Forms.Container container)
         {
             var P = Eto.Platform.Instance.ToString();
-#if WINDOWS
+#if WINDOWS || WINFORMS
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // For WinForms, the native control is often a System.Windows.Forms.Panel when using auto-scrolling.
@@ -939,6 +944,25 @@ namespace CommonUi
                 }
             }
             // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
+        }
+        /// <summary>
+        /// Extension for applying flat borders and Left-aligning the content
+        /// Uses custom logic for WinForms (placeholder)
+        /// </summary>
+        /// <param name="container">An Eto.Forms.Button hosting scrollable content.</param>
+        /// <param name="P">A string representing the current Eto backend platform.</param>
+        public static void RemoveBorder(this Eto.Forms.Button b)
+        {
+            var P = Eto.Platform.Instance.ToString();
+#if WINDOWS || WINFORMS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.Button nativeB = b.ControlObject as System.Windows.Forms.Button;
+                nativeB.FlatStyle = FlatStyle.Flat;
+                nativeB.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+                nativeB.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            }
+#endif
         }
 
         public static void ConfigureForPlatform(this Eto.Forms.GridView targetGridView)

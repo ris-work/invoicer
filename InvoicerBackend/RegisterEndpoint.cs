@@ -21,6 +21,22 @@ namespace InvoicerBackend
 
         public delegate object DelWithDetails(object o, LoginDetails Login);
 
+        public static void TryAddPermissionToDatabase(string Permission)
+        {
+            using (var ctx = new NewinvContext())
+            {
+                try
+                {
+                    ctx.PermissionsLists.Add(new PermissionsList() { Permission = Permission.ToUpperInvariant() });
+                    ctx.SaveChanges();
+                }
+                catch (Exception E)
+                {
+                    Console.WriteLine($"{E.ToString}, {E.StackTrace}");
+                }
+            }
+        }
+
         public static WebApplication AddEndpoint<T>(
             this WebApplication app,
             string Name,
@@ -42,6 +58,7 @@ namespace InvoicerBackend
                 )
                 .WithName(Name)
                 .WithOpenApi();
+            TryAddPermissionToDatabase(Permission);
             return app;
         }
 
@@ -91,6 +108,8 @@ namespace InvoicerBackend
                 )
                 .WithName(Name)
                 .WithOpenApi();
+            TryAddPermissionToDatabase(Permission);
+
             return app;
         }
 
@@ -132,6 +151,7 @@ namespace InvoicerBackend
                 )
                 .WithName(Name)
                 .WithOpenApi();
+            TryAddPermissionToDatabase(Permission);
             return app;
         }
     }

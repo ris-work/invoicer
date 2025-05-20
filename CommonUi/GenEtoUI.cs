@@ -401,7 +401,7 @@ namespace CommonUi
                 Eto.Forms.Label? ELegend = null;
                 Eto.Forms.Control EInput = new Label();
                 Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
-                OriginalTypes.Add(kv.Key, kv.Value.Value.GetType());
+                OriginalTypes.Add(kv.Key, kv.Value.Value?.GetType() ?? typeof(long));
                 if (
                     kv.Value.Item2 == null
                     || kv.Value.Item2.GetType() == typeof(long)

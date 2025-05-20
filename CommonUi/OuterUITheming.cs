@@ -29,6 +29,8 @@ namespace CommonUi
         public static FontFamily? UIFontMono = null;// = Eto.Drawing.FontFamilies.Monospace;
         public static int? InnerLabelHeight = null;
             public static int? InnerLabelWidth = null;
+        public static int? InnerControlHeight = null;
+        public static int? InnerControlWidth = null;
 
         public static void RotateAll(double degrees)
         {

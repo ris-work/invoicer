@@ -9,6 +9,7 @@ using RV.InvNew.Common;
 using System.Text.Json;
 using Terminal.Gui;
 using MyAOTFriendlyExtensions;
+using common;
 
 Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
 Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
@@ -159,6 +160,9 @@ var fieldRemovalTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!
 Eto.Forms.MessageBox.Show($"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1").RemoveFieldIfPresent("ShouldBeremoved2"))}", "Field Removal Test");
 var fieldUpdateTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeUpdated1 = "You should not see this", ShouldBeUpdated2 = "You should not see this!", ShouldNotBeUpdated1 = "You should see this" };
 Eto.Forms.MessageBox.Show($"Field update: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldUpdateTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldUpdateTestObjectInput.ApplyChangesExceptFilteredFromJson(["a", "ShouldNotbeupdated1"],JsonSerializer.Serialize( new {a = "You should not see this", ShouldBeUpdated1 = "This is correct", ShouldBeUpdated2 = "This is correct", ShouldNotBeUpdated1 = "You should not see this" })))}", "Field Update Test");
+var AclRemovalInput = new { allowed = "allowed", denied = "You should not see this", DeniedCaseInsensitive = "You should not see this" };
+string PatchJson = AclRemovalInput.RemoveRelevantDenyFields(["denied", "deniedcaseinsensitive"]);
+Eto.Forms.MessageBox.Show($"Input: {AclRemovalInput.ToJson()} Output: {PatchJson}");
 var receiptPrinter = new ReceiptPrinter(invoiceItems, config);
 receiptPrinter.PrintReceipt();
 

@@ -498,6 +498,18 @@ app.AddEndpointWithBearerAuth<string>(
     },
     "Refresh"
     );
+app.AddEndpointWithBearerAuth<string>(
+    "GetUniversalDenyList",
+    (AS, LoginInfo) => {
+        string[] DeniedList;
+        using (var ctx = new NewinvContext())
+        {
+            DeniedList = ctx.UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId).Select(e => e.DeniedField).ToArray();
+        }
+        return DeniedList;
+    },
+    "Refresh"
+    );
 
 app.AddEndpointWithBearerAuth<string>("BatchRead",
     (AS, LoginInfo) =>

@@ -202,7 +202,7 @@ namespace MyAOTFriendlyExtensions
         public static T ApplyChangesFromFiltered<T>(this T target, string[] filter, T jsonSerializableObject)
         {
             return target.ApplyChangesFromFiltered(filter, JsonSerializer.Serialize(jsonSerializableObject));
-            
+
         }
 
         #endregion
@@ -532,5 +532,68 @@ namespace MyAOTFriendlyExtensions
 
 
         #endregion
+    
+
+
+        #region AOT-Friendly Conversion Methods
+
+        
+
+        #endregion
+
+        #region Dictionary Removal Helper
+
+
+        #endregion
+
+        #region Object Extension: RemoveFieldIfPresent
+
+
+        #endregion
+
+        #region JSON String Based Field Removal (Chainable)
+
+        /// <summary>
+        /// Removes the specified field from the provided JSON string.
+        /// This extension method works purely with JSON (without deserialization into non‑nullable DTOs)
+        /// by converting the JSON string to a dictionary, removing the field, and serializing back.
+        /// </summary>
+        /// <param name="json">The input JSON string.</param>
+        /// <param name="fieldName">The name of the field to remove.</param>
+        /// <param name="logger">An optional logger to record the removal action.</param>
+        /// <returns>The updated JSON string with the specified field removed.</returns>
+        /// <exception cref="ArgumentException">Thrown when json or fieldName is null or whitespace.</exception>
+        public static string RemoveFieldFromJson(this string json, string fieldName, Logger? logger = null)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                throw new ArgumentException("Input JSON must not be null or whitespace.", nameof(json));
+            if (string.IsNullOrWhiteSpace(fieldName))
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+
+            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            if (dict == null)
+                throw new InvalidOperationException("Failed to deserialize JSON into a dictionary.");
+
+            dict.RemoveFieldFromDictionaryIfPresent(fieldName, logger);
+
+            return JsonSerializer.Serialize(dict);
+        }
+
+        #endregion
+        /// <summary>
+        /// Serializes this object to a JSON string.
+        /// This extension is intended to be the starting point for chaining JSON-based operations.
+        /// </summary>
+        /// <typeparam name="T">The type of the object.</typeparam>
+        /// <param name="obj">The object to serialize.</param>
+        /// <returns>A JSON string representing the object.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the object is null.</exception>
+        public static string ToJson<T>(this T obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+
+            return System.Text.Json.JsonSerializer.Serialize(obj);
+        }
     }
 }

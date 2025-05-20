@@ -115,7 +115,7 @@
 		<TargetPlatformMinVersion>7.0</TargetPlatformMinVersion>
 	</PropertyGroup>-->
     <ItemGroup>
-        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
+        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
         <PackageReference Include="CsvHelper" Version="33.0.1" />
         <PackageReference Include="Eto.Containers" Version="1.1.0" />
         <PackageReference Include="Eto.Forms" Version="2.9.0" />
