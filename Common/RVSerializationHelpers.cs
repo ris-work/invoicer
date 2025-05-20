@@ -7,9 +7,9 @@ namespace MyAOTFriendlyExtensions
 {
     // Define the Logger delegate.
     /// <summary>
-    /// 
+    ///
     /// Debug logging, set it to no-op in production
-    /// 
+    ///
     /// </summary>
     public delegate void Logger(string message);
 
@@ -19,7 +19,7 @@ namespace MyAOTFriendlyExtensions
         // The default logger writes messages to the console.
         public static Logger DefaultLogger = message => Console.WriteLine(message);
     }
-    
+
     /// <summary>
     /// A record struct representing field metadata for UI rendering.
     /// Description is a friendly label, Value is the current property value,
@@ -199,10 +199,16 @@ namespace MyAOTFriendlyExtensions
             return targetDict.FromDictionary<T>();
         }
 
-        public static T ApplyChangesFromFiltered<T>(this T target, string[] filter, T jsonSerializableObject)
+        public static T ApplyChangesFromFiltered<T>(
+            this T target,
+            string[] filter,
+            T jsonSerializableObject
+        )
         {
-            return target.ApplyChangesFromFiltered(filter, JsonSerializer.Serialize(jsonSerializableObject));
-
+            return target.ApplyChangesFromFiltered(
+                filter,
+                JsonSerializer.Serialize(jsonSerializableObject)
+            );
         }
 
         #endregion
@@ -321,7 +327,7 @@ namespace MyAOTFriendlyExtensions
         #region AOT-Friendly Conversion Methods
 
         /// <summary>
-        /// Converts an object to a Dictionary&lt;string, JsonElement&gt; by serializing it to JSON 
+        /// Converts an object to a Dictionary&lt;string, JsonElement&gt; by serializing it to JSON
         /// and then deserializing that JSON. This avoids reflection and is AOT friendly.
         /// </summary>
         /// <typeparam name="T">The type of the object.</typeparam>
@@ -371,16 +377,18 @@ namespace MyAOTFriendlyExtensions
         public static Dictionary<string, JsonElement> RemoveFieldFromDictionaryIfPresent(
             this Dictionary<string, JsonElement> dict,
             string fieldName,
-            Logger? logger = null)
+            Logger? logger = null
+        )
         {
             if (dict == null)
                 throw new ArgumentNullException(nameof(dict));
             if (string.IsNullOrWhiteSpace(fieldName))
-                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+                throw new ArgumentException(
+                    "Field name cannot be null or whitespace.",
+                    nameof(fieldName)
+                );
             if (logger == null)
                 logger = LogHelper.DefaultLogger;
-
-
 
             string keyToRemove = null;
             // Use an explicit loop to ensure AOT compatibility (avoiding LINQ)
@@ -407,7 +415,7 @@ namespace MyAOTFriendlyExtensions
         #region Object Extension: RemoveFieldIfPresent
 
         /// <summary>
-        /// Removes the specified field from the target object by serializing it to JSON, 
+        /// Removes the specified field from the target object by serializing it to JSON,
         /// converting to a dictionary, removing the field (case‑insensitively),
         /// and then deserializing the modified dictionary back into the target type.
         /// This method is AOT friendly assuming that serializer code generation is present.
@@ -419,12 +427,19 @@ namespace MyAOTFriendlyExtensions
         /// <returns>The updated object of type T.</returns>
         /// <exception cref="ArgumentNullException">Thrown when target or logger is null.</exception>
         /// <exception cref="ArgumentException">Thrown when fieldName is null or whitespace.</exception>
-        public static T RemoveFieldIfPresent<T>(this T target, string fieldName, Logger? logger = null)
+        public static T RemoveFieldIfPresent<T>(
+            this T target,
+            string fieldName,
+            Logger? logger = null
+        )
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (string.IsNullOrWhiteSpace(fieldName))
-                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+                throw new ArgumentException(
+                    "Field name cannot be null or whitespace.",
+                    nameof(fieldName)
+                );
             if (logger == null)
                 logger = LogHelper.DefaultLogger;
 
@@ -452,10 +467,11 @@ namespace MyAOTFriendlyExtensions
         /// <param name="logger">The logger to use for logging events.</param>
         /// <returns>The updated object of type T.</returns>
         public static T ApplyChangesExceptFilteredFromJson<T>(
-    this T target,
-    string[] removalFilter,
-    string patchJson,
-    Logger? logger = null)
+            this T target,
+            string[] removalFilter,
+            string patchJson,
+            Logger? logger = null
+        )
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
@@ -467,7 +483,9 @@ namespace MyAOTFriendlyExtensions
                 return target;
 
             // Deserialize the patch JSON into a dictionary.
-            Dictionary<string, JsonElement>? patchDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(patchJson);
+            Dictionary<string, JsonElement>? patchDict = JsonSerializer.Deserialize<
+                Dictionary<string, JsonElement>
+            >(patchJson);
             if (patchDict == null)
                 throw new InvalidOperationException("Failed to deserialize update patch JSON.");
 
@@ -488,14 +506,18 @@ namespace MyAOTFriendlyExtensions
                 }
                 if (!string.IsNullOrEmpty(keyToRemove))
                 {
-                    logger($"Filtering out field '{keyToRemove}' from update patch due to ACL restrictions.");
+                    logger(
+                        $"Filtering out field '{keyToRemove}' from update patch due to ACL restrictions."
+                    );
                     patchDict.Remove(keyToRemove);
                 }
             }
 
             // Convert the target object to a dictionary.
             string targetJson = JsonSerializer.Serialize(target);
-            Dictionary<string, JsonElement>? targetDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(targetJson);
+            Dictionary<string, JsonElement>? targetDict = JsonSerializer.Deserialize<
+                Dictionary<string, JsonElement>
+            >(targetJson);
             if (targetDict == null)
                 throw new InvalidOperationException("Failed to deserialize target object.");
 
@@ -512,32 +534,30 @@ namespace MyAOTFriendlyExtensions
             this T target,
             string[] removalFilter,
             T updatePatch,
-            Logger? logger = null)
+            Logger? logger = null
+        )
         {
             // Serialize the update patch to JSON and delegate to the JSON-based version.
             string patchJson = JsonSerializer.Serialize(updatePatch);
             return target.ApplyChangesExceptFilteredFromJson(removalFilter, patchJson, logger);
         }
 
-
         public static T ApplyFilteredUpdate<T>(
             this T target,
             T updateObject,
             string[] removalFilter,
-            Logger? logger = null)
+            Logger? logger = null
+        )
         {
             // This helper simply calls the above method.
             return target.ApplyChangesExceptFiltered(removalFilter, updateObject, logger);
         }
 
-
         #endregion
-    
 
 
         #region AOT-Friendly Conversion Methods
 
-        
 
         #endregion
 
@@ -563,16 +583,28 @@ namespace MyAOTFriendlyExtensions
         /// <param name="logger">An optional logger to record the removal action.</param>
         /// <returns>The updated JSON string with the specified field removed.</returns>
         /// <exception cref="ArgumentException">Thrown when json or fieldName is null or whitespace.</exception>
-        public static string RemoveFieldFromJson(this string json, string fieldName, Logger? logger = null)
+        public static string RemoveFieldFromJson(
+            this string json,
+            string fieldName,
+            Logger? logger = null
+        )
         {
             if (string.IsNullOrWhiteSpace(json))
-                throw new ArgumentException("Input JSON must not be null or whitespace.", nameof(json));
+                throw new ArgumentException(
+                    "Input JSON must not be null or whitespace.",
+                    nameof(json)
+                );
             if (string.IsNullOrWhiteSpace(fieldName))
-                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(fieldName));
+                throw new ArgumentException(
+                    "Field name cannot be null or whitespace.",
+                    nameof(fieldName)
+                );
 
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             if (dict == null)
-                throw new InvalidOperationException("Failed to deserialize JSON into a dictionary.");
+                throw new InvalidOperationException(
+                    "Failed to deserialize JSON into a dictionary."
+                );
 
             dict.RemoveFieldFromDictionaryIfPresent(fieldName, logger);
 

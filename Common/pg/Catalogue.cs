@@ -38,4 +38,20 @@ public partial class Catalogue
     public long CategoriesBitmask { get; set; }
 
     public bool ProcessDiscounts { get; set; }
+
+    public double MaxPerInvoice { get; set; }
+
+    public double MinPerInvoice { get; set; }
+
+    public double MaxPerPerson { get; set; }
+
+    public double HeightM { get; set; }
+
+    public double LengthM { get; set; }
+
+    public double WidthM { get; set; }
+
+    public double WeightPerUnitKg { get; set; }
+
+    public bool AllowPriceSuggestions { get; set; }
 }

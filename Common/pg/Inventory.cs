@@ -35,4 +35,6 @@ public partial class Inventory
     public long Suppliercode { get; set; }
 
     public bool UserDiscounts { get; set; }
+
+    public DateTime LastCountedAt { get; set; }
 }

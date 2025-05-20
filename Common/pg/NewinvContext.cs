@@ -25,11 +25,17 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<AuthorizedTerminal> AuthorizedTerminals { get; set; }
 
+    public virtual DbSet<BundledPricing> BundledPricings { get; set; }
+
     public virtual DbSet<Catalogue> Catalogues { get; set; }
 
     public virtual DbSet<CategoriesBitmask> CategoriesBitmasks { get; set; }
 
     public virtual DbSet<Credential> Credentials { get; set; }
+
+    public virtual DbSet<CustomerDiscount> CustomerDiscounts { get; set; }
+
+    public virtual DbSet<DefaultDenyField> DefaultDenyFields { get; set; }
 
     public virtual DbSet<DescriptionsOtherLanguage> DescriptionsOtherLanguages { get; set; }
 
@@ -59,6 +65,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
 
+    public virtual DbSet<Pii> Piis { get; set; }
+
     public virtual DbSet<Receipt> Receipts { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
@@ -70,6 +78,10 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<Sih> Sihs { get; set; }
 
     public virtual DbSet<SihCurrent> SihCurrents { get; set; }
+
+    public virtual DbSet<SuggestedPrice> SuggestedPrices { get; set; }
+
+    public virtual DbSet<TieredDiscount> TieredDiscounts { get; set; }
 
     public virtual DbSet<Token> Tokens { get; set; }
 
@@ -84,8 +96,6 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-
     {
         optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
@@ -200,6 +210,17 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Userid).ValueGeneratedOnAdd().HasColumnName("userid");
         });
 
+        modelBuilder.Entity<BundledPricing>(entity =>
+        {
+            entity.HasKey(e => e.BundleId).HasName("bundled_pricing_pkey");
+
+            entity.ToTable("bundled_pricing");
+
+            entity.Property(e => e.BundleId).HasColumnName("bundle_id");
+            entity.Property(e => e.Discount).HasColumnName("discount");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+        });
+
         modelBuilder.Entity<Catalogue>(entity =>
         {
             entity.HasKey(e => e.Itemcode).HasName("catalogue_pkey");
@@ -211,6 +232,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Active).HasDefaultValue(true).HasColumnName("active");
             entity.Property(e => e.ActiveWeb).HasDefaultValue(false).HasColumnName("active_web");
+            entity
+                .Property(e => e.AllowPriceSuggestions)
+                .HasDefaultValue(true)
+                .HasColumnName("allow_price_suggestions");
             entity
                 .Property(e => e.CategoriesBitmask)
                 .HasDefaultValue(1L)
@@ -238,6 +263,17 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.ExpiryTrackingEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("expiry_tracking_enabled");
+            entity.Property(e => e.HeightM).HasColumnName("height_m");
+            entity.Property(e => e.LengthM).HasColumnName("length_m");
+            entity
+                .Property(e => e.MaxPerInvoice)
+                .HasDefaultValueSql("1000000")
+                .HasColumnName("max_per_invoice");
+            entity
+                .Property(e => e.MaxPerPerson)
+                .HasDefaultValueSql("1000000")
+                .HasColumnName("max_per_person");
+            entity.Property(e => e.MinPerInvoice).HasColumnName("min_per_invoice");
             entity
                 .Property(e => e.PermissionsCategory)
                 .HasDefaultValue(0L)
@@ -258,6 +294,8 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.VatDependsOnUser)
                 .HasDefaultValue(false)
                 .HasColumnName("vat_depends_on_user");
+            entity.Property(e => e.WeightPerUnitKg).HasColumnName("weight_per_unit_kg");
+            entity.Property(e => e.WidthM).HasColumnName("width_m");
         });
 
         modelBuilder.Entity<CategoriesBitmask>(entity =>
@@ -290,6 +328,35 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Pubkey).HasColumnName("pubkey");
             entity.Property(e => e.Username).HasColumnName("username");
             entity.Property(e => e.ValidUntil).HasColumnName("valid_until");
+        });
+
+        modelBuilder.Entity<CustomerDiscount>(entity =>
+        {
+            entity.HasKey(e => e.CustomerId).HasName("customer_discounts_pkey");
+
+            entity.ToTable("customer_discounts");
+
+            entity.Property(e => e.CustomerId).ValueGeneratedNever().HasColumnName("customer_id");
+            entity
+                .Property(e => e.RecommendedDiscountPercent)
+                .HasColumnName("recommended_discount_percent");
+        });
+
+        modelBuilder.Entity<DefaultDenyField>(entity =>
+        {
+            entity.HasKey(e => e.Field).HasName("default_deny_fields_pkey");
+
+            entity.ToTable(
+                "default_deny_fields",
+                tb => tb.HasComment("Of the form [object].[field] or [field]")
+            );
+
+            entity.Property(e => e.Field).HasColumnName("field");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("created_at");
         });
 
         modelBuilder.Entity<DescriptionsOtherLanguage>(entity =>
@@ -346,6 +413,10 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("batch_enabled");
             entity.Property(e => e.CostPrice).HasColumnName("cost_price");
             entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity
+                .Property(e => e.LastCountedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("last_counted_at");
             entity.Property(e => e.MarkedPrice).HasColumnName("marked_price");
             entity
                 .Property(e => e.MeasurementUnit)
@@ -529,6 +600,29 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Categories).HasDefaultValue(0L).HasColumnName("categories");
         });
 
+        modelBuilder.Entity<Pii>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("pii_pkey");
+
+            entity.ToTable("pii");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Address).HasColumnName("address");
+            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.Fax).HasColumnName("fax");
+            entity
+                .Property(e => e.Gender)
+                .HasDefaultValueSql("'unspecified'::text")
+                .HasColumnName("gender");
+            entity.Property(e => e.Im).HasColumnName("IM");
+            entity.Property(e => e.IsCompany).HasDefaultValue(false).HasColumnName("is_company");
+            entity.Property(e => e.Mobile).HasColumnName("mobile");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Sip).HasColumnName("SIP");
+            entity.Property(e => e.Telephone).HasColumnName("telephone");
+            entity.Property(e => e.Title).HasColumnName("title");
+        });
+
         modelBuilder.Entity<Receipt>(entity =>
         {
             entity.HasKey(e => e.ReceiptId).HasName("receipts_pkey");
@@ -652,6 +746,25 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Desc).HasColumnName("desc");
             entity.Property(e => e.Sell).HasColumnName("sell");
             entity.Property(e => e.Sih).HasColumnName("sih");
+        });
+
+        modelBuilder.Entity<SuggestedPrice>(entity =>
+        {
+            entity.HasKey(e => new { e.Itemcode, e.Price }).HasName("suggested_prices_pkey");
+
+            entity.ToTable("suggested_prices");
+
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Price).HasColumnName("price");
+        });
+
+        modelBuilder.Entity<TieredDiscount>(entity =>
+        {
+            entity.HasNoKey().ToTable("tiered_discounts");
+
+            entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.MinQty).HasColumnName("min_qty");
         });
 
         modelBuilder.Entity<Token>(entity =>
