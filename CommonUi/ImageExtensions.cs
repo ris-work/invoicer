@@ -119,7 +119,7 @@ namespace MyImageProcessing
                     // Wrap the ImageView in a container of fixed size (500×500) to ensure the image is centered.
                     var imageContainer = new Panel
                     {
-                        Size = new Size(500, 500),
+                        Size = new Size(250, 250),
                         Content = imageView
                     };
 
@@ -128,8 +128,13 @@ namespace MyImageProcessing
                     {
                         Text = base64String,
                         Wrap = WrapMode.Word,
-                        Width = 40,
-                        Height = 40
+                        Width = 100,
+                        Height = 20
+                    };
+                    var imageSizeLabel = new Label()
+                    {
+                        Text = $"{imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
+                        Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.Monospace, 10)
                     };
 
                     // Arrange the image container and the Base64 label in a vertical layout.
@@ -137,10 +142,12 @@ namespace MyImageProcessing
                     {
                         Orientation = Orientation.Vertical,
                         Spacing = 10,
+                        VerticalContentAlignment = VerticalAlignment.Stretch,
                         Items =
                         {
                             imageContainer,
-                            base64Label
+                            base64Label,
+                            imageSizeLabel
                         }
                     };
 

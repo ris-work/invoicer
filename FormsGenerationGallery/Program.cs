@@ -132,8 +132,10 @@ new Eto.Forms.Application().Run(
 */
 
 var AC = new Eto.Forms.Application();
-Panel imagePanel = ImagePanelFactory.CreateImagePanel("logo.png", 100);
-Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("logo.png", 100);
+//Image: https://www.flickr.com/photos/ellaolsson/48839117163/
+//Copyright (c) Ella Olson 2019, CC-BY 2.0
+Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
+Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg", 100);
 AC.Run(
     new Form()
     {
@@ -152,10 +154,13 @@ AC.Run(
             true
         ),
         new Eto.Forms.StackLayout(
+            null,
         imagePanel,
-        imagePanelSkia
+        null,
+        imagePanelSkia,
+        null
         )
-        { Orientation = Eto.Forms.Orientation.Horizontal }
+        { Orientation = Eto.Forms.Orientation.Horizontal, HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch, Spacing = -1 , Padding = 10, Width = -1 }
         ),
     }
 );

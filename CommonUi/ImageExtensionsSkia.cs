@@ -135,7 +135,7 @@ namespace MySkiaApp
             // Wrap the image in a fixed 500×500 panel to center it.
             var imageContainer = new Panel
             {
-                Size = new Eto.Drawing.Size(500, 500),
+                Size = new Eto.Drawing.Size(250, 250),
                 Content = imageView
             };
 
@@ -143,7 +143,14 @@ namespace MySkiaApp
             var base64Label = new Label
             {
                 Text = base64String,
-                Wrap = WrapMode.Word
+                Wrap = WrapMode.Word,
+                Width = 100,
+                Height = 20
+            };
+            var imageSizeLabel = new Label()
+            {
+                Text =  $"{ imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
+                Font = new Eto.Drawing.Font( Eto.Drawing.FontFamilies.Monospace, 10)
             };
 
             // Arrange the image and label vertically.
@@ -151,10 +158,12 @@ namespace MySkiaApp
             {
                 Orientation = Orientation.Vertical,
                 Spacing = 10,
+                VerticalContentAlignment = VerticalAlignment.Stretch,
                 Items =
                 {
                     imageContainer,
-                    base64Label
+                    base64Label,
+                    imageSizeLabel
                 }
             };
 
