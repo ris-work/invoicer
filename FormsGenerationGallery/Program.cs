@@ -154,14 +154,15 @@ AC.Run(
             true
         ),
         new Eto.Forms.StackLayout(
-            null,
-        imagePanel,
-        null,
-        imagePanelSkia,
-        null
+            new StackLayoutItem(null, true),
+        new StackLayoutItem(imagePanel, false),
+        new StackLayoutItem(null, true),
+        new StackLayoutItem(imagePanelSkia, false),
+        new StackLayoutItem(null, true)
         )
-        { Orientation = Eto.Forms.Orientation.Horizontal, HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch, Spacing = -1 , Padding = 10, Width = -1 }
-        ),
+        { Orientation = Eto.Forms.Orientation.Horizontal, HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch }
+        )
+        { HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch},
     }
 );
 var config = ReceiptPrinter.LoadConfig("theme.toml");
