@@ -9,6 +9,7 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using MyAOTFriendlyExtensions;
 using MyImageProcessing;
+using MySkiaApp;
 using RV.InvNew.Common;
 using Terminal.Gui;
 
@@ -131,7 +132,8 @@ new Eto.Forms.Application().Run(
 */
 
 var AC = new Eto.Forms.Application();
-Panel imagePanel = ImagePanelFactory.CreateImagePanel("logo.png", 200);
+Panel imagePanel = ImagePanelFactory.CreateImagePanel("logo.png", 100);
+Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("logo.png", 100);
 AC.Run(
     new Form()
     {
@@ -149,7 +151,11 @@ AC.Run(
             null,
             true
         ),
-        imagePanel
+        new Eto.Forms.StackLayout(
+        imagePanel,
+        imagePanelSkia
+        )
+        { Orientation = Eto.Forms.Orientation.Horizontal }
         ),
     }
 );
