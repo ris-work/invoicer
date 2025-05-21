@@ -22,20 +22,26 @@
         <Compile Remove="theming\WpfPlus\WpfPlus\Controls\**" />
         <Compile Remove="theming\WpfPlus\WpfPlus\MvvmHelpers\**" />
         <Compile Remove="theming\WpfPlus\WpfPlus\Properties\**" />
+        <Compile Remove="UnoFE\**" />
         <Compile Remove="WPFDarkTheme\**" />
         <EmbeddedResource Remove="Themes\**" />
         <EmbeddedResource Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <EmbeddedResource Remove="UnoFE\**" />
         <EmbeddedResource Remove="WPFDarkTheme\**" />
         <MauiCss Remove="Themes\**" />
         <MauiCss Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <MauiCss Remove="UnoFE\**" />
         <MauiCss Remove="WPFDarkTheme\**" />
         <MauiXaml Remove="Themes\**" />
         <MauiXaml Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <MauiXaml Remove="UnoFE\**" />
         <MauiXaml Remove="WPFDarkTheme\**" />
         <None Remove="Themes\**" />
         <None Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <None Remove="UnoFE\**" />
         <None Remove="WPFDarkTheme\**" />
         <Page Remove="theming\WpfPlus\ToolkitDemo\**" />
+        <Page Remove="UnoFE\**" />
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="DisableDefaults.cs" />
@@ -163,11 +169,7 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target
-        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
-        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
-        Condition="'$(IsWindowsTarget)' != 'true'"
-    >
+    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />

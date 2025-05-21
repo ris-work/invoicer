@@ -8,6 +8,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using MyAOTFriendlyExtensions;
+using MyImageProcessing;
 using RV.InvNew.Common;
 using Terminal.Gui;
 
@@ -129,10 +130,12 @@ new Eto.Forms.Application().Run(
 );
 */
 
-new Eto.Forms.Application().Run(
+var AC = new Eto.Forms.Application();
+Panel imagePanel = ImagePanelFactory.CreateImagePanel("logo.png", 200);
+AC.Run(
     new Form()
     {
-        Content = new GenEtoUI(
+        Content = new Eto.Forms.StackLayout( new GenEtoUI(
             SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
             (_) =>
             {
@@ -146,9 +149,13 @@ new Eto.Forms.Application().Run(
             null,
             true
         ),
+        imagePanel
+        ),
     }
 );
 var config = ReceiptPrinter.LoadConfig("theme.toml");
+
+
 
 var invoiceItems = new List<string[]>
 {
