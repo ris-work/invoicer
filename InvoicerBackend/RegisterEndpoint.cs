@@ -154,7 +154,9 @@ namespace InvoicerBackend
                                 $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
                             );
                             var AuthenticatedInner =
-                                VerificationResultAndMessage.RequestBody.RemoveFieldFromJsonMultiple(RemovalKeys);
+                                VerificationResultAndMessage.RequestBody.RemoveFieldFromJsonMultiple(
+                                    RemovalKeys
+                                );
                             ;
                             if (AuthenticatedInner != null)
                             {

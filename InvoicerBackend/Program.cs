@@ -12,8 +12,6 @@ using MyAOTFriendlyExtensions;
 using RV.InvNew.Common;
 using Tomlyn.Syntax;
 
-
-
 Console.WriteLine("CWD: {0}", Directory.GetCurrentDirectory());
 Console.WriteLine("[common] CWD: {0}", Config.GetCWD());
 Config.Initialize();
@@ -55,7 +53,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseHttpLogging();
 }
-
 
 app.AddEarlierDesignedEndpoints();
 app.AddNotificationsHandler();
@@ -226,8 +223,6 @@ app.AddEndpointWithBearerAuth<Inventory>(
     },
     "Refresh"
 );
-
-
 
 System.Console.WriteLine("Done setting up!");
 app.Run();
