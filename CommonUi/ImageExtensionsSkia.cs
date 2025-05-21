@@ -1,9 +1,9 @@
 ﻿using System;
-using System.IO;
-using Eto.Forms;
-using Eto.Drawing;
-using SkiaSharp;
 using System.Drawing;
+using System.IO;
+using Eto.Drawing;
+using Eto.Forms;
+using SkiaSharp;
 
 namespace MySkiaApp
 {
@@ -68,8 +68,7 @@ namespace MySkiaApp
                         break;
 
                     quality -= 5;
-                }
-                while (true);
+                } while (true);
             }
 
             byte[] result = encodedData.ToArray();
@@ -127,16 +126,13 @@ namespace MySkiaApp
             Eto.Drawing.Bitmap etoBitmap = resized.ToEtoBitmap(imageKBytes);
 
             // Create an ImageView for displaying the image.
-            var imageView = new ImageView
-            {
-                Image = etoBitmap,
-            };
+            var imageView = new ImageView { Image = etoBitmap };
 
             // Wrap the image in a fixed 500×500 panel to center it.
             var imageContainer = new Panel
             {
                 Size = new Eto.Drawing.Size(250, 250),
-                Content = imageView
+                Content = imageView,
             };
 
             // Create a label to show the Base64 string.
@@ -145,12 +141,12 @@ namespace MySkiaApp
                 Text = base64String,
                 Wrap = WrapMode.Word,
                 Width = 100,
-                Height = 20
+                Height = 20,
             };
             var imageSizeLabel = new Label()
             {
-                Text =  $"{ imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
-                Font = new Eto.Drawing.Font( Eto.Drawing.FontFamilies.Monospace, 10)
+                Text = $"{imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
+                Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.Monospace, 10),
             };
 
             // Arrange the image and label vertically.
@@ -159,12 +155,7 @@ namespace MySkiaApp
                 Orientation = Orientation.Vertical,
                 Spacing = 10,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
-                Items =
-                {
-                    imageContainer,
-                    base64Label,
-                    imageSizeLabel
-                }
+                Items = { imageContainer, base64Label, imageSizeLabel },
             };
 
             // Dispose the resized bitmap since we've generated the outputs.
@@ -192,8 +183,8 @@ namespace MySkiaApp
                 Items =
                 {
                     new Label { Text = "Logo Image (SkiaSharp) with Base64 String:" },
-                    imagePanel
-                }
+                    imagePanel,
+                },
             };
         }
     }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using Eto.Forms;
 using Eto.Drawing;
+using Eto.Forms;
 using ImageMagick;
 
 namespace MyImageProcessing
@@ -35,7 +35,11 @@ namespace MyImageProcessing
         /// <param name="maxKBytes">
         /// If provided, the JPEG encoder adjusts quality automatically so that the final output is under the specified number of kilobytes.
         /// </param>
-        public static string ToBase64String(this MagickImage image, int? maxKBytes = null, MagickFormat format = MagickFormat.Jpeg)
+        public static string ToBase64String(
+            this MagickImage image,
+            int? maxKBytes = null,
+            MagickFormat format = MagickFormat.Jpeg
+        )
         {
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
@@ -56,7 +60,11 @@ namespace MyImageProcessing
         /// <summary>
         /// Converts the image into an Eto.Drawing.Bitmap in JPEG format, optionally constraining its file size.
         /// </summary>
-        public static Bitmap ToEtoBitmap(this MagickImage image, int? maxKBytes = null, MagickFormat format = MagickFormat.Jpeg)
+        public static Bitmap ToEtoBitmap(
+            this MagickImage image,
+            int? maxKBytes = null,
+            MagickFormat format = MagickFormat.Jpeg
+        )
         {
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
@@ -111,16 +119,13 @@ namespace MyImageProcessing
 
                     // Create an ImageView to display the image.
                     // Instead of forcing a size here, we'll center it in its container below.
-                    var imageView = new ImageView
-                    {
-                        Image = etoBitmap
-                    };
+                    var imageView = new ImageView { Image = etoBitmap };
 
                     // Wrap the ImageView in a container of fixed size (500×500) to ensure the image is centered.
                     var imageContainer = new Panel
                     {
                         Size = new Size(250, 250),
-                        Content = imageView
+                        Content = imageView,
                     };
 
                     // Create a Label to display the Base64 string.
@@ -129,12 +134,13 @@ namespace MyImageProcessing
                         Text = base64String,
                         Wrap = WrapMode.Word,
                         Width = 100,
-                        Height = 20
+                        Height = 20,
                     };
                     var imageSizeLabel = new Label()
                     {
-                        Text = $"{imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
-                        Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.Monospace, 10)
+                        Text =
+                            $"{imageView.Image.Width}x{imageView.Image.Height} {base64String.Length}",
+                        Font = new Eto.Drawing.Font(Eto.Drawing.FontFamilies.Monospace, 10),
                     };
 
                     // Arrange the image container and the Base64 label in a vertical layout.
@@ -143,12 +149,7 @@ namespace MyImageProcessing
                         Orientation = Orientation.Vertical,
                         Spacing = 10,
                         VerticalContentAlignment = VerticalAlignment.Stretch,
-                        Items =
-                        {
-                            imageContainer,
-                            base64Label,
-                            imageSizeLabel
-                        }
+                        Items = { imageContainer, base64Label, imageSizeLabel },
                     };
 
                     return new Panel { Content = layout };
