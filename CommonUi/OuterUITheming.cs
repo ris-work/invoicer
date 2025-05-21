@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Reflection;
 using Eto.Drawing;
 using MyExtensions;
-
 #if WINDOWS
 using System.Windows;
 #endif
@@ -25,10 +24,10 @@ namespace CommonUi
         public static Color SelectedColumnColor { get; set; }
         public static Color LesserBackgroundColor { get; set; }
         public static Color LesserForegroundColor { get; set; }
-        public static FontFamily? UIFont = null;// = Eto.Drawing.FontFamilies.Sans;
-        public static FontFamily? UIFontMono = null;// = Eto.Drawing.FontFamilies.Monospace;
+        public static FontFamily? UIFont = null; // = Eto.Drawing.FontFamilies.Sans;
+        public static FontFamily? UIFontMono = null; // = Eto.Drawing.FontFamilies.Monospace;
         public static int? InnerLabelHeight = null;
-            public static int? InnerLabelWidth = null;
+        public static int? InnerLabelWidth = null;
         public static int? InnerControlHeight = null;
         public static int? InnerControlWidth = null;
 
@@ -45,7 +44,8 @@ namespace CommonUi
 
         public static PanelSettings RotateAllToPanelSettings(double degrees)
         {
-            return new PanelSettings() {
+            return new PanelSettings()
+            {
                 AlternatingColor1 = AlternatingColor1.HueRotate(degrees),
                 AlternatingColor2 = AlternatingColor2.HueRotate(degrees),
                 ForegroundColor = ForegroundColor.HueRotate(degrees),
@@ -57,20 +57,25 @@ namespace CommonUi
         }
 #if WINDOWS
         // New properties that return WPF brushes directly
-        public static System.Windows.Media.SolidColorBrush BackgroundBrush
-            => new System.Windows.Media.SolidColorBrush(BackgroundColor.ToMediaColor());
+        public static System.Windows.Media.SolidColorBrush BackgroundBrush =>
+            new System.Windows.Media.SolidColorBrush(BackgroundColor.ToMediaColor());
 
-        public static System.Windows.Media.SolidColorBrush ForegroundBrush
-            => new System.Windows.Media.SolidColorBrush(ForegroundColor.ToMediaColor());
-        public static System.Windows.Media.SolidColorBrush LesserBackgroundBrush
-            => new System.Windows.Media.SolidColorBrush(LesserBackgroundColor.ToMediaColor());
+        public static System.Windows.Media.SolidColorBrush ForegroundBrush =>
+            new System.Windows.Media.SolidColorBrush(ForegroundColor.ToMediaColor());
+        public static System.Windows.Media.SolidColorBrush LesserBackgroundBrush =>
+            new System.Windows.Media.SolidColorBrush(LesserBackgroundColor.ToMediaColor());
 
-        public static System.Windows.Media.SolidColorBrush LesserForegroundBrush
-            => new System.Windows.Media.SolidColorBrush(LesserForegroundColor.ToMediaColor());
+        public static System.Windows.Media.SolidColorBrush LesserForegroundBrush =>
+            new System.Windows.Media.SolidColorBrush(LesserForegroundColor.ToMediaColor());
 
         public static System.Windows.Media.Color ToMediaColor(this Eto.Drawing.Color color)
         {
-            return System.Windows.Media.Color.FromArgb((byte)color.Ab, (byte)color.Rb, (byte)color.Gb, (byte)color.Bb);
+            return System.Windows.Media.Color.FromArgb(
+                (byte)color.Ab,
+                (byte)color.Rb,
+                (byte)color.Gb,
+                (byte)color.Bb
+            );
         }
 #endif
 
@@ -145,7 +150,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} ForegroundColor not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} ForegroundColor not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("BackgroundColor"))
                 {
@@ -155,7 +162,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} BackgroundColor not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} BackgroundColor not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("LesserBackgroundColor"))
                 {
@@ -165,7 +174,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} LesserBackgroundColor not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} LesserBackgroundColor not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("LesserForegroundColor"))
                 {
@@ -175,7 +186,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} LesserForegroundColor not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} LesserForegroundColor not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("AlternatingColor1"))
                 {
@@ -185,7 +198,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} AlternatingColor1 not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} AlternatingColor1 not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("AlternatingColor2"))
                 {
@@ -195,7 +210,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} AlternatingColor2 not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} AlternatingColor2 not found"
+                    );
                 }
                 if (panelConfig.ContainsKey("SelectedColumnColor"))
                 {
@@ -205,7 +222,9 @@ namespace CommonUi
                 }
                 else
                 {
-                    Console.WriteLine($"Per panel colours: {panelConfig.ToString()} SelectedColumnColor not found");
+                    Console.WriteLine(
+                        $"Per panel colours: {panelConfig.ToString()} SelectedColumnColor not found"
+                    );
                 }
                 return panelSettings;
             }

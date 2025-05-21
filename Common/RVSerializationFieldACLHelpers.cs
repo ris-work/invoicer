@@ -18,14 +18,13 @@ namespace common
             string[] DenyListForSpecificObjectsAndRelevantToThisObject = DenyList
                 .Where(x => x.ToLowerInvariant().Contains($"{DataType}."))
                 .ToArray();
-            foreach (
-                string DenyField in DenyListForAllObjects
-                    .Concat(DenyListForSpecificObjectsAndRelevantToThisObject)
-                    .ToList()
-            )
-            {
-                _InProgressChain = _InProgressChain.RemoveFieldFromJson(DenyField);
-            }
+
+            string[] FullDenyFieldList = DenyListForAllObjects
+                .Concat(DenyListForSpecificObjectsAndRelevantToThisObject)
+                .ToArray();
+
+            _InProgressChain = _InProgressChain.RemoveFieldFromJsonMultiple(FullDenyFieldList);
+
             return _InProgressChain;
         }
     }

@@ -1,15 +1,15 @@
-﻿using CommonUi;
+﻿using System.Text.Json;
+using common;
+using CommonUi;
 using Eto.Forms;
 using FormsGenerationGallery;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
-using RV.InvNew.Common;
-using System.Text.Json;
-using Terminal.Gui;
 using MyAOTFriendlyExtensions;
-using common;
+using RV.InvNew.Common;
+using Terminal.Gui;
 
 Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
 Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
@@ -156,16 +156,41 @@ var invoiceItems = new List<string[]>
     new string[] { "Item2 பெயர், नमस्ते 2", "1", "$10.00" },
     new string[] { "Item3 பெயர், नमस्ते 3", "5", "$50.00" },
 };
-var fieldRemovalTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeRemoved1 = "You should not see this", ShouldBeRemoved2 = "You should not see this!" };
-Eto.Forms.MessageBox.Show($"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1").RemoveFieldIfPresent("ShouldBeremoved2"))}", "Field Removal Test");
-var fieldUpdateTestObjectInput = new { a = "Hello", b = "World", c = "Everyone!", ShouldBeUpdated1 = "You should not see this", ShouldBeUpdated2 = "You should not see this!", ShouldNotBeUpdated1 = "You should see this" };
-Eto.Forms.MessageBox.Show($"Field update: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldUpdateTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldUpdateTestObjectInput.ApplyChangesExceptFilteredFromJson(["a", "ShouldNotbeupdated1"],JsonSerializer.Serialize( new {a = "You should not see this", ShouldBeUpdated1 = "This is correct", ShouldBeUpdated2 = "This is correct", ShouldNotBeUpdated1 = "You should not see this" })))}", "Field Update Test");
-var AclRemovalInput = new { allowed = "allowed", denied = "You should not see this", DeniedCaseInsensitive = "You should not see this" };
+var fieldRemovalTestObjectInput = new
+{
+    a = "Hello",
+    b = "World",
+    c = "Everyone!",
+    ShouldBeRemoved1 = "You should not see this",
+    ShouldBeRemoved2 = "You should not see this!",
+};
+Eto.Forms.MessageBox.Show(
+    $"Field removal: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldRemovalTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldRemovalTestObjectInput.RemoveFieldIfPresent("ShouldBeRemoved1").RemoveFieldIfPresent("ShouldBeremoved2"))}",
+    "Field Removal Test"
+);
+var fieldUpdateTestObjectInput = new
+{
+    a = "Hello",
+    b = "World",
+    c = "Everyone!",
+    ShouldBeUpdated1 = "You should not see this",
+    ShouldBeUpdated2 = "You should not see this!",
+    ShouldNotBeUpdated1 = "You should see this",
+};
+Eto.Forms.MessageBox.Show(
+    $"Field update: {Environment.NewLine}Input: {JsonSerializer.Serialize(fieldUpdateTestObjectInput)}{Environment.NewLine}Output: {JsonSerializer.Serialize(fieldUpdateTestObjectInput.ApplyChangesExceptFilteredFromJson(["a", "ShouldNotbeupdated1"], JsonSerializer.Serialize(new { a = "You should not see this", ShouldBeUpdated1 = "This is correct", ShouldBeUpdated2 = "This is correct", ShouldNotBeUpdated1 = "You should not see this" })))}",
+    "Field Update Test"
+);
+var AclRemovalInput = new
+{
+    allowed = "allowed",
+    denied = "You should not see this",
+    DeniedCaseInsensitive = "You should not see this",
+};
 string PatchJson = AclRemovalInput.RemoveRelevantDenyFields(["denied", "deniedcaseinsensitive"]);
 Eto.Forms.MessageBox.Show($"Input: {AclRemovalInput.ToJson()} Output: {PatchJson}");
 var receiptPrinter = new ReceiptPrinter(invoiceItems, config);
 receiptPrinter.PrintReceipt();
-
 
 Terminal.Gui.Application.Init();
 
@@ -227,4 +252,3 @@ Terminal.Gui.Application.Run(
         null
     )
 );
-

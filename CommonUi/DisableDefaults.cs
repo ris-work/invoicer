@@ -945,6 +945,7 @@ namespace CommonUi
             }
             // For WPF or other backends, consider theming via native style methods (e.g., XAML styles).
         }
+
         /// <summary>
         /// Extension for applying flat borders and Left-aligning the content
         /// Uses custom logic for WinForms (placeholder)
@@ -957,7 +958,8 @@ namespace CommonUi
 #if WINDOWS || WINFORMS
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
-                System.Windows.Forms.Button nativeB = b.ControlObject as System.Windows.Forms.Button;
+                System.Windows.Forms.Button nativeB =
+                    b.ControlObject as System.Windows.Forms.Button;
                 nativeB.FlatStyle = FlatStyle.Flat;
                 nativeB.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
                 nativeB.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;

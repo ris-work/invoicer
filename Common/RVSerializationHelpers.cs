@@ -611,6 +611,38 @@ namespace MyAOTFriendlyExtensions
             return JsonSerializer.Serialize(dict);
         }
 
+        public static string RemoveFieldFromJsonMultiple(
+            this string json,
+            string[] fieldNames,
+            Logger? logger = null
+        )
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                throw new ArgumentException(
+                    "Input JSON must not be null or whitespace.",
+                    nameof(json)
+                );
+            if (fieldNames.Count() == 0)
+                logger("Empty array was supplied to RemoveFieldFromJsonMultiple");
+
+            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            if (dict == null)
+                throw new InvalidOperationException(
+                    "Failed to deserialize JSON into a dictionary."
+                );
+
+            foreach (var fieldName in fieldNames)
+            {
+                if (string.IsNullOrWhiteSpace(fieldName))
+                    throw new ArgumentException(
+                        "Field name cannot be null or whitespace.",
+                        nameof(fieldName)
+                    );
+                dict = dict.RemoveFieldFromDictionaryIfPresent(fieldName, logger);
+            }
+            return JsonSerializer.Serialize(dict);
+        }
+
         #endregion
         /// <summary>
         /// Serializes this object to a JSON string.

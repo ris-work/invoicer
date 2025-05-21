@@ -27,7 +27,9 @@ namespace InvoicerBackend
             {
                 try
                 {
-                    ctx.PermissionsLists.Add(new PermissionsList() { Permission = Permission.ToUpperInvariant() });
+                    ctx.PermissionsLists.Add(
+                        new PermissionsList() { Permission = Permission.ToUpperInvariant() }
+                    );
                     ctx.SaveChanges();
                 }
                 catch (Exception E)

@@ -10,6 +10,7 @@ using Eto.Forms;
 using Microsoft.Maui.Platform;
 using Microsoft.Win32.SafeHandles;
 using Tomlyn;
+
 //using static System.Net.Mime.MediaTypeNames;
 
 //using Xceed.Wpf.Toolkit.Converters;
@@ -107,7 +108,7 @@ namespace CommonUi
                 Configuration,
                 Context,
                 ControlName,
-                new Eto.Drawing.Font(ColorSettings.UIFont?? Eto.Drawing.FontFamilies.Monospace, 12 ) 
+                new Eto.Drawing.Font(ColorSettings.UIFont ?? Eto.Drawing.FontFamilies.Monospace, 12)
             );
             Size TSize = EtoThemingUtilities.GetNestedSize(
                 Configuration,
@@ -123,8 +124,16 @@ namespace CommonUi
                 "control_size",
                 new Eto.Drawing.Size(10, 24)
             );
-            if(ControlName == "Legend")
-            return (FG, LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor, FGc, BGc, EFont, TSize, CSize);
+            if (ControlName == "Legend")
+                return (
+                    FG,
+                    LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor,
+                    FGc,
+                    BGc,
+                    EFont,
+                    TSize,
+                    CSize
+                );
             else
                 return (FG, BG, FGc, BGc, EFont, TSize, CSize);
         }
@@ -152,13 +161,10 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            
                             Success = long.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
-
                         }
                         else
                         {
-                            
                             Success = long.TryParse(((Button)_Einputs[e.Key]).Text, out _);
                         }
                     }
@@ -166,12 +172,10 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            
                             Success = int.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
                         }
                         else
                         {
-                            
                             Success = int.TryParse(((Button)_Einputs[e.Key]).Text, out _);
                         }
                     }
@@ -179,12 +183,10 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            
                             Success = float.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
                         }
                         else
                         {
-                            
                             Success = float.TryParse(((Button)_Einputs[e.Key]).Text, out _);
                         }
                     }
@@ -192,40 +194,39 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            
                             Success = double.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
                         }
                         else
                         {
-                            
                             Success = double.TryParse(((Button)_Einputs[e.Key]).Text, out _);
                         }
                     }
                     else if (T == typeof(string))
                     {
-                        
                         Success = true;
                     }
                     else if (T == typeof(bool))
                     {
-                        
                         Success = true;
                     }
-                    if (!Success) {
+                    if (!Success)
+                    {
                         CumulativeSuccess = false;
                         _EFieldNames[e.Key].BackgroundColor = ColorSettings.AlternatingColor1;
                         _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
                     }
                     else
                     {
-                        _EFieldNames[e.Key].BackgroundColor = LocalColor?.BackgroundColor ?? LegendBG;
+                        _EFieldNames[e.Key].BackgroundColor =
+                            LocalColor?.BackgroundColor ?? LegendBG;
                         _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
                     }
-                        ;
+                    ;
                 }
             }
             return CumulativeSuccess;
         }
+
         public void ConvertInputs()
         {
             ConvertedInputs = new();
@@ -316,24 +317,26 @@ namespace CommonUi
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
-            PanelSettings CurrentPanelColours = new PanelSettings() { BackgroundColor = ColorSettings.BackgroundColor, ForegroundColor = ColorSettings.ForegroundColor };
+            PanelSettings CurrentPanelColours = new PanelSettings()
+            {
+                BackgroundColor = ColorSettings.BackgroundColor,
+                ForegroundColor = ColorSettings.ForegroundColor,
+            };
             if (PanelColours != null)
             {
                 CurrentPanelColours.BackgroundColor = PanelColours.BackgroundColor;
                 CurrentPanelColours.ForegroundColor = PanelColours.ForegroundColor;
                 LocalColor = PanelColours;
             }
-            
+
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
                 GetThemeForComponent("form");
             BackgroundColor = BGF;
-            BackgroundColor = LocalColor?.BackgroundColor??ColorSettings.BackgroundColor;
+            BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
             var SaveButtonTheme = GetThemeForComponent("save");
             var NewButtonTheme = GetThemeForComponent("new");
             var ViewButtonTheme = GetThemeForComponent("view");
             var CancelButtonTheme = GetThemeForComponent("cancel");
-            
-            
 
             this.ChangesOnly = ChangesOnly;
             //Eto.Drawing.Color BackgroundColor, ForegroundColor, ChangedBackgroundColor, ChangedForegroundColor;
@@ -588,9 +591,13 @@ namespace CommonUi
                 }
                 Label EFieldName = new Label()
                 {
-                    Width  = ColorSettings.InnerLabelWidth ?? -1,
+                    Width = ColorSettings.InnerLabelWidth ?? -1,
                     Height = ColorSettings.InnerLabelHeight ?? -1,
-                    Text = TranslationHelper.Translate(kv.Value.ControlName, kv.Value.Item1, TranslationHelper.Lang),
+                    Text = TranslationHelper.Translate(
+                        kv.Value.ControlName,
+                        kv.Value.Item1,
+                        TranslationHelper.Lang
+                    ),
                     TextColor = CurrentPanelColours.ForegroundColor,
                 };
                 if (EInput is Eto.Forms.TextBox T)
@@ -598,11 +605,17 @@ namespace CommonUi
                     T.ShowBorder = false;
 
                     //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend) { ScaleHeight = false, };
+                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend)
+                    {
+                        ScaleHeight = false,
+                    };
                 }
                 else
                 {
-                    EControl = new TableRow(EFieldName, new TableCell( EInput, true), ELegend) { ScaleHeight = false, };
+                    EControl = new TableRow(EFieldName, new TableCell(EInput, true), ELegend)
+                    {
+                        ScaleHeight = false,
+                    };
                 }
                 EFocusableList.Add(EInput);
                 _Einputs.Add(kv.Key, EInput);
@@ -658,9 +671,14 @@ namespace CommonUi
 
             NewButton.Click += (_, _) =>
             {
-                if(ValidateInputs())
-                ConvertInputs();
-                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
+                if (ValidateInputs())
+                    ConvertInputs();
+                else
+                    MessageBox.Show(
+                        $"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted",
+                        "Wrong type",
+                        MessageBoxType.Error
+                    );
             };
             SaveButton.Click += (_, _) =>
             {
@@ -675,9 +693,13 @@ namespace CommonUi
                     {
                         SaveExistingHandler(ConvertedInputs);
                     }
-                    
                 }
-                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
+                else
+                    MessageBox.Show(
+                        $"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted",
+                        "Wrong type",
+                        MessageBoxType.Error
+                    );
             };
             ViewButton.Click += (_, _) =>
             {
@@ -690,13 +712,25 @@ namespace CommonUi
                         MessageBoxType.Information
                     );
                 }
-                else MessageBox.Show($"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted", "Wrong type", MessageBoxType.Error);
+                else
+                    MessageBox.Show(
+                        $"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted",
+                        "Wrong type",
+                        MessageBoxType.Error
+                    );
             };
-            var ActionButtons = new StackLayout(null, NewButton, SaveButton, ViewButton, CancelButton, null)
+            var ActionButtons = new StackLayout(
+                null,
+                NewButton,
+                SaveButton,
+                ViewButton,
+                CancelButton,
+                null
+            )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 2,
-                HorizontalContentAlignment = HorizontalAlignment.Center
+                HorizontalContentAlignment = HorizontalAlignment.Center,
             };
             //BorderType = BorderType.None;
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>
@@ -708,10 +742,53 @@ namespace CommonUi
             var rightList = new TableLayout(yscale: false, EControlsR.ToArray())
             {
                 Spacing = new Eto.Drawing.Size(2, 2),
-                
             };
-            leftList.Rows.Add(new TableRow(new TableCell(new Panel() { Width = 100, Height = 1, BackgroundColor = ColorSettings.ForegroundColor }), new TableCell(new Panel() { Width = 100, Height = 2, BackgroundColor = ColorSettings.ForegroundColor })) { ScaleHeight = true });
-            rightList.Rows.Add(new TableRow(new TableCell(new Panel() { Width = 100, Height = 1, BackgroundColor=ColorSettings.ForegroundColor }), new TableCell(new Panel() { Width = 100, Height = 2, BackgroundColor = ColorSettings.ForegroundColor })) {ScaleHeight = true });
+            leftList.Rows.Add(
+                new TableRow(
+                    new TableCell(
+                        new Panel()
+                        {
+                            Width = 100,
+                            Height = 1,
+                            BackgroundColor = ColorSettings.ForegroundColor,
+                        }
+                    ),
+                    new TableCell(
+                        new Panel()
+                        {
+                            Width = 100,
+                            Height = 2,
+                            BackgroundColor = ColorSettings.ForegroundColor,
+                        }
+                    )
+                )
+                {
+                    ScaleHeight = true,
+                }
+            );
+            rightList.Rows.Add(
+                new TableRow(
+                    new TableCell(
+                        new Panel()
+                        {
+                            Width = 100,
+                            Height = 1,
+                            BackgroundColor = ColorSettings.ForegroundColor,
+                        }
+                    ),
+                    new TableCell(
+                        new Panel()
+                        {
+                            Width = 100,
+                            Height = 2,
+                            BackgroundColor = ColorSettings.ForegroundColor,
+                        }
+                    )
+                )
+                {
+                    ScaleHeight = true,
+                }
+            );
             //int maxCount = Math.Max(leftList.Count, rightList.Count);
 
             /*var combinedRows = new List<TableRow>();
@@ -739,25 +816,30 @@ namespace CommonUi
             }*/
 
             // Create the TableLayout and assign the combined rows.
-            var tableLayout = new TableLayout(false, new TableRow(new TableCell(leftList, true), new TableCell(rightList, true)))
+            var tableLayout = new TableLayout(
+                false,
+                new TableRow(new TableCell(leftList, true), new TableCell(rightList, true))
+            )
             {
                 Padding = 5,
                 Spacing = new Eto.Drawing.Size(10, 3),
-                
-                
             };
             ;
 
             var GeneratedControls = tableLayout;
 
-            Content = new StackLayout(ActionButtons, new StackLayoutItem( new Scrollable() { Content =  GeneratedControls , Border = BorderType.None}, false))
+            Content = new StackLayout(
+                ActionButtons,
+                new StackLayoutItem(
+                    new Scrollable() { Content = GeneratedControls, Border = BorderType.None },
+                    false
+                )
+            )
             {
                 Orientation = Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                VerticalContentAlignment = VerticalAlignment.Top
-                
+                VerticalContentAlignment = VerticalAlignment.Top,
             };
-            
         }
 
         public long Save()

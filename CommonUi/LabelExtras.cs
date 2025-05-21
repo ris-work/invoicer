@@ -1,12 +1,12 @@
 ﻿using System;
-using Eto.Forms;
-using Eto.Drawing;
-using Microsoft.Maui.Platform;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
+using Eto.Drawing;
+using Eto.Forms;
+using Microsoft.Maui.Platform;
+
 namespace CommonUi
 {
-
     public class RoundedDrawable : Drawable
     {
         /// <summary>
@@ -110,7 +110,6 @@ namespace CommonUi
             return path;
         }
     }
-
 
     public class RoundedLabel : Drawable
     {
@@ -251,9 +250,8 @@ namespace CommonUi
         }
     }
 
-
-
-    public class RoundedDrawable<T> : Drawable where T : Control, new()
+    public class RoundedDrawable<T> : Drawable
+        where T : Control, new()
     {
         /// <summary>
         /// Gets the wrapped inner control. (This won’t be auto‐hosted in this Drawable—you must add it manually.)
@@ -317,7 +315,6 @@ namespace CommonUi
             };
             Content = InnerControl;
             InnerControl.Width = Width;
-            
         }
 
         /// <summary>
@@ -349,7 +346,12 @@ namespace CommonUi
             if (HasFocus)
             {
                 float inset = BorderWidth + 2;
-                var focusRect = new RectangleF(inset, inset, rect.Width - inset * 2, rect.Height - inset * 2);
+                var focusRect = new RectangleF(
+                    inset,
+                    inset,
+                    rect.Width - inset * 2,
+                    rect.Height - inset * 2
+                );
                 using (var focusPen = new Pen(Colors.Black, 1) { DashStyle = DashStyles.Dot })
                 {
                     e.Graphics.DrawRectangle(focusPen, focusRect);
@@ -415,8 +417,9 @@ namespace CommonUi
         {
             return rounded.InnerControl;
         }
+
         public RoundedDrawable(T control)
-    : this() // Call the default constructor to perform common initialization.
+            : this() // Call the default constructor to perform common initialization.
         {
             if (control == null)
                 throw new ArgumentNullException(nameof(control));
@@ -424,9 +427,5 @@ namespace CommonUi
             // Override the inner control with the provided control.
             InnerControl = control;
         }
-
     }
-
-
-
 }

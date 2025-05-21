@@ -21,7 +21,7 @@ namespace MyExtensions
             double r = color.Rb / 255.0;
             double g = color.Gb / 255.0;
             double b = color.Bb / 255.0;
-            int alpha = color.Ab;  // alpha remains unchanged
+            int alpha = color.Ab; // alpha remains unchanged
 
             // Convert sRGB to linear RGB.
             r = (r <= 0.04045) ? (r / 12.92) : Math.Pow((r + 0.055) / 1.055, 2.4);
@@ -43,7 +43,7 @@ namespace MyExtensions
             double fy = F_xyz(Y / Yn);
             double fz = F_xyz(Z / Zn);
 
-            double L = 116 * fy - 16;                   // Lightness remains intact
+            double L = 116 * fy - 16; // Lightness remains intact
             double a_lab = 500 * (fx - fy);
             double b_lab = 200 * (fy - fz);
 
@@ -61,15 +61,15 @@ namespace MyExtensions
             double fx_inv = new_a / 500.0 + fy_inv;
             double fz_inv = fy_inv - new_b / 200.0;
 
-            double Xr = (Math.Pow(fx_inv, 3) > 0.008856)
-                ? Math.Pow(fx_inv, 3)
-                : (fx_inv - 16.0 / 116.0) / 7.787;
-            double Yr = (L > (903.3 * 0.008856))
-                ? Math.Pow(fy_inv, 3)
-                : L / 903.3;
-            double Zr = (Math.Pow(fz_inv, 3) > 0.008856)
-                ? Math.Pow(fz_inv, 3)
-                : (fz_inv - 16.0 / 116.0) / 7.787;
+            double Xr =
+                (Math.Pow(fx_inv, 3) > 0.008856)
+                    ? Math.Pow(fx_inv, 3)
+                    : (fx_inv - 16.0 / 116.0) / 7.787;
+            double Yr = (L > (903.3 * 0.008856)) ? Math.Pow(fy_inv, 3) : L / 903.3;
+            double Zr =
+                (Math.Pow(fz_inv, 3) > 0.008856)
+                    ? Math.Pow(fz_inv, 3)
+                    : (fz_inv - 16.0 / 116.0) / 7.787;
 
             // Scale XYZ by the white point.
             double X_final = Xr * Xn;
@@ -82,15 +82,12 @@ namespace MyExtensions
             double b_lin = X_final * 0.0557 + Y_final * -0.2040 + Z_final * 1.0570;
 
             // Convert linear RGB back to sRGB (apply gamma correction).
-            double R = (r_lin <= 0.0031308)
-                ? 12.92 * r_lin
-                : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
-            double G = (g_lin <= 0.0031308)
-                ? 12.92 * g_lin
-                : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
-            double B_out = (b_lin <= 0.0031308)
-                ? 12.92 * b_lin
-                : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
+            double R =
+                (r_lin <= 0.0031308) ? 12.92 * r_lin : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
+            double G =
+                (g_lin <= 0.0031308) ? 12.92 * g_lin : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
+            double B_out =
+                (b_lin <= 0.0031308) ? 12.92 * b_lin : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
 
             // Clamp each component to the [0,1] range.
             R = Clamp(R, 0, 1);
@@ -128,7 +125,7 @@ namespace MyExtensions
         }
 
         /// <summary>
-        /// Returns a new Color whose contrast (perceptual lightness difference) is adjusted 
+        /// Returns a new Color whose contrast (perceptual lightness difference) is adjusted
         /// by shifting the Lab lightness (L) away from or toward a mid–lightness value (50)
         /// while keeping the hue and chroma unchanged.
         /// A positive percentage increases contrast, and a negative percentage decreases it.
@@ -177,15 +174,15 @@ namespace MyExtensions
             double fx_inv = a_lab / 500.0 + fy_inv;
             double fz_inv = fy_inv - b_lab / 200.0;
 
-            double Xr = (Math.Pow(fx_inv, 3) > 0.008856)
-                        ? Math.Pow(fx_inv, 3)
-                        : (fx_inv - 16.0 / 116.0) / 7.787;
-            double Yr = (newL > (903.3 * 0.008856))
-                        ? Math.Pow(fy_inv, 3)
-                        : newL / 903.3;
-            double Zr = (Math.Pow(fz_inv, 3) > 0.008856)
-                        ? Math.Pow(fz_inv, 3)
-                        : (fz_inv - 16.0 / 116.0) / 7.787;
+            double Xr =
+                (Math.Pow(fx_inv, 3) > 0.008856)
+                    ? Math.Pow(fx_inv, 3)
+                    : (fx_inv - 16.0 / 116.0) / 7.787;
+            double Yr = (newL > (903.3 * 0.008856)) ? Math.Pow(fy_inv, 3) : newL / 903.3;
+            double Zr =
+                (Math.Pow(fz_inv, 3) > 0.008856)
+                    ? Math.Pow(fz_inv, 3)
+                    : (fz_inv - 16.0 / 116.0) / 7.787;
 
             double X_final = Xr * Xn;
             double Y_final = Yr * Yn;
@@ -197,15 +194,12 @@ namespace MyExtensions
             double b_lin = X_final * 0.0557 + Y_final * -0.2040 + Z_final * 1.0570;
 
             // Convert linear RGB back to sRGB.
-            double R = (r_lin <= 0.0031308)
-                        ? 12.92 * r_lin
-                        : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
-            double G = (g_lin <= 0.0031308)
-                        ? 12.92 * g_lin
-                        : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
-            double B_out = (b_lin <= 0.0031308)
-                        ? 12.92 * b_lin
-                        : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
+            double R =
+                (r_lin <= 0.0031308) ? 12.92 * r_lin : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
+            double G =
+                (g_lin <= 0.0031308) ? 12.92 * g_lin : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
+            double B_out =
+                (b_lin <= 0.0031308) ? 12.92 * b_lin : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
 
             R = Clamp(R, 0, 1);
             G = Clamp(G, 0, 1);
@@ -217,7 +211,6 @@ namespace MyExtensions
 
             return Color.FromArgb(redByte, greenByte, blueByte, alpha);
         }
-
 
         /// <summary>
         /// Returns a new Color whose perceptual lightness is adjusted by the given percentage (using the CIELAB space)
@@ -233,7 +226,7 @@ namespace MyExtensions
             double r = color.Rb / 255.0;
             double g = color.Gb / 255.0;
             double b = color.Bb / 255.0;
-            int alpha = color.Ab;  // preserve alpha
+            int alpha = color.Ab; // preserve alpha
 
             // Convert sRGB to linear RGB.
             r = (r <= 0.04045) ? (r / 12.92) : Math.Pow((r + 0.055) / 1.055, 2.4);
@@ -255,28 +248,28 @@ namespace MyExtensions
             double fy = F_xyz(Y / Yn);
             double fz = F_xyz(Z / Zn);
 
-            double L = 116 * fy - 16;          // original lightness (0 to 100)
+            double L = 116 * fy - 16; // original lightness (0 to 100)
             double a_lab = 500 * (fx - fy);
             double b_lab = 200 * (fy - fz);
 
             // Adjust lightness by scaling L. For example, a 20% increase multiplies L by 1.2.
             double newL = L * (1 + percent / 100.0);
-            newL = Clamp(newL, 0, 100);  // ensure lightness stays within [0, 100]
+            newL = Clamp(newL, 0, 100); // ensure lightness stays within [0, 100]
 
             // Convert the adjusted Lab (with the new L, same a_lab and b_lab) back to XYZ.
             double fy_inv = (newL + 16) / 116.0;
             double fx_inv = a_lab / 500.0 + fy_inv;
             double fz_inv = fy_inv - b_lab / 200.0;
 
-            double Xr = (Math.Pow(fx_inv, 3) > 0.008856)
-                        ? Math.Pow(fx_inv, 3)
-                        : (fx_inv - 16.0 / 116.0) / 7.787;
-            double Yr = (newL > (903.3 * 0.008856))
-                        ? Math.Pow(fy_inv, 3)
-                        : newL / 903.3;
-            double Zr = (Math.Pow(fz_inv, 3) > 0.008856)
-                        ? Math.Pow(fz_inv, 3)
-                        : (fz_inv - 16.0 / 116.0) / 7.787;
+            double Xr =
+                (Math.Pow(fx_inv, 3) > 0.008856)
+                    ? Math.Pow(fx_inv, 3)
+                    : (fx_inv - 16.0 / 116.0) / 7.787;
+            double Yr = (newL > (903.3 * 0.008856)) ? Math.Pow(fy_inv, 3) : newL / 903.3;
+            double Zr =
+                (Math.Pow(fz_inv, 3) > 0.008856)
+                    ? Math.Pow(fz_inv, 3)
+                    : (fz_inv - 16.0 / 116.0) / 7.787;
 
             // Scale XYZ by the white point.
             double X_final = Xr * Xn;
@@ -289,15 +282,12 @@ namespace MyExtensions
             double b_lin = X_final * 0.0557 + Y_final * -0.2040 + Z_final * 1.0570;
 
             // Convert linear RGB back to sRGB (applying gamma correction).
-            double R = (r_lin <= 0.0031308)
-                        ? 12.92 * r_lin
-                        : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
-            double G = (g_lin <= 0.0031308)
-                        ? 12.92 * g_lin
-                        : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
-            double B_out = (b_lin <= 0.0031308)
-                        ? 12.92 * b_lin
-                        : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
+            double R =
+                (r_lin <= 0.0031308) ? 12.92 * r_lin : 1.055 * Math.Pow(r_lin, 1.0 / 2.4) - 0.055;
+            double G =
+                (g_lin <= 0.0031308) ? 12.92 * g_lin : 1.055 * Math.Pow(g_lin, 1.0 / 2.4) - 0.055;
+            double B_out =
+                (b_lin <= 0.0031308) ? 12.92 * b_lin : 1.055 * Math.Pow(b_lin, 1.0 / 2.4) - 0.055;
 
             // Clamp each component to the [0,1] range.
             R = Clamp(R, 0, 1);
@@ -312,6 +302,5 @@ namespace MyExtensions
             // Return the newly created Color.
             return Color.FromArgb(redByte, greenByte, blueByte, alpha);
         }
-
     }
 }

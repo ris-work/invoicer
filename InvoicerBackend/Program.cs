@@ -454,7 +454,7 @@ app.AddEndpointWithBearerAuth<Catalogue>(
 
         Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode");
         Catalogue A;
-        
+
         using (var ctx = new NewinvContext())
         {
             A = ctx.Catalogues.Where(a => a.Itemcode == SafeR.Itemcode).First();
@@ -488,30 +488,39 @@ app.AddEndpointWithBearerAuth<object>(
 
 app.AddEndpointWithBearerAuth<string>(
     "GetMyDenyList",
-    (AS, LoginInfo) => {
-        string [] DeniedList;
-        using (var ctx = new NewinvContext())
-        {
-            DeniedList = ctx.UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId).Select(e => e.DeniedField).ToArray();
-        }
-        return DeniedList;
-    },
-    "Refresh"
-    );
-app.AddEndpointWithBearerAuth<string>(
-    "GetUniversalDenyList",
-    (AS, LoginInfo) => {
+    (AS, LoginInfo) =>
+    {
         string[] DeniedList;
         using (var ctx = new NewinvContext())
         {
-            DeniedList = ctx.UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId).Select(e => e.DeniedField).ToArray();
+            DeniedList = ctx
+                .UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId)
+                .Select(e => e.DeniedField)
+                .ToArray();
         }
         return DeniedList;
     },
     "Refresh"
-    );
+);
+app.AddEndpointWithBearerAuth<string>(
+    "GetUniversalDenyList",
+    (AS, LoginInfo) =>
+    {
+        string[] DeniedList;
+        using (var ctx = new NewinvContext())
+        {
+            DeniedList = ctx
+                .UsersFieldLevelAccessControlsDenyLists.Where(e => e.UserId == LoginInfo.UserId)
+                .Select(e => e.DeniedField)
+                .ToArray();
+        }
+        return DeniedList;
+    },
+    "Refresh"
+);
 
-app.AddEndpointWithBearerAuth<string>("BatchRead",
+app.AddEndpointWithBearerAuth<string>(
+    "BatchRead",
     (AS, LoginInfo) =>
     {
         List<Inventory> Batches;
@@ -522,17 +531,22 @@ app.AddEndpointWithBearerAuth<string>("BatchRead",
         return Batches;
     },
     "Refresh"
-    );
+);
 
-app.AddEndpointWithBearerAuth<Inventory>("BatchEdit",
+app.AddEndpointWithBearerAuth<Inventory>(
+    "BatchEdit",
     (AS, LoginInfo) =>
     {
         var Batch = (Inventory)AS;
         var SafeBatch = Batch.RemoveField("Itemcode").RemoveField("Batchcode");
-        
+
         using (var ctx = new NewinvContext())
         {
-            var BatchCurrent = ctx.Inventories.Where(e => e.Itemcode == Batch.Itemcode && e.Batchcode == Batch.Itemcode).First();
+            var BatchCurrent = ctx
+                .Inventories.Where(e =>
+                    e.Itemcode == Batch.Itemcode && e.Batchcode == Batch.Itemcode
+                )
+                .First();
             BatchCurrent.ApplyChangesFromFiltered([], JsonSerializer.Serialize(Batch));
             ctx.SaveChanges();
             Batch = BatchCurrent;
@@ -540,7 +554,7 @@ app.AddEndpointWithBearerAuth<Inventory>("BatchEdit",
         return Batch;
     },
     "Refresh"
-    );
+);
 
 app.AddEndpointWithBearerAuth<string>(
     "PosRefreshBearerAuth",

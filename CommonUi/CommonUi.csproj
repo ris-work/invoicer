@@ -9,7 +9,7 @@
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
     </PropertyGroup>
     <ItemGroup>
-		<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
         <PackageReference Include="CsvHelper" Version="33.0.1" />
         <PackageReference Include="Eto.Forms" Version="2.9.0" />
         <PackageReference Include="GtkSharp" Version="3.24.24.117-develop" />

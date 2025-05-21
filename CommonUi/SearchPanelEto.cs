@@ -145,11 +145,16 @@ namespace CommonUi
         {
             var Colors = new PanelSettings()
             {
-                AlternatingColor1 = LocalColors?.AlternatingColor1 ?? ColorSettings.AlternatingColor1,
-                AlternatingColor2 = LocalColors?.AlternatingColor2 ?? ColorSettings.AlternatingColor2,
-                SelectedColumnColor = LocalColors?.SelectedColumnColor ?? ColorSettings.SelectedColumnColor,
-                LesserForegroundColor = LocalColors?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor,
-                LesserBackgroundColor = LocalColors?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor,
+                AlternatingColor1 =
+                    LocalColors?.AlternatingColor1 ?? ColorSettings.AlternatingColor1,
+                AlternatingColor2 =
+                    LocalColors?.AlternatingColor2 ?? ColorSettings.AlternatingColor2,
+                SelectedColumnColor =
+                    LocalColors?.SelectedColumnColor ?? ColorSettings.SelectedColumnColor,
+                LesserForegroundColor =
+                    LocalColors?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor,
+                LesserBackgroundColor =
+                    LocalColors?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor,
                 ForegroundColor = LocalColors?.ForegroundColor ?? ColorSettings.ForegroundColor,
                 BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
             };
@@ -759,8 +764,8 @@ namespace CommonUi
                 Items =
                 {
                     SearchOptions,
-                    ShowExportOptions ? GBExportOptions: null,
-                    ShowPrintOptions? GBPrintOptions: null
+                    ShowExportOptions ? GBExportOptions : null,
+                    ShowPrintOptions ? GBPrintOptions : null,
                 },
                 Orientation = Eto.Forms.Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
