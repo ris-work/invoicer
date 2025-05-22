@@ -45,6 +45,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Inventory> Inventories { get; set; }
 
+    public virtual DbSet<InventoryImage> InventoryImages { get; set; }
+
     public virtual DbSet<IssuedInvoice> IssuedInvoices { get; set; }
 
     public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
@@ -66,6 +68,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
 
     public virtual DbSet<Pii> Piis { get; set; }
+
+    public virtual DbSet<PiiImage> PiiImages { get; set; }
 
     public virtual DbSet<Receipt> Receipts { get; set; }
 
@@ -96,6 +100,7 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
         optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
@@ -338,6 +343,10 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.CustomerId).ValueGeneratedNever().HasColumnName("customer_id");
             entity
+                .Property(e => e.LoyaltyPaidToAccountId)
+                .HasColumnName("loyalty_paid_to_account_id");
+            entity.Property(e => e.LoyaltyRate).HasColumnName("loyalty_rate");
+            entity
                 .Property(e => e.RecommendedDiscountPercent)
                 .HasColumnName("recommended_discount_percent");
         });
@@ -435,6 +444,17 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.VolumeDiscounts)
                 .HasDefaultValue(false)
                 .HasColumnName("volume_discounts");
+        });
+
+        modelBuilder.Entity<InventoryImage>(entity =>
+        {
+            entity.HasKey(e => new { e.Imageid, e.Itemcode }).HasName("inventory_images_pkey");
+
+            entity.ToTable("inventory_images");
+
+            entity.Property(e => e.Imageid).HasDefaultValue(0L).HasColumnName("imageid");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ImageBase64).HasColumnName("image_base64");
         });
 
         modelBuilder.Entity<IssuedInvoice>(entity =>
@@ -621,6 +641,23 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Sip).HasColumnName("SIP");
             entity.Property(e => e.Telephone).HasColumnName("telephone");
             entity.Property(e => e.Title).HasColumnName("title");
+        });
+
+        modelBuilder.Entity<PiiImage>(entity =>
+        {
+            entity.HasKey(e => new { e.PiiId, e.ImageNo }).HasName("pii_images_pkey");
+
+            entity.ToTable(
+                "pii_images",
+                tb =>
+                    tb.HasComment(
+                        "Photos of people, companies - any person, including non-natural persons."
+                    )
+            );
+
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+            entity.Property(e => e.ImageNo).HasDefaultValue(0L).HasColumnName("image_no");
+            entity.Property(e => e.Image).HasColumnName("image");
         });
 
         modelBuilder.Entity<Receipt>(entity =>
