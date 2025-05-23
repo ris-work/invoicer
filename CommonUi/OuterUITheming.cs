@@ -30,6 +30,8 @@ namespace CommonUi
         public static int? InnerLabelWidth = null;
         public static int? InnerControlHeight = null;
         public static int? InnerControlWidth = null;
+        public static bool ExpandContentWidth = true;
+        public static bool ExpandContentHeight = false;
 
         public static void RotateAll(double degrees)
         {

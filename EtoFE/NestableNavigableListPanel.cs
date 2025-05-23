@@ -378,6 +378,8 @@ namespace EtoFE
                     Height = -1,
                     Border = BorderType.None,
                     Width = Program.PanelWidth ?? -1,
+                    ExpandContentHeight = false,
+                    ExpandContentWidth = true,
                     //BackgroundColor = ColorSettings.RotateAllToPanelSettings(60).BackgroundColor
                     //BackgroundColor = ColorSettings.BackgroundColor,
                     //ScrollSize = new Eto.Drawing.Size(10, 10),

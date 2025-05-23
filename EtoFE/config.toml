@@ -11,6 +11,8 @@ InnerPanelButtonContainerWidth=200 #Use with WinForms Native Port only
 InnerPanelButtonContainerHeight=50 #Use with WinForms Native Port only
 InnerLabelWidth =300 #Use with WinForms Native Port only
 InnerLabelHeight =30 #Use with WinForms Native Port only
+InnerEditorWidth =300 #Use with WinForms Native Port only
+InnerEditorHeight =30 #Use with WinForms Native Port only
 
 
 ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast

@@ -88,6 +88,8 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 
 var SampleJson =
     @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true}";
+var SampleJsonNested =
+    @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""longArray"": [65536, 65536], ""bool"": true}";
 if (args.Length >= 1 && File.Exists(args[0]))
 {
     try
@@ -140,7 +142,9 @@ Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg",
 AC.Run(
     new Form()
     {
-        Content = new Eto.Forms.StackLayout(
+        Content = new Eto.Forms.Scrollable()
+        {
+            Content = new Eto.Forms.StackLayout(
             new GenEtoUI(
                 SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
                 (_) =>
@@ -165,10 +169,13 @@ AC.Run(
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
-            }
+            },
+            new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
+            new JsonEditorExample.JsonEditorPanel(SampleJsonNested, Eto.Forms.Orientation.Horizontal)
         )
-        {
-            HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
+            {
+                HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
+            }
         },
     }
 );

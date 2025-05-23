@@ -61,6 +61,10 @@ public class Program
     public static int? InnerPanelButtonContainerWidth = null;
     public static int? InnerLabelHeight = null;
     public static int? InnerLabelWidth = null;
+    public static int? InnerEditorHeight = null;
+    public static int? InnerEditorWidth = null;
+    public static bool ExpandContentHeight = false;
+    public static bool ExpandContentWidth = true;
 
     [STAThread]
     public static void Main()
@@ -130,10 +134,16 @@ public class Program
             (long?)ConfigDict.GetValueOrDefault("InnerPanelButtonContainerHeight", null);
         InnerLabelWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelWidth", null);
         InnerLabelHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelHeight", null);
+        InnerEditorWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorWidth", null);
+        InnerEditorHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorHeight", null);
+        ExpandContentWidth = (bool)ConfigDict.GetValueOrDefault("ExpandContentWidth", true);
+        ExpandContentHeight = (bool)ConfigDict.GetValueOrDefault("ExpandContentHeight", false);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
         CommonUi.ColorSettings.InnerLabelWidth = InnerLabelWidth;
         CommonUi.ColorSettings.InnerLabelHeight = InnerLabelHeight;
+        CommonUi.ColorSettings.ExpandContentHeight = ExpandContentHeight;
+        CommonUi.ColorSettings.ExpandContentWidth = ExpandContentWidth;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
