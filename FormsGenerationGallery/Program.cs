@@ -89,7 +89,62 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 var SampleJson =
     @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true}";
 var SampleJsonNested =
-    @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""longArray"": [65536, 65536], ""bool"": true}";
+@"{
+    ""identity"": {
+        ""firstName"": ""John"",
+        ""lastName"": ""Doe"",
+        ""localName"": ""जॉन डो, ஜான் டோ, ジョン・ドウ""
+    },
+    ""location"": {
+        ""country"": ""Sri Lanka"",
+        ""city"": ""Colombo"",
+        ""province"": {
+            ""english"": ""Western Province"",
+            ""native"": ""மேற்கு மாகாணம்""
+        }
+    },
+    ""misc"": {
+        ""floatValue"": 3.14159,
+        ""bool"": true,
+        ""longArray"": [65536, 131072, 262144]
+    },
+    ""funFacts"": {
+        ""hobbies"": [
+            ""Cricket"",
+            ""Chess"",
+            ""映画を見る"",
+            ""సంగీతం"",
+            ""Приключение""
+        ],
+        ""favoriteQuote"": {
+            ""en"": ""The universe is full of surprises, each a testament to nature’s elegant design."",
+            ""jp"": ""宇宙は驚きに満ちており、そのすべてが自然の優雅な設計の証です."",
+            ""hi"": ""ब्रह्मांड आश्चर्यों से भरा है, प्रत्येक एक प्रकृति के सुंदर डिजाइन का प्रमाण है।"",
+            ""ru"": ""Вселенная полна сюрпризов, и каждый из них — свидетельство элегантного замысла природы.""
+        }
+    },
+    ""culturalNotes"": {
+        ""festivals"": [
+            ""Diwali"",
+            ""New Year"",
+            ""பொங்கல்"",
+            ""අලුත් අවුරුද්ද""
+        ],
+        ""languagesSpoken"": [
+            ""English"",
+            ""සිංහල"",
+            ""தமிழ்"",
+            ""हिंदी"",
+            ""日本語"",
+            ""русский""
+        ],
+        ""traditionalMusic"": {
+            ""instrument"": ""Veena"",
+            ""style"": ""Carnatic""
+        }
+    }
+}";
+
 if (args.Length >= 1 && File.Exists(args[0]))
 {
     try
