@@ -831,7 +831,13 @@ namespace CommonUi
             Content = new StackLayout(
                 ActionButtons,
                 new StackLayoutItem(
-                    new Scrollable() { Content = GeneratedControls, Border = BorderType.None, ExpandContentHeight = ColorSettings.ExpandContentHeight, ExpandContentWidth = ColorSettings.ExpandContentWidth },
+                    new Scrollable()
+                    {
+                        Content = GeneratedControls,
+                        Border = BorderType.None,
+                        ExpandContentHeight = ColorSettings.ExpandContentHeight,
+                        ExpandContentWidth = ColorSettings.ExpandContentWidth,
+                    },
                     false
                 )
             )

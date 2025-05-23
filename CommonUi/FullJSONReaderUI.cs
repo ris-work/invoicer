@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Eto.Forms;
-using Eto.Drawing;
 using System.Text.Json;
+using Eto.Drawing;
+using Eto.Forms;
 
 namespace JsonEditorExample
 {
@@ -14,35 +14,42 @@ namespace JsonEditorExample
         /// For each node path (e.g. "Parent.Child" or "array[0]"), the original JSON type is stored.
         /// For numbers, only long and double are supported.
         /// </summary>
-        public Dictionary<string, Type> OriginalTypes { get; private set; } = new Dictionary<string, Type>();
+        public Dictionary<string, Type> OriginalTypes { get; private set; } =
+            new Dictionary<string, Type>();
 
         /// <summary>
         /// Constructs a JsonEditorPanel from a JSON object expressed as an IReadOnlyDictionary.
         /// </summary>
-        public JsonEditorPanel(IReadOnlyDictionary<string, JsonElement> data, Orientation orientation)
-            : this(data, orientation, "", null)
-        {
-        }
+        public JsonEditorPanel(
+            IReadOnlyDictionary<string, JsonElement> data,
+            Orientation orientation
+        )
+            : this(data, orientation, "", null) { }
 
         /// <summary>
         /// Constructs a JsonEditorPanel from a JSON string.
         /// </summary>
         public JsonEditorPanel(string json, Orientation orientation)
-            : this(ConvertJsonToDictionary(json), orientation, "", null)
-        {
-        }
+            : this(ConvertJsonToDictionary(json), orientation, "", null) { }
 
         /// <summary>
         /// Private constructor that supports recursive calls.
         /// </summary>
-        private JsonEditorPanel(IReadOnlyDictionary<string, JsonElement> data, Orientation orientation, string path, Dictionary<string, Type> originalTypes)
+        private JsonEditorPanel(
+            IReadOnlyDictionary<string, JsonElement> data,
+            Orientation orientation,
+            string path,
+            Dictionary<string, Type> originalTypes
+        )
         {
             if (originalTypes != null)
                 this.OriginalTypes = originalTypes;
             else
                 this.OriginalTypes = new Dictionary<string, Type>();
 
-            Debug.WriteLine($"[Panel Build] Creating JsonEditorPanel at path \"{path}\" with orientation {orientation}");
+            Debug.WriteLine(
+                $"[Panel Build] Creating JsonEditorPanel at path \"{path}\" with orientation {orientation}"
+            );
 
             // Create a container StackLayout.
             var rootStack = new StackLayout { Orientation = orientation, Spacing = 5 };
@@ -66,12 +73,19 @@ namespace JsonEditorExample
         /// <summary>
         /// Recursively builds controls from each key/value pair in the dictionary.
         /// </summary>
-        private void BuildFromDictionary(IReadOnlyDictionary<string, JsonElement> dict, StackLayout container, Orientation orientation, string path)
+        private void BuildFromDictionary(
+            IReadOnlyDictionary<string, JsonElement> dict,
+            StackLayout container,
+            Orientation orientation,
+            string path
+        )
         {
             foreach (var kvp in dict)
             {
                 string currentPath = string.IsNullOrEmpty(path) ? kvp.Key : $"{path}.{kvp.Key}";
-                Debug.WriteLine($"[Build Dictionary] Node \"{currentPath}\" with ValueKind {kvp.Value.ValueKind}");
+                Debug.WriteLine(
+                    $"[Build Dictionary] Node \"{currentPath}\" with ValueKind {kvp.Value.ValueKind}"
+                );
 
                 // Create a label whose text is the translated key.
                 var label = new Label { Text = Translate(kvp.Key), Tag = kvp.Key };
@@ -99,14 +113,20 @@ namespace JsonEditorExample
         /// <summary>
         /// Recursively builds controls for each element in a JSON array.
         /// </summary>
-        private Control BuildFromList(IEnumerable<JsonElement> list, Orientation orientation, string path)
+        private Control BuildFromList(
+            IEnumerable<JsonElement> list,
+            Orientation orientation,
+            string path
+        )
         {
             var container = new StackLayout { Orientation = orientation, Spacing = 5 };
             int index = 0;
             foreach (var item in list)
             {
                 string itemPath = $"{path}[{index}]";
-                Debug.WriteLine($"[Build List] Array node \"{itemPath}\" with ValueKind {item.ValueKind}");
+                Debug.WriteLine(
+                    $"[Build List] Array node \"{itemPath}\" with ValueKind {item.ValueKind}"
+                );
 
                 // Create a label for the index.
                 var label = new Label { Text = $"[{index}]", Tag = index };
@@ -132,7 +152,11 @@ namespace JsonEditorExample
         /// Returns the appropriate control for a given JSON element.
         /// For numbers, distinguishes between long and double.
         /// </summary>
-        private Control BuildControlForValue(JsonElement value, Orientation orientation, string path)
+        private Control BuildControlForValue(
+            JsonElement value,
+            Orientation orientation,
+            string path
+        )
         {
             switch (value.ValueKind)
             {
@@ -142,9 +166,17 @@ namespace JsonEditorExample
 
                 case JsonValueKind.Object:
                     Debug.WriteLine($"[Build Value] At \"{path}\": Recursively building object");
+
                     {
-                        var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(value.GetRawText());
-                        return new JsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes);
+                        var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                            value.GetRawText()
+                        );
+                        return new JsonEditorPanel(
+                            dict,
+                            Invert(orientation),
+                            path,
+                            this.OriginalTypes
+                        );
                     }
 
                 case JsonValueKind.Array:
@@ -153,39 +185,52 @@ namespace JsonEditorExample
 
                 case JsonValueKind.True:
                 case JsonValueKind.False:
-                    Debug.WriteLine($"[Build Value] At \"{path}\": Creating CheckBox for boolean: {value.GetBoolean()}");
+                    Debug.WriteLine(
+                        $"[Build Value] At \"{path}\": Creating CheckBox for boolean: {value.GetBoolean()}"
+                    );
+
                     {
                         var cb = new CheckBox { Checked = value.GetBoolean(), Tag = path };
                         return cb;
                     }
 
                 case JsonValueKind.Number:
+                {
+                    // First try to create a long.
+                    if (value.TryGetInt64(out long l))
                     {
-                        // First try to create a long.
-                        if (value.TryGetInt64(out long l))
-                        {
-                            Debug.WriteLine($"[Build Value] At \"{path}\": Creating TextBox for long: {l}");
-                            var tb = new TextBox { Text = l.ToString(), Tag = path };
-                            return tb;
-                        }
-                        else
-                        {
-                            double d = value.GetDouble();
-                            Debug.WriteLine($"[Build Value] At \"{path}\": Creating TextBox for double: {d}");
-                            var tb = new TextBox { Text = d.ToString(), Tag = path };
-                            return tb;
-                        }
+                        Debug.WriteLine(
+                            $"[Build Value] At \"{path}\": Creating TextBox for long: {l}"
+                        );
+                        var tb = new TextBox { Text = l.ToString(), Tag = path };
+                        return tb;
                     }
+                    else
+                    {
+                        double d = value.GetDouble();
+                        Debug.WriteLine(
+                            $"[Build Value] At \"{path}\": Creating TextBox for double: {d}"
+                        );
+                        var tb = new TextBox { Text = d.ToString(), Tag = path };
+                        return tb;
+                    }
+                }
 
                 case JsonValueKind.String:
-                    Debug.WriteLine($"[Build Value] At \"{path}\": Creating TextBox for string: {value.GetString()}");
+                    Debug.WriteLine(
+                        $"[Build Value] At \"{path}\": Creating TextBox for string: {value.GetString()}"
+                    );
+
                     {
                         var tb = new TextBox { Text = value.GetString(), Tag = path };
                         return tb;
                     }
 
                 default:
-                    Debug.WriteLine($"[Build Value] At \"{path}\": Defaulting to TextBox for value: {value}");
+                    Debug.WriteLine(
+                        $"[Build Value] At \"{path}\": Defaulting to TextBox for value: {value}"
+                    );
+
                     {
                         var tb = new TextBox { Text = value.ToString(), Tag = path };
                         return tb;
@@ -198,7 +243,9 @@ namespace JsonEditorExample
         /// </summary>
         private Orientation Invert(Orientation orientation)
         {
-            return orientation == Orientation.Horizontal ? Orientation.Vertical : Orientation.Horizontal;
+            return orientation == Orientation.Horizontal
+                ? Orientation.Vertical
+                : Orientation.Horizontal;
         }
 
         /// <summary>
@@ -235,7 +282,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Recursively disables interactive controls.  
+        /// Recursively disables interactive controls.
         /// Because StackLayout.Items returns a collection of StackLayoutItem, we access each item’s Control.
         /// </summary>
         private void DisableAllFields()
@@ -247,12 +294,16 @@ namespace JsonEditorExample
         {
             if (control is TextBox tb)
             {
-                Debug.WriteLine($"[Disable] Disabling TextBox (path \"{tb.Tag}\") with text: \"{tb.Text}\"");
+                Debug.WriteLine(
+                    $"[Disable] Disabling TextBox (path \"{tb.Tag}\") with text: \"{tb.Text}\""
+                );
                 tb.Enabled = false;
             }
             else if (control is CheckBox cb)
             {
-                Debug.WriteLine($"[Disable] Disabling CheckBox (path \"{cb.Tag}\") with state: {cb.Checked}");
+                Debug.WriteLine(
+                    $"[Disable] Disabling CheckBox (path \"{cb.Tag}\") with state: {cb.Checked}"
+                );
                 cb.Enabled = false;
             }
             else if (control is Panel panel && panel.Content != null)
@@ -270,7 +321,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Recursively validates each interactive field.  
+        /// Recursively validates each interactive field.
         /// For numeric fields, it checks that the text can be parsed as long or double as expected.
         /// </summary>
         public List<string> ValidateFields()
@@ -285,7 +336,9 @@ namespace JsonEditorExample
             if (control is TextBox tb)
             {
                 string path = tb.Tag as string ?? "Unknown";
-                Debug.WriteLine($"[Validate] Validating TextBox at \"{path}\" with text: \"{tb.Text}\"");
+                Debug.WriteLine(
+                    $"[Validate] Validating TextBox at \"{path}\" with text: \"{tb.Text}\""
+                );
                 if (string.IsNullOrWhiteSpace(tb.Text))
                 {
                     errors.Add($"Field \"{path}\" is empty.");
@@ -420,7 +473,9 @@ namespace JsonEditorExample
                         // The first item is the label; extract the key.
                         var lblItem = row.Items[0].Control as Label;
                         string key = lblItem?.Tag as string ?? lblItem?.Text;
-                        string childPath = string.IsNullOrEmpty(basePath) ? key : $"{basePath}.{key}";
+                        string childPath = string.IsNullOrEmpty(basePath)
+                            ? key
+                            : $"{basePath}.{key}";
                         if (row.Items[1].Control != null)
                         {
                             object value = SerializeValue(row.Items[1].Control, childPath);
@@ -439,7 +494,11 @@ namespace JsonEditorExample
         {
             foreach (var item in container.Items)
             {
-                if (item.Control is StackLayout row && row.Items.Count > 0 && row.Items[0].Control is Label lbl)
+                if (
+                    item.Control is StackLayout row
+                    && row.Items.Count > 0
+                    && row.Items[0].Control is Label lbl
+                )
                 {
                     string text = lbl.Text;
                     if (!(text.StartsWith("[") && text.EndsWith("]")))

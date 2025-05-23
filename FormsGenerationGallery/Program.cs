@@ -145,37 +145,40 @@ AC.Run(
         Content = new Eto.Forms.Scrollable()
         {
             Content = new Eto.Forms.StackLayout(
-            new GenEtoUI(
-                SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
-                (_) =>
+                new GenEtoUI(
+                    SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+                    (_) =>
+                    {
+                        return 100;
+                    },
+                    (_) =>
+                    {
+                        return 100;
+                    },
+                    ActionsMap,
+                    null,
+                    true
+                ),
+                new Eto.Forms.StackLayout(
+                    new StackLayoutItem(null, true),
+                    new StackLayoutItem(imagePanel, false),
+                    new StackLayoutItem(null, true),
+                    new StackLayoutItem(imagePanelSkia, false),
+                    new StackLayoutItem(null, true)
+                )
                 {
-                    return 100;
+                    Orientation = Eto.Forms.Orientation.Horizontal,
+                    HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
-                (_) =>
-                {
-                    return 100;
-                },
-                ActionsMap,
-                null,
-                true
-            ),
-            new Eto.Forms.StackLayout(
-                new StackLayoutItem(null, true),
-                new StackLayoutItem(imagePanel, false),
-                new StackLayoutItem(null, true),
-                new StackLayoutItem(imagePanelSkia, false),
-                new StackLayoutItem(null, true)
+                new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
+                new JsonEditorExample.JsonEditorPanel(
+                    SampleJsonNested,
+                    Eto.Forms.Orientation.Horizontal
+                )
             )
             {
-                Orientation = Eto.Forms.Orientation.Horizontal,
                 HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
             },
-            new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
-            new JsonEditorExample.JsonEditorPanel(SampleJsonNested, Eto.Forms.Orientation.Horizontal)
-        )
-            {
-                HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
-            }
         },
     }
 );

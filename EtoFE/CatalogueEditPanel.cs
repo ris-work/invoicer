@@ -145,7 +145,12 @@ namespace EtoFE
                 PanelColours: LocalColor
             );
             //MessageBox.Show(JsonSerializer.Serialize(LowerPanelContent));
-            var ScrollableLower = new Panel() { Content = LowerPanel, Height = Program.InnerEditorHeight ?? -1, Width = Program.InnerEditorWidth ?? -1 };
+            var ScrollableLower = new Panel()
+            {
+                Content = LowerPanel,
+                Height = Program.InnerEditorHeight ?? -1,
+                Width = Program.InnerEditorWidth ?? -1,
+            };
             SearchBox.OnSelectionMade = () =>
             {
                 //MessageBox.Show(String.Join(',', SearchBox.Selected));
