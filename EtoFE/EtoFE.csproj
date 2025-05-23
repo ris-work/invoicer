@@ -131,6 +131,7 @@
 	-->
         <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
+        <PackageReference Include="SkiaSharp" Version="3.119.0" />
         <PackageReference Include="Tomlyn" Version="0.19.0" />
         <PackageReference Include="Wiry.Base32" Version="1.1.1" />
     </ItemGroup>

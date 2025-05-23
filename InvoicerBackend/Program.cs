@@ -223,6 +223,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
     },
     "Refresh"
 );
+app.AddCatalogueDefaultImageEndpoints();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();
