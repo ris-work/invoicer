@@ -132,6 +132,7 @@ new Eto.Forms.Application().Run(
 */
 
 var AC = new Eto.Forms.Application();
+
 //Image: https://www.flickr.com/photos/ellaolsson/48839117163/
 //Copyright (c) Ella Olson 2019, CC-BY 2.0
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
@@ -139,35 +140,39 @@ Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg",
 AC.Run(
     new Form()
     {
-        Content = new Eto.Forms.StackLayout( new GenEtoUI(
-            SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
-            (_) =>
+        Content = new Eto.Forms.StackLayout(
+            new GenEtoUI(
+                SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+                (_) =>
+                {
+                    return 100;
+                },
+                (_) =>
+                {
+                    return 100;
+                },
+                ActionsMap,
+                null,
+                true
+            ),
+            new Eto.Forms.StackLayout(
+                new StackLayoutItem(null, true),
+                new StackLayoutItem(imagePanel, false),
+                new StackLayoutItem(null, true),
+                new StackLayoutItem(imagePanelSkia, false),
+                new StackLayoutItem(null, true)
+            )
             {
-                return 100;
-            },
-            (_) =>
-            {
-                return 100;
-            },
-            ActionsMap,
-            null,
-            true
-        ),
-        new Eto.Forms.StackLayout(
-            new StackLayoutItem(null, true),
-        new StackLayoutItem(imagePanel, false),
-        new StackLayoutItem(null, true),
-        new StackLayoutItem(imagePanelSkia, false),
-        new StackLayoutItem(null, true)
+                Orientation = Eto.Forms.Orientation.Horizontal,
+                HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
+            }
         )
-        { Orientation = Eto.Forms.Orientation.Horizontal, HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch }
-        )
-        { HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch},
+        {
+            HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
+        },
     }
 );
 var config = ReceiptPrinter.LoadConfig("theme.toml");
-
-
 
 var invoiceItems = new List<string[]>
 {

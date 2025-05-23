@@ -65,8 +65,10 @@ namespace EtoFE
                 })
                 .ToList();
             var SearchBox = new SearchPanelEto(SearchCatalogue, HeaderEntries, false, LocalColor);
-            var imageEditPanel = new InventoryImageEditorPanel(null,
-                (itemcode, imageid) => {
+            var imageEditPanel = new InventoryImageEditorPanel(
+                null,
+                (itemcode, imageid) =>
+                {
                     if (itemcode != null)
                     {
                         var IA = SendAuthenticatedRequest<long, InventoryImage>.Send(
@@ -75,17 +77,30 @@ namespace EtoFE
                         );
                         return IA.Out?.ImageBase64;
                     }
-                    else { return null; }
-                }, 
-                (itemcode, imageid, imageData) => { 
-                var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
-                    new InventoryImage() {Itemcode = (long)itemcode, Imageid = imageid, ImageBase64 = imageData},
-                    "CatalogueDefaultImageSet"
-                );
-                return IA.Out;
-            }
-                );
-            var imageEditPanelContainer = new Panel() { Content = imageEditPanel , Size = new Eto.Drawing.Size(200, 500)};
+                    else
+                    {
+                        return null;
+                    }
+                },
+                (itemcode, imageid, imageData) =>
+                {
+                    var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
+                        new InventoryImage()
+                        {
+                            Itemcode = (long)itemcode,
+                            Imageid = imageid,
+                            ImageBase64 = imageData,
+                        },
+                        "CatalogueDefaultImageSet"
+                    );
+                    return IA.Out;
+                }
+            );
+            var imageEditPanelContainer = new Panel()
+            {
+                Content = imageEditPanel,
+                Size = new Eto.Drawing.Size(200, 500),
+            };
             var LowerPanelContent = SimpleJsonToUISerialization.ConvertToUISerialization(
                 JsonSerializer.Serialize(
                     new Catalogue()
@@ -139,25 +154,36 @@ namespace EtoFE
                     long.Parse(SearchBox.Selected[0]),
                     "CatalogueRead"
                 );
-                var imageEditPanel = new InventoryImageEditorPanel(long.Parse(SearchBox.Selected[0]),
-                (itemcode, imageid) => {
-                    if (itemcode != null)
+                var imageEditPanel = new InventoryImageEditorPanel(
+                    long.Parse(SearchBox.Selected[0]),
+                    (itemcode, imageid) =>
                     {
-                        var IA = SendAuthenticatedRequest<long, InventoryImage>.Send(
-                            (long)itemcode,
-                            "CatalogueDefaultImageGet"
+                        if (itemcode != null)
+                        {
+                            var IA = SendAuthenticatedRequest<long, InventoryImage>.Send(
+                                (long)itemcode,
+                                "CatalogueDefaultImageGet"
+                            );
+                            return IA.Out?.ImageBase64;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    },
+                    (itemcode, imageid, imageData) =>
+                    {
+                        var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
+                            new InventoryImage()
+                            {
+                                Itemcode = (long)itemcode,
+                                Imageid = imageid,
+                                ImageBase64 = imageData,
+                            },
+                            "CatalogueDefaultImageSet"
                         );
-                        return IA.Out?.ImageBase64;
+                        return IA.Out;
                     }
-                    else { return null; }
-                },
-                (itemcode, imageid, imageData) => {
-                    var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
-                        new InventoryImage() { Itemcode = (long)itemcode, Imageid = imageid, ImageBase64 = imageData },
-                        "CatalogueDefaultImageSet"
-                    );
-                    return IA.Out;
-                }
                 );
                 imageEditPanelContainer.Content = imageEditPanel;
                 /*var IA = SendAuthenticatedRequest<long, InventoryImage?>.Send(
@@ -174,34 +200,47 @@ namespace EtoFE
                }*/
                 //MessageBox.Show(JsonSerializer.Serialize(A.Out), "Response");
                 ScrollableLower.Content = new GenEtoUI(
-                        SimpleJsonToUISerialization.ConvertToUISerialization(
-                            JsonSerializer.Serialize(A.Out)
-                        ),
-                        (a) =>
-                        {
-                            MessageBox.Show(
-                                JsonSerializer.Serialize(a),
-                                "Serialized",
-                                MessageBoxType.Information
-                            );
-                            return 0;
-                        },
-                        (e) =>
-                        {
-                            return 0;
-                        },
-                        new Dictionary<string, (CommonUi.ShowAndGetValue, CommonUi.LookupValue)>(),
-                        "id",
-                        true
-                    );
+                    SimpleJsonToUISerialization.ConvertToUISerialization(
+                        JsonSerializer.Serialize(A.Out)
+                    ),
+                    (a) =>
+                    {
+                        MessageBox.Show(
+                            JsonSerializer.Serialize(a),
+                            "Serialized",
+                            MessageBoxType.Information
+                        );
+                        return 0;
+                    },
+                    (e) =>
+                    {
+                        return 0;
+                    },
+                    new Dictionary<string, (CommonUi.ShowAndGetValue, CommonUi.LookupValue)>(),
+                    "id",
+                    true
+                );
                 ScrollableLower.BackgroundColor =
                     LocalColor?.BackgroundColor ?? CommonUi.ColorSettings.BackgroundColor;
                 ScrollableLower.Invalidate();
             };
 
             Content = new StackLayout(
-                new StackLayout(new StackLayoutItem(SearchBox, true)) { Orientation = Orientation.Horizontal},
-                new StackLayoutItem(new StackLayout(new StackLayoutItem(ScrollableLower, true), imageEditPanelContainer) {Orientation = Orientation.Horizontal, VerticalContentAlignment = VerticalAlignment.Stretch }, true)
+                new StackLayout(new StackLayoutItem(SearchBox, true))
+                {
+                    Orientation = Orientation.Horizontal,
+                },
+                new StackLayoutItem(
+                    new StackLayout(
+                        new StackLayoutItem(ScrollableLower, true),
+                        imageEditPanelContainer
+                    )
+                    {
+                        Orientation = Orientation.Horizontal,
+                        VerticalContentAlignment = VerticalAlignment.Stretch,
+                    },
+                    true
+                )
             )
             {
                 VerticalContentAlignment = VerticalAlignment.Center,

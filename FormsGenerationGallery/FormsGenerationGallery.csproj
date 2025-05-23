@@ -39,7 +39,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="large_image.jpg">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="logo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

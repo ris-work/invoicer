@@ -170,7 +170,11 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
+    <Target
+        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
+        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
+        Condition="'$(IsWindowsTarget)' != 'true'"
+    >
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
