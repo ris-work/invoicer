@@ -194,6 +194,7 @@ var AC = new Eto.Forms.Application();
 //Copyright (c) Ella Olson 2019, CC-BY 2.0
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
 Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg", 100);
+TextBox DiscountMarkupText = new TextBox() { Text = "10.52" };
 AC.Run(
     new Form()
     {
@@ -225,10 +226,12 @@ AC.Run(
                     Orientation = Eto.Forms.Orientation.Horizontal,
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
+                DiscountMarkupText,
+                new DiscountMarkupPanel(DiscountMarkupText, "Discount", Eto.Forms.Orientation.Vertical) ,
                 new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
                 new JsonEditorExample.JsonEditorPanel(
                     SampleJsonNested,
-                    Eto.Forms.Orientation.Horizontal
+                    Eto.Forms.Orientation.Vertical
                 )
             )
             {
