@@ -195,6 +195,20 @@ var AC = new Eto.Forms.Application();
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
 Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg", 100);
 TextBox DiscountMarkupText = new TextBox() { Text = "10.52" };
+var PurchasingUIButton = (new Eto.Forms.Button()
+{
+    Text = "Launch ReceivedInvoices UI with Purchases",
+});
+PurchasingUIButton.Click += (_, _) => {
+    List<Purchase> LP = new List<Purchase> {
+        new Purchase(){
+
+        }
+    };
+   var F =  new Eto.Forms.Form() { 
+   };
+    F.Show();
+};
 AC.Run(
     new Form()
     {
@@ -226,6 +240,7 @@ AC.Run(
                     Orientation = Eto.Forms.Orientation.Horizontal,
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
+                PurchasingUIButton                ,
                 DiscountMarkupText,
                 new DiscountMarkupPanel(
                     DiscountMarkupText,
