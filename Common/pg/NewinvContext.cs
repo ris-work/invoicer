@@ -109,10 +109,8 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
-        optionsBuilder.LogTo(Console.WriteLine);
-    }
+        =>
+        optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=newinv;Username=rishi;Password=eeee");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -753,9 +751,19 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.ProductName)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("product_name");
+            entity
+                .Property(e => e.ReceivedAsUnitQuantity)
+                .HasColumnName("received_as_unit_quantity");
             entity.Property(e => e.ReceivedInvoiceId).HasColumnName("received_invoice_id");
             entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
-            entity.Property(e => e.UnitQuantity).HasColumnName("unit_quantity");
+            entity.Property(e => e.TotalUnits).HasColumnName("total_units");
+            entity.Property(e => e.VatAbsolute).HasColumnName("VAT_absolute");
+            entity.Property(e => e.VatCategory).HasDefaultValue(0L).HasColumnName("VAT_category");
+            entity
+                .Property(e => e.VatCategoryName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("VAT_category_name");
+            entity.Property(e => e.VatPercentage).HasColumnName("VAT_percentage");
         });
 
         modelBuilder.Entity<Receipt>(entity =>
@@ -786,6 +794,10 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.DefaultVatCategory)
                 .HasDefaultValue(0L)
                 .HasColumnName("default_VAT_category");
+            entity
+                .Property(e => e.DefaultVatCategoryName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("default_VAT_category_name");
             entity.Property(e => e.DefaultVatPercentage).HasColumnName("default_VAT_percentage");
             entity.Property(e => e.Discount).HasColumnName("discount");
             entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");

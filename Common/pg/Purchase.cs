@@ -13,7 +13,7 @@ public partial class Purchase
 
     public long PackQuantity { get; set; }
 
-    public double UnitQuantity { get; set; }
+    public double ReceivedAsUnitQuantity { get; set; }
 
     public long FreePacks { get; set; }
 
@@ -44,4 +44,14 @@ public partial class Purchase
     public double GrossCostPerUnit { get; set; }
 
     public double SellingPrice { get; set; }
+
+    public double VatPercentage { get; set; }
+
+    public long VatCategory { get; set; }
+
+    public double VatAbsolute { get; set; }
+
+    public string VatCategoryName { get; set; } = null!;
+
+    public double TotalUnits { get; set; }
 }

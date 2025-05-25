@@ -30,4 +30,6 @@ public partial class ReceivedInvoice
     public double DiscountPercentage { get; set; }
 
     public bool IsSettled { get; set; }
+
+    public string DefaultVatCategoryName { get; set; } = null!;
 }
