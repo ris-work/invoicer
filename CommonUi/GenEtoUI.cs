@@ -315,7 +315,10 @@ namespace CommonUi
             string[]? DenyList = null,
             PanelSettings PanelColours = null,
             IReadOnlyDictionary<string, Func<string[], TextBox?, Panel>>? PanelGenerators = null,
-            IReadOnlyDictionary<string[], (string ControlName, string? ParentField)>? FieldsListHandledByGeneratedPanels = null
+            IReadOnlyDictionary<
+                string[],
+                (string ControlName, string? ParentField)
+            >? FieldsListHandledByGeneratedPanels = null
         )
         {
             List<string> NotInNormalFlow = new();
@@ -643,10 +646,18 @@ namespace CommonUi
                     }
                     _EFieldNames.Add(kv.Key, EFieldName);
                     _ELegends.Add(kv.Key, ELegend);
-                    if(FieldsListHandledByGeneratedPanels != null && FieldsListHandledByGeneratedPanels.Where(ikvp => ikvp.Value.ParentField == kv.Key).Count() > 0)
+                    if (
+                        FieldsListHandledByGeneratedPanels != null
+                        && FieldsListHandledByGeneratedPanels
+                            .Where(ikvp => ikvp.Value.ParentField == kv.Key)
+                            .Count() > 0
+                    )
                     {
-                        var Fields = FieldsListHandledByGeneratedPanels.Where(ikvp => ikvp.Value.ParentField == kv.Key).First();
-                        var GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, (TextBox)EInput);
+                        var Fields = FieldsListHandledByGeneratedPanels
+                            .Where(ikvp => ikvp.Value.ParentField == kv.Key)
+                            .First();
+                        var GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
+                            (Fields.Key, (TextBox)EInput);
                         EControl.Cells.Add(GeneratedCustom);
                     }
 

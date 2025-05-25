@@ -11,9 +11,13 @@ namespace CommonUi
     {
         public static Dictionary<string, Func<string[], TextBox?, Panel>> Defaults()
         {
-            return new Dictionary<string, Func<string[], TextBox?, Panel>>(){{
-            "DiscountPanel", (string[] i, TextBox? T) => new DiscountMarkupPanel(T,"Discount", Orientation.Vertical)
-            }
+            return new Dictionary<string, Func<string[], TextBox?, Panel>>()
+            {
+                {
+                    "DiscountPanel",
+                    (string[] i, TextBox? T) =>
+                        new DiscountMarkupPanel(T, "Discount", Orientation.Vertical)
+                },
             };
         }
     }

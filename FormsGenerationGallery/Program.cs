@@ -246,8 +246,10 @@ AC.Run(
                     [],
                     null,
                     PanelGenerators.Defaults(),
-                    new Dictionary<string[], (string, string)> { { ["adiscount", "pdiscount"], ("DiscountPanel", "price") } }
-                    
+                    new Dictionary<string[], (string, string)>
+                    {
+                        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+                    }
                 ),
                 new Eto.Forms.StackLayout(
                     new StackLayoutItem(null, true),
