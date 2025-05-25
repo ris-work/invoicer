@@ -29,7 +29,7 @@ namespace CommonUi
     {
         public PanelSettings? LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
-        public delegate Eto.Forms.Panel GeneratePanel(string[] FieldNames);
+        public delegate Eto.Forms.Panel GeneratePanel(string[] FieldNames, TextBox? Parent);
         public bool ChangesOnly = false;
         public string Context = "default";
         public IReadOnlyDictionary<string, object> Values
@@ -314,8 +314,8 @@ namespace CommonUi
             bool ChangesOnly = false,
             string[]? DenyList = null,
             PanelSettings PanelColours = null,
-            IReadOnlyDictionary<string, GeneratePanel>? PanelGenerators = null,
-            IReadOnlyDictionary<string[], string>? FieldsListHandledByGeneratedPanels = null
+            IReadOnlyDictionary<string, Func<string[], TextBox?, Panel>>? PanelGenerators = null,
+            IReadOnlyDictionary<string[], (string ControlName, string? ParentField)>? FieldsListHandledByGeneratedPanels = null
         )
         {
             List<string> NotInNormalFlow = new();
@@ -407,33 +407,95 @@ namespace CommonUi
             ) = GetThemeForComponent("Legend");
             foreach (var kv in E)
             {
-                Console.WriteLine($"Attempt to construct with: {kv.Key}");
-                (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) =
-                    GetThemeForComponent(kv.Key);
-                var BackgroundColor = BG;
-                var ForegroundColor = FG;
-                var ChangedBackgroundColor = BGc;
-                var ChangedForegroundColor = FGc;
-                Eto.Forms.TableRow EControl;
-                Eto.Forms.Label? ELegend = null;
-                Eto.Forms.Control EInput = new Label();
-                Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
-                OriginalTypes.Add(kv.Key, kv.Value.Value?.GetType() ?? typeof(long));
-                if (
-                    kv.Value.Item2 == null
-                    || kv.Value.Item2.GetType() == typeof(long)
-                    || kv.Value.Item2.GetType() == typeof(int)
-                    || kv.Value.Item2.GetType() == typeof(double)
-                    || kv.Value.Item2.GetType() == typeof(float)
-                )
+                if (!NotInNormalFlow.Contains(kv.Key))
                 {
+                    Console.WriteLine($"Attempt to construct with: {kv.Key}");
+                    (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) =
+                        GetThemeForComponent(kv.Key);
+                    var BackgroundColor = BG;
+                    var ForegroundColor = FG;
+                    var ChangedBackgroundColor = BGc;
+                    var ChangedForegroundColor = FGc;
+                    Eto.Forms.TableRow EControl;
+                    Eto.Forms.Label? ELegend = null;
+                    Eto.Forms.Control EInput = new Label();
+                    Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}");
+                    OriginalTypes.Add(kv.Key, kv.Value.Value?.GetType() ?? typeof(long));
                     if (
                         kv.Value.Item2 == null
                         || kv.Value.Item2.GetType() == typeof(long)
-                        || kv.Value.Item2.GetType() == typeof(Int64)
+                        || kv.Value.Item2.GetType() == typeof(int)
+                        || kv.Value.Item2.GetType() == typeof(double)
+                        || kv.Value.Item2.GetType() == typeof(float)
                     )
                     {
-                        if (kv.Value.Item3 == null)
+                        if (
+                            kv.Value.Item2 == null
+                            || kv.Value.Item2.GetType() == typeof(long)
+                            || kv.Value.Item2.GetType() == typeof(Int64)
+                        )
+                        {
+                            if (kv.Value.Item3 == null)
+                            {
+                                EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                                {
+                                    if (e is TextBox tb)
+                                    {
+                                        tb.BackgroundColor = ChangedBackgroundColor;
+                                        tb.TextColor = ChangedForegroundColor;
+                                        _EChangeTracker.TryAdd(kv.Key, true);
+                                    }
+                                };
+                                EInput = new TextBox()
+                                {
+                                    Text = (kv.Value.Item2 ?? 0).ToString(),
+                                    TextAlignment = TextAlignment.Right,
+                                };
+                                /*((TextBox)EInput).Text = (kv.Value.Item2 ?? 0).ToString();
+                                    ((TextBox)EInput).TextAlignment = TextAlignment.Right;*/
+                                ((TextBox)EInput).TextInput += ChangedIndication;
+                                ((TextBox)EInput).BackgroundColor = BG;
+                                ((TextBox)EInput).TextColor = FG;
+                                ((TextBox)EInput).Font = TFont;
+                                ((TextBox)EInput).Size = CSize;
+                                ((TextBox)EInput).KeyUp += GoToNext;
+                                if (DenyList.Contains(kv.Key))
+                                    ((TextBox)EInput).ReadOnly = true;
+                                if (kv.Key == IdentityColumn)
+                                {
+                                    ((TextBox)EInput).Enabled = false;
+                                }
+                            }
+                            else
+                            {
+                                EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                                {
+                                    if (e is TextBox tb)
+                                    {
+                                        tb.BackgroundColor = ChangedBackgroundColor;
+                                        tb.TextColor = ChangedForegroundColor;
+                                        _EChangeTracker.TryAdd(kv.Key, true);
+                                    }
+                                };
+                                EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
+                                ELegend = new Label() { };
+                                if (DenyList.Contains(kv.Key))
+                                    ((Button)EInput).Enabled = false;
+                                ((Button)EInput).Click += (_, _) =>
+                                {
+                                    long? IHS = InputHandler[kv.Value.Item3].Item1();
+                                    if (IHS != null)
+                                    {
+                                        ((Button)EInput).Text = IHS.ToString();
+                                        //((Button)EInput).Text = IHS.ToString();
+                                        ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
+                                            .Item2(IHS.GetValueOrDefault(0));
+                                        ChangedIndication(EInput, null);
+                                    }
+                                };
+                            }
+                        }
+                        else if (kv.Value.Item2.GetType() == typeof(double))
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
@@ -446,25 +508,36 @@ namespace CommonUi
                             };
                             EInput = new TextBox()
                             {
-                                Text = (kv.Value.Item2 ?? 0).ToString(),
+                                Text = ((double)kv.Value.Item2).ToString(),
                                 TextAlignment = TextAlignment.Right,
                             };
-                            /*((TextBox)EInput).Text = (kv.Value.Item2 ?? 0).ToString();
-                                ((TextBox)EInput).TextAlignment = TextAlignment.Right;*/
                             ((TextBox)EInput).TextInput += ChangedIndication;
                             ((TextBox)EInput).BackgroundColor = BG;
                             ((TextBox)EInput).TextColor = FG;
                             ((TextBox)EInput).Font = TFont;
                             ((TextBox)EInput).Size = CSize;
                             ((TextBox)EInput).KeyUp += GoToNext;
-                            if (DenyList.Contains(kv.Key))
-                                ((TextBox)EInput).ReadOnly = true;
-                            if (kv.Key == IdentityColumn)
-                            {
-                                ((TextBox)EInput).Enabled = false;
-                            }
                         }
-                        else
+                        else if (kv.Value.Item2.GetType() == typeof(bool))
+                        {
+                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                            {
+                                if (e is CheckBox cb)
+                                {
+                                    cb.BackgroundColor = ChangedBackgroundColor;
+                                    cb.TextColor = ChangedForegroundColor;
+                                    _EChangeTracker.TryAdd(kv.Key, true);
+                                }
+                            };
+                            EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
+                            ((CheckBox)EInput).TextInput += ChangedIndication;
+                            ((CheckBox)EInput).TextColor = FG;
+                            ((CheckBox)EInput).BackgroundColor = BG;
+                            ((CheckBox)EInput).Size = CSize;
+                            ((CheckBox)EInput).Font = TFont;
+                            ((CheckBox)EInput).KeyUp += GoToNext;
+                        }
+                        else if (kv.Value.Item2.GetType() == typeof(string))
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
@@ -475,67 +548,40 @@ namespace CommonUi
                                     _EChangeTracker.TryAdd(kv.Key, true);
                                 }
                             };
-                            EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
-                            ELegend = new Label() { };
-                            if (DenyList.Contains(kv.Key))
-                                ((Button)EInput).Enabled = false;
-                            ((Button)EInput).Click += (_, _) =>
+                            EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
+                            if (kv.Key == IdentityColumn)
                             {
-                                long? IHS = InputHandler[kv.Value.Item3].Item1();
-                                if (IHS != null)
-                                {
-                                    ((Button)EInput).Text = IHS.ToString();
-                                    //((Button)EInput).Text = IHS.ToString();
-                                    ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
-                                        .Item2(IHS.GetValueOrDefault(0));
-                                    ChangedIndication(EInput, null);
-                                }
-                            };
-                        }
-                    }
-                    else if (kv.Value.Item2.GetType() == typeof(double))
-                    {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                        {
-                            if (e is TextBox tb)
-                            {
-                                tb.BackgroundColor = ChangedBackgroundColor;
-                                tb.TextColor = ChangedForegroundColor;
-                                _EChangeTracker.TryAdd(kv.Key, true);
+                                ((TextBox)EInput).Enabled = false;
                             }
-                        };
-                        EInput = new TextBox()
-                        {
-                            Text = ((double)kv.Value.Item2).ToString(),
-                            TextAlignment = TextAlignment.Right,
-                        };
-                        ((TextBox)EInput).TextInput += ChangedIndication;
-                        ((TextBox)EInput).BackgroundColor = BG;
-                        ((TextBox)EInput).TextColor = FG;
-                        ((TextBox)EInput).Font = TFont;
-                        ((TextBox)EInput).Size = CSize;
-                        ((TextBox)EInput).KeyUp += GoToNext;
+                            ((TextBox)EInput).TextInput += ChangedIndication;
+                            ((TextBox)EInput).BackgroundColor = BG;
+                            ((TextBox)EInput).TextColor = FG;
+                            ((TextBox)EInput).Font = TFont;
+                            ((TextBox)EInput).Size = CSize;
+                            ((TextBox)EInput).KeyUp += GoToNext;
+                        }
                     }
                     else if (kv.Value.Item2.GetType() == typeof(bool))
                     {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                        EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
                         {
                             if (e is CheckBox cb)
                             {
                                 cb.BackgroundColor = ChangedBackgroundColor;
                                 cb.TextColor = ChangedForegroundColor;
+
                                 _EChangeTracker.TryAdd(kv.Key, true);
                             }
                         };
-                        EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
-                        ((CheckBox)EInput).TextInput += ChangedIndication;
+                        EInput = new CheckBox() { Checked = ((bool)kv.Value.Item2) };
+                        ((CheckBox)EInput).CheckedChanged += ChangedIndication;
                         ((CheckBox)EInput).TextColor = FG;
                         ((CheckBox)EInput).BackgroundColor = BG;
                         ((CheckBox)EInput).Size = CSize;
                         ((CheckBox)EInput).Font = TFont;
                         ((CheckBox)EInput).KeyUp += GoToNext;
                     }
-                    else if (kv.Value.Item2.GetType() == typeof(string))
+                    else
                     {
                         EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                         {
@@ -547,106 +593,69 @@ namespace CommonUi
                             }
                         };
                         EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
-                        if (kv.Key == IdentityColumn)
-                        {
-                            ((TextBox)EInput).Enabled = false;
-                        }
                         ((TextBox)EInput).TextInput += ChangedIndication;
-                        ((TextBox)EInput).BackgroundColor = BG;
                         ((TextBox)EInput).TextColor = FG;
-                        ((TextBox)EInput).Font = TFont;
+                        ((TextBox)EInput).BackgroundColor = BG;
                         ((TextBox)EInput).Size = CSize;
+                        ((TextBox)EInput).Font = TFont;
                         ((TextBox)EInput).KeyUp += GoToNext;
                     }
-                }
-                else if (kv.Value.Item2.GetType() == typeof(bool))
-                {
-                    EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
+                    EInput.Width = 200;
+                    if (EInput is TextBox TB)
                     {
-                        if (e is CheckBox cb)
+                        TB.Width = 200;
+                    }
+                    Label EFieldName = new Label()
+                    {
+                        Width = ColorSettings.InnerLabelWidth ?? -1,
+                        Height = ColorSettings.InnerLabelHeight ?? -1,
+                        Text = TranslationHelper.Translate(
+                            kv.Value.ControlName,
+                            kv.Value.Item1,
+                            TranslationHelper.Lang
+                        ),
+                        TextColor = CurrentPanelColours.ForegroundColor,
+                    };
+                    if (EInput is Eto.Forms.TextBox T)
+                    {
+                        T.ShowBorder = false;
+
+                        //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
+                        EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend)
                         {
-                            cb.BackgroundColor = ChangedBackgroundColor;
-                            cb.TextColor = ChangedForegroundColor;
-
-                            _EChangeTracker.TryAdd(kv.Key, true);
-                        }
-                    };
-                    EInput = new CheckBox() { Checked = ((bool)kv.Value.Item2) };
-                    ((CheckBox)EInput).CheckedChanged += ChangedIndication;
-                    ((CheckBox)EInput).TextColor = FG;
-                    ((CheckBox)EInput).BackgroundColor = BG;
-                    ((CheckBox)EInput).Size = CSize;
-                    ((CheckBox)EInput).Font = TFont;
-                    ((CheckBox)EInput).KeyUp += GoToNext;
-                }
-                else
-                {
-                    EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
+                            ScaleHeight = false,
+                        };
+                    }
+                    else
                     {
-                        if (e is TextBox tb)
+                        EControl = new TableRow(EFieldName, new TableCell(EInput, true), ELegend)
                         {
-                            tb.BackgroundColor = ChangedBackgroundColor;
-                            tb.TextColor = ChangedForegroundColor;
-                            _EChangeTracker.TryAdd(kv.Key, true);
-                        }
-                    };
-                    EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
-                    ((TextBox)EInput).TextInput += ChangedIndication;
-                    ((TextBox)EInput).TextColor = FG;
-                    ((TextBox)EInput).BackgroundColor = BG;
-                    ((TextBox)EInput).Size = CSize;
-                    ((TextBox)EInput).Font = TFont;
-                    ((TextBox)EInput).KeyUp += GoToNext;
-                }
-                EInput.Width = 200;
-                if (EInput is TextBox TB)
-                {
-                    TB.Width = 200;
-                }
-                Label EFieldName = new Label()
-                {
-                    Width = ColorSettings.InnerLabelWidth ?? -1,
-                    Height = ColorSettings.InnerLabelHeight ?? -1,
-                    Text = TranslationHelper.Translate(
-                        kv.Value.ControlName,
-                        kv.Value.Item1,
-                        TranslationHelper.Lang
-                    ),
-                    TextColor = CurrentPanelColours.ForegroundColor,
-                };
-                if (EInput is Eto.Forms.TextBox T)
-                {
-                    T.ShowBorder = false;
-
-                    //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                    EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend)
+                            ScaleHeight = false,
+                        };
+                    }
+                    EFocusableList.Add(EInput);
+                    _Einputs.Add(kv.Key, EInput);
+                    if (EFieldName != null)
                     {
-                        ScaleHeight = false,
-                    };
-                }
-                else
-                {
-                    EControl = new TableRow(EFieldName, new TableCell(EInput, true), ELegend)
+                        EFieldName.BackgroundColor = LegendBG;
+                        EFieldName.TextColor = LegendFG;
+                        EFieldName.Font = LegendTFont;
+                    }
+                    _EFieldNames.Add(kv.Key, EFieldName);
+                    _ELegends.Add(kv.Key, ELegend);
+                    if(FieldsListHandledByGeneratedPanels != null && FieldsListHandledByGeneratedPanels.Where(ikvp => ikvp.Value.ParentField == kv.Key).Count() > 0)
                     {
-                        ScaleHeight = false,
-                    };
-                }
-                EFocusableList.Add(EInput);
-                _Einputs.Add(kv.Key, EInput);
-                if (EFieldName != null)
-                {
-                    EFieldName.BackgroundColor = LegendBG;
-                    EFieldName.TextColor = LegendFG;
-                    EFieldName.Font = LegendTFont;
-                }
-                _EFieldNames.Add(kv.Key, EFieldName);
-                _ELegends.Add(kv.Key, ELegend);
+                        var Fields = FieldsListHandledByGeneratedPanels.Where(ikvp => ikvp.Value.ParentField == kv.Key).First();
+                        var GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, (TextBox)EInput);
+                        EControl.Cells.Add(GeneratedCustom);
+                    }
 
-                if (CurrentNo < EMid)
-                    EControlsL.Add(EControl);
-                else
-                    EControlsR.Add(EControl);
-                CurrentNo++;
+                    if (CurrentNo < EMid)
+                        EControlsL.Add(EControl);
+                    else
+                        EControlsR.Add(EControl);
+                    CurrentNo++;
+                }
             }
             _EControlsL = EControlsL;
             _EControlsR = EControlsR;

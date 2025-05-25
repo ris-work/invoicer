@@ -11,5 +11,6 @@ namespace CommonUi
         void MapLookupValues(string[] fieldNames);
         object LookupValue(string fieldName);
         public void SetMoveNext(Action MoveNext);
+        public (bool isValid, string errorDescription) Validate();
     }
 }
