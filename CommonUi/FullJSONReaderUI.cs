@@ -222,7 +222,12 @@ namespace JsonEditorExample
                     );
 
                     {
-                        var tb = new TextBox { Text = value.GetString(), Tag = path , Width = 300};
+                        var tb = new TextBox
+                        {
+                            Text = value.GetString(),
+                            Tag = path,
+                            Width = 300,
+                        };
                         return tb;
                     }
 
@@ -232,7 +237,12 @@ namespace JsonEditorExample
                     );
 
                     {
-                        var tb = new TextBox { Text = value.ToString(), Tag = path, Width = 300 };
+                        var tb = new TextBox
+                        {
+                            Text = value.ToString(),
+                            Tag = path,
+                            Width = 300,
+                        };
                         return tb;
                     }
             }

@@ -1,6 +1,6 @@
 ﻿using System;
-using Eto.Forms;
 using Eto.Drawing;
+using Eto.Forms;
 
 namespace CommonUi
 {
@@ -11,12 +11,12 @@ namespace CommonUi
         private readonly Label percentageLabel;
         private readonly TextBox absoluteTextBox;
         private readonly TextBox percentageTextBox;
-        private readonly TextBox parentTextBox;  // Provides the base value via its Text property
+        private readonly TextBox parentTextBox; // Provides the base value via its Text property
 
         // Configuration fields
         private readonly int precisionDigits;
         private readonly Orientation layoutOrientation;
-        private readonly string discountTypeText;  // e.g. "Discount" or "Markup" after translation
+        private readonly string discountTypeText; // e.g. "Discount" or "Markup" after translation
 
         // Flag to prevent re-entrant updates.
         private bool isUpdating;
@@ -39,7 +39,13 @@ namespace CommonUi
         /// <param name="precisionDigits">
         /// Number of decimal digits to display (default is 2).
         /// </param>
-        public DiscountMarkupPanel(TextBox parentTextBox, string discountType, Orientation orientation, EventHandler<EventArgs> parentTextChangedHandler = null, int precisionDigits = 2)
+        public DiscountMarkupPanel(
+            TextBox parentTextBox,
+            string discountType,
+            Orientation orientation,
+            EventHandler<EventArgs> parentTextChangedHandler = null,
+            int precisionDigits = 2
+        )
         {
             if (parentTextBox == null)
                 throw new ArgumentNullException(nameof(parentTextBox));
@@ -55,7 +61,7 @@ namespace CommonUi
             percentageLabel = new Label { Text = Translate("Percentage " + discountTypeText) };
 
             // Create the two textboxes.
-            absoluteTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth??200 };
+            absoluteTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200 };
             percentageTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200 };
 
             // Attach change events for interlinked updating.
@@ -89,8 +95,8 @@ namespace CommonUi
                     Rows =
                     {
                         new TableRow(absoluteLabel, absoluteTextBox),
-                        new TableRow(percentageLabel, percentageTextBox)
-                    }
+                        new TableRow(percentageLabel, percentageTextBox),
+                    },
                 };
             }
             else // Orientation.Vertical
@@ -104,8 +110,8 @@ namespace CommonUi
                         new TableRow(new TableCell(absoluteLabel, true)),
                         new TableRow(new TableCell(absoluteTextBox, true)),
                         new TableRow(new TableCell(percentageLabel, true)),
-                        new TableRow(new TableCell(percentageTextBox, true))
-                    }
+                        new TableRow(new TableCell(percentageTextBox, true)),
+                    },
                 };
             }
 
@@ -256,7 +262,11 @@ namespace CommonUi
         /// <param name="baseValue">The base value from the parent TextBox.</param>
         /// <param name="absolute">The absolute discount/markup value.</param>
         /// <param name="percentage">The percentage discount/markup value.</param>
-        public (bool isValid, string errorDescription) PrimitiveValidate(double baseValue, double absolute, double percentage)
+        public (bool isValid, string errorDescription) PrimitiveValidate(
+            double baseValue,
+            double absolute,
+            double percentage
+        )
         {
             double expectedAbsolute = baseValue * (percentage / 100.0);
             double tolerance = Math.Abs(expectedAbsolute) * 0.0001;
@@ -269,9 +279,10 @@ namespace CommonUi
             }
             else
             {
-                string error = $"Validation failed: expected absolute value to be {expectedAbsolute} " +
-                               $"(within tolerance {tolerance}) for base value {baseValue} and percentage {percentage}%, " +
-                               $"but got {absolute}.";
+                string error =
+                    $"Validation failed: expected absolute value to be {expectedAbsolute} "
+                    + $"(within tolerance {tolerance}) for base value {baseValue} and percentage {percentage}%, "
+                    + $"but got {absolute}.";
                 return (false, error);
             }
         }

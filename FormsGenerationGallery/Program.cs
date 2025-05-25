@@ -89,7 +89,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 var SampleJson =
     @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true}";
 var SampleJsonNested =
-@"{
+    @"{
     ""identity"": {
         ""firstName"": ""John"",
         ""lastName"": ""Doe"",
@@ -227,7 +227,11 @@ AC.Run(
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
                 DiscountMarkupText,
-                new DiscountMarkupPanel(DiscountMarkupText, "Discount", Eto.Forms.Orientation.Vertical) ,
+                new DiscountMarkupPanel(
+                    DiscountMarkupText,
+                    "Discount",
+                    Eto.Forms.Orientation.Vertical
+                ),
                 new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
                 new JsonEditorExample.JsonEditorPanel(
                     SampleJsonNested,
