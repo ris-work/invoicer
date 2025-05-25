@@ -37,4 +37,6 @@ public partial class Inventory
     public bool UserDiscounts { get; set; }
 
     public DateTime LastCountedAt { get; set; }
+
+    public string Remarks { get; set; } = null!;
 }

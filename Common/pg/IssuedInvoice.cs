@@ -21,4 +21,8 @@ public partial class IssuedInvoice
     public double PaidValue { get; set; }
 
     public string? InvoiceHumanFriendly { get; set; }
+
+    public DateTimeOffset InvoiceTimePosted { get; set; }
+
+    public bool IsPosted { get; set; }
 }

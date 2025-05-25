@@ -1,0 +1,47 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace RV.InvNew.Common;
+
+public partial class Purchase
+{
+    public long ReceivedInvoiceId { get; set; }
+
+    public long Itemcode { get; set; }
+
+    public long PackSize { get; set; }
+
+    public long PackQuantity { get; set; }
+
+    public double UnitQuantity { get; set; }
+
+    public long FreePacks { get; set; }
+
+    public double FreeUnits { get; set; }
+
+    public DateTimeOffset ExpiryDate { get; set; }
+
+    public DateTimeOffset? ManufacturingDate { get; set; }
+
+    public string? ManufacturerBatchId { get; set; }
+
+    public string ProductName { get; set; } = null!;
+
+    public DateTimeOffset AddedDate { get; set; }
+
+    public double DiscountPercentage { get; set; }
+
+    public double DiscountAbsolute { get; set; }
+
+    public double GrossProfitPercentage { get; set; }
+
+    public double GrossProfitAbsolute { get; set; }
+
+    public double CostPerUnit { get; set; }
+
+    public double CostPerPack { get; set; }
+
+    public double GrossCostPerUnit { get; set; }
+
+    public double SellingPrice { get; set; }
+}

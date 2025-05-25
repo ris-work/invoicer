@@ -54,4 +54,6 @@ public partial class Catalogue
     public double WeightPerUnitKg { get; set; }
 
     public bool AllowPriceSuggestions { get; set; }
+
+    public string Remarks { get; set; } = null!;
 }

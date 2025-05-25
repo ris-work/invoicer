@@ -31,6 +31,10 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<CategoriesBitmask> CategoriesBitmasks { get; set; }
 
+    public virtual DbSet<CodesBatch> CodesBatches { get; set; }
+
+    public virtual DbSet<CodesCatalogue> CodesCatalogues { get; set; }
+
     public virtual DbSet<Credential> Credentials { get; set; }
 
     public virtual DbSet<CustomerDiscount> CustomerDiscounts { get; set; }
@@ -71,7 +75,11 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<PiiImage> PiiImages { get; set; }
 
+    public virtual DbSet<Purchase> Purchases { get; set; }
+
     public virtual DbSet<Receipt> Receipts { get; set; }
+
+    public virtual DbSet<ReceivedInvoice> ReceivedInvoices { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
 
@@ -291,6 +299,7 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.ProcessDiscounts)
                 .HasDefaultValue(true)
                 .HasColumnName("process_discounts");
+            entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
             entity
                 .Property(e => e.VatCategoryAdjustable)
                 .HasDefaultValue(false)
@@ -312,6 +321,46 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Bitmask).ValueGeneratedNever().HasColumnName("bitmask");
             entity.Property(e => e.I18nLabel).HasColumnName("i18n_label");
             entity.Property(e => e.Name).HasColumnName("name");
+        });
+
+        modelBuilder.Entity<CodesBatch>(entity =>
+        {
+            entity
+                .HasKey(e => new
+                {
+                    e.Code,
+                    e.Itemcode,
+                    e.Batchcode,
+                })
+                .HasName("codes_batches_pkey");
+
+            entity.ToTable("codes_batches");
+
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
+        });
+
+        modelBuilder.Entity<CodesCatalogue>(entity =>
+        {
+            entity.HasKey(e => new { e.Code, e.Itemcode }).HasName("codes_catalogue_pkey");
+
+            entity.ToTable("codes_catalogue");
+
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
         });
 
         modelBuilder.Entity<Credential>(entity =>
@@ -433,6 +482,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("measurement_unit");
             entity.Property(e => e.MfgDate).HasDefaultValueSql("now()").HasColumnName("mfg_date");
             entity.Property(e => e.PackedSize).HasDefaultValueSql("1").HasColumnName("packed_size");
+            entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
             entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
             entity.Property(e => e.Suppliercode).HasDefaultValue(0L).HasColumnName("suppliercode");
             entity.Property(e => e.Units).HasColumnName("units");
@@ -470,6 +520,12 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.InvoiceTime)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("invoice_time");
+            entity
+                .Property(e => e.InvoiceTimePosted)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("invoice_time_posted");
+            entity.Property(e => e.IsPosted).HasDefaultValue(false).HasColumnName("is_posted");
             entity.Property(e => e.IsSettled).HasColumnName("is_settled");
             entity.Property(e => e.IssuedValue).HasColumnName("issued_value");
             entity.Property(e => e.PaidValue).HasColumnName("paid_value");
@@ -660,6 +716,48 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Image).HasColumnName("image");
         });
 
+        modelBuilder.Entity<Purchase>(entity =>
+        {
+            entity.HasNoKey().ToTable("purchases");
+
+            entity
+                .Property(e => e.AddedDate)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("added_date");
+            entity.Property(e => e.CostPerPack).HasColumnName("cost_per_pack");
+            entity.Property(e => e.CostPerUnit).HasColumnName("cost_per_unit");
+            entity.Property(e => e.DiscountAbsolute).HasColumnName("discount_absolute");
+            entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
+            entity
+                .Property(e => e.ExpiryDate)
+                .HasColumnType("time with time zone")
+                .HasColumnName("expiry_date");
+            entity.Property(e => e.FreePacks).HasDefaultValue(0L).HasColumnName("free_packs");
+            entity.Property(e => e.FreeUnits).HasColumnName("free_units");
+            entity.Property(e => e.GrossCostPerUnit).HasColumnName("gross_cost_per_unit");
+            entity.Property(e => e.GrossProfitAbsolute).HasColumnName("gross_profit_absolute");
+            entity.Property(e => e.GrossProfitPercentage).HasColumnName("gross_profit_percentage");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity
+                .Property(e => e.ManufacturerBatchId)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("manufacturer_batch_id");
+            entity
+                .Property(e => e.ManufacturingDate)
+                .HasColumnType("time with time zone")
+                .HasColumnName("manufacturing_date");
+            entity.Property(e => e.PackQuantity).HasDefaultValue(0L).HasColumnName("pack_quantity");
+            entity.Property(e => e.PackSize).HasDefaultValue(0L).HasColumnName("pack_size");
+            entity
+                .Property(e => e.ProductName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("product_name");
+            entity.Property(e => e.ReceivedInvoiceId).HasColumnName("received_invoice_id");
+            entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
+            entity.Property(e => e.UnitQuantity).HasColumnName("unit_quantity");
+        });
+
         modelBuilder.Entity<Receipt>(entity =>
         {
             entity.HasKey(e => e.ReceiptId).HasName("receipts_pkey");
@@ -675,6 +773,33 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("time with time zone")
                 .HasColumnName("time_received");
+        });
+
+        modelBuilder.Entity<ReceivedInvoice>(entity =>
+        {
+            entity.HasKey(e => e.ReceivedInvoiceNo).HasName("received_invoices_pkey");
+
+            entity.ToTable("received_invoices");
+
+            entity.Property(e => e.ReceivedInvoiceNo).HasColumnName("received_invoice_no");
+            entity
+                .Property(e => e.DefaultVatCategory)
+                .HasDefaultValue(0L)
+                .HasColumnName("default_VAT_category");
+            entity.Property(e => e.DefaultVatPercentage).HasColumnName("default_VAT_percentage");
+            entity.Property(e => e.Discount).HasColumnName("discount");
+            entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
+            entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
+            entity.Property(e => e.IsPosted).HasDefaultValue(false).HasColumnName("is_posted");
+            entity.Property(e => e.IsSettled).HasDefaultValue(false).HasColumnName("is_settled");
+            entity.Property(e => e.Reference).HasColumnName("reference");
+            entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
+            entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
+            entity
+                .Property(e => e.SupplierName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("supplier_name");
+            entity.Property(e => e.TransportCharges).HasColumnName("transport_charges");
         });
 
         modelBuilder.Entity<Request>(entity =>
