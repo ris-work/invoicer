@@ -29,6 +29,7 @@ namespace CommonUi
     {
         public PanelSettings? LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
+        public delegate Eto.Forms.Panel GeneratePanel(string[] FieldNames);
         public bool ChangesOnly = false;
         public string Context = "default";
         public IReadOnlyDictionary<string, object> Values
@@ -48,6 +49,7 @@ namespace CommonUi
         Dictionary<string, object> ConvertedInputs = new();
         Dictionary<string, Label> _EFieldNames = new();
         Dictionary<string, Type> OriginalTypes = new();
+        Dictionary<string, GeneratePanel> PanelGenerators = new();
         IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
@@ -311,9 +313,15 @@ namespace CommonUi
             string? IdentityColumn,
             bool ChangesOnly = false,
             string[]? DenyList = null,
-            PanelSettings PanelColours = null
+            PanelSettings PanelColours = null,
+            IReadOnlyDictionary<string, GeneratePanel>? PanelGenerators = null,
+            IReadOnlyDictionary<string[], string>? FieldsListHandledByGeneratedPanels = null
         )
         {
+            List<string> NotInNormalFlow = new();
+            if (FieldsListHandledByGeneratedPanels != null) foreach(var kv in FieldsListHandledByGeneratedPanels) {
+                NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
+            }
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
@@ -369,7 +377,9 @@ namespace CommonUi
                 {
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
                     if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
-                        EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
+                        if (((Eto.Forms.Control)e).Enabled)
+                            EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
+                        else GoToNext(e, a);
                     else
                         SaveButton.Focus();
                 }

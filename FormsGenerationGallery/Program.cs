@@ -37,6 +37,10 @@ var CT = new CatalogueTransfer
     VatCategoryAdjustable = false,
     VatDependsOnUser = false,
 };
+ColorSettings.BackgroundColor = Eto.Drawing.Color.FromGrayscale(255);
+ColorSettings.ForegroundColor = Eto.Drawing.Color.FromGrayscale(0);
+ColorSettings.LesserBackgroundColor = Eto.Drawing.Color.FromGrayscale(60);
+ColorSettings.LesserForegroundColor = Eto.Drawing.Color.FromGrayscale(190);
 var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 {
     {
@@ -200,13 +204,23 @@ var PurchasingUIButton = (new Eto.Forms.Button()
     Text = "Launch ReceivedInvoices UI with Purchases",
 });
 PurchasingUIButton.Click += (_, _) => {
-    List<Purchase> LP = new List<Purchase> {
-        new Purchase(){
-
-        }
+    List<Purchase> LP =
+        SampleDataGenerator.GetSampleValidPurchases();
+    var F = new Eto.Forms.Form()
+    {
+        Content = new GenEtoUI( SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
+        (_) =>
+        {
+            return 100;
+        },
+                    (_) =>
+                    {
+                        return 100;
+                    },
+                    ActionsMap,
+                    null,
+                    true)
     };
-   var F =  new Eto.Forms.Form() { 
-   };
     F.Show();
 };
 AC.Run(
