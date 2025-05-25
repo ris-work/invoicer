@@ -319,9 +319,11 @@ namespace CommonUi
         )
         {
             List<string> NotInNormalFlow = new();
-            if (FieldsListHandledByGeneratedPanels != null) foreach(var kv in FieldsListHandledByGeneratedPanels) {
-                NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
-            }
+            if (FieldsListHandledByGeneratedPanels != null)
+                foreach (var kv in FieldsListHandledByGeneratedPanels)
+                {
+                    NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
+                }
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
@@ -378,8 +380,10 @@ namespace CommonUi
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
                     if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
                         if (((Eto.Forms.Control)e).Enabled)
-                            EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
-                        else GoToNext(e, a);
+                            EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1]
+                                .Focus();
+                        else
+                            GoToNext(e, a);
                     else
                         SaveButton.Focus();
                 }

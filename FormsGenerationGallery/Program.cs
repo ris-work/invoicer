@@ -199,27 +199,28 @@ var AC = new Eto.Forms.Application();
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
 Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg", 100);
 TextBox DiscountMarkupText = new TextBox() { Text = "10.52" };
-var PurchasingUIButton = (new Eto.Forms.Button()
+var PurchasingUIButton = (
+    new Eto.Forms.Button() { Text = "Launch ReceivedInvoices UI with Purchases" }
+);
+PurchasingUIButton.Click += (_, _) =>
 {
-    Text = "Launch ReceivedInvoices UI with Purchases",
-});
-PurchasingUIButton.Click += (_, _) => {
-    List<Purchase> LP =
-        SampleDataGenerator.GetSampleValidPurchases();
+    List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
     var F = new Eto.Forms.Form()
     {
-        Content = new GenEtoUI( SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
-        (_) =>
-        {
-            return 100;
-        },
-                    (_) =>
-                    {
-                        return 100;
-                    },
-                    ActionsMap,
-                    null,
-                    true)
+        Content = new GenEtoUI(
+            SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
+            (_) =>
+            {
+                return 100;
+            },
+            (_) =>
+            {
+                return 100;
+            },
+            ActionsMap,
+            null,
+            true
+        ),
     };
     F.Show();
 };
@@ -254,7 +255,7 @@ AC.Run(
                     Orientation = Eto.Forms.Orientation.Horizontal,
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
-                PurchasingUIButton                ,
+                PurchasingUIButton,
                 DiscountMarkupText,
                 new DiscountMarkupPanel(
                     DiscountMarkupText,

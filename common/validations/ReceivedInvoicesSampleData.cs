@@ -27,256 +27,249 @@ namespace RV.InvNew.Common
                 // Discount 5% → DiscountAbsolute = 2,500.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 101,
-                    PackSize               = 25,
-                    PackQuantity           = 10,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 101,
+                    PackSize = 25,
+                    PackQuantity = 10,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-2),
-                    ManufacturerBatchId    = "BATCH-RICE-001",
-                    ProductName            = "Rice",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 5.0,
-                    DiscountAbsolute       = 2500,
-                    GrossProfitPercentage  = 10.0,
-                    GrossProfitAbsolute    = 2500,  // Example value
-                    CostPerUnit            = 200,
-                    CostPerPack            = 25 * 200,
-                    GrossCostPerUnit       = 210,
-                    SellingPrice           = 250,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = (50000 - 2500) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 250
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-2),
+                    ManufacturerBatchId = "BATCH-RICE-001",
+                    ProductName = "Rice",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 5.0,
+                    DiscountAbsolute = 2500,
+                    GrossProfitPercentage = 10.0,
+                    GrossProfitAbsolute = 2500, // Example value
+                    CostPerUnit = 200,
+                    CostPerPack = 25 * 200,
+                    GrossCostPerUnit = 210,
+                    SellingPrice = 250,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = (50000 - 2500) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 250,
                 },
-
                 // Purchase 2: Wheat
                 // 5 packs of 50 kg plus 1 free pack → total units = 300.
                 // Base cost = 300 × 150 = 45,000; Discount 3% → 1,350.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 102,
-                    PackSize               = 50,
-                    PackQuantity           = 5,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 102,
+                    PackSize = 50,
+                    PackQuantity = 5,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 1,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-1),
-                    ManufacturerBatchId    = "BATCH-WHEAT-002",
-                    ProductName            = "Wheat",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 3.0,
-                    DiscountAbsolute       = 1350,
-                    GrossProfitPercentage  = 8.0,
-                    GrossProfitAbsolute    = 1080,  // Approximate value
-                    CostPerUnit            = 150,
-                    CostPerPack            = 50 * 150,
-                    GrossCostPerUnit       = 155,
-                    SellingPrice           = 180,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = (45000 - 1350) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 300
+                    FreePacks = 1,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-1),
+                    ManufacturerBatchId = "BATCH-WHEAT-002",
+                    ProductName = "Wheat",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 3.0,
+                    DiscountAbsolute = 1350,
+                    GrossProfitPercentage = 8.0,
+                    GrossProfitAbsolute = 1080, // Approximate value
+                    CostPerUnit = 150,
+                    CostPerPack = 50 * 150,
+                    GrossCostPerUnit = 155,
+                    SellingPrice = 180,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = (45000 - 1350) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 300,
                 },
-
                 // Purchase 3: Milk Powder
                 // 20 packs of 1 kg at LKR 1200 per kg.
                 // Base = 20 * 1200 = 24,000; Discount 2% → 480.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 103,
-                    PackSize               = 1,
-                    PackQuantity           = 20,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 103,
+                    PackSize = 1,
+                    PackQuantity = 20,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddMonths(12),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-3),
-                    ManufacturerBatchId    = "BATCH-MILK-003",
-                    ProductName            = "Milk Powder",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 2.0,
-                    DiscountAbsolute       = 480,
-                    GrossProfitPercentage  = 15.0,
-                    GrossProfitAbsolute    = 3600,  // Example value
-                    CostPerUnit            = 1200,
-                    CostPerPack            = 1200,
-                    GrossCostPerUnit       = 1250,
-                    SellingPrice           = 1400,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = (24000 - 480) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 20
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddMonths(12),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-3),
+                    ManufacturerBatchId = "BATCH-MILK-003",
+                    ProductName = "Milk Powder",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 2.0,
+                    DiscountAbsolute = 480,
+                    GrossProfitPercentage = 15.0,
+                    GrossProfitAbsolute = 3600, // Example value
+                    CostPerUnit = 1200,
+                    CostPerPack = 1200,
+                    GrossCostPerUnit = 1250,
+                    SellingPrice = 1400,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = (24000 - 480) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 20,
                 },
-
                 // Purchase 4: Dehusked Coconut
                 // 8 packs of 5 kg at LKR 300 per kg.
                 // Base = 40 * 300 = 12,000; Discount 4% → 480.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 104,
-                    PackSize               = 5,
-                    PackQuantity           = 8,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 104,
+                    PackSize = 5,
+                    PackQuantity = 8,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-4),
-                    ManufacturerBatchId    = "BATCH-COCO-004",
-                    ProductName            = "Dehusked Coconut",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 4.0,
-                    DiscountAbsolute       = 480,
-                    GrossProfitPercentage  = 5.0,
-                    GrossProfitAbsolute    = 600,   // Example value
-                    CostPerUnit            = 300,
-                    CostPerPack            = 5 * 300,
-                    GrossCostPerUnit       = 310,
-                    SellingPrice           = 350,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = ((40 * 300) - 480) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 40
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-4),
+                    ManufacturerBatchId = "BATCH-COCO-004",
+                    ProductName = "Dehusked Coconut",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 4.0,
+                    DiscountAbsolute = 480,
+                    GrossProfitPercentage = 5.0,
+                    GrossProfitAbsolute = 600, // Example value
+                    CostPerUnit = 300,
+                    CostPerPack = 5 * 300,
+                    GrossCostPerUnit = 310,
+                    SellingPrice = 350,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = ((40 * 300) - 480) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 40,
                 },
-
                 // Purchase 5: Barley
                 // 15 packs of 10 kg at LKR 180 per kg.
                 // Base = 150 * 180 = 27,000; Discount 6% → 1,620.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 105,
-                    PackSize               = 10,
-                    PackQuantity           = 15,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 105,
+                    PackSize = 10,
+                    PackQuantity = 15,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-5),
-                    ManufacturerBatchId    = "BATCH-BARL-005",
-                    ProductName            = "Barley",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 6.0,
-                    DiscountAbsolute       = 1620,
-                    GrossProfitPercentage  = 7.0,
-                    GrossProfitAbsolute    = 1890,  // Approximate value
-                    CostPerUnit            = 180,
-                    CostPerPack            = 10 * 180,
-                    GrossCostPerUnit       = 185,
-                    SellingPrice           = 210,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = ((150 * 180) - 1620) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 150
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-5),
+                    ManufacturerBatchId = "BATCH-BARL-005",
+                    ProductName = "Barley",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 6.0,
+                    DiscountAbsolute = 1620,
+                    GrossProfitPercentage = 7.0,
+                    GrossProfitAbsolute = 1890, // Approximate value
+                    CostPerUnit = 180,
+                    CostPerPack = 10 * 180,
+                    GrossCostPerUnit = 185,
+                    SellingPrice = 210,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = ((150 * 180) - 1620) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 150,
                 },
-
                 // Purchase 6: Maize
                 // 12 packs of 20 kg plus 1 free pack → total units = 260.
                 // Base = 260 * 160 = 41,600; Discount 3.5% → ≈1,456.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 106,
-                    PackSize               = 20,
-                    PackQuantity           = 12,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 106,
+                    PackSize = 20,
+                    PackQuantity = 12,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 1,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-6),
-                    ManufacturerBatchId    = "BATCH-MAIZ-006",
-                    ProductName            = "Maize",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 3.5,
-                    DiscountAbsolute       = 1456,
-                    GrossProfitPercentage  = 10.0,
-                    GrossProfitAbsolute    = 416,   // Example value
-                    CostPerUnit            = 160,
-                    CostPerPack            = 20 * 160,
-                    GrossCostPerUnit       = 165,
-                    SellingPrice           = 190,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = ((260 * 160) - 1456) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 260
+                    FreePacks = 1,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-6),
+                    ManufacturerBatchId = "BATCH-MAIZ-006",
+                    ProductName = "Maize",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 3.5,
+                    DiscountAbsolute = 1456,
+                    GrossProfitPercentage = 10.0,
+                    GrossProfitAbsolute = 416, // Example value
+                    CostPerUnit = 160,
+                    CostPerPack = 20 * 160,
+                    GrossCostPerUnit = 165,
+                    SellingPrice = 190,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = ((260 * 160) - 1456) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 260,
                 },
-
                 // Purchase 7: Oats
                 // 30 packs of 1 kg plus 2 free packs → total units = 32.
                 // Base = 32 * 400 = 12,800; Discount 5% → 640.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 107,
-                    PackSize               = 1,
-                    PackQuantity           = 30,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 107,
+                    PackSize = 1,
+                    PackQuantity = 30,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 2,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-2),
-                    ManufacturerBatchId    = "BATCH-OATS-007",
-                    ProductName            = "Oats",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 5.0,
-                    DiscountAbsolute       = 640,
-                    GrossProfitPercentage  = 8.0,
-                    GrossProfitAbsolute    = 1024,  // Example value
-                    CostPerUnit            = 400,
-                    CostPerPack            = 400,
-                    GrossCostPerUnit       = 410,
-                    SellingPrice           = 450,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = ((32 * 400) - 640) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 32
+                    FreePacks = 2,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-2),
+                    ManufacturerBatchId = "BATCH-OATS-007",
+                    ProductName = "Oats",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 5.0,
+                    DiscountAbsolute = 640,
+                    GrossProfitPercentage = 8.0,
+                    GrossProfitAbsolute = 1024, // Example value
+                    CostPerUnit = 400,
+                    CostPerPack = 400,
+                    GrossCostPerUnit = 410,
+                    SellingPrice = 450,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = ((32 * 400) - 640) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 32,
                 },
-
                 // Purchase 8: Chickpea
                 // 7 packs of 5 kg plus 5 free units → total units = 40.
                 // Base = 40 × 250 = 10,000; Discount 4% → 400.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 5001,
-                    Itemcode               = 108,
-                    PackSize               = 5,
-                    PackQuantity           = 7,
+                    ReceivedInvoiceId = 5001,
+                    Itemcode = 108,
+                    PackSize = 5,
+                    PackQuantity = 7,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 5,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-3),
-                    ManufacturerBatchId    = "BATCH-CHIK-008",
-                    ProductName            = "Chickpea",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 4.0,
-                    DiscountAbsolute       = 400,
-                    GrossProfitPercentage  = 6.0,
-                    GrossProfitAbsolute    = 600,   // Example value
-                    CostPerUnit            = 250,
-                    CostPerPack            = 5 * 250,
-                    GrossCostPerUnit       = 260,
-                    SellingPrice           = 300,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = ((40 * 250) - 400) * 15 / 100,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 40
-                }
+                    FreePacks = 0,
+                    FreeUnits = 5,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-3),
+                    ManufacturerBatchId = "BATCH-CHIK-008",
+                    ProductName = "Chickpea",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 4.0,
+                    DiscountAbsolute = 400,
+                    GrossProfitPercentage = 6.0,
+                    GrossProfitAbsolute = 600, // Example value
+                    CostPerUnit = 250,
+                    CostPerPack = 5 * 250,
+                    GrossCostPerUnit = 260,
+                    SellingPrice = 300,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = ((40 * 250) - 400) * 15 / 100,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 40,
+                },
             };
         }
 
@@ -288,10 +281,14 @@ namespace RV.InvNew.Common
         public static ReceivedInvoice GetSampleValidInvoice(List<Purchase> purchases)
         {
             double totalPurchaseCost = purchases.Sum(p =>
-                p.CostPerUnit * (p.PackQuantity * p.PackSize +
-                                 p.ReceivedAsUnitQuantity +
-                                 p.FreePacks * p.PackSize +
-                                 p.FreeUnits));
+                p.CostPerUnit
+                * (
+                    p.PackQuantity * p.PackSize
+                    + p.ReceivedAsUnitQuantity
+                    + p.FreePacks * p.PackSize
+                    + p.FreeUnits
+                )
+            );
 
             // For this valid sample, assume a header discount of 1000 and transport charges of 500.
             return new ReceivedInvoice
@@ -308,7 +305,7 @@ namespace RV.InvNew.Common
                 DefaultVatPercentage = 15,
                 DefaultVatCategory = 1,
                 DiscountPercentage = 2.0,
-                IsSettled = false
+                IsSettled = false,
             };
         }
     }
@@ -330,209 +327,209 @@ namespace RV.InvNew.Common
                 // DiscountAbsolute is set below the expected value.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 201,
-                    PackSize               = 20,
-                    PackQuantity           = 5,
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 201,
+                    PackSize = 20,
+                    PackQuantity = 5,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-2),
-                    ManufacturerBatchId    = "INV-BATCH-201",
-                    ProductName            = "Invalid Product 1 (Discount Error)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 10.0,
-                    DiscountAbsolute       = 500,    // Too low compared to expected value.
-                    GrossProfitPercentage  = 5.0,
-                    GrossProfitAbsolute    = 0,      // Incorrect gross profit absolute.
-                    CostPerUnit            = 100,
-                    CostPerPack            = 20 * 100,
-                    GrossCostPerUnit       = 105,
-                    SellingPrice           = 120,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 0,      // Incorrect VAT calculation.
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 100
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-2),
+                    ManufacturerBatchId = "INV-BATCH-201",
+                    ProductName = "Invalid Product 1 (Discount Error)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 10.0,
+                    DiscountAbsolute = 500, // Too low compared to expected value.
+                    GrossProfitPercentage = 5.0,
+                    GrossProfitAbsolute = 0, // Incorrect gross profit absolute.
+                    CostPerUnit = 100,
+                    CostPerPack = 20 * 100,
+                    GrossCostPerUnit = 105,
+                    SellingPrice = 120,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 0, // Incorrect VAT calculation.
+                    VatCategoryName = "Standard",
+                    TotalUnits = 100,
                 },
                 // Purchase 2: Negative quantities error.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 202,
-                    PackSize               = -10,   // Negative pack size (invalid).
-                    PackQuantity           = 5,
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 202,
+                    PackSize = -10, // Negative pack size (invalid).
+                    PackQuantity = 5,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-2),
-                    ManufacturerBatchId    = "INV-BATCH-202",
-                    ProductName            = "Invalid Product 2 (Negative Quantities)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 5.0,
-                    DiscountAbsolute       = 100,
-                    GrossProfitPercentage  = 7.0,
-                    GrossProfitAbsolute    = 50,
-                    CostPerUnit            = 120,
-                    CostPerPack            = -10 * 120, // Negative value.
-                    GrossCostPerUnit       = 125,
-                    SellingPrice           = 140,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 0,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = -50    // Incorrect total units.
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-2),
+                    ManufacturerBatchId = "INV-BATCH-202",
+                    ProductName = "Invalid Product 2 (Negative Quantities)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 5.0,
+                    DiscountAbsolute = 100,
+                    GrossProfitPercentage = 7.0,
+                    GrossProfitAbsolute = 50,
+                    CostPerUnit = 120,
+                    CostPerPack = -10 * 120, // Negative value.
+                    GrossCostPerUnit = 125,
+                    SellingPrice = 140,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 0,
+                    VatCategoryName = "Standard",
+                    TotalUnits = -50, // Incorrect total units.
                 },
                 // Purchase 3: Total units inconsistency.
                 // TotalUnits field is set too low when compared with computed value.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 203,
-                    PackSize               = 10,
-                    PackQuantity           = 10,
-                    ReceivedAsUnitQuantity = 2,    // Calculated total units should be 10*10 + 2 = 102.
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-3),
-                    ManufacturerBatchId    = "INV-BATCH-203",
-                    ProductName            = "Invalid Product 3 (Total Units Mismatch)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 5.0,
-                    DiscountAbsolute       = 500,
-                    GrossProfitPercentage  = 10.0,
-                    GrossProfitAbsolute    = 150,
-                    CostPerUnit            = 50,
-                    CostPerPack            = 10 * 50,
-                    GrossCostPerUnit       = 55,
-                    SellingPrice           = 60,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 300,
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 50    // Incorrect; should be nearer to 102.
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 203,
+                    PackSize = 10,
+                    PackQuantity = 10,
+                    ReceivedAsUnitQuantity = 2, // Calculated total units should be 10*10 + 2 = 102.
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-3),
+                    ManufacturerBatchId = "INV-BATCH-203",
+                    ProductName = "Invalid Product 3 (Total Units Mismatch)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 5.0,
+                    DiscountAbsolute = 500,
+                    GrossProfitPercentage = 10.0,
+                    GrossProfitAbsolute = 150,
+                    CostPerUnit = 50,
+                    CostPerPack = 10 * 50,
+                    GrossCostPerUnit = 55,
+                    SellingPrice = 60,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 300,
+                    VatCategoryName = "Standard",
+                    TotalUnits = 50, // Incorrect; should be nearer to 102.
                 },
                 // Purchase 4: VAT inconsistency.
                 // VAT absolute value is arbitrarily set.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 204,
-                    PackSize               = 5,
-                    PackQuantity           = 8,
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 204,
+                    PackSize = 5,
+                    PackQuantity = 8,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-1),
-                    ManufacturerBatchId    = "INV-BATCH-204",
-                    ProductName            = "Invalid Product 4 (VAT Mismatch)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 4.0,
-                    DiscountAbsolute       = 300,   // Does not match calculated discount.
-                    GrossProfitPercentage  = 8.0,
-                    GrossProfitAbsolute    = 50,
-                    CostPerUnit            = 200,
-                    CostPerPack            = 5 * 200,
-                    GrossCostPerUnit       = 205,
-                    SellingPrice           = 240,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 100,   // Incorrect VAT.
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 40
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-1),
+                    ManufacturerBatchId = "INV-BATCH-204",
+                    ProductName = "Invalid Product 4 (VAT Mismatch)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 4.0,
+                    DiscountAbsolute = 300, // Does not match calculated discount.
+                    GrossProfitPercentage = 8.0,
+                    GrossProfitAbsolute = 50,
+                    CostPerUnit = 200,
+                    CostPerPack = 5 * 200,
+                    GrossCostPerUnit = 205,
+                    SellingPrice = 240,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 100, // Incorrect VAT.
+                    VatCategoryName = "Standard",
+                    TotalUnits = 40,
                 },
                 // Purchase 5: Gross profit inconsistency.
                 // GrossProfitAbsolute is not near the expected calculation.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 205,
-                    PackSize               = 15,
-                    PackQuantity           = 4,
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 205,
+                    PackSize = 15,
+                    PackQuantity = 4,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 1,    // Total units should be 4*15 + 15 = 75.
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-2),
-                    ManufacturerBatchId    = "INV-BATCH-205",
-                    ProductName            = "Invalid Product 5 (Gross Profit Error)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 8.0,
-                    DiscountAbsolute       = 500,
-                    GrossProfitPercentage  = 10.0,
-                    GrossProfitAbsolute    = 0,     // Incorrect value.
-                    CostPerUnit            = 80,
-                    CostPerPack            = 15 * 80,
-                    GrossCostPerUnit       = 85,
-                    SellingPrice           = 100,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 0,     // Incorrect VAT.
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 75
+                    FreePacks = 1, // Total units should be 4*15 + 15 = 75.
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-2),
+                    ManufacturerBatchId = "INV-BATCH-205",
+                    ProductName = "Invalid Product 5 (Gross Profit Error)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 8.0,
+                    DiscountAbsolute = 500,
+                    GrossProfitPercentage = 10.0,
+                    GrossProfitAbsolute = 0, // Incorrect value.
+                    CostPerUnit = 80,
+                    CostPerPack = 15 * 80,
+                    GrossCostPerUnit = 85,
+                    SellingPrice = 100,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 0, // Incorrect VAT.
+                    VatCategoryName = "Standard",
+                    TotalUnits = 75,
                 },
                 // Purchase 6: Multiple errors.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 206,
-                    PackSize               = 30,
-                    PackQuantity           = 2,
-                    ReceivedAsUnitQuantity = 1,    // Expected total units = 2*30 + 1 = 61 (this one is correct).
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-6),
-                    ManufacturerBatchId    = "INV-BATCH-206",
-                    ProductName            = "Invalid Product 6 (Mixed Errors)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 7.0,
-                    DiscountAbsolute       = 300,   // Likely too low.
-                    GrossProfitPercentage  = 12.0,
-                    GrossProfitAbsolute    = 50,    // Incorrect.
-                    CostPerUnit            = 90,
-                    CostPerPack            = 30 * 90,
-                    GrossCostPerUnit       = 95,
-                    SellingPrice           = 110,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 50,    // Incorrect VAT.
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 61
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 206,
+                    PackSize = 30,
+                    PackQuantity = 2,
+                    ReceivedAsUnitQuantity = 1, // Expected total units = 2*30 + 1 = 61 (this one is correct).
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-6),
+                    ManufacturerBatchId = "INV-BATCH-206",
+                    ProductName = "Invalid Product 6 (Mixed Errors)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 7.0,
+                    DiscountAbsolute = 300, // Likely too low.
+                    GrossProfitPercentage = 12.0,
+                    GrossProfitAbsolute = 50, // Incorrect.
+                    CostPerUnit = 90,
+                    CostPerPack = 30 * 90,
+                    GrossCostPerUnit = 95,
+                    SellingPrice = 110,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 50, // Incorrect VAT.
+                    VatCategoryName = "Standard",
+                    TotalUnits = 61,
                 },
                 // Purchase 7: Inadequate discount and VAT values.
                 new Purchase
                 {
-                    ReceivedInvoiceId      = 6001,
-                    Itemcode               = 207,
-                    PackSize               = 2,
-                    PackQuantity           = 100,
+                    ReceivedInvoiceId = 6001,
+                    Itemcode = 207,
+                    PackSize = 2,
+                    PackQuantity = 100,
                     ReceivedAsUnitQuantity = 0,
-                    FreePacks              = 0,
-                    FreeUnits              = 0,
-                    ExpiryDate             = DateTimeOffset.Now.AddYears(1),
-                    ManufacturingDate      = DateTimeOffset.Now.AddMonths(-1),
-                    ManufacturerBatchId    = "INV-BATCH-207",
-                    ProductName            = "Invalid Product 7 (Inadequate Discount/VAT)",
-                    AddedDate              = DateTimeOffset.Now,
-                    DiscountPercentage     = 5.0,
-                    DiscountAbsolute       = 50,    // Too low compared to base cost.
-                    GrossProfitPercentage  = 10.0,
-                    GrossProfitAbsolute    = 30,    // Too low.
-                    CostPerUnit            = 20,
-                    CostPerPack            = 2 * 20,
-                    GrossCostPerUnit       = 21,
-                    SellingPrice           = 25,
-                    VatPercentage          = 15,
-                    VatCategory            = 1,
-                    VatAbsolute            = 5,     // Far too low.
-                    VatCategoryName        = "Standard",
-                    TotalUnits             = 200
-                }
+                    FreePacks = 0,
+                    FreeUnits = 0,
+                    ExpiryDate = DateTimeOffset.Now.AddYears(1),
+                    ManufacturingDate = DateTimeOffset.Now.AddMonths(-1),
+                    ManufacturerBatchId = "INV-BATCH-207",
+                    ProductName = "Invalid Product 7 (Inadequate Discount/VAT)",
+                    AddedDate = DateTimeOffset.Now,
+                    DiscountPercentage = 5.0,
+                    DiscountAbsolute = 50, // Too low compared to base cost.
+                    GrossProfitPercentage = 10.0,
+                    GrossProfitAbsolute = 30, // Too low.
+                    CostPerUnit = 20,
+                    CostPerPack = 2 * 20,
+                    GrossCostPerUnit = 21,
+                    SellingPrice = 25,
+                    VatPercentage = 15,
+                    VatCategory = 1,
+                    VatAbsolute = 5, // Far too low.
+                    VatCategoryName = "Standard",
+                    TotalUnits = 200,
+                },
             };
         }
 
@@ -543,10 +540,14 @@ namespace RV.InvNew.Common
         public static ReceivedInvoice GetSampleInvalidInvoice(List<Purchase> purchases)
         {
             double totalPurchaseCost = purchases.Sum(p =>
-                p.CostPerUnit * (p.PackQuantity * p.PackSize +
-                                 p.ReceivedAsUnitQuantity +
-                                 p.FreePacks * p.PackSize +
-                                 p.FreeUnits));
+                p.CostPerUnit
+                * (
+                    p.PackQuantity * p.PackSize
+                    + p.ReceivedAsUnitQuantity
+                    + p.FreePacks * p.PackSize
+                    + p.FreeUnits
+                )
+            );
 
             // Intentional mismatch: extra adjustment is introduced.
             return new ReceivedInvoice
@@ -557,13 +558,13 @@ namespace RV.InvNew.Common
                 SupplierName = "Faulty Supplies Ltd.",
                 Remarks = "Invalid sample invoice",
                 Reference = "INV-2025-FAULTY",
-                Discount = 500,    // Header discount does not match aggregated purchase discounts.
+                Discount = 500, // Header discount does not match aggregated purchase discounts.
                 TransportCharges = 300,
-                GrossTotal = totalPurchaseCost - 500 + 300 + 100,  // Incorrect extra adjustment.
+                GrossTotal = totalPurchaseCost - 500 + 300 + 100, // Incorrect extra adjustment.
                 DefaultVatPercentage = 15,
                 DefaultVatCategory = 1,
-                DiscountPercentage = 10.0,   // Incoherent with aggregate data.
-                IsSettled = false
+                DiscountPercentage = 10.0, // Incoherent with aggregate data.
+                IsSettled = false,
             };
         }
     }

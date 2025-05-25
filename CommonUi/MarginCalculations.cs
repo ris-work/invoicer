@@ -8,6 +8,7 @@ namespace CommonUi
     public class DiscountMarkupPanel : Panel, ILookupSupportedChildPanel
     {
         private Action? MoveNext = null;
+
         // Private controls
         private readonly Label absoluteLabel;
         private readonly Label percentageLabel;
@@ -19,7 +20,7 @@ namespace CommonUi
         private readonly int precisionDigits;
         private readonly Orientation layoutOrientation;
         private readonly string discountTypeText; // e.g. "Discount" or "Markup" after translation
-        private  Dictionary<string, Func<object>> ActionsMap = new();
+        private Dictionary<string, Func<object>> ActionsMap = new();
 
         // Flag to prevent re-entrant updates.
         private bool isUpdating;
@@ -117,8 +118,16 @@ namespace CommonUi
                     },
                 };
             }
-            absoluteTextBox.KeyUp += (_, a) => { if(a.Key == Keys.Enter) percentageTextBox.Focus(); };
-            percentageTextBox.KeyUp += (_, a) => { if (a.Key == Keys.Enter && this.MoveNext != null) this.MoveNext(); };
+            absoluteTextBox.KeyUp += (_, a) =>
+            {
+                if (a.Key == Keys.Enter)
+                    percentageTextBox.Focus();
+            };
+            percentageTextBox.KeyUp += (_, a) =>
+            {
+                if (a.Key == Keys.Enter && this.MoveNext != null)
+                    this.MoveNext();
+            };
             this.Content = layout;
         }
 
@@ -290,15 +299,18 @@ namespace CommonUi
                 return (false, error);
             }
         }
-        
-        public object LookupValue(string fieldName) {
+
+        public object LookupValue(string fieldName)
+        {
             return ActionsMap[fieldName]();
         }
+
         public void MapLookupValues(string[] fieldNames)
         {
             ActionsMap.Add(fieldNames[0], () => AbsoluteValue);
             ActionsMap.Add(fieldNames[1], () => PercentageValue);
         }
+
         public void SetMoveNext(Action MoveNext)
         {
             this.MoveNext = MoveNext;
