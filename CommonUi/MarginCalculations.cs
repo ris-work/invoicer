@@ -81,6 +81,9 @@ namespace CommonUi
             }
 
             BuildLayout();
+            GotFocus += (_, _) => {
+                absoluteTextBox.Focus ();
+            };
         }
 
         /// <summary>
@@ -310,10 +313,14 @@ namespace CommonUi
             ActionsMap.Add(fieldNames[0], () => AbsoluteValue);
             ActionsMap.Add(fieldNames[1], () => PercentageValue);
         }
-
+        
         public void SetMoveNext(Action MoveNext)
         {
             this.MoveNext = MoveNext;
+        }
+        public void FocusChild()
+        {
+            absoluteTextBox.Focus();
         }
     }
 }

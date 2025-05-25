@@ -382,9 +382,15 @@ namespace CommonUi
                 {
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
                     if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
-                        if (((Eto.Forms.Control)e).Enabled)
-                            EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1]
-                                .Focus();
+                        if (((Eto.Forms.Control)e).Enabled) { 
+                            if(EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1] is ILookupSupportedChildPanel FocusChild )
+                                FocusChild.FocusChild();
+                            else
+                            {
+                                EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
+                            }
+                        }
+                        
                         else
                             GoToNext(e, a);
                     else
@@ -661,7 +667,7 @@ namespace CommonUi
                             (Fields.Key, (TextBox)EInput);
                         SupplementalControl = GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
-                        
+
                         //EControl.Cells.Add(GeneratedCustom);
                     }
 

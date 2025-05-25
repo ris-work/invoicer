@@ -12,5 +12,6 @@ namespace CommonUi
         object LookupValue(string fieldName);
         public void SetMoveNext(Action MoveNext);
         public (bool isValid, string errorDescription) Validate();
+        public void FocusChild();
     }
 }
