@@ -61,12 +61,12 @@ namespace CommonUi
             this.discountTypeText = Translate(discountType);
 
             // Create labels using localized text.
-            absoluteLabel = new Label { Text = Translate("Absolute " + discountTypeText) };
-            percentageLabel = new Label { Text = Translate("Percentage " + discountTypeText) };
+            absoluteLabel = new Label { Text = Translate("Absolute " + discountTypeText), BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
+            percentageLabel = new Label { Text = Translate("Percentage " + discountTypeText), BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
 
             // Create the two textboxes.
-            absoluteTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200 };
-            percentageTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200 };
+            absoluteTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200, BackgroundColor = ColorSettings.LesserBackgroundColor, TextColor = ColorSettings.ForegroundColor };
+            percentageTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200, BackgroundColor = ColorSettings.LesserBackgroundColor, TextColor = ColorSettings.ForegroundColor };
 
             // Attach change events for interlinked updating.
             absoluteTextBox.TextChanged += AbsoluteTextBox_TextChanged;

@@ -37,10 +37,10 @@ var CT = new CatalogueTransfer
     VatCategoryAdjustable = false,
     VatDependsOnUser = false,
 };
-ColorSettings.BackgroundColor = Eto.Drawing.Color.FromGrayscale(255);
+ColorSettings.BackgroundColor = Eto.Drawing.Color.FromGrayscale(1);
 ColorSettings.ForegroundColor = Eto.Drawing.Color.FromGrayscale(0);
-ColorSettings.LesserBackgroundColor = Eto.Drawing.Color.FromGrayscale(60);
-ColorSettings.LesserForegroundColor = Eto.Drawing.Color.FromGrayscale(190);
+ColorSettings.LesserBackgroundColor = Eto.Drawing.Color.FromGrayscale(0.3f);
+ColorSettings.LesserForegroundColor = Eto.Drawing.Color.FromGrayscale(0.8f);
 var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 {
     {

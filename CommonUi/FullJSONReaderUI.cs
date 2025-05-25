@@ -10,6 +10,8 @@ namespace JsonEditorExample
 {
     public class JsonEditorPanel : Panel
     {
+        int fontSize = 8;
+        int cWidth = 100;
         /// <summary>
         /// For each node path (e.g. "Parent.Child" or "array[0]"), the original JSON type is stored.
         /// For numbers, only long and double are supported.
@@ -39,7 +41,8 @@ namespace JsonEditorExample
             IReadOnlyDictionary<string, JsonElement> data,
             Orientation orientation,
             string path,
-            Dictionary<string, Type> originalTypes
+            Dictionary<string, Type> originalTypes,
+            int fontSize = 12
         )
         {
             if (originalTypes != null)
@@ -88,7 +91,7 @@ namespace JsonEditorExample
                 );
 
                 // Create a label whose text is the translated key.
-                var label = new Label { Text = Translate(kvp.Key), Tag = kvp.Key };
+                var label = new Label { Text = Translate(kvp.Key), Tag = kvp.Key, Font = Eto.Drawing.Fonts.Monospace(fontSize) };
 
                 // Create the control for the value.
                 Control valueControl = BuildControlForValue(kvp.Value, orientation, currentPath);
@@ -162,7 +165,7 @@ namespace JsonEditorExample
             {
                 case JsonValueKind.Null:
                     Debug.WriteLine($"[Build Value] At \"{path}\": Encountered null");
-                    return new Label { Text = "null" };
+                    return new Label { Text = "null", Font = Eto.Drawing.Fonts.Monospace(fontSize) };
 
                 case JsonValueKind.Object:
                     Debug.WriteLine($"[Build Value] At \"{path}\": Recursively building object");
@@ -190,7 +193,7 @@ namespace JsonEditorExample
                     );
 
                     {
-                        var cb = new CheckBox { Checked = value.GetBoolean(), Tag = path };
+                        var cb = new CheckBox { Checked = value.GetBoolean(), Tag = path, Font = Eto.Drawing.Fonts.Monospace(fontSize) };
                         return cb;
                     }
 
@@ -202,7 +205,7 @@ namespace JsonEditorExample
                         Debug.WriteLine(
                             $"[Build Value] At \"{path}\": Creating TextBox for long: {l}"
                         );
-                        var tb = new TextBox { Text = l.ToString(), Tag = path };
+                        var tb = new TextBox { Text = l.ToString(), Tag = path, Font = Eto.Drawing.Fonts.Monospace(fontSize) };
                         return tb;
                     }
                     else
@@ -211,7 +214,7 @@ namespace JsonEditorExample
                         Debug.WriteLine(
                             $"[Build Value] At \"{path}\": Creating TextBox for double: {d}"
                         );
-                        var tb = new TextBox { Text = d.ToString(), Tag = path };
+                        var tb = new TextBox { Text = d.ToString(), Tag = path, Font = Eto.Drawing.Fonts.Monospace(fontSize) };
                         return tb;
                     }
                 }
@@ -226,7 +229,8 @@ namespace JsonEditorExample
                         {
                             Text = value.GetString(),
                             Tag = path,
-                            Width = 300,
+                            Width = cWidth,
+                            Font = Eto.Drawing.Fonts.Monospace(fontSize)
                         };
                         return tb;
                     }
@@ -241,7 +245,8 @@ namespace JsonEditorExample
                         {
                             Text = value.ToString(),
                             Tag = path,
-                            Width = 300,
+                            Width = cWidth,
+                            Font = Eto.Drawing.Fonts.Monospace(fontSize)
                         };
                         return tb;
                     }

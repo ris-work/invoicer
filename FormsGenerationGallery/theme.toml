@@ -71,14 +71,14 @@ font_style = "Regular"
 control_size = "100,40"
 
 [default.form]
-background_color = "#000000"
-foreground_color = "#FFFFFF"
+#background_color = "#000000"
+#foreground_color = "#FFFFFF"
 background_color_changed = "#FFFFFF"
 foreground_color_changed = "#FF0000"
 font_family = "Arial"
 font_size = "16"
 font_style = "Regular"
-control_size = "100,40"
+control_size = "10,40"
 
 [default.localName]
 background_color = "#FF0000"

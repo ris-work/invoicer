@@ -419,6 +419,7 @@ namespace CommonUi
                     var ForegroundColor = FG;
                     var ChangedBackgroundColor = BGc;
                     var ChangedForegroundColor = FGc;
+                    Eto.Forms.Control? SupplementalControl = null;
                     Eto.Forms.TableRow EControl;
                     Eto.Forms.Label? ELegend = null;
                     Eto.Forms.Control EInput = new Label();
@@ -658,13 +659,22 @@ namespace CommonUi
                             .First();
                         var GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
                             (Fields.Key, (TextBox)EInput);
-                        EControl.Cells.Add(GeneratedCustom);
+                        SupplementalControl = GeneratedCustom;
+                        EFocusableList.Add(SupplementalControl);
+                        
+                        //EControl.Cells.Add(GeneratedCustom);
                     }
 
                     if (CurrentNo < EMid)
+                    {
                         EControlsL.Add(EControl);
+                        if (SupplementalControl!= null) EControlsL.Add(SupplementalControl);
+                    }
                     else
+                    {
                         EControlsR.Add(EControl);
+                        if (SupplementalControl!= null)EControlsR.Add(SupplementalControl);
+                    }
                     CurrentNo++;
                 }
             }
