@@ -9,6 +9,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using Microsoft.Maui.Platform;
 using Microsoft.Win32.SafeHandles;
+using MyAOTFriendlyExtensions;
 using Tomlyn;
 
 //using static System.Net.Mime.MediaTypeNames;
@@ -29,7 +30,7 @@ namespace CommonUi
     {
         public PanelSettings? LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
-        public delegate Eto.Forms.Panel GeneratePanel(string[] FieldNames, TextBox? Parent);
+        public delegate ILookupSupportedChildPanel GeneratePanel(string[] FieldNames, TextBox? Parent);
         public bool ChangesOnly = false;
         public string Context = "default";
         public IReadOnlyDictionary<string, object> Values
@@ -50,7 +51,9 @@ namespace CommonUi
         Dictionary<string, Label> _EFieldNames = new();
         Dictionary<string, Type> OriginalTypes = new();
         Dictionary<string, GeneratePanel> PanelGenerators = new();
-        IReadOnlyDictionary<string, (string, object, string?)> _Inputs;
+        Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
+        Dictionary<string, Type> OriginalTypesCustomPanels = new();
+        Dictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
 
@@ -300,6 +303,11 @@ namespace CommonUi
                     }
                 }
             }
+            foreach (var kvp in CustomPanelInputRetrievalFunctions)
+            {
+                ConvertedInputs.Add(kvp.Key, kvp.Value());
+            }
+            //foreach(var input in )
         }
 
         public GenEtoUI(
@@ -314,19 +322,22 @@ namespace CommonUi
             bool ChangesOnly = false,
             string[]? DenyList = null,
             PanelSettings PanelColours = null,
-            IReadOnlyDictionary<string, Func<string[], TextBox?, Panel>>? PanelGenerators = null,
+            IReadOnlyDictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>>? PanelGenerators = null,
             IReadOnlyDictionary<
                 string[],
                 (string ControlName, string? ParentField)
             >? FieldsListHandledByGeneratedPanels = null
         )
         {
+            _Inputs = Inputs.ToDictionary();
             List<string> NotInNormalFlow = new();
             if (FieldsListHandledByGeneratedPanels != null)
                 foreach (var kv in FieldsListHandledByGeneratedPanels)
                 {
                     NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
+                    //_EChangeTracker.Add()
                 }
+            NotInNormalFlow.Select(e => { _EChangeTracker.Add(e, true); _Inputs.Remove(e); return true; }).ToList();
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
@@ -341,6 +352,7 @@ namespace CommonUi
                 CurrentPanelColours.ForegroundColor = PanelColours.ForegroundColor;
                 LocalColor = PanelColours;
             }
+            
 
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
                 GetThemeForComponent("form");
@@ -360,7 +372,7 @@ namespace CommonUi
             List<Eto.Forms.TableRow> EControlsL = new() { };
             List<Eto.Forms.TableRow> EControlsR = new();
             List<Eto.Forms.Control> EFocusableList = new();
-            _Inputs = Inputs;
+            
 
             var E = Inputs.AsEnumerable();
             var ECount = E.Count();
@@ -382,15 +394,19 @@ namespace CommonUi
                 {
                     //MessageBox.Show(EFocusableList.IndexOf((Eto.Forms.Control)e).ToString());
                     if (EFocusableList.IndexOf((Eto.Forms.Control)e) < EFocusableList.Count() - 1)
-                        if (((Eto.Forms.Control)e).Enabled) { 
-                            if(EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1] is ILookupSupportedChildPanel FocusChild )
+                        if (((Eto.Forms.Control)e).Enabled)
+                        {
+                            if (
+                                EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1]
+                                is ILookupSupportedChildPanel FocusChild
+                            )
                                 FocusChild.FocusChild();
                             else
                             {
-                                EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1].Focus();
+                                EFocusableList[EFocusableList.IndexOf((Eto.Forms.Control)e) + 1]
+                                    .Focus();
                             }
                         }
-                        
                         else
                             GoToNext(e, a);
                     else
@@ -665,8 +681,16 @@ namespace CommonUi
                             .First();
                         var GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
                             (Fields.Key, (TextBox)EInput);
-                        SupplementalControl = GeneratedCustom;
+                        Console.WriteLine($"{Fields.Key[0]}");
+                        //GeneratedCustom.SetMoveNext(()=>);
+                        foreach (string s in Fields.Key)
+                        {
+                            CustomPanelInputRetrievalFunctions.Add(s, () => GeneratedCustom.LookupValue(s));
+                            GeneratedCustom.SetOriginalValue(s, E.Where(kvpair => kvpair.Key == s).First().Value.Value);
+                        }
+                        SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
+
 
                         //EControl.Cells.Add(GeneratedCustom);
                     }
@@ -674,12 +698,14 @@ namespace CommonUi
                     if (CurrentNo < EMid)
                     {
                         EControlsL.Add(EControl);
-                        if (SupplementalControl!= null) EControlsL.Add(SupplementalControl);
+                        if (SupplementalControl != null)
+                            EControlsL.Add(new TableRow(null, SupplementalControl));
                     }
                     else
                     {
                         EControlsR.Add(EControl);
-                        if (SupplementalControl!= null)EControlsR.Add(SupplementalControl);
+                        if (SupplementalControl != null)
+                            EControlsR.Add(new TableRow(null,SupplementalControl));
                     }
                     CurrentNo++;
                 }

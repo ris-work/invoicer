@@ -21,6 +21,7 @@ namespace CommonUi
         private readonly Orientation layoutOrientation;
         private readonly string discountTypeText; // e.g. "Discount" or "Markup" after translation
         private Dictionary<string, Func<object>> ActionsMap = new();
+        private Dictionary<string, Action<object>> SetMap = new();
 
         // Flag to prevent re-entrant updates.
         private bool isUpdating;
@@ -48,9 +49,11 @@ namespace CommonUi
             string discountType,
             Orientation orientation,
             EventHandler<EventArgs> parentTextChangedHandler = null,
-            int precisionDigits = 2
+            int precisionDigits = 2,
+            string[]? Mappings = null
         )
         {
+            Console.WriteLine($"{Mappings[0]}");
             if (parentTextBox == null)
                 throw new ArgumentNullException(nameof(parentTextBox));
 
@@ -61,12 +64,32 @@ namespace CommonUi
             this.discountTypeText = Translate(discountType);
 
             // Create labels using localized text.
-            absoluteLabel = new Label { Text = Translate("Absolute " + discountTypeText), BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
-            percentageLabel = new Label { Text = Translate("Percentage " + discountTypeText), BackgroundColor = ColorSettings.BackgroundColor, TextColor = ColorSettings.ForegroundColor };
+            absoluteLabel = new Label
+            {
+                Text = Translate("Absolute " + discountTypeText),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+            };
+            percentageLabel = new Label
+            {
+                Text = Translate("Percentage " + discountTypeText),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+            };
 
             // Create the two textboxes.
-            absoluteTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200, BackgroundColor = ColorSettings.LesserBackgroundColor, TextColor = ColorSettings.ForegroundColor };
-            percentageTextBox = new TextBox() { Width = ColorSettings.InnerControlWidth ?? 200, BackgroundColor = ColorSettings.LesserBackgroundColor, TextColor = ColorSettings.ForegroundColor };
+            absoluteTextBox = new TextBox()
+            {
+                Width = ColorSettings.InnerControlWidth ?? 200,
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+            };
+            percentageTextBox = new TextBox()
+            {
+                Width = ColorSettings.InnerControlWidth ?? 200,
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+            };
 
             // Attach change events for interlinked updating.
             absoluteTextBox.TextChanged += AbsoluteTextBox_TextChanged;
@@ -79,11 +102,15 @@ namespace CommonUi
             {
                 parentTextBox.TextChanged += parentTextChangedHandler;
             }
+            SetMap.Add(Mappings[0], (o) => AbsoluteValue = (double)o);
+            SetMap.Add(Mappings[1], (o) => PercentageValue = (double)o);
 
             BuildLayout();
-            GotFocus += (_, _) => {
-                absoluteTextBox.Focus ();
+            GotFocus += (_, _) =>
+            {
+                absoluteTextBox.Focus();
             };
+            if (Mappings != null) MapLookupValues(Mappings);
         }
 
         /// <summary>
@@ -313,14 +340,35 @@ namespace CommonUi
             ActionsMap.Add(fieldNames[0], () => AbsoluteValue);
             ActionsMap.Add(fieldNames[1], () => PercentageValue);
         }
-        
+        public void MapSetValues(string[] fieldNames)
+        {
+            SetMap.Add(fieldNames[0], (a) => AbsoluteValue = (double)a);
+            SetMap.Add(fieldNames[1], (a) => PercentageValue = (double)a);
+        }
+        public void SetOriginalValue(string Key, object Value)
+        {
+            SetMap[Key](Value);
+        }
+
         public void SetMoveNext(Action MoveNext)
         {
             this.MoveNext = MoveNext;
         }
+
         public void FocusChild()
         {
             absoluteTextBox.Focus();
+        }
+
+        public List<Control> GetFocusableControls()
+        {
+            return new List<Control>() { absoluteTextBox, percentageTextBox};
+        }
+
+        public void SetOriginalValues(object[] OriginalValues)
+        {
+            AbsoluteValue = (double)OriginalValues[0];
+            PercentageValue = (double)OriginalValues[1];
         }
     }
 }
