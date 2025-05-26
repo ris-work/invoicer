@@ -249,7 +249,8 @@ AC.Run(
                     new Dictionary<string[], (string, string)>
                     {
                         { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
-                    }
+                    },
+                    ["price"]
                 ),
                 new Eto.Forms.StackLayout(
                     new StackLayoutItem(null, true),
@@ -267,7 +268,8 @@ AC.Run(
                 new DiscountMarkupPanel(
                     DiscountMarkupText,
                     "Discount",
-                    Eto.Forms.Orientation.Vertical, Mappings: ["a","b"]
+                    Eto.Forms.Orientation.Vertical,
+                    Mappings: ["a", "b"]
                 ),
                 new JsonEditorExample.JsonEditorPanel(SampleJson, Eto.Forms.Orientation.Horizontal),
                 new JsonEditorExample.JsonEditorPanel(

@@ -110,7 +110,8 @@ namespace CommonUi
             {
                 absoluteTextBox.Focus();
             };
-            if (Mappings != null) MapLookupValues(Mappings);
+            if (Mappings != null)
+                MapLookupValues(Mappings);
         }
 
         /// <summary>
@@ -340,11 +341,13 @@ namespace CommonUi
             ActionsMap.Add(fieldNames[0], () => AbsoluteValue);
             ActionsMap.Add(fieldNames[1], () => PercentageValue);
         }
+
         public void MapSetValues(string[] fieldNames)
         {
             SetMap.Add(fieldNames[0], (a) => AbsoluteValue = (double)a);
             SetMap.Add(fieldNames[1], (a) => PercentageValue = (double)a);
         }
+
         public void SetOriginalValue(string Key, object Value)
         {
             SetMap[Key](Value);
@@ -362,7 +365,7 @@ namespace CommonUi
 
         public List<Control> GetFocusableControls()
         {
-            return new List<Control>() { absoluteTextBox, percentageTextBox};
+            return new List<Control>() { absoluteTextBox, percentageTextBox };
         }
 
         public void SetOriginalValues(object[] OriginalValues)

@@ -9,16 +9,25 @@ namespace CommonUi
 {
     public static class PanelGenerators
     {
-        public static Dictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>> Defaults()
+        public static Dictionary<
+            string,
+            Func<string[], TextBox?, ILookupSupportedChildPanel>
+        > Defaults()
         {
             return new Dictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>>()
             {
                 {
                     "DiscountPanel",
-                    (string[] i, TextBox? T) =>{
+                    (string[] i, TextBox? T) =>
+                    {
                         Console.WriteLine($"Discount Panel: {i[0]} {i[1]}");
-                        return new DiscountMarkupPanel(T, "Discount", Orientation.Vertical, Mappings: i);
-                        }
+                        return new DiscountMarkupPanel(
+                            T,
+                            "Discount",
+                            Orientation.Vertical,
+                            Mappings: i
+                        );
+                    }
                 },
             };
         }

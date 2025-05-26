@@ -30,7 +30,10 @@ namespace CommonUi
     {
         public PanelSettings? LocalColor = null;
         public delegate long SaveHandler(IReadOnlyDictionary<string, object> UserInput);
-        public delegate ILookupSupportedChildPanel GeneratePanel(string[] FieldNames, TextBox? Parent);
+        public delegate ILookupSupportedChildPanel GeneratePanel(
+            string[] FieldNames,
+            TextBox? Parent
+        );
         public bool ChangesOnly = false;
         public string Context = "default";
         public IReadOnlyDictionary<string, object> Values
@@ -53,7 +56,7 @@ namespace CommonUi
         Dictionary<string, GeneratePanel> PanelGenerators = new();
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
         Dictionary<string, Type> OriginalTypesCustomPanels = new();
-        Dictionary<string, (string, object, string?)> _Inputs;
+        OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
 
@@ -322,14 +325,36 @@ namespace CommonUi
             bool ChangesOnly = false,
             string[]? DenyList = null,
             PanelSettings PanelColours = null,
-            IReadOnlyDictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>>? PanelGenerators = null,
+            IReadOnlyDictionary<
+                string,
+                Func<string[], TextBox?, ILookupSupportedChildPanel>
+            >? PanelGenerators = null,
             IReadOnlyDictionary<
                 string[],
                 (string ControlName, string? ParentField)
-            >? FieldsListHandledByGeneratedPanels = null
+            >? FieldsListHandledByGeneratedPanels = null,
+            string[]? order = null
         )
         {
-            _Inputs = Inputs.ToDictionary();
+            OrderedDictionary<
+                string,
+                (string ControlName, object Value, string? LookupFunctionCallback)
+            > InputsOrdered = new();
+            var InputsUnordered = Inputs.ToDictionary();
+            if (order != null)
+            {
+                foreach (var element in order)
+                {
+                    InputsOrdered.Add(element, InputsUnordered[element]);
+                    InputsUnordered.Remove(element);
+                }
+            }
+            foreach (var UnorderedInput in InputsUnordered)
+            {
+                InputsOrdered.Add(UnorderedInput.Key, UnorderedInput.Value);
+            }
+            //_Inputs = Inputs.ToDictionary();
+            _Inputs = InputsOrdered;
             List<string> NotInNormalFlow = new();
             if (FieldsListHandledByGeneratedPanels != null)
                 foreach (var kv in FieldsListHandledByGeneratedPanels)
@@ -337,7 +362,14 @@ namespace CommonUi
                     NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
                     //_EChangeTracker.Add()
                 }
-            NotInNormalFlow.Select(e => { _EChangeTracker.Add(e, true); _Inputs.Remove(e); return true; }).ToList();
+            NotInNormalFlow
+                .Select(e =>
+                {
+                    _EChangeTracker.Add(e, true);
+                    _Inputs.Remove(e);
+                    return true;
+                })
+                .ToList();
             if (DenyList == null)
                 DenyList = new string[] { };
             InitializeConfiguration();
@@ -352,7 +384,6 @@ namespace CommonUi
                 CurrentPanelColours.ForegroundColor = PanelColours.ForegroundColor;
                 LocalColor = PanelColours;
             }
-            
 
             (var FGF, var BGF, var FGcF, var BGcF, var TFontF, var TSizeF, var CSizeF) =
                 GetThemeForComponent("form");
@@ -372,9 +403,8 @@ namespace CommonUi
             List<Eto.Forms.TableRow> EControlsL = new() { };
             List<Eto.Forms.TableRow> EControlsR = new();
             List<Eto.Forms.Control> EFocusableList = new();
-            
 
-            var E = Inputs.AsEnumerable();
+            var E = InputsOrdered.AsEnumerable();
             var ECount = E.Count();
             var EMid = ECount / 2;
             var CurrentNo = 0;
@@ -685,12 +715,17 @@ namespace CommonUi
                         //GeneratedCustom.SetMoveNext(()=>);
                         foreach (string s in Fields.Key)
                         {
-                            CustomPanelInputRetrievalFunctions.Add(s, () => GeneratedCustom.LookupValue(s));
-                            GeneratedCustom.SetOriginalValue(s, E.Where(kvpair => kvpair.Key == s).First().Value.Value);
+                            CustomPanelInputRetrievalFunctions.Add(
+                                s,
+                                () => GeneratedCustom.LookupValue(s)
+                            );
+                            GeneratedCustom.SetOriginalValue(
+                                s,
+                                Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
+                            );
                         }
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
-
 
                         //EControl.Cells.Add(GeneratedCustom);
                     }
@@ -705,7 +740,7 @@ namespace CommonUi
                     {
                         EControlsR.Add(EControl);
                         if (SupplementalControl != null)
-                            EControlsR.Add(new TableRow(null,SupplementalControl));
+                            EControlsR.Add(new TableRow(null, SupplementalControl));
                     }
                     CurrentNo++;
                 }
