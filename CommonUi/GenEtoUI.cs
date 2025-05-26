@@ -451,6 +451,27 @@ namespace CommonUi
                         SaveButton.Focus();
                 }*/
             };
+            Action<Control> GoToNextFromPanel = (_) => { }; 
+            GoToNextFromPanel = (Control PreviousObject) => { 
+                if (EFocusableList.IndexOf(PreviousObject) < EFocusableList.Count() - 1)
+                        if ((PreviousObject).Enabled)
+                        {
+                            if (
+                                EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
+                                is ILookupSupportedChildPanel FocusChild
+                            )
+                                FocusChild.FocusChild();
+                            else
+                            {
+                                EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
+                                    .Focus();
+                            }
+                        }
+                        else
+                            GoToNextFromPanel(EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]);
+                    else
+                        SaveButton.Focus();
+            };
             (
                 var LegendFG,
                 var LegendBG,
@@ -713,6 +734,7 @@ namespace CommonUi
                             (Fields.Key, (TextBox)EInput);
                         Console.WriteLine($"{Fields.Key[0]}");
                         //GeneratedCustom.SetMoveNext(()=>);
+                        
                         foreach (string s in Fields.Key)
                         {
                             CustomPanelInputRetrievalFunctions.Add(
@@ -726,6 +748,7 @@ namespace CommonUi
                         }
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
+                        GeneratedCustom.SetMoveNext(() => { GoToNextFromPanel(SupplementalControl); });
 
                         //EControl.Cells.Add(GeneratedCustom);
                     }
