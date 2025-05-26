@@ -710,6 +710,9 @@ namespace CommonUi
                             ScaleHeight = false,
                         };
                     }
+                    if (DenyList.Contains(kv.Key)) {
+                        EInput.Enabled = false;
+                    }
                     EFocusableList.Add(EInput);
                     _Einputs.Add(kv.Key, EInput);
                     if (EFieldName != null)

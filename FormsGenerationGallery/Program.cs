@@ -243,7 +243,7 @@ AC.Run(
                     ActionsMap,
                     null,
                     true,
-                    [],
+                    ["localName"],
                     null,
                     PanelGenerators.Defaults(),
                     new Dictionary<string[], (string, string)>
