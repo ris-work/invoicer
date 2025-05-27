@@ -971,7 +971,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 
-            if (P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk)?.ToString())
             {
                 Console.WriteLine(targetGridView.ControlObject);
                 // Access the native Gtk.Button control using ControlObject.

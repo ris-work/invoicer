@@ -199,6 +199,19 @@ var AC = new Eto.Forms.Application();
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
 Panel imagePanelSkia = ImagePanelFactorySkia.CreateImagePanel("large_image.jpg", 100);
 TextBox DiscountMarkupText = new TextBox() { Text = "10.52" };
+var SuggestedPrices = SampleDataGenerators.GenerateSuggestedPrices();
+var VatCategories = SampleDataGenerators.GenerateVatCategories();
+var AccountsInformation = SampleDataGenerators.GenerateAccountsInformation();
+var PIISamples = SampleDataGenerators.GeneratePiiList();
+Form RandomSearchForm = new Form()
+{
+    Content = new Eto.Forms.StackLayout(new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(SuggestedPrices), SearchPanelUtility.GenerateSearchPanel(VatCategories)),
+    new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(AccountsInformation), SearchPanelUtility.GenerateSearchPanel(PIISamples))),
+};
+var SearchUIButton = new Eto.Forms.Button() { Text = "Launch sample SearchUI" };
+SearchUIButton.Click += (_,_) => {
+    RandomSearchForm.Show();
+};
 var PurchasingUIButton = (
     new Eto.Forms.Button() { Text = "Launch ReceivedInvoices UI with Purchases" }
 );
@@ -276,6 +289,7 @@ AC.Run(
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
                 PurchasingUIButton,
+                SearchUIButton,
                 DiscountMarkupText,
                 new DiscountMarkupPanel(
                     DiscountMarkupText,

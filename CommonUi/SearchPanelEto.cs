@@ -137,12 +137,13 @@ namespace CommonUi
         );
 
         public SearchPanelEto(
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SC,
-            List<(string, TextAlignment, bool)> HeaderEntries,
+            List<(string[] SearchText, Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue,
+            List<(string Header, TextAlignment Alignment, bool NumericalSort)> HeaderEntries,
             bool Debug = true,
             PanelSettings? LocalColors = null
         )
         {
+            var SC = SearchCatalogue;
             var Colors = new PanelSettings()
             {
                 AlternatingColor1 =
@@ -479,9 +480,10 @@ namespace CommonUi
                     && Results.DataStore.Count() <= ColorMat.Length
                 )
                 {
-                    if (ColorMat[a.Row].Item1 != null)
+                    System.Console.WriteLine($"Expected: <{ColorMat.Length}, Got: {a.Row}");
+                    if (ColorMat.Length >= a.Row && a.Row >= 0 && ColorMat[a.Row].Item1 != null)
                         a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
-                    if (ColorMat[a.Row].Item2 != null)
+                    if (ColorMat.Length >= a.Row && a.Row >= 0 && ColorMat[a.Row].Item2 != null)
                         a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
                 }
                 ;
