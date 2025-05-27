@@ -381,7 +381,7 @@ namespace CommonUi
             }
             foreach (var kvp in CustomPanelInputRetrievalFunctions)
             {
-                ConvertedInputs[kvp.Key] = kvp.Value;
+                ConvertedInputs[kvp.Key] = kvp.Value();
             }
             //foreach(var input in )
         }
