@@ -13,6 +13,7 @@ namespace CommonUi
     // The panel that displays a list of Purchase items and calculates totals.
     public class PurchasePanel : Panel
     {
+        public Action<int> DeleteReceivedInvoiceItem;
         private readonly GridView _gridView;
         private readonly Label _indexLabel;
         private List<Purchase> _purchases = new List<Purchase>();
@@ -164,6 +165,11 @@ namespace CommonUi
             }
 
             _gridView.DataStore = _purchases;
+            _gridView.KeyUp += (e, a) => { 
+                if(a.Key == Keys.Delete && _gridView.SelectedRow>-1) {
+                    DeleteReceivedInvoiceItem(_gridView.SelectedRow);
+                }
+            }; 
         }
     }
 }

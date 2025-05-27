@@ -204,24 +204,32 @@ var PurchasingUIButton = (
 );
 var SamplePurchasePanel = new PurchasePanel();
 SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
+
 PurchasingUIButton.Click += (_, _) =>
 {
     List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
+    SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) => {System.Console.WriteLine($"Requested to remove: {i}"); LP.RemoveAt(i); SamplePurchasePanel.Render(LP); };
     var F = new Eto.Forms.Form()
     {
         Content = new Eto.Forms.StackLayout(new GenEtoUI(
             SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
-            (_) =>
+            (e) =>
             {
+                Eto.Forms.MessageBox.Show(JsonSerializer.Serialize(e), "Serialized", MessageBoxType.Information);
+                LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+                SamplePurchasePanel.Render(LP);
                 return 100;
             },
-            (_) =>
+            (e) =>
             {
+                Eto.Forms.MessageBox.Show(JsonSerializer.Serialize(e), "Serialized", MessageBoxType.Information);
+                LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+                SamplePurchasePanel.Render(LP);
                 return 100;
             },
             ActionsMap,
             null,
-            true
+            false
         ),
         SamplePurchasePanel
         ),
