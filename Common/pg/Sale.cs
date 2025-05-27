@@ -45,4 +45,6 @@ public partial class Sale
     public double LoyalityPointsPercentage { get; set; }
 
     public double LoyalityPointsIssued { get; set; }
+
+    public string ProductName { get; set; } = null!;
 }

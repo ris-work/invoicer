@@ -202,12 +202,14 @@ TextBox DiscountMarkupText = new TextBox() { Text = "10.52" };
 var PurchasingUIButton = (
     new Eto.Forms.Button() { Text = "Launch ReceivedInvoices UI with Purchases" }
 );
+var SamplePurchasePanel = new PurchasePanel();
+SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
 PurchasingUIButton.Click += (_, _) =>
 {
     List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
     var F = new Eto.Forms.Form()
     {
-        Content = new GenEtoUI(
+        Content = new Eto.Forms.StackLayout(new GenEtoUI(
             SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
             (_) =>
             {
@@ -220,6 +222,8 @@ PurchasingUIButton.Click += (_, _) =>
             ActionsMap,
             null,
             true
+        ),
+        SamplePurchasePanel
         ),
     };
     F.Show();

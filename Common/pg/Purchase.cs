@@ -54,4 +54,8 @@ public partial class Purchase
     public string VatCategoryName { get; set; } = null!;
 
     public double TotalUnits { get; set; }
+
+    public double NetTotalPrice { get; set; }
+
+    public double TotalAmountDue { get; set; }
 }
