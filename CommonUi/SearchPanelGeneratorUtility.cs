@@ -27,7 +27,8 @@ namespace CommonUi
         public static SearchPanelEto GenerateSearchPanel<T>(
             List<T> items,
             bool debug = true,
-            PanelSettings? localColors = null)
+            PanelSettings? localColors = null
+        )
         {
             if (items == null || items.Count == 0)
             {
@@ -35,7 +36,8 @@ namespace CommonUi
                     new List<(string[] Cells, Color? ForeColor, Color? BackColor)>(),
                     new List<(string Header, TextAlignment Alignment, bool Visible)>(),
                     debug,
-                    localColors);
+                    localColors
+                );
             }
 
             // Serialize the first object to build the column template.
@@ -48,9 +50,10 @@ namespace CommonUi
             foreach (var key in keys)
             {
                 JsonElement element = firstDict[key];
-                TextAlignment alignment = (element.ValueKind == JsonValueKind.Number)
-                                            ? TextAlignment.Right
-                                            : TextAlignment.Left;
+                TextAlignment alignment =
+                    (element.ValueKind == JsonValueKind.Number)
+                        ? TextAlignment.Right
+                        : TextAlignment.Left;
                 headerEntries.Add((key, alignment, true));
             }
             // Append an extra header for the full JSON (typically hidden).
@@ -113,5 +116,4 @@ namespace CommonUi
             }
         }
     }
-
 }

@@ -205,11 +205,26 @@ var AccountsInformation = SampleDataGenerators.GenerateAccountsInformation();
 var PIISamples = SampleDataGenerators.GeneratePiiList();
 Form RandomSearchForm = new Form()
 {
-    Content = new Eto.Forms.StackLayout(new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(SuggestedPrices), SearchPanelUtility.GenerateSearchPanel(VatCategories)) { Orientation = Eto.Forms.Orientation.Horizontal },
-    new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(AccountsInformation), SearchPanelUtility.GenerateSearchPanel(PIISamples)) {Orientation = Eto.Forms.Orientation.Horizontal }),
+    Content = new Eto.Forms.StackLayout(
+        new Eto.Forms.StackLayout(
+            SearchPanelUtility.GenerateSearchPanel(SuggestedPrices),
+            SearchPanelUtility.GenerateSearchPanel(VatCategories)
+        )
+        {
+            Orientation = Eto.Forms.Orientation.Horizontal,
+        },
+        new Eto.Forms.StackLayout(
+            SearchPanelUtility.GenerateSearchPanel(AccountsInformation),
+            SearchPanelUtility.GenerateSearchPanel(PIISamples)
+        )
+        {
+            Orientation = Eto.Forms.Orientation.Horizontal,
+        }
+    ),
 };
 var SearchUIButton = new Eto.Forms.Button() { Text = "Launch sample SearchUI" };
-SearchUIButton.Click += (_,_) => {
+SearchUIButton.Click += (_, _) =>
+{
     RandomSearchForm.Show();
 };
 var PurchasingUIButton = (
@@ -221,77 +236,98 @@ SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
 PurchasingUIButton.Click += (_, _) =>
 {
     List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
-    SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) => {System.Console.WriteLine($"Requested to remove: {i}"); LP.RemoveAt(i); SamplePurchasePanel.Render(LP); };
+    SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
+    {
+        System.Console.WriteLine($"Requested to remove: {i}");
+        LP.RemoveAt(i);
+        SamplePurchasePanel.Render(LP);
+    };
     var F = new Eto.Forms.Form()
     {
-        Content = new Eto.Forms.StackLayout(new GenEtoUI(
-            SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(LP[0])),
-            (e) =>
-            {
-                Eto.Forms.MessageBox.Show(JsonSerializer.Serialize(e), "Serialized", MessageBoxType.Information);
-                LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
-                SamplePurchasePanel.Render(LP);
-                return 100;
-            },
-            (e) =>
-            {
-                Eto.Forms.MessageBox.Show(JsonSerializer.Serialize(e), "Serialized", MessageBoxType.Information);
-                LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
-                SamplePurchasePanel.Render(LP);
-                return 100;
-            },
-            ActionsMap,
-            null,
-            false,
-            [],
-            null,
-            PanelGenerators.Defaults(),
-            new Dictionary<string[], (string, string)>
-                    {
-                        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
-                        { ["today"], ("DatePickerPanel", null) },
-                        { ["ExpiryDate"], ("DatePickerPanel", null) },
-                        { ["ManufacturingDate"], ("DatePickerPanel", null) },
-                    }
-
-        ),
-        SamplePurchasePanel
+        Content = new Eto.Forms.StackLayout(
+            new GenEtoUI(
+                SimpleJsonToUISerialization.ConvertToUISerialization(
+                    JsonSerializer.Serialize(LP[0])
+                ),
+                (e) =>
+                {
+                    Eto.Forms.MessageBox.Show(
+                        JsonSerializer.Serialize(e),
+                        "Serialized",
+                        MessageBoxType.Information
+                    );
+                    LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+                    SamplePurchasePanel.Render(LP);
+                    return 100;
+                },
+                (e) =>
+                {
+                    Eto.Forms.MessageBox.Show(
+                        JsonSerializer.Serialize(e),
+                        "Serialized",
+                        MessageBoxType.Information
+                    );
+                    LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+                    SamplePurchasePanel.Render(LP);
+                    return 100;
+                },
+                ActionsMap,
+                null,
+                false,
+                [],
+                null,
+                PanelGenerators.Defaults(),
+                new Dictionary<string[], (string, string)>
+                {
+                    { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+                    { ["today"], ("DatePickerPanel", null) },
+                    { ["ExpiryDate"], ("DatePickerPanel", null) },
+                    { ["ManufacturingDate"], ("DatePickerPanel", null) },
+                }
+            ),
+            SamplePurchasePanel
         ),
     };
     F.Show();
 };
 var GeneratedEtoUISample = new GenEtoUI(
-                    SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
-                    (_) =>
-                    {
-                        return 100;
-                    },
-                    (_) =>
-                    {
-                        return 100;
-                    },
-                    ActionsMap,
-                    null,
-                    false,
-                    ["localName"],
-                    null,
-                    PanelGenerators.Defaults(),
-                    new Dictionary<string[], (string, string)>
-                    {
-                        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
-                        { ["today"], ("DatePickerPanel", null) },
-                    },
-                    ["price"]
-                );
+    SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+    (_) =>
+    {
+        return 100;
+    },
+    (_) =>
+    {
+        return 100;
+    },
+    ActionsMap,
+    null,
+    false,
+    ["localName"],
+    null,
+    PanelGenerators.Defaults(),
+    new Dictionary<string[], (string, string)>
+    {
+        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+        { ["today"], ("DatePickerPanel", null) },
+    },
+    ["price"]
+);
 var ExternalCalculateButton = new Eto.Forms.Button() { Text = "Run external calculation" };
-ExternalCalculateButton.Click += (_,_) => {
-    Eto.Forms.MessageBox.Show(GeneratedEtoUISample.SerializeIfValid(), Eto.Forms.MessageBoxType.Information);
+ExternalCalculateButton.Click += (_, _) =>
+{
+    Eto.Forms.MessageBox.Show(
+        GeneratedEtoUISample.SerializeIfValid(),
+        Eto.Forms.MessageBoxType.Information
+    );
 };
 var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calculated" };
-GeneratedEtoUISample.AnythingChanged = () => {
+GeneratedEtoUISample.AnythingChanged = () =>
+{
     ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
 };
-var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated) { };
+var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)
+{ };
 
 AC.Run(
     new Form()
@@ -299,7 +335,7 @@ AC.Run(
         Content = new Eto.Forms.Scrollable()
         {
             Content = new Eto.Forms.StackLayout(
-               GeneratedEtoUISample,
+                GeneratedEtoUISample,
                 new Eto.Forms.StackLayout(
                     new StackLayoutItem(null, true),
                     new StackLayoutItem(imagePanel, false),

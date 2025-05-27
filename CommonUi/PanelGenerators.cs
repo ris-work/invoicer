@@ -37,12 +37,14 @@ namespace CommonUi
                 },
                 {
                     "VatCategoryLookupPanel",
-                    (string[] mappings, TextBox? _) => new VatCategoryLookupPanel(mappings: mappings)
+                    (string[] mappings, TextBox? _) =>
+                        new VatCategoryLookupPanel(mappings: mappings)
                 },
                 {
                     "PhoneNumberLookupPanel",
-                    (string[] mappings, TextBox? _) => new PhoneNumberLookupPanel(mappings: mappings)
-                }
+                    (string[] mappings, TextBox? _) =>
+                        new PhoneNumberLookupPanel(mappings: mappings)
+                },
             };
         }
     }

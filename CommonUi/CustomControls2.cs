@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Eto.Forms;
 using Eto.Drawing;
+using Eto.Forms;
 using RV.InvNew.Common;
 
 namespace CommonUi
 {
-
     #region ILookupSupportedChildPanel Interface
 
 
@@ -20,18 +19,21 @@ namespace CommonUi
     /// Mapping order (from the string array):
     ///   • fieldNames[0] : The date value from the DateTimePicker.
     ///   • fieldNames[1] : Text from the lookup result (for example, from a VAT lookup).
-    /// 
+    ///
     /// The panel exposes a public delegate (DateLookupHandler) so that you can wire up a LINQ lookup or any other logic.
     /// </summary>
     public class DatePickerPanel : Panel, ILookupSupportedChildPanel
     {
         // Built-in DateTimePicker control.
         private DateTimePicker datePicker;
+
         // An optional read-only TextBox that may display lookup results.
         private TextBox lookupResultTextBox;
 
-        private readonly Dictionary<string, Func<object>> actionsMap = new Dictionary<string, Func<object>>();
-        private readonly Dictionary<string, Action<object>> setMap = new Dictionary<string, Action<object>>();
+        private readonly Dictionary<string, Func<object>> actionsMap =
+            new Dictionary<string, Func<object>>();
+        private readonly Dictionary<string, Action<object>> setMap =
+            new Dictionary<string, Action<object>>();
         private Action? moveNext;
 
         /// <summary>
@@ -47,7 +49,7 @@ namespace CommonUi
             {
                 ReadOnly = true,
                 BackgroundColor = Color.Parse("#EFEFEF"),
-                TextColor = Colors.Black
+                TextColor = Colors.Black,
             };
 
             // When the date changes, invoke the lookup function if available.
@@ -64,12 +66,12 @@ namespace CommonUi
             {
                 Spacing = new Size(5, 5),
                 Rows =
-            {
-                new TableRow(new Label { Text = "Select Date:" }),
-                new TableRow(datePicker),
-                new TableRow(new Label { Text = "Lookup Result:" }),
-                new TableRow(lookupResultTextBox)
-            }
+                {
+                    new TableRow(new Label { Text = "Select Date:" }),
+                    new TableRow(datePicker),
+                    new TableRow(new Label { Text = "Lookup Result:" }),
+                    new TableRow(lookupResultTextBox),
+                },
             };
 
             if (mappings != null)
@@ -82,8 +84,8 @@ namespace CommonUi
         {
             // Map the DateTimePicker value and the lookup-result TextBox.
             actionsMap.Add(fieldNames[0], () => datePicker.Value);
-            if(fieldNames.Length > 1)
-            actionsMap.Add(fieldNames[1], () => lookupResultTextBox.Text);
+            if (fieldNames.Length > 1)
+                actionsMap.Add(fieldNames[1], () => lookupResultTextBox.Text);
         }
 
         public object LookupValue(string fieldName)
@@ -135,7 +137,7 @@ namespace CommonUi
     /// Mapping order (from the string array):
     ///   • fieldNames[0] : User input for VAT Category ID.
     ///   • fieldNames[1] : The lookup result (e.g. the category name and percentage).
-    /// 
+    ///
     /// The panel expects an external list of VatCategory objects (which may be set via the property VatCategories).
     /// </summary>
     public class VatCategoryLookupPanel : Panel, ILookupSupportedChildPanel
@@ -143,8 +145,10 @@ namespace CommonUi
         private TextBox vatCategoryIdTextBox;
         private TextBox vatDetailsTextBox;
 
-        private readonly Dictionary<string, Func<object>> actionsMap = new Dictionary<string, Func<object>>();
-        private readonly Dictionary<string, Action<object>> setMap = new Dictionary<string, Action<object>>();
+        private readonly Dictionary<string, Func<object>> actionsMap =
+            new Dictionary<string, Func<object>>();
+        private readonly Dictionary<string, Action<object>> setMap =
+            new Dictionary<string, Action<object>>();
         private Action? moveNext;
 
         /// <summary>
@@ -157,13 +161,13 @@ namespace CommonUi
             vatCategoryIdTextBox = new TextBox
             {
                 BackgroundColor = Color.Parse("#EFEFEF"),
-                TextColor = Colors.Black
+                TextColor = Colors.Black,
             };
             vatDetailsTextBox = new TextBox
             {
                 ReadOnly = true,
                 BackgroundColor = Color.Parse("#EFEFEF"),
-                TextColor = Colors.Black
+                TextColor = Colors.Black,
             };
 
             // When the VAT Category ID text changes, perform a LINQ lookup.
@@ -189,12 +193,12 @@ namespace CommonUi
             {
                 Spacing = new Size(5, 5),
                 Rows =
-            {
-                new TableRow(new Label { Text = "VAT Category ID:" }),
-                new TableRow(vatCategoryIdTextBox),
-                new TableRow(new Label { Text = "VAT Details:" }),
-                new TableRow(vatDetailsTextBox)
-            }
+                {
+                    new TableRow(new Label { Text = "VAT Category ID:" }),
+                    new TableRow(vatCategoryIdTextBox),
+                    new TableRow(new Label { Text = "VAT Details:" }),
+                    new TableRow(vatDetailsTextBox),
+                },
             };
 
             if (mappings != null)
@@ -221,15 +225,18 @@ namespace CommonUi
 
         public void SetMoveNext(Action moveNext) => this.moveNext = moveNext;
 
-        public List<Control> GetFocusableControls() => new List<Control> { vatCategoryIdTextBox, vatDetailsTextBox };
+        public List<Control> GetFocusableControls() =>
+            new List<Control> { vatCategoryIdTextBox, vatDetailsTextBox };
 
         public (bool isValid, string errorDescription) Validate()
         {
             if (!long.TryParse(vatCategoryIdTextBox.Text, out _))
                 return (false, "VAT Category ID is not a valid number.");
-            if (string.IsNullOrEmpty(vatDetailsTextBox.Text) ||
-                vatDetailsTextBox.Text == "Not found" ||
-                vatDetailsTextBox.Text == "Invalid ID")
+            if (
+                string.IsNullOrEmpty(vatDetailsTextBox.Text)
+                || vatDetailsTextBox.Text == "Not found"
+                || vatDetailsTextBox.Text == "Invalid ID"
+            )
                 return (false, "VAT category lookup failed.");
             return (true, string.Empty);
         }
@@ -266,7 +273,7 @@ namespace CommonUi
     /// Mapping order (from the string array):
     ///   • fieldNames[0] : Inputted phone number.
     ///   • fieldNames[1] : The lookup result (customer/supplier name).
-    /// 
+    ///
     /// The panel expects an external list of Pii objects to be provided (via the property PiiList).
     /// </summary>
     public class PhoneNumberLookupPanel : Panel, ILookupSupportedChildPanel
@@ -274,8 +281,10 @@ namespace CommonUi
         private TextBox phoneNumberTextBox;
         private TextBox customerNameTextBox;
 
-        private readonly Dictionary<string, Func<object>> actionsMap = new Dictionary<string, Func<object>>();
-        private readonly Dictionary<string, Action<object>> setMap = new Dictionary<string, Action<object>>();
+        private readonly Dictionary<string, Func<object>> actionsMap =
+            new Dictionary<string, Func<object>>();
+        private readonly Dictionary<string, Action<object>> setMap =
+            new Dictionary<string, Action<object>>();
         private Action? moveNext;
 
         /// <summary>
@@ -288,13 +297,13 @@ namespace CommonUi
             phoneNumberTextBox = new TextBox
             {
                 BackgroundColor = Color.Parse("#EFEFEF"),
-                TextColor = Colors.Black
+                TextColor = Colors.Black,
             };
             customerNameTextBox = new TextBox
             {
                 ReadOnly = true,
                 BackgroundColor = Color.Parse("#EFEFEF"),
-                TextColor = Colors.Black
+                TextColor = Colors.Black,
             };
 
             phoneNumberTextBox.TextChanged += (sender, e) =>
@@ -307,8 +316,14 @@ namespace CommonUi
                 }
 
                 var person = PiiList.FirstOrDefault(p =>
-                    (!string.IsNullOrEmpty(p.Telephone) && p.Telephone.Equals(input, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(p.Mobile) && p.Mobile.Equals(input, StringComparison.OrdinalIgnoreCase))
+                    (
+                        !string.IsNullOrEmpty(p.Telephone)
+                        && p.Telephone.Equals(input, StringComparison.OrdinalIgnoreCase)
+                    )
+                    || (
+                        !string.IsNullOrEmpty(p.Mobile)
+                        && p.Mobile.Equals(input, StringComparison.OrdinalIgnoreCase)
+                    )
                 );
                 customerNameTextBox.Text = person != null ? person.Name : "Not found";
             };
@@ -317,12 +332,12 @@ namespace CommonUi
             {
                 Spacing = new Size(5, 5),
                 Rows =
-            {
-                new TableRow(new Label { Text = "Phone Number:" }),
-                new TableRow(phoneNumberTextBox),
-                new TableRow(new Label { Text = "Customer Name:" }),
-                new TableRow(customerNameTextBox)
-            }
+                {
+                    new TableRow(new Label { Text = "Phone Number:" }),
+                    new TableRow(phoneNumberTextBox),
+                    new TableRow(new Label { Text = "Customer Name:" }),
+                    new TableRow(customerNameTextBox),
+                },
             };
 
             if (mappings != null)
@@ -384,9 +399,4 @@ namespace CommonUi
     }
 
     #endregion
-
-    
-
-  
-
 }

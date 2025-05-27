@@ -1,5 +1,5 @@
-﻿using RV.InvNew.Common;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using RV.InvNew.Common;
 
 public static class SampleDataGenerators
 {
@@ -13,43 +13,43 @@ public static class SampleDataGenerators
                 VatCategoryId = 1,
                 VatPercentage = 18.0,
                 VatName = "Standard VAT",
-                Active = true
+                Active = true,
             },
             new VatCategory
             {
                 VatCategoryId = 2,
                 VatPercentage = 5.0,
                 VatName = "Reduced VAT",
-                Active = false
+                Active = false,
             },
             new VatCategory
             {
                 VatCategoryId = 3,
                 VatPercentage = 0.0,
                 VatName = "Zero VAT",
-                Active = true
+                Active = true,
             },
             new VatCategory
             {
                 VatCategoryId = 4,
                 VatPercentage = 12.5,
                 VatName = "Intermediate VAT",
-                Active = true
+                Active = true,
             },
             new VatCategory
             {
                 VatCategoryId = 5,
                 VatPercentage = 2.5,
                 VatName = "Super Reduced VAT",
-                Active = true
+                Active = true,
             },
             new VatCategory
             {
                 VatCategoryId = 6,
                 VatPercentage = 20.0,
                 VatName = "High VAT",
-                Active = false
-            }
+                Active = false,
+            },
         };
     }
 
@@ -62,28 +62,23 @@ public static class SampleDataGenerators
             new SuggestedPrice { Itemcode = 1001, Price = 20.5 },
             new SuggestedPrice { Itemcode = 1001, Price = 21.0 },
             new SuggestedPrice { Itemcode = 1001, Price = 19.75 },
-            
             // Item 1002 has three suggested prices.
             new SuggestedPrice { Itemcode = 1002, Price = 30.0 },
             new SuggestedPrice { Itemcode = 1002, Price = 29.5 },
             new SuggestedPrice { Itemcode = 1002, Price = 30.25 },
-            
             // Item 1003 has two suggested prices.
             new SuggestedPrice { Itemcode = 1003, Price = 15.75 },
             new SuggestedPrice { Itemcode = 1003, Price = 16.0 },
-            
             // Item 1004 has two suggested prices.
             new SuggestedPrice { Itemcode = 1004, Price = 99.99 },
             new SuggestedPrice { Itemcode = 1004, Price = 100.0 },
-            
             // Item 1005 has three suggested prices.
             new SuggestedPrice { Itemcode = 1005, Price = 50.0 },
             new SuggestedPrice { Itemcode = 1005, Price = 51.0 },
             new SuggestedPrice { Itemcode = 1005, Price = 49.5 },
-            
             // Item 1006 has two suggested prices.
             new SuggestedPrice { Itemcode = 1006, Price = 75.0 },
-            new SuggestedPrice { Itemcode = 1006, Price = 74.5 }
+            new SuggestedPrice { Itemcode = 1006, Price = 74.5 },
         };
     }
 
@@ -105,7 +100,7 @@ public static class SampleDataGenerators
                 Fax = "555-1111",
                 Im = "john_doe",
                 Sip = "sip:john_doe@example.com",
-                Gender = "Male"
+                Gender = "Male",
             },
             new Pii
             {
@@ -120,7 +115,7 @@ public static class SampleDataGenerators
                 Fax = "555-2222",
                 Im = "jane_smith",
                 Sip = "sip:jane_smith@example.com",
-                Gender = "Female"
+                Gender = "Female",
             },
             new Pii
             {
@@ -135,7 +130,7 @@ public static class SampleDataGenerators
                 Fax = "555-0002",
                 Im = "acme_chat",
                 Sip = "sip:acme@example.com",
-                Gender = null
+                Gender = null,
             },
             new Pii
             {
@@ -150,7 +145,7 @@ public static class SampleDataGenerators
                 Fax = "555-5555",
                 Im = "sam_green",
                 Sip = "sip:sam_green@example.com",
-                Gender = "Male"
+                Gender = "Male",
             },
             new Pii
             {
@@ -165,7 +160,7 @@ public static class SampleDataGenerators
                 Fax = "555-7766",
                 Im = "alice_brown",
                 Sip = "sip:alice_brown@example.com",
-                Gender = "Female"
+                Gender = "Female",
             },
             new Pii
             {
@@ -180,8 +175,8 @@ public static class SampleDataGenerators
                 Fax = "555-3322",
                 Im = "bob_johnson",
                 Sip = "sip:bob_johnson@example.com",
-                Gender = "Male"
-            }
+                Gender = "Male",
+            },
         };
     }
 
@@ -199,7 +194,7 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 10,
                 AccountMin = 100.0,
                 AccountMax = 10000.0,
-                HumanFriendlyId = "ACC-001"
+                HumanFriendlyId = "ACC-001",
             },
             new AccountsInformation
             {
@@ -210,7 +205,7 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 20,
                 AccountMin = 50.0,
                 AccountMax = 5000.0,
-                HumanFriendlyId = "ACC-002"
+                HumanFriendlyId = "ACC-002",
             },
             new AccountsInformation
             {
@@ -221,7 +216,7 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 30,
                 AccountMin = 200.0,
                 AccountMax = 15000.0,
-                HumanFriendlyId = "ACC-003"
+                HumanFriendlyId = "ACC-003",
             },
             new AccountsInformation
             {
@@ -232,7 +227,7 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 40,
                 AccountMin = 500.0,
                 AccountMax = 25000.0,
-                HumanFriendlyId = "ACC-004"
+                HumanFriendlyId = "ACC-004",
             },
             new AccountsInformation
             {
@@ -243,7 +238,7 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 50,
                 AccountMin = 1000.0,
                 AccountMax = 50000.0,
-                HumanFriendlyId = "ACC-005"
+                HumanFriendlyId = "ACC-005",
             },
             new AccountsInformation
             {
@@ -254,8 +249,8 @@ public static class SampleDataGenerators
                 AccountI18nLabel = 60,
                 AccountMin = 2000.0,
                 AccountMax = 75000.0,
-                HumanFriendlyId = "ACC-006"
-            }
+                HumanFriendlyId = "ACC-006",
+            },
         };
     }
 
@@ -265,14 +260,54 @@ public static class SampleDataGenerators
     {
         return new List<I18nLabel>
         {
-            new I18nLabel { Id = 1, Lang = "en", Value = "Standard description" },
-            new I18nLabel { Id = 2, Lang = "fr", Value = "Description standard" },
-            new I18nLabel { Id = 3, Lang = "es", Value = "Descripción estándar" },
-            new I18nLabel { Id = 4, Lang = "de", Value = "Standardbeschreibung" },
-            new I18nLabel { Id = 5, Lang = "it", Value = "Descrizione standard" },
-            new I18nLabel { Id = 6, Lang = "pt", Value = "Descrição padrão" },
-            new I18nLabel { Id = 7, Lang = "ja", Value = "標準説明" },
-            new I18nLabel { Id = 8, Lang = "zh", Value = "标准描述" }
+            new I18nLabel
+            {
+                Id = 1,
+                Lang = "en",
+                Value = "Standard description",
+            },
+            new I18nLabel
+            {
+                Id = 2,
+                Lang = "fr",
+                Value = "Description standard",
+            },
+            new I18nLabel
+            {
+                Id = 3,
+                Lang = "es",
+                Value = "Descripción estándar",
+            },
+            new I18nLabel
+            {
+                Id = 4,
+                Lang = "de",
+                Value = "Standardbeschreibung",
+            },
+            new I18nLabel
+            {
+                Id = 5,
+                Lang = "it",
+                Value = "Descrizione standard",
+            },
+            new I18nLabel
+            {
+                Id = 6,
+                Lang = "pt",
+                Value = "Descrição padrão",
+            },
+            new I18nLabel
+            {
+                Id = 7,
+                Lang = "ja",
+                Value = "標準説明",
+            },
+            new I18nLabel
+            {
+                Id = 8,
+                Lang = "zh",
+                Value = "标准描述",
+            },
         };
     }
 }

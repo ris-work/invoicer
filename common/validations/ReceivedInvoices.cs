@@ -192,7 +192,11 @@ namespace Rv.InvNew.Common
 
             return overall ? (true, null) : (false, string.Join(" ", errorMessages));
         }
-        public static (bool, string) ValidateNetTotalPriceConsistency(this Purchase p, double tolPercentage)
+
+        public static (bool, string) ValidateNetTotalPriceConsistency(
+            this Purchase p,
+            double tolPercentage
+        )
         {
             double calculatedTotalUnits = p.CalculateTotalUnitQuantity();
             double expectedNetTotal = (p.CostPerUnit * calculatedTotalUnits) - p.DiscountAbsolute;
@@ -204,7 +208,6 @@ namespace Rv.InvNew.Common
                     $"[6] Net Total Price Consistency Error: Expected NetTotalPrice = {expectedNetTotal:F4} (computed as [CostPerUnit × TotalUnits] - DiscountAbsolute), but found {p.NetTotalPrice:F4}."
                 );
         }
-
 
         // ---------------------------
         // HEADER (ReceivedInvoice) VALIDATION

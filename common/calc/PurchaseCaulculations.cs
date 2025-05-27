@@ -12,7 +12,8 @@
         public static Purchase CalculateNetTotal(this Purchase p)
         {
             // Calculate total units using the standard formula.
-            double calculatedTotalUnits = (p.PackQuantity * p.PackSize)
+            double calculatedTotalUnits =
+                (p.PackQuantity * p.PackSize)
                 + p.ReceivedAsUnitQuantity
                 + (p.FreePacks * p.PackSize)
                 + p.FreeUnits;

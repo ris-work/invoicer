@@ -235,9 +235,11 @@ namespace CommonUi
             }
             return CumulativeSuccess;
         }
+
         public string SerializeIfValid()
         {
-            if (!ValidateInputs()) return "";
+            if (!ValidateInputs())
+                return "";
             Dictionary<string, object> _LocalDict = new();
             foreach (var e in _Inputs)
             {
@@ -270,10 +272,7 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            _LocalDict.Add(
-                                e.Key,
-                                float.Parse(((TextBox)_Einputs[e.Key]).Text)
-                            );
+                            _LocalDict.Add(e.Key, float.Parse(((TextBox)_Einputs[e.Key]).Text));
                         }
                         else
                         {
@@ -284,17 +283,11 @@ namespace CommonUi
                     {
                         if (e.Value.Item3 == null)
                         {
-                            _LocalDict.Add(
-                                e.Key,
-                                double.Parse(((TextBox)_Einputs[e.Key]).Text)
-                            );
+                            _LocalDict.Add(e.Key, double.Parse(((TextBox)_Einputs[e.Key]).Text));
                         }
                         else
                         {
-                            _LocalDict.Add(
-                                e.Key,
-                                double.Parse(((Button)_Einputs[e.Key]).Text)
-                            );
+                            _LocalDict.Add(e.Key, double.Parse(((Button)_Einputs[e.Key]).Text));
                         }
                     }
                     else if (T == typeof(string))
@@ -314,6 +307,7 @@ namespace CommonUi
             //foreach(var input in )
             return JsonSerializer.Serialize(_LocalDict);
         }
+
         public void ConvertInputs()
         {
             ConvertedInputs = new();
@@ -387,7 +381,7 @@ namespace CommonUi
             }
             foreach (var kvp in CustomPanelInputRetrievalFunctions)
             {
-                ConvertedInputs[kvp.Key]= kvp.Value;
+                ConvertedInputs[kvp.Key] = kvp.Value;
             }
             //foreach(var input in )
         }
@@ -438,7 +432,8 @@ namespace CommonUi
             if (FieldsListHandledByGeneratedPanels != null)
                 foreach (var kv in FieldsListHandledByGeneratedPanels)
                 {
-                    if(kv.Value.ParentField != null) NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
+                    if (kv.Value.ParentField != null)
+                        NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
                     //_EChangeTracker.Add()
                 }
             NotInNormalFlow
@@ -530,26 +525,28 @@ namespace CommonUi
                         SaveButton.Focus();
                 }*/
             };
-            Action<Control> GoToNextFromPanel = (_) => { }; 
-            GoToNextFromPanel = (Control PreviousObject) => { 
+            Action<Control> GoToNextFromPanel = (_) => { };
+            GoToNextFromPanel = (Control PreviousObject) =>
+            {
                 if (EFocusableList.IndexOf(PreviousObject) < EFocusableList.Count() - 1)
-                        if ((PreviousObject).Enabled)
-                        {
-                            if (
-                                EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
-                                is ILookupSupportedChildPanel FocusChild
-                            )
-                                FocusChild.FocusChild();
-                            else
-                            {
-                                EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
-                                    .Focus();
-                            }
-                        }
+                    if ((PreviousObject).Enabled)
+                    {
+                        if (
+                            EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
+                            is ILookupSupportedChildPanel FocusChild
+                        )
+                            FocusChild.FocusChild();
                         else
-                            GoToNextFromPanel(EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]);
+                        {
+                            EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1].Focus();
+                        }
+                    }
                     else
-                        SaveButton.Focus();
+                        GoToNextFromPanel(
+                            EFocusableList[EFocusableList.IndexOf(PreviousObject) + 1]
+                        );
+                else
+                    SaveButton.Focus();
             };
             (
                 var LegendFG,
@@ -608,7 +605,7 @@ namespace CommonUi
                                     Text = (kv.Value.Item2 ?? 0).ToString(),
                                     TextAlignment = TextAlignment.Right,
                                 };
-                                
+
                                 /*((TextBox)EInput).Text = (kv.Value.Item2 ?? 0).ToString();
                                     ((TextBox)EInput).TextAlignment = TextAlignment.Right;*/
                                 ((TextBox)EInput).TextInput += ChangedIndication;
@@ -797,7 +794,8 @@ namespace CommonUi
                             ScaleHeight = false,
                         };
                     }
-                    if (DenyList.Contains(kv.Key)) {
+                    if (DenyList.Contains(kv.Key))
+                    {
                         EInput.Enabled = false;
                     }
                     EFocusableList.Add(EInput);
@@ -839,14 +837,20 @@ namespace CommonUi
                         }
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
-                        GeneratedCustom.SetMoveNext(() => { GoToNextFromPanel(SupplementalControl); });
+                        GeneratedCustom.SetMoveNext(() =>
+                        {
+                            GoToNextFromPanel(SupplementalControl);
+                        });
 
                         //EControl.Cells.Add(GeneratedCustom);
                     }
-                    else if (FieldsListHandledByGeneratedPanels != null
+                    else if (
+                        FieldsListHandledByGeneratedPanels != null
                         && FieldsListHandledByGeneratedPanels
                             .Where(ikvp => ikvp.Key.Contains(kv.Key))
-                            .Count() > 0) {
+                            .Count() > 0
+                    )
+                    {
                         // We are a custom control with no data dependencies
                         var Fields = FieldsListHandledByGeneratedPanels
                             .Where(ikvp => ikvp.Key.Contains(kv.Key))
@@ -868,9 +872,12 @@ namespace CommonUi
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
                             );
                         }
-                        EControl = new TableRow(EFieldName,(Control)GeneratedCustom);
-                            EFocusableList.Add((Control)GeneratedCustom);
-                        GeneratedCustom.SetMoveNext(() => { GoToNextFromPanel(SupplementalControl); });
+                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom);
+                        EFocusableList.Add((Control)GeneratedCustom);
+                        GeneratedCustom.SetMoveNext(() =>
+                        {
+                            GoToNextFromPanel(SupplementalControl);
+                        });
                     }
                     EInput.KeyUp += (_, _) => AnythingChanged();
                     if (CurrentNo < EMid)

@@ -1,15 +1,13 @@
-﻿using Eto.Forms;
-using RV.InvNew.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace CommonUi
 {
-
-
     // The panel that displays a list of Purchase items and calculates totals.
     public class PurchasePanel : Panel
     {
@@ -37,7 +35,8 @@ namespace CommonUi
             _gridView = new GridView();
             _gridView.SelectionChanged += (sender, e) =>
             {
-                _indexLabel.Text = $"Selected Index: {(_gridView.SelectedRow >= 0 ? _gridView.SelectedRow.ToString() : "None")}";
+                _indexLabel.Text =
+                    $"Selected Index: {(_gridView.SelectedRow >= 0 ? _gridView.SelectedRow.ToString() : "None")}";
             };
 
             _indexLabel = new Label { Text = "Selected Index: None" };
@@ -51,8 +50,8 @@ namespace CommonUi
 
         /// <summary>
         /// Renders the list of Purchase items in the GridView.
-        /// Before binding the list, each Purchase is updated by calling the 
-        /// CalculateNetTotal() and CalculateTotalAmountDue() extension methods.  
+        /// Before binding the list, each Purchase is updated by calling the
+        /// CalculateNetTotal() and CalculateTotalAmountDue() extension methods.
         /// Columns are defined in a logical order:
         ///
         /// [Index column] - 50px
@@ -65,7 +64,7 @@ namespace CommonUi
         /// CostPerUnit, CostPerPack, GrossCostPerUnit, SellingPrice,
         /// NetTotalPrice, VatPercentage, VatAbsolute, and finally TotalAmountDue.
         ///
-        /// The auto-hide logic removes ReceivedInvoiceId and any fields matching the 
+        /// The auto-hide logic removes ReceivedInvoiceId and any fields matching the
         /// "percentage" rule—except GrossProfitPercentage and VatPercentage.
         /// </summary>
         /// <param name="purchases">The list of Purchase items to display.</param>
@@ -88,9 +87,11 @@ namespace CommonUi
                 HeaderText = "#",
                 DataCell = new TextBoxCell
                 {
-                    Binding = new DelegateBinding<Purchase, string>(purchase => _purchases.IndexOf(purchase).ToString())
+                    Binding = new DelegateBinding<Purchase, string>(purchase =>
+                        _purchases.IndexOf(purchase).ToString()
+                    ),
                 },
-                Width = 50
+                Width = 50,
             };
             _gridView.Columns.Add(indexColumn);
 
@@ -98,33 +99,53 @@ namespace CommonUi
             var columns = new List<(string Title, Func<Purchase, string> Getter, int Width)>
             {
                 // Although "ReceivedInvoiceId" is defined, auto-hide logic will remove it.
-                ("ReceivedInvoiceId",       purchase => purchase.ReceivedInvoiceId.ToString(), 80),
+                ("ReceivedInvoiceId", purchase => purchase.ReceivedInvoiceId.ToString(), 80),
                 // Core product and packaging fields.
-                ("Itemcode",                purchase => purchase.Itemcode.ToString(), 80),
-                ("ProductName",             purchase => purchase.ProductName, 150),
-                ("ManufacturerBatchId",     purchase => purchase.ManufacturerBatchId ?? string.Empty, 120),
-                ("PackSize",                purchase => purchase.PackSize.ToString(), 80),
-                ("PackQuantity",            purchase => purchase.PackQuantity.ToString(), 80),
-                ("ReceivedAsUnitQuantity",  purchase => purchase.ReceivedAsUnitQuantity.ToString(), 80),
-                ("FreePacks",               purchase => purchase.FreePacks.ToString(), 80),
-                ("FreeUnits",               purchase => purchase.FreeUnits.ToString(), 80),
-                ("TotalUnits",              purchase => purchase.TotalUnits.ToString("F2"), 80),
-                ("ManufacturingDate",       purchase => purchase.ManufacturingDate?.ToString("d") ?? string.Empty, 100),
-                ("ExpiryDate",              purchase => purchase.ExpiryDate.ToString("d"), 100),
-                ("AddedDate",               purchase => purchase.AddedDate.ToString("g"), 120),
+                ("Itemcode", purchase => purchase.Itemcode.ToString(), 80),
+                ("ProductName", purchase => purchase.ProductName, 150),
+                (
+                    "ManufacturerBatchId",
+                    purchase => purchase.ManufacturerBatchId ?? string.Empty,
+                    120
+                ),
+                ("PackSize", purchase => purchase.PackSize.ToString(), 80),
+                ("PackQuantity", purchase => purchase.PackQuantity.ToString(), 80),
+                (
+                    "ReceivedAsUnitQuantity",
+                    purchase => purchase.ReceivedAsUnitQuantity.ToString(),
+                    80
+                ),
+                ("FreePacks", purchase => purchase.FreePacks.ToString(), 80),
+                ("FreeUnits", purchase => purchase.FreeUnits.ToString(), 80),
+                ("TotalUnits", purchase => purchase.TotalUnits.ToString("F2"), 80),
+                (
+                    "ManufacturingDate",
+                    purchase => purchase.ManufacturingDate?.ToString("d") ?? string.Empty,
+                    100
+                ),
+                ("ExpiryDate", purchase => purchase.ExpiryDate.ToString("d"), 100),
+                ("AddedDate", purchase => purchase.AddedDate.ToString("g"), 120),
                 // Pricing details.
-                ("DiscountAbsolute",        purchase => purchase.DiscountAbsolute.ToString("F2"), 80),
-                ("GrossProfitPercentage",   purchase => purchase.GrossProfitPercentage.ToString("F2"), 80),
-                ("GrossProfitAbsolute",     purchase => purchase.GrossProfitAbsolute.ToString("F2"), 80),
-                ("CostPerUnit",             purchase => purchase.CostPerUnit.ToString("F2"), 80),
-                ("CostPerPack",             purchase => purchase.CostPerPack.ToString("F2"), 80),
-                ("GrossCostPerUnit",        purchase => purchase.GrossCostPerUnit.ToString("F2"), 80),
-                ("SellingPrice",            purchase => purchase.SellingPrice.ToString("F2"), 80),
+                ("DiscountAbsolute", purchase => purchase.DiscountAbsolute.ToString("F2"), 80),
+                (
+                    "GrossProfitPercentage",
+                    purchase => purchase.GrossProfitPercentage.ToString("F2"),
+                    80
+                ),
+                (
+                    "GrossProfitAbsolute",
+                    purchase => purchase.GrossProfitAbsolute.ToString("F2"),
+                    80
+                ),
+                ("CostPerUnit", purchase => purchase.CostPerUnit.ToString("F2"), 80),
+                ("CostPerPack", purchase => purchase.CostPerPack.ToString("F2"), 80),
+                ("GrossCostPerUnit", purchase => purchase.GrossCostPerUnit.ToString("F2"), 80),
+                ("SellingPrice", purchase => purchase.SellingPrice.ToString("F2"), 80),
                 // Final summary fields.
-                ("NetTotalPrice",           purchase => purchase.NetTotalPrice.ToString("F2"), 100),
-                ("VatPercentage",           purchase => purchase.VatPercentage.ToString("F2"), 80),
-                ("VatAbsolute",             purchase => purchase.VatAbsolute.ToString("F2"), 80),
-                ("TotalAmountDue",          purchase => purchase.TotalAmountDue.ToString("F2"), 100)
+                ("NetTotalPrice", purchase => purchase.NetTotalPrice.ToString("F2"), 100),
+                ("VatPercentage", purchase => purchase.VatPercentage.ToString("F2"), 80),
+                ("VatAbsolute", purchase => purchase.VatAbsolute.ToString("F2"), 80),
+                ("TotalAmountDue", purchase => purchase.TotalAmountDue.ToString("F2"), 100),
             };
 
             // Apply auto-hide logic. If HiddenItems is empty, then automatically hide:
@@ -139,15 +160,24 @@ namespace CommonUi
                 {
                     if (col.Title.Equals("ReceivedInvoiceId", StringComparison.OrdinalIgnoreCase))
                         skipColumn = true;
-                    else if (col.Title.IndexOf("percentage", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                            !col.Title.Equals("GrossProfitPercentage", StringComparison.OrdinalIgnoreCase) &&
-                            !col.Title.Equals("VatPercentage", StringComparison.OrdinalIgnoreCase))
+                    else if (
+                        col.Title.IndexOf("percentage", StringComparison.OrdinalIgnoreCase) >= 0
+                        && !col.Title.Equals(
+                            "GrossProfitPercentage",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                        && !col.Title.Equals("VatPercentage", StringComparison.OrdinalIgnoreCase)
+                    )
                         skipColumn = true;
                 }
                 else
                 {
                     // If a custom HiddenItems list is provided, hide matching columns.
-                    if (HiddenItems.Exists(x => string.Equals(x, col.Title, StringComparison.OrdinalIgnoreCase)))
+                    if (
+                        HiddenItems.Exists(x =>
+                            string.Equals(x, col.Title, StringComparison.OrdinalIgnoreCase)
+                        )
+                    )
                         skipColumn = true;
                 }
 
@@ -157,19 +187,24 @@ namespace CommonUi
                 var gridColumn = new GridColumn
                 {
                     HeaderText = col.Title,
-                    DataCell = new TextBoxCell { Binding = new DelegateBinding<Purchase, string>(col.Getter) },
-                    Width = col.Width
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = new DelegateBinding<Purchase, string>(col.Getter),
+                    },
+                    Width = col.Width,
                 };
 
                 _gridView.Columns.Add(gridColumn);
             }
 
             _gridView.DataStore = _purchases;
-            _gridView.KeyUp += (e, a) => { 
-                if(a.Key == Keys.Delete && _gridView.SelectedRow>-1) {
+            _gridView.KeyUp += (e, a) =>
+            {
+                if (a.Key == Keys.Delete && _gridView.SelectedRow > -1)
+                {
                     DeleteReceivedInvoiceItem(_gridView.SelectedRow);
                 }
-            }; 
+            };
         }
     }
 }
