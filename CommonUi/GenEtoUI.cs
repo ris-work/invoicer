@@ -57,6 +57,7 @@ namespace CommonUi
         Dictionary<string, GeneratePanel> PanelGenerators = new();
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
         Dictionary<string, Type> OriginalTypesCustomPanels = new();
+        Dictionary<string, ILookupSupportedChildPanel> FieldsHandlerMapping = new();
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
@@ -115,6 +116,10 @@ namespace CommonUi
             else if (T == typeof(bool))
             {
                 Out = ((CheckBox)_Einputs[e.Key]).Checked;
+            }
+            else
+            {
+                Out = CustomPanelInputRetrievalFunctions[e.Key]();
             }
             return Out;
         }
@@ -888,6 +893,7 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
+                            FieldsHandlerMapping.Add(s, (Control)GeneratedCustom);
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
@@ -925,6 +931,7 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
+                            FieldsHandlerMapping.Add(s, (Control)GeneratedCustom);
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
