@@ -60,6 +60,64 @@ namespace CommonUi
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
+        public object Lookup(string key) {
+            var e = _Inputs.Where(e => e.Key == key).First();
+            object? Out=null;
+            Type T = OriginalTypes[e.Key];
+            if (T == typeof(long))
+            {
+                if (e.Value.Item3 == null)
+                {
+                    Out = long.Parse(((TextBox)_Einputs[e.Key]).Text);
+                }
+                else
+                {
+                    Out = long.Parse(((Button)_Einputs[e.Key]).Text);
+                }
+            }
+            else if (T == typeof(int))
+            {
+                if (e.Value.Item3 == null)
+                {
+                    Out = int.Parse(((TextBox)_Einputs[e.Key]).Text);
+                }
+                else
+                {
+                    Out = int.Parse(((Button)_Einputs[e.Key]).Text);
+                }
+            }
+            else if (T == typeof(float))
+            {
+                if (e.Value.Item3 == null)
+                {
+                    Out = float.Parse(((TextBox)_Einputs[e.Key]).Text);
+                }
+                else
+                {
+                    Out = float.Parse(((Button)_Einputs[e.Key]).Text);
+                }
+            }
+            else if (T == typeof(double))
+            {
+                if (e.Value.Item3 == null)
+                {
+                    Out = double.Parse(((TextBox)_Einputs[e.Key]).Text);
+                }
+                else
+                {
+                    Out = double.Parse(((Button)_Einputs[e.Key]).Text);
+                }
+            }
+            else if (T == typeof(string))
+            {
+                Out = ((TextBox)_Einputs[e.Key]).Text;
+            }
+            else if (T == typeof(bool))
+            {
+                Out = ((CheckBox)_Einputs[e.Key]).Checked;
+            }
+            return Out;
+        }
 
         public void InitializeConfiguration()
         {

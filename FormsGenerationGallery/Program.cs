@@ -10,6 +10,7 @@ using Microsoft.Maui.Hosting;
 using MyAOTFriendlyExtensions;
 using MyImageProcessing;
 using MySkiaApp;
+using Rv.InvNew.Common;
 using RV.InvNew.Common;
 using Terminal.Gui;
 
@@ -231,21 +232,9 @@ var PurchasingUIButton = (
     new Eto.Forms.Button() { Text = "Launch ReceivedInvoices UI with Purchases" }
 );
 var SamplePurchasePanel = new PurchasePanel();
+List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
 SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
-
-PurchasingUIButton.Click += (_, _) =>
-{
-    List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
-    SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
-    {
-        System.Console.WriteLine($"Requested to remove: {i}");
-        LP.RemoveAt(i);
-        SamplePurchasePanel.Render(LP);
-    };
-    var F = new Eto.Forms.Form()
-    {
-        Content = new Eto.Forms.StackLayout(
-            new GenEtoUI(
+var PurchaseDataEntryForm = new GenEtoUI(
                 SimpleJsonToUISerialization.ConvertToUISerialization(
                     JsonSerializer.Serialize(LP[0])
                 ),
@@ -263,7 +252,7 @@ PurchasingUIButton.Click += (_, _) =>
                 (e) =>
                 {
                     Eto.Forms.MessageBox.Show(
-                        JsonSerializer.Serialize(e),
+                        $"{JsonSerializer.Serialize(e)}, {JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription}",
                         "Serialized",
                         MessageBoxType.Information
                     );
@@ -284,7 +273,25 @@ PurchasingUIButton.Click += (_, _) =>
                     { ["ExpiryDate"], ("DatePickerPanel", null) },
                     { ["ManufacturingDate"], ("DatePickerPanel", null) },
                 }
-            ),
+            );
+PurchaseDataEntryForm.AnythingChanged = () => {
+    double PackSize = double.Parse(((TextBox)PurchaseDataEntryForm._Einputs["PackSize"]).Text);
+    Eto.Forms.MessageBox.Show($"{PackSize.ToString()}, {PurchaseDataEntryForm.Lookup("PackSize")}", "Title");
+};
+
+PurchasingUIButton.Click += (_, _) =>
+{
+   
+    SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
+    {
+        System.Console.WriteLine($"Requested to remove: {i}");
+        LP.RemoveAt(i);
+        SamplePurchasePanel.Render(LP);
+    };
+    var F = new Eto.Forms.Form()
+    {
+        Content = new Eto.Forms.StackLayout(PurchaseDataEntryForm
+            ,
             SamplePurchasePanel
         ),
     };
