@@ -82,6 +82,7 @@ namespace CommonUi
         {
             // Map the DateTimePicker value and the lookup-result TextBox.
             actionsMap.Add(fieldNames[0], () => datePicker.Value);
+            if(fieldNames.Length > 1)
             actionsMap.Add(fieldNames[1], () => lookupResultTextBox.Text);
         }
 

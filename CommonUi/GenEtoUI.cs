@@ -36,6 +36,7 @@ namespace CommonUi
         );
         public bool ChangesOnly = false;
         public string Context = "default";
+        public Action AnythingChanged = () => { };
         public IReadOnlyDictionary<string, object> Values
         {
             get => _Values;
@@ -234,7 +235,85 @@ namespace CommonUi
             }
             return CumulativeSuccess;
         }
-
+        public string SerializeIfValid()
+        {
+            if (!ValidateInputs()) return "";
+            Dictionary<string, object> _LocalDict = new();
+            foreach (var e in _Inputs)
+            {
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
+                {
+                    Type T = e.Value.Item2.GetType();
+                    if (T == typeof(long))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            _LocalDict.Add(e.Key, long.Parse(((TextBox)_Einputs[e.Key]).Text));
+                        }
+                        else
+                        {
+                            _LocalDict.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
+                        }
+                    }
+                    else if (T == typeof(int))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            _LocalDict.Add(e.Key, int.Parse(((TextBox)_Einputs[e.Key]).Text));
+                        }
+                        else
+                        {
+                            _LocalDict.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
+                        }
+                    }
+                    else if (T == typeof(float))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            _LocalDict.Add(
+                                e.Key,
+                                float.Parse(((TextBox)_Einputs[e.Key]).Text)
+                            );
+                        }
+                        else
+                        {
+                            _LocalDict.Add(e.Key, float.Parse(((Button)_Einputs[e.Key]).Text));
+                        }
+                    }
+                    else if (T == typeof(double))
+                    {
+                        if (e.Value.Item3 == null)
+                        {
+                            _LocalDict.Add(
+                                e.Key,
+                                double.Parse(((TextBox)_Einputs[e.Key]).Text)
+                            );
+                        }
+                        else
+                        {
+                            _LocalDict.Add(
+                                e.Key,
+                                double.Parse(((Button)_Einputs[e.Key]).Text)
+                            );
+                        }
+                    }
+                    else if (T == typeof(string))
+                    {
+                        _LocalDict.Add(e.Key, ((TextBox)_Einputs[e.Key]).Text);
+                    }
+                    else if (T == typeof(bool))
+                    {
+                        _LocalDict.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked == true);
+                    }
+                }
+            }
+            foreach (var kvp in CustomPanelInputRetrievalFunctions)
+            {
+                _LocalDict[kvp.Key] = kvp.Value();
+            }
+            //foreach(var input in )
+            return JsonSerializer.Serialize(_LocalDict);
+        }
         public void ConvertInputs()
         {
             ConvertedInputs = new();
@@ -308,7 +387,7 @@ namespace CommonUi
             }
             foreach (var kvp in CustomPanelInputRetrievalFunctions)
             {
-                ConvertedInputs.Add(kvp.Key, kvp.Value());
+                ConvertedInputs[kvp.Key]= kvp.Value;
             }
             //foreach(var input in )
         }
@@ -359,7 +438,7 @@ namespace CommonUi
             if (FieldsListHandledByGeneratedPanels != null)
                 foreach (var kv in FieldsListHandledByGeneratedPanels)
                 {
-                    NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
+                    if(kv.Value.ParentField != null) NotInNormalFlow = NotInNormalFlow.Concat(kv.Key.ToList()).ToList();
                     //_EChangeTracker.Add()
                 }
             NotInNormalFlow
@@ -516,6 +595,7 @@ namespace CommonUi
                             {
                                 EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                                 {
+                                    AnythingChanged();
                                     if (e is TextBox tb)
                                     {
                                         tb.BackgroundColor = ChangedBackgroundColor;
@@ -528,6 +608,7 @@ namespace CommonUi
                                     Text = (kv.Value.Item2 ?? 0).ToString(),
                                     TextAlignment = TextAlignment.Right,
                                 };
+                                
                                 /*((TextBox)EInput).Text = (kv.Value.Item2 ?? 0).ToString();
                                     ((TextBox)EInput).TextAlignment = TextAlignment.Right;*/
                                 ((TextBox)EInput).TextInput += ChangedIndication;
@@ -547,6 +628,7 @@ namespace CommonUi
                             {
                                 EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                                 {
+                                    AnythingChanged();
                                     if (e is TextBox tb)
                                     {
                                         tb.BackgroundColor = ChangedBackgroundColor;
@@ -576,6 +658,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
+                                AnythingChanged();
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -599,6 +682,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
+                                AnythingChanged();
                                 if (e is CheckBox cb)
                                 {
                                     cb.BackgroundColor = ChangedBackgroundColor;
@@ -618,6 +702,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
+                                AnythingChanged();
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -642,6 +727,7 @@ namespace CommonUi
                     {
                         EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
                         {
+                            AnythingChanged();
                             if (e is CheckBox cb)
                             {
                                 cb.BackgroundColor = ChangedBackgroundColor;
@@ -662,6 +748,7 @@ namespace CommonUi
                     {
                         EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                         {
+                            AnythingChanged();
                             if (e is TextBox tb)
                             {
                                 tb.BackgroundColor = ChangedBackgroundColor;
@@ -730,6 +817,7 @@ namespace CommonUi
                             .Count() > 0
                     )
                     {
+                        //We are the parent. We group all the children together.
                         var Fields = FieldsListHandledByGeneratedPanels
                             .Where(ikvp => ikvp.Value.ParentField == kv.Key)
                             .First();
@@ -737,7 +825,7 @@ namespace CommonUi
                             (Fields.Key, (TextBox)EInput);
                         Console.WriteLine($"{Fields.Key[0]}");
                         //GeneratedCustom.SetMoveNext(()=>);
-                        
+
                         foreach (string s in Fields.Key)
                         {
                             CustomPanelInputRetrievalFunctions.Add(
@@ -755,7 +843,36 @@ namespace CommonUi
 
                         //EControl.Cells.Add(GeneratedCustom);
                     }
+                    else if (FieldsListHandledByGeneratedPanels != null
+                        && FieldsListHandledByGeneratedPanels
+                            .Where(ikvp => ikvp.Key.Contains(kv.Key))
+                            .Count() > 0) {
+                        // We are a custom control with no data dependencies
+                        var Fields = FieldsListHandledByGeneratedPanels
+                            .Where(ikvp => ikvp.Key.Contains(kv.Key))
+                            .First();
+                        //MessageBox.Show("Control, custom", MessageBoxType.Information);
+                        var GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
+                            (Fields.Key, (TextBox)EInput);
+                        Console.WriteLine($"{Fields.Key[0]}");
+                        //GeneratedCustom.SetMoveNext(()=>);
 
+                        foreach (string s in Fields.Key)
+                        {
+                            CustomPanelInputRetrievalFunctions.Add(
+                                s,
+                                () => GeneratedCustom.LookupValue(s)
+                            );
+                            GeneratedCustom.SetOriginalValue(
+                                s,
+                                Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
+                            );
+                        }
+                        EControl = new TableRow(EFieldName,(Control)GeneratedCustom);
+                            EFocusableList.Add((Control)GeneratedCustom);
+                        GeneratedCustom.SetMoveNext(() => { GoToNextFromPanel(SupplementalControl); });
+                    }
+                    EInput.KeyUp += (_, _) => AnythingChanged();
                     if (CurrentNo < EMid)
                     {
                         EControlsL.Add(EControl);

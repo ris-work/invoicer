@@ -91,7 +91,7 @@ var ActionsMap = new Dictionary<string, (ShowAndGetValue, LookupValue)>
 };
 
 var SampleJson =
-    @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true, ""price"": 600.0, ""pdiscount"": 10.0, ""adiscount"": 11.0}";
+    @"{""name"": ""name"",""localName"": ""பெயர், नमस्ते"",""float"": 1.2,""location"": ""ஊர் பெயர்"",""ஊர் பெயர்"": ""திருகோணமலை"", ""long"": 65536, ""bool"": true, ""price"": 600.0, ""pdiscount"": 10.0, ""adiscount"": 11.0, ""today"": ""2024"" }";
 var SampleJsonNested =
     @"{
     ""identity"": {
@@ -205,8 +205,8 @@ var AccountsInformation = SampleDataGenerators.GenerateAccountsInformation();
 var PIISamples = SampleDataGenerators.GeneratePiiList();
 Form RandomSearchForm = new Form()
 {
-    Content = new Eto.Forms.StackLayout(new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(SuggestedPrices), SearchPanelUtility.GenerateSearchPanel(VatCategories)),
-    new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(AccountsInformation), SearchPanelUtility.GenerateSearchPanel(PIISamples))),
+    Content = new Eto.Forms.StackLayout(new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(SuggestedPrices), SearchPanelUtility.GenerateSearchPanel(VatCategories)) { Orientation = Eto.Forms.Orientation.Horizontal },
+    new Eto.Forms.StackLayout(SearchPanelUtility.GenerateSearchPanel(AccountsInformation), SearchPanelUtility.GenerateSearchPanel(PIISamples)) {Orientation = Eto.Forms.Orientation.Horizontal }),
 };
 var SearchUIButton = new Eto.Forms.Button() { Text = "Launch sample SearchUI" };
 SearchUIButton.Click += (_,_) => {
@@ -242,20 +242,25 @@ PurchasingUIButton.Click += (_, _) =>
             },
             ActionsMap,
             null,
-            false
+            false,
+            [],
+            null,
+            PanelGenerators.Defaults(),
+            new Dictionary<string[], (string, string)>
+                    {
+                        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+                        { ["today"], ("DatePickerPanel", null) },
+                        { ["ExpiryDate"], ("DatePickerPanel", null) },
+                        { ["ManufacturingDate"], ("DatePickerPanel", null) },
+                    }
+
         ),
         SamplePurchasePanel
         ),
     };
     F.Show();
 };
-AC.Run(
-    new Form()
-    {
-        Content = new Eto.Forms.Scrollable()
-        {
-            Content = new Eto.Forms.StackLayout(
-                new GenEtoUI(
+var GeneratedEtoUISample = new GenEtoUI(
                     SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
                     (_) =>
                     {
@@ -267,16 +272,34 @@ AC.Run(
                     },
                     ActionsMap,
                     null,
-                    true,
+                    false,
                     ["localName"],
                     null,
                     PanelGenerators.Defaults(),
                     new Dictionary<string[], (string, string)>
                     {
                         { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+                        { ["today"], ("DatePickerPanel", null) },
                     },
                     ["price"]
-                ),
+                );
+var ExternalCalculateButton = new Eto.Forms.Button() { Text = "Run external calculation" };
+ExternalCalculateButton.Click += (_,_) => {
+    Eto.Forms.MessageBox.Show(GeneratedEtoUISample.SerializeIfValid(), Eto.Forms.MessageBoxType.Information);
+};
+var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calculated" };
+GeneratedEtoUISample.AnythingChanged = () => {
+    ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
+};
+var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated) { };
+
+AC.Run(
+    new Form()
+    {
+        Content = new Eto.Forms.Scrollable()
+        {
+            Content = new Eto.Forms.StackLayout(
+               GeneratedEtoUISample,
                 new Eto.Forms.StackLayout(
                     new StackLayoutItem(null, true),
                     new StackLayoutItem(imagePanel, false),
@@ -288,6 +311,7 @@ AC.Run(
                     Orientation = Eto.Forms.Orientation.Horizontal,
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
+                ExternalWatcher,
                 PurchasingUIButton,
                 SearchUIButton,
                 DiscountMarkupText,
