@@ -207,15 +207,15 @@ Form RandomSearchForm = new Form()
 {
     Content = new Eto.Forms.StackLayout(
         new Eto.Forms.StackLayout(
-            SearchPanelUtility.GenerateSearchPanel(SuggestedPrices),
-            SearchPanelUtility.GenerateSearchPanel(VatCategories)
+            SearchPanelUtility.GenerateSearchPanel(SuggestedPrices, debug: false),
+            SearchPanelUtility.GenerateSearchPanel(VatCategories, debug: false)
         )
         {
             Orientation = Eto.Forms.Orientation.Horizontal,
         },
         new Eto.Forms.StackLayout(
-            SearchPanelUtility.GenerateSearchPanel(AccountsInformation),
-            SearchPanelUtility.GenerateSearchPanel(PIISamples)
+            SearchPanelUtility.GenerateSearchPanel(AccountsInformation, debug: false),
+            SearchPanelUtility.GenerateSearchPanel(PIISamples, debug: false)
         )
         {
             Orientation = Eto.Forms.Orientation.Horizontal,
@@ -325,6 +325,7 @@ var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calcul
 GeneratedEtoUISample.AnythingChanged = () =>
 {
     ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
+    //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
 };
 var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)
 { };

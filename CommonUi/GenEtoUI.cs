@@ -42,13 +42,13 @@ namespace CommonUi
             get => _Values;
         }
         private Dictionary<string, object> _Values = new();
-        private Dictionary<string, Eto.Forms.Control> _Controls = new();
+        public Dictionary<string, Eto.Forms.Control> _Controls = new();
         private bool _new = false;
         private SaveHandler _SaveNewHandler;
         private SaveHandler _SaveExistingHandler;
         List<Eto.Forms.TableRow> _EControlsL = new();
         List<Eto.Forms.TableRow> _EControlsR = new();
-        Dictionary<string, Eto.Forms.Control> _Einputs = new();
+        public Dictionary<string, Eto.Forms.Control> _Einputs = new();
         Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, bool> _EChangeTracker = new();
         Dictionary<string, object> ConvertedInputs = new();
@@ -57,7 +57,7 @@ namespace CommonUi
         Dictionary<string, GeneratePanel> PanelGenerators = new();
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
         Dictionary<string, Type> OriginalTypesCustomPanels = new();
-        OrderedDictionary<string, (string, object, string?)> _Inputs;
+        public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
 
