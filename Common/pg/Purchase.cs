@@ -59,5 +59,5 @@ public partial class Purchase
 
     public double TotalAmountDue { get; set; }
 
-    public double GrossCost { get; set; }
+    public double GrossTotal { get; set; }
 }

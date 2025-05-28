@@ -733,10 +733,10 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("expiry_date");
             entity.Property(e => e.FreePacks).HasDefaultValue(0L).HasColumnName("free_packs");
             entity.Property(e => e.FreeUnits).HasColumnName("free_units");
-            entity.Property(e => e.GrossCost).HasColumnName("gross_cost");
             entity.Property(e => e.GrossCostPerUnit).HasColumnName("gross_cost_per_unit");
             entity.Property(e => e.GrossProfitAbsolute).HasColumnName("gross_profit_absolute");
             entity.Property(e => e.GrossProfitPercentage).HasColumnName("gross_profit_percentage");
+            entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity
                 .Property(e => e.ManufacturerBatchId)
