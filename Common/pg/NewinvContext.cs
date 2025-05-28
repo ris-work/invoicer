@@ -733,6 +733,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ManufacturingDate)
                 .HasColumnType("time with time zone")
                 .HasColumnName("manufacturing_date");
+            entity.Property(e => e.NetCostPerUnit).HasColumnName("net_cost_per_unit");
             entity.Property(e => e.NetTotal).HasColumnName("net_total");
             entity.Property(e => e.NetTotalPrice).HasColumnName("net_total_price");
             entity.Property(e => e.PackQuantity)

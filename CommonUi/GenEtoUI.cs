@@ -61,7 +61,14 @@ namespace CommonUi
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
-
+        public void Disable(string key) {
+            object? Out = null;
+            if (_Inputs.ContainsKey(key))
+            {
+                var e = _Inputs.Where(e => e.Key == key).First();
+                _Einputs[e.Key].Enabled = false;
+            }
+            }
         public object Lookup(string key)
         {
             object? Out = null;

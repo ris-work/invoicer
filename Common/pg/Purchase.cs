@@ -68,4 +68,6 @@ public partial class Purchase
     public double GrossMarkupAbsolute { get; set; }
 
     public bool IsVatADisallowedInputTax { get; set; }
+
+    public double NetCostPerUnit { get; set; }
 }
