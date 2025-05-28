@@ -132,6 +132,7 @@ namespace CommonUi
             }
             else
             {
+                Console.WriteLine(string.Join(',',CustomPanelInputRetrievalFunctions.Keys.ToArray()));
                 Out = CustomPanelInputRetrievalFunctions[key]();
             }
             return Out;

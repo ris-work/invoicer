@@ -233,6 +233,67 @@ SearchUIButton.Click += (_, _) =>
 var PurchasingUIButton = (
     new Eto.Forms.Button() { Text = "Launch ReceivedInvoices UI with Purchases" }
 );
+string[] fieldOrder = new string[]
+{
+    // Identification & Product Details
+    "ReceivedInvoiceId",
+    "Itemcode",
+    "ProductName",
+    
+    // Date & Batch Information
+    "AddedDate",
+    "ManufacturingDate",
+    "ExpiryDate",
+    "ManufacturerBatchId",
+    
+    // Quantity Input Fields
+    "PackSize",
+    "PackQuantity",
+    "FreePacks",
+    "ReceivedAsUnitQuantity",
+    "FreeUnits",
+    
+    // Computed: Total quantity (paid and free)
+    "TotalUnits",
+    
+    // Cost Input Fields
+    "CostPerPack",
+    "CostPerUnit",
+    
+    // Computed: Gross Total (cost for paid items only)
+    "GrossTotal",
+    
+    // Discounts
+    "DiscountPercentage",
+    "DiscountAbsolute",
+    
+    // Computed: Net Price before Tax (GrossTotal - DiscountAbsolute)
+    "NetTotalPrice",
+    
+    // Tax Input Fields & Flag (for VAT reclaimability)
+    "VatPercentage",
+    "VatCategory",
+    "VatAbsolute",
+    "VatCategoryName",
+    "IsVatADisallowedInputTax",
+    
+    // Computed: Final Amount Due including VAT
+    "TotalAmountDue",
+    
+    // Computed: Average Costs per Unit
+    "GrossCostPerUnit",
+    "NetCostPerUnit",
+    
+    // Computed: Final incurred cost (renamed from NetTotal to NetTotalCost)
+    "NetTotalCost",
+    
+    // Sales and Profit Information
+    "SellingPrice",
+    "GrossMarkupPercentage",
+    "GrossMarkupAbsolute",
+};
+
+
 var SamplePurchasePanel = new PurchasePanel();
 List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
 SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
@@ -247,6 +308,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             "Serialized",
             MessageBoxType.Information
         );
+        Eto.Forms.MessageBox.Show(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription, "Validation status");
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
         SamplePurchasePanel.Render(LP);
         return 100;
@@ -258,6 +320,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             "Serialized",
             MessageBoxType.Information
         );
+        Eto.Forms.MessageBox.Show(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription, "Validation status");
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
         SamplePurchasePanel.Render(LP);
         return 100;
@@ -275,9 +338,9 @@ var PurchaseDataEntryForm = new GenEtoUI(
         { ["ExpiryDate"], ("DatePickerPanel", null) },
         { ["ManufacturingDate"], ("DatePickerPanel", null) },
         { ["DiscountAbsolute", "DiscountPercentage"], ("DiscountPanel", "GrossTotal") },
-        { ["VatAbsolute", "VatPercentage"], ("VatPanel", "NetTotal") },
+        { ["VatAbsolute", "VatPercentage"], ("VatPanel", "NetTotalPrice") },
         { ["GrossMarkupAbsolute", "GrossMarkupPercentage"], ("MarkupPanel", "NetCostPerUnit") }
-    }
+    }, fieldOrder
 );
 PurchaseDataEntryForm.AnythingChanged = () =>
 {
@@ -287,46 +350,67 @@ PurchaseDataEntryForm.AnythingChanged = () =>
     var P = PurchaseDataEntryForm;
     try
     {
-        // Retrieve the underlying values using Lookup() so that
-        // we do not overwrite any user-edited uncomputed values.
+        // Retrieve base values using Lookup so that any user-edited values remain intact.
         long packSize = (long)P.Lookup("PackSize");
         long packQuantity = (long)P.Lookup("PackQuantity");
         long freePacks = (long)P.Lookup("FreePacks");
-        Console.WriteLine("Did not except yet");
 
         double receivedAsUnitQuantity = (double)P.Lookup("ReceivedAsUnitQuantity");
         double freeUnits = (double)P.Lookup("FreeUnits");
-        Console.WriteLine("Did not except yet");
 
+        // Obtain provided cost details.
+        // Note: The initial CostPerUnit is provided by the user and is not recalculated.
         double costPerPack = (double)P.Lookup("CostPerPack");
         double costPerUnit = (double)P.Lookup("CostPerUnit");
         double discountAbsolute = (double)P.Lookup("DiscountAbsolute");
         double vatAbsolute = (double)P.Lookup("VatAbsolute");
-        Console.WriteLine("Did not except yet");
+        bool isVatADisallowed = (bool)P.Lookup("IsVatADisallowedInputTax");
 
-        // Calculate total units including both paid and free units.
-        double totalUnits =
-            ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
+        // Calculate the total number of units, including free items.
+        double totalUnits = ((packQuantity + freePacks) * packSize)
+                            + receivedAsUnitQuantity
+                            + freeUnits;
 
-        // Compute the GrossTotal using the updated formula.
-        // Note that free packs/units are not charged.
-        double grossTotal = (packQuantity * costPerPack) + (receivedAsUnitQuantity * costPerUnit);
+        // Compute the gross total: only the cost that is actually charged.
+        double grossTotal = (packQuantity * costPerPack)
+                            + (receivedAsUnitQuantity * costPerUnit);
 
-        // Calculate the net total price and the total amount due.
+        // Compute net total price (price after discount, before tax).
         double netTotalPrice = grossTotal - discountAbsolute;
+
+        // Calculate the final amount due including VAT.
         double totalAmountDue = netTotalPrice + vatAbsolute;
 
-        // Update computed fields only so that user-edited values remain unchanged.
-        P.SetValue("TotalUnits", totalUnits);
-        P.SetValue("GrossTotal", grossTotal);
-        P.SetValue("NetTotalPrice", netTotalPrice);
-        P.SetValue("TotalAmountDue", totalAmountDue);
+        // Calculate cost per unit values (costs averaged over all physical units).
+        // GrossCostPerUnit considers the cost divided over the total units received.
+        double grossCostPerUnit = totalUnits > 0 ? grossTotal / totalUnits : 0.0;
+
+        // NetCostPerUnit uses either the net price or the final amount due based on whether VAT is reclaimable.
+        double netCostPerUnit = totalUnits > 0
+            ? (isVatADisallowed ? totalAmountDue / totalUnits : netTotalPrice / totalUnits)
+            : 0.0;
+
+        // Now compute the incurred cost, renamed as NetTotalCost.
+        // When VAT cannot be reclaimed, include VAT as an incurred extra cost.
+        double netTotalCost = isVatADisallowed ? totalAmountDue : netTotalPrice;
+
+        // Update computed fields and disable editing for calculated values.
+        P.SetValue("TotalUnits", totalUnits); P.Disable("TotalUnits");
+        P.SetValue("GrossTotal", grossTotal); P.Disable("GrossTotal");
+        P.SetValue("NetTotalPrice", netTotalPrice); P.Disable("NetTotalPrice");
+        P.SetValue("TotalAmountDue", totalAmountDue); P.Disable("TotalAmountDue");
+        P.SetValue("GrossCostPerUnit", grossCostPerUnit); P.Disable("GrossCostPerUnit");
+        P.SetValue("NetCostPerUnit", netCostPerUnit); P.Disable("NetCostPerUnit");
+        P.SetValue("NetTotalCost", netTotalCost); P.Disable("NetTotalCost");
+
     }
     catch (Exception ex)
     {
-        // Log or handle the exception as necessary.
+        // Handle or log exceptions as necessary.
         Console.WriteLine("Error recalculating computed fields: " + ex.Message + ex.StackTrace);
     }
+
+
     //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
 };
 

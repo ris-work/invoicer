@@ -720,8 +720,6 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.GrossCostPerUnit).HasColumnName("gross_cost_per_unit");
             entity.Property(e => e.GrossMarkupAbsolute).HasColumnName("gross_markup_absolute");
             entity.Property(e => e.GrossMarkupPercentage).HasColumnName("gross_markup_percentage");
-            entity.Property(e => e.GrossProfitAbsolute).HasColumnName("gross_profit_absolute");
-            entity.Property(e => e.GrossProfitPercentage).HasColumnName("gross_profit_percentage");
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
             entity.Property(e => e.IsVatADisallowedInputTax)
                 .HasDefaultValue(false)
@@ -734,7 +732,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnType("time with time zone")
                 .HasColumnName("manufacturing_date");
             entity.Property(e => e.NetCostPerUnit).HasColumnName("net_cost_per_unit");
-            entity.Property(e => e.NetTotal).HasColumnName("net_total");
+            entity.Property(e => e.NetTotalCost).HasColumnName("net_total_cost");
             entity.Property(e => e.NetTotalPrice).HasColumnName("net_total_price");
             entity.Property(e => e.PackQuantity)
                 .HasDefaultValue(0L)

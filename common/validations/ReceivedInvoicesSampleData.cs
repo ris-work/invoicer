@@ -41,8 +41,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 5.0,
                     DiscountAbsolute = 2500,
-                    GrossProfitPercentage = 10.0,
-                    GrossProfitAbsolute = 2500, // Example value
+                    GrossMarkupPercentage = 10.0,
+                    GrossMarkupAbsolute = 2500, // Example value
                     CostPerUnit = 200,
                     CostPerPack = 25 * 200,
                     GrossCostPerUnit = 210,
@@ -72,8 +72,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 3.0,
                     DiscountAbsolute = 1350,
-                    GrossProfitPercentage = 8.0,
-                    GrossProfitAbsolute = 1080, // Approximate value
+                    GrossMarkupPercentage = 8.0,
+                    GrossMarkupAbsolute = 1080, // Approximate value
                     CostPerUnit = 150,
                     CostPerPack = 50 * 150,
                     GrossCostPerUnit = 155,
@@ -103,8 +103,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 2.0,
                     DiscountAbsolute = 480,
-                    GrossProfitPercentage = 15.0,
-                    GrossProfitAbsolute = 3600, // Example value
+                    GrossMarkupPercentage = 15.0,
+                    GrossMarkupAbsolute = 3600, // Example value
                     CostPerUnit = 1200,
                     CostPerPack = 1200,
                     GrossCostPerUnit = 1250,
@@ -134,8 +134,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 4.0,
                     DiscountAbsolute = 480,
-                    GrossProfitPercentage = 5.0,
-                    GrossProfitAbsolute = 600, // Example value
+                    GrossMarkupPercentage = 5.0,
+                    GrossMarkupAbsolute = 600, // Example value
                     CostPerUnit = 300,
                     CostPerPack = 5 * 300,
                     GrossCostPerUnit = 310,
@@ -165,8 +165,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 6.0,
                     DiscountAbsolute = 1620,
-                    GrossProfitPercentage = 7.0,
-                    GrossProfitAbsolute = 1890, // Approximate value
+                    GrossMarkupPercentage = 7.0,
+                    GrossMarkupAbsolute = 1890, // Approximate value
                     CostPerUnit = 180,
                     CostPerPack = 10 * 180,
                     GrossCostPerUnit = 185,
@@ -196,8 +196,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 3.5,
                     DiscountAbsolute = 1456,
-                    GrossProfitPercentage = 10.0,
-                    GrossProfitAbsolute = 416, // Example value
+                    GrossMarkupPercentage = 10.0,
+                    GrossMarkupAbsolute = 416, // Example value
                     CostPerUnit = 160,
                     CostPerPack = 20 * 160,
                     GrossCostPerUnit = 165,
@@ -227,8 +227,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 5.0,
                     DiscountAbsolute = 640,
-                    GrossProfitPercentage = 8.0,
-                    GrossProfitAbsolute = 1024, // Example value
+                    GrossMarkupPercentage = 8.0,
+                    GrossMarkupAbsolute = 1024, // Example value
                     CostPerUnit = 400,
                     CostPerPack = 400,
                     GrossCostPerUnit = 410,
@@ -258,8 +258,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 4.0,
                     DiscountAbsolute = 400,
-                    GrossProfitPercentage = 6.0,
-                    GrossProfitAbsolute = 600, // Example value
+                    GrossMarkupPercentage = 6.0,
+                    GrossMarkupAbsolute = 600, // Example value
                     CostPerUnit = 250,
                     CostPerPack = 5 * 250,
                     GrossCostPerUnit = 260,
@@ -341,8 +341,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 10.0,
                     DiscountAbsolute = 500, // Too low compared to expected value.
-                    GrossProfitPercentage = 5.0,
-                    GrossProfitAbsolute = 0, // Incorrect gross profit absolute.
+                    GrossMarkupPercentage = 5.0,
+                    GrossMarkupAbsolute = 0, // Incorrect gross profit absolute.
                     CostPerUnit = 100,
                     CostPerPack = 20 * 100,
                     GrossCostPerUnit = 105,
@@ -370,8 +370,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 5.0,
                     DiscountAbsolute = 100,
-                    GrossProfitPercentage = 7.0,
-                    GrossProfitAbsolute = 50,
+                    GrossMarkupPercentage = 7.0,
+                    GrossMarkupAbsolute = 50,
                     CostPerUnit = 120,
                     CostPerPack = -10 * 120, // Negative value.
                     GrossCostPerUnit = 125,
@@ -400,8 +400,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 5.0,
                     DiscountAbsolute = 500,
-                    GrossProfitPercentage = 10.0,
-                    GrossProfitAbsolute = 150,
+                    GrossMarkupPercentage = 10.0,
+                    GrossMarkupAbsolute = 150,
                     CostPerUnit = 50,
                     CostPerPack = 10 * 50,
                     GrossCostPerUnit = 55,
@@ -430,8 +430,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 4.0,
                     DiscountAbsolute = 300, // Does not match calculated discount.
-                    GrossProfitPercentage = 8.0,
-                    GrossProfitAbsolute = 50,
+                    GrossMarkupPercentage = 8.0,
+                    GrossMarkupAbsolute = 50,
                     CostPerUnit = 200,
                     CostPerPack = 5 * 200,
                     GrossCostPerUnit = 205,
@@ -443,7 +443,7 @@ namespace RV.InvNew.Common
                     TotalUnits = 40,
                 },
                 // Purchase 5: Gross profit inconsistency.
-                // GrossProfitAbsolute is not near the expected calculation.
+                // GrossMarkupAbsolute is not near the expected calculation.
                 new Purchase
                 {
                     ReceivedInvoiceId = 6001,
@@ -460,8 +460,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 8.0,
                     DiscountAbsolute = 500,
-                    GrossProfitPercentage = 10.0,
-                    GrossProfitAbsolute = 0, // Incorrect value.
+                    GrossMarkupPercentage = 10.0,
+                    GrossMarkupAbsolute = 0, // Incorrect value.
                     CostPerUnit = 80,
                     CostPerPack = 15 * 80,
                     GrossCostPerUnit = 85,
@@ -489,8 +489,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 7.0,
                     DiscountAbsolute = 300, // Likely too low.
-                    GrossProfitPercentage = 12.0,
-                    GrossProfitAbsolute = 50, // Incorrect.
+                    GrossMarkupPercentage = 12.0,
+                    GrossMarkupAbsolute = 50, // Incorrect.
                     CostPerUnit = 90,
                     CostPerPack = 30 * 90,
                     GrossCostPerUnit = 95,
@@ -518,8 +518,8 @@ namespace RV.InvNew.Common
                     AddedDate = DateTimeOffset.Now,
                     DiscountPercentage = 5.0,
                     DiscountAbsolute = 50, // Too low compared to base cost.
-                    GrossProfitPercentage = 10.0,
-                    GrossProfitAbsolute = 30, // Too low.
+                    GrossMarkupPercentage = 10.0,
+                    GrossMarkupAbsolute = 30, // Too low.
                     CostPerUnit = 20,
                     CostPerPack = 2 * 20,
                     GrossCostPerUnit = 21,

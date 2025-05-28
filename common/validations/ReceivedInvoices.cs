@@ -68,7 +68,7 @@ namespace Rv.InvNew.Common
 
         /// <summary>
         /// [2] Gross profit consistency rule.
-        /// GrossProfitAbsolute should equal GrossCostPerUnit × (GrossProfitPercentage/100).
+        /// GrossMarkupAbsolute should equal GrossCostPerUnit × (GrossMarkupPercentage/100).
         /// This rule relates the two representations (absolute vs. percentage) of gross profit.
         /// </summary>
         public static (bool, string) ValidateGrossProfitConsistency(
@@ -76,13 +76,13 @@ namespace Rv.InvNew.Common
             double tolPercentage
         )
         {
-            double expectedGP = p.GrossCostPerUnit * (p.GrossProfitPercentage / 100.0);
-            if (AreApproximatelyEqual(expectedGP, p.GrossProfitAbsolute, tolPercentage))
+            double expectedGP = p.GrossCostPerUnit * (p.GrossMarkupPercentage / 100.0);
+            if (AreApproximatelyEqual(expectedGP, p.GrossMarkupAbsolute, tolPercentage))
                 return (true, null);
             else
                 return (
                     false,
-                    $"[2] Gross Profit Consistency Error: Expected GrossProfitAbsolute = {expectedGP:F4} (from GrossCostPerUnit = {p.GrossCostPerUnit:F4} and GrossProfitPercentage = {p.GrossProfitPercentage:F2}%), but found {p.GrossProfitAbsolute:F4}."
+                    $"[2] Gross Profit Consistency Error: Expected GrossMarkupAbsolute = {expectedGP:F4} (from GrossCostPerUnit = {p.GrossCostPerUnit:F4} and GrossMarkupPercentage = {p.GrossMarkupPercentage:F2}%), but found {p.GrossMarkupAbsolute:F4}."
                 );
         }
 

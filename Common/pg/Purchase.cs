@@ -33,10 +33,6 @@ public partial class Purchase
 
     public double DiscountAbsolute { get; set; }
 
-    public double GrossProfitPercentage { get; set; }
-
-    public double GrossProfitAbsolute { get; set; }
-
     public double CostPerUnit { get; set; }
 
     public double CostPerPack { get; set; }
@@ -61,7 +57,7 @@ public partial class Purchase
 
     public double GrossTotal { get; set; }
 
-    public double NetTotal { get; set; }
+    public double NetTotalCost { get; set; }
 
     public double GrossMarkupPercentage { get; set; }
 

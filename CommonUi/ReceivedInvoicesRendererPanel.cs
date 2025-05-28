@@ -20,7 +20,7 @@ namespace CommonUi
         /// When left empty, the panel automatically hides:
         ///   • "ReceivedInvoiceId"
         ///   • Any field whose title contains "percentage" (case-insensitive)
-        ///     except "GrossProfitPercentage" and "VatPercentage".
+        ///     except "GrossMarkupPercentage" and "VatPercentage".
         /// You can also supply specific field names to hide via this list.
         /// </summary>
         public List<string> HiddenItems { get; set; } = new List<string>();
@@ -60,12 +60,12 @@ namespace CommonUi
         /// TotalUnits (F2), ManufacturingDate (date-only), ExpiryDate (date-only), AddedDate.
         ///
         /// Pricing and totals fields:
-        /// DiscountAbsolute, GrossProfitPercentage, GrossProfitAbsolute,
+        /// DiscountAbsolute, GrossMarkupPercentage, GrossMarkupAbsolute,
         /// CostPerUnit, CostPerPack, GrossCostPerUnit, SellingPrice,
         /// NetTotalPrice, VatPercentage, VatAbsolute, and finally TotalAmountDue.
         ///
         /// The auto-hide logic removes ReceivedInvoiceId and any fields matching the
-        /// "percentage" rule—except GrossProfitPercentage and VatPercentage.
+        /// "percentage" rule—except GrossMarkupPercentage and VatPercentage.
         /// </summary>
         /// <param name="purchases">The list of Purchase items to display.</param>
         public void Render(List<Purchase> purchases)
@@ -128,13 +128,13 @@ namespace CommonUi
                 // Pricing details.
                 ("DiscountAbsolute", purchase => purchase.DiscountAbsolute.ToString("F2"), 80),
                 (
-                    "GrossProfitPercentage",
-                    purchase => purchase.GrossProfitPercentage.ToString("F2"),
+                    "GrossMarkupPercentage",
+                    purchase => purchase.GrossMarkupPercentage.ToString("F2"),
                     80
                 ),
                 (
-                    "GrossProfitAbsolute",
-                    purchase => purchase.GrossProfitAbsolute.ToString("F2"),
+                    "GrossMarkupAbsolute",
+                    purchase => purchase.GrossMarkupAbsolute.ToString("F2"),
                     80
                 ),
                 ("CostPerUnit", purchase => purchase.CostPerUnit.ToString("F2"), 80),
@@ -151,7 +151,7 @@ namespace CommonUi
             // Apply auto-hide logic. If HiddenItems is empty, then automatically hide:
             //   • "ReceivedInvoiceId"
             //   • Any field whose name contains "percentage" (case-insensitive)
-            //     except "GrossProfitPercentage" and "VatPercentage".
+            //     except "GrossMarkupPercentage" and "VatPercentage".
             foreach (var col in columns)
             {
                 bool skipColumn = false;
@@ -163,7 +163,7 @@ namespace CommonUi
                     else if (
                         col.Title.IndexOf("percentage", StringComparison.OrdinalIgnoreCase) >= 0
                         && !col.Title.Equals(
-                            "GrossProfitPercentage",
+                            "GrossMarkupPercentage",
                             StringComparison.OrdinalIgnoreCase
                         )
                         && !col.Title.Equals("VatPercentage", StringComparison.OrdinalIgnoreCase)
