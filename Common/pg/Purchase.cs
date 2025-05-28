@@ -60,4 +60,12 @@ public partial class Purchase
     public double TotalAmountDue { get; set; }
 
     public double GrossTotal { get; set; }
+
+    public double NetTotal { get; set; }
+
+    public double GrossMarkupPercentage { get; set; }
+
+    public double GrossMarkupAbsolute { get; set; }
+
+    public bool IsVatADisallowedInputTax { get; set; }
 }

@@ -274,6 +274,9 @@ var PurchaseDataEntryForm = new GenEtoUI(
         { ["today"], ("DatePickerPanel", null) },
         { ["ExpiryDate"], ("DatePickerPanel", null) },
         { ["ManufacturingDate"], ("DatePickerPanel", null) },
+        { ["DiscountAbsolute", "DiscountPercentage"], ("DiscountPanel", "GrossTotal") },
+        { ["VatAbsolute", "VatPercentage"], ("VatPanel", "NetTotal") },
+        { ["GrossMarkupAbsolute", "GrossMarkupPercentage"], ("MarkupPanel", "NetTotal") }
     }
 );
 PurchaseDataEntryForm.AnythingChanged = () =>

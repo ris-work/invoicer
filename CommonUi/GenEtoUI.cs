@@ -64,64 +64,68 @@ namespace CommonUi
 
         public object Lookup(string key)
         {
-            var e = _Inputs.Where(e => e.Key == key).First();
             object? Out = null;
-            Type T = OriginalTypes[e.Key];
-            if (T == typeof(long))
+            if (_Inputs.ContainsKey(key))
             {
-                if (e.Value.Item3 == null)
+                var e = _Inputs.Where(e => e.Key == key).First();
+                
+                Type T = OriginalTypes[e.Key];
+                if (T == typeof(long))
                 {
-                    Out = long.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    if (e.Value.Item3 == null)
+                    {
+                        Out = long.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    }
+                    else
+                    {
+                        Out = long.Parse(((Button)_Einputs[e.Key]).Text);
+                    }
                 }
-                else
+                else if (T == typeof(int))
                 {
-                    Out = long.Parse(((Button)_Einputs[e.Key]).Text);
+                    if (e.Value.Item3 == null)
+                    {
+                        Out = int.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    }
+                    else
+                    {
+                        Out = int.Parse(((Button)_Einputs[e.Key]).Text);
+                    }
                 }
-            }
-            else if (T == typeof(int))
-            {
-                if (e.Value.Item3 == null)
+                else if (T == typeof(float))
                 {
-                    Out = int.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    if (e.Value.Item3 == null)
+                    {
+                        Out = float.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    }
+                    else
+                    {
+                        Out = float.Parse(((Button)_Einputs[e.Key]).Text);
+                    }
                 }
-                else
+                else if (T == typeof(double))
                 {
-                    Out = int.Parse(((Button)_Einputs[e.Key]).Text);
+                    if (e.Value.Item3 == null)
+                    {
+                        Out = double.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    }
+                    else
+                    {
+                        Out = double.Parse(((Button)_Einputs[e.Key]).Text);
+                    }
                 }
-            }
-            else if (T == typeof(float))
-            {
-                if (e.Value.Item3 == null)
+                else if (T == typeof(string))
                 {
-                    Out = float.Parse(((TextBox)_Einputs[e.Key]).Text);
+                    Out = ((TextBox)_Einputs[e.Key]).Text;
                 }
-                else
+                else if (T == typeof(bool))
                 {
-                    Out = float.Parse(((Button)_Einputs[e.Key]).Text);
+                    Out = ((CheckBox)_Einputs[e.Key]).Checked;
                 }
-            }
-            else if (T == typeof(double))
-            {
-                if (e.Value.Item3 == null)
-                {
-                    Out = double.Parse(((TextBox)_Einputs[e.Key]).Text);
-                }
-                else
-                {
-                    Out = double.Parse(((Button)_Einputs[e.Key]).Text);
-                }
-            }
-            else if (T == typeof(string))
-            {
-                Out = ((TextBox)_Einputs[e.Key]).Text;
-            }
-            else if (T == typeof(bool))
-            {
-                Out = ((CheckBox)_Einputs[e.Key]).Checked;
             }
             else
             {
-                Out = CustomPanelInputRetrievalFunctions[e.Key]();
+                Out = CustomPanelInputRetrievalFunctions[key]();
             }
             return Out;
         }
