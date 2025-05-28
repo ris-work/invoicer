@@ -332,6 +332,8 @@ var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calcul
 GeneratedEtoUISample.AnythingChanged = () =>
 {
     ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
+    GeneratedEtoUISample.SetValue("float", 3.1415);
+    GeneratedEtoUISample.SetValue("adiscount", 3.1415);
     //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
 };
 var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)

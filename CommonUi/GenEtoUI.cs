@@ -124,6 +124,79 @@ namespace CommonUi
             return Out;
         }
 
+        public void SetValue(string key, object value)
+        {
+            // First, try built-in controls from _Inputs.
+            // Built-in controls take precedence over custom ones.
+            if (_Einputs.TryGetValue(key, out Control builtinControl))
+            {
+                // Assume that OriginalTypes contains the type expected for this key.
+                Type expectedType = OriginalTypes[key];
+
+                // For boolean values, assume a CheckBox is used.
+                if (expectedType == typeof(bool))
+                {
+                    if (builtinControl is CheckBox checkBox)
+                    {
+                        if (value is bool boolValue)
+                            checkBox.Checked = boolValue;
+                        else
+                            throw new ArgumentException($"Value for key '{key}' must be a boolean.");
+                    }
+                    // Fallback in case the built-in control supports the custom interface.
+                    else if (builtinControl is ILookupSupportedChildPanel panel)
+                    {
+                        panel.SetOriginalValue(key, value);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Control for key '{key}' is not a CheckBox or a supported custom type for boolean values.");
+                    }
+                }
+                // For numbers and strings, update the Text property (TextBox or Button).
+                else
+                {
+                    string textValue = value?.ToString() ?? "";
+                    if (builtinControl is TextBox textBox)
+                    {
+                        textBox.Text = textValue;
+                    }
+                    else if (builtinControl is Button button)
+                    {
+                        button.Text = textValue;
+                    }
+                    // Fallback for built-in controls that implement the custom interface
+                    else if (builtinControl is ILookupSupportedChildPanel panel)
+                    {
+                        panel.SetOriginalValue(key, value);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Control type '{builtinControl.GetType().Name}' for key '{key}' is not supported for setting text/numeric values.");
+                    }
+                }
+                return;
+            }
+
+            // Next, try custom controls from FieldsHandlerMapping (which might not exhaustively contain every key).
+            if (FieldsHandlerMapping.TryGetValue(key, out ILookupSupportedChildPanel customControl))
+            {
+                if (customControl is ILookupSupportedChildPanel customPanel)
+                {
+                    customPanel.SetOriginalValue(key, value);
+                }
+                else
+                {
+                    throw new NotSupportedException($"Custom control for key '{key}' does not implement ILookupSupportedChildPanel.");
+                }
+                return;
+            }
+
+            // If the key is not found in either collection, throw an error.
+            throw new KeyNotFoundException($"Key '{key}' not found in built-in (_Inputs) or custom (FieldsHandlerMapping) control mappings.");
+        }
+
+
         public void InitializeConfiguration()
         {
             string ConfigText;
@@ -893,7 +966,7 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
-                            FieldsHandlerMapping.Add(s, (Control)GeneratedCustom);
+                            FieldsHandlerMapping.Add(s, (ILookupSupportedChildPanel)GeneratedCustom);
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
@@ -931,7 +1004,7 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
-                            FieldsHandlerMapping.Add(s, (Control)GeneratedCustom);
+                            FieldsHandlerMapping.Add(s, (ILookupSupportedChildPanel)GeneratedCustom);
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
