@@ -163,6 +163,7 @@ if (args.Length >= 1 && File.Exists(args[0]))
 }
 JsonSerializerOptions JSOptions = new();
 JSOptions.Converters.Add(new ForceDoubleConverter());
+
 /*
 new Eto.Forms.Application().Run(
     new Form()
@@ -236,46 +237,47 @@ var SamplePurchasePanel = new PurchasePanel();
 List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
 SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
 var PurchaseDataEntryForm = new GenEtoUI(
-                SimpleJsonToUISerialization.ConvertToUISerialization(
-                    JsonSerializer.Serialize(LP[0], JSOptions)
-                ),
-                (e) =>
-                {
-                    Eto.Forms.MessageBox.Show(
-                        JsonSerializer.Serialize(e),
-                        "Serialized",
-                        MessageBoxType.Information
-                    );
-                    LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
-                    SamplePurchasePanel.Render(LP);
-                    return 100;
-                },
-                (e) =>
-                {
-                    Eto.Forms.MessageBox.Show(
-                        $"{JsonSerializer.Serialize(e)}, {JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription}",
-                        "Serialized",
-                        MessageBoxType.Information
-                    );
-                    LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
-                    SamplePurchasePanel.Render(LP);
-                    return 100;
-                },
-                ActionsMap,
-                null,
-                false,
-                [],
-                null,
-                PanelGenerators.Defaults(),
-                new Dictionary<string[], (string, string)>
-                {
-                    { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
-                    { ["today"], ("DatePickerPanel", null) },
-                    { ["ExpiryDate"], ("DatePickerPanel", null) },
-                    { ["ManufacturingDate"], ("DatePickerPanel", null) },
-                }
-            );
-PurchaseDataEntryForm.AnythingChanged = () => {
+    SimpleJsonToUISerialization.ConvertToUISerialization(
+        JsonSerializer.Serialize(LP[0], JSOptions)
+    ),
+    (e) =>
+    {
+        Eto.Forms.MessageBox.Show(
+            JsonSerializer.Serialize(e),
+            "Serialized",
+            MessageBoxType.Information
+        );
+        LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+        SamplePurchasePanel.Render(LP);
+        return 100;
+    },
+    (e) =>
+    {
+        Eto.Forms.MessageBox.Show(
+            $"{JsonSerializer.Serialize(e)}, {JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription}",
+            "Serialized",
+            MessageBoxType.Information
+        );
+        LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
+        SamplePurchasePanel.Render(LP);
+        return 100;
+    },
+    ActionsMap,
+    null,
+    false,
+    [],
+    null,
+    PanelGenerators.Defaults(),
+    new Dictionary<string[], (string, string)>
+    {
+        { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
+        { ["today"], ("DatePickerPanel", null) },
+        { ["ExpiryDate"], ("DatePickerPanel", null) },
+        { ["ManufacturingDate"], ("DatePickerPanel", null) },
+    }
+);
+PurchaseDataEntryForm.AnythingChanged = () =>
+{
     //double PackSize = double.Parse(((TextBox)PurchaseDataEntryForm._Einputs["PackSize"]).Text);
     //Eto.Forms.MessageBox.Show($"{PackSize.ToString()}, {PurchaseDataEntryForm.Lookup("PackSize")}", "Title");
     //ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
@@ -300,7 +302,8 @@ PurchaseDataEntryForm.AnythingChanged = () => {
         Console.WriteLine("Did not except yet");
 
         // Calculate total units including both paid and free units.
-        double totalUnits = ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
+        double totalUnits =
+            ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
 
         // Compute the GrossTotal using the updated formula.
         // Note that free packs/units are not charged.
@@ -326,7 +329,6 @@ PurchaseDataEntryForm.AnythingChanged = () => {
 
 PurchasingUIButton.Click += (_, _) =>
 {
-   
     SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
     {
         System.Console.WriteLine($"Requested to remove: {i}");
@@ -335,10 +337,7 @@ PurchasingUIButton.Click += (_, _) =>
     };
     var F = new Eto.Forms.Form()
     {
-        Content = new Eto.Forms.StackLayout(PurchaseDataEntryForm
-            ,
-            SamplePurchasePanel
-        ),
+        Content = new Eto.Forms.StackLayout(PurchaseDataEntryForm, SamplePurchasePanel),
     };
     F.Show();
 };
@@ -374,10 +373,7 @@ ExternalCalculateButton.Click += (_, _) =>
     );
 };
 var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calculated" };
-GeneratedEtoUISample.AnythingChanged = () =>
-{
-
-};
+GeneratedEtoUISample.AnythingChanged = () => { };
 var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)
 { };
 

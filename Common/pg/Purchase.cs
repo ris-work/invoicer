@@ -58,4 +58,6 @@ public partial class Purchase
     public double NetTotalPrice { get; set; }
 
     public double TotalAmountDue { get; set; }
+
+    public double GrossCost { get; set; }
 }

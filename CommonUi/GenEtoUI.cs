@@ -61,9 +61,11 @@ namespace CommonUi
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
-        public object Lookup(string key) {
+
+        public object Lookup(string key)
+        {
             var e = _Inputs.Where(e => e.Key == key).First();
-            object? Out=null;
+            object? Out = null;
             Type T = OriginalTypes[e.Key];
             if (T == typeof(long))
             {
@@ -141,7 +143,9 @@ namespace CommonUi
                         if (value is bool boolValue)
                             checkBox.Checked = boolValue;
                         else
-                            throw new ArgumentException($"Value for key '{key}' must be a boolean.");
+                            throw new ArgumentException(
+                                $"Value for key '{key}' must be a boolean."
+                            );
                     }
                     // Fallback in case the built-in control supports the custom interface.
                     else if (builtinControl is ILookupSupportedChildPanel panel)
@@ -150,7 +154,9 @@ namespace CommonUi
                     }
                     else
                     {
-                        throw new NotSupportedException($"Control for key '{key}' is not a CheckBox or a supported custom type for boolean values.");
+                        throw new NotSupportedException(
+                            $"Control for key '{key}' is not a CheckBox or a supported custom type for boolean values."
+                        );
                     }
                 }
                 // For numbers and strings, update the Text property (TextBox or Button).
@@ -172,7 +178,9 @@ namespace CommonUi
                     }
                     else
                     {
-                        throw new NotSupportedException($"Control type '{builtinControl.GetType().Name}' for key '{key}' is not supported for setting text/numeric values.");
+                        throw new NotSupportedException(
+                            $"Control type '{builtinControl.GetType().Name}' for key '{key}' is not supported for setting text/numeric values."
+                        );
                     }
                 }
                 return;
@@ -187,15 +195,18 @@ namespace CommonUi
                 }
                 else
                 {
-                    throw new NotSupportedException($"Custom control for key '{key}' does not implement ILookupSupportedChildPanel.");
+                    throw new NotSupportedException(
+                        $"Custom control for key '{key}' does not implement ILookupSupportedChildPanel."
+                    );
                 }
                 return;
             }
 
             // If the key is not found in either collection, throw an error.
-            throw new KeyNotFoundException($"Key '{key}' not found in built-in (_Inputs) or custom (FieldsHandlerMapping) control mappings.");
+            throw new KeyNotFoundException(
+                $"Key '{key}' not found in built-in (_Inputs) or custom (FieldsHandlerMapping) control mappings."
+            );
         }
-
 
         public void InitializeConfiguration()
         {
@@ -708,7 +719,9 @@ namespace CommonUi
                     Eto.Forms.TableRow EControl;
                     Eto.Forms.Label? ELegend = null;
                     Eto.Forms.Control EInput = new Label();
-                    Console.WriteLine($"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}");
+                    Console.WriteLine(
+                        $"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}"
+                    );
                     OriginalTypes.Add(kv.Key, kv.Value.Value?.GetType() ?? typeof(long));
                     if (
                         kv.Value.Item2 == null
@@ -966,7 +979,10 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
-                            FieldsHandlerMapping.Add(s, (ILookupSupportedChildPanel)GeneratedCustom);
+                            FieldsHandlerMapping.Add(
+                                s,
+                                (ILookupSupportedChildPanel)GeneratedCustom
+                            );
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
@@ -1004,7 +1020,10 @@ namespace CommonUi
                                 s,
                                 () => GeneratedCustom.LookupValue(s)
                             );
-                            FieldsHandlerMapping.Add(s, (ILookupSupportedChildPanel)GeneratedCustom);
+                            FieldsHandlerMapping.Add(
+                                s,
+                                (ILookupSupportedChildPanel)GeneratedCustom
+                            );
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
