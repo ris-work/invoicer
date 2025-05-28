@@ -344,13 +344,10 @@ var PurchaseDataEntryForm = new GenEtoUI(
 );
 PurchaseDataEntryForm.AnythingChanged = () =>
 {
-    //double PackSize = double.Parse(((TextBox)PurchaseDataEntryForm._Einputs["PackSize"]).Text);
-    //Eto.Forms.MessageBox.Show($"{PackSize.ToString()}, {PurchaseDataEntryForm.Lookup("PackSize")}", "Title");
-    //ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
     var P = PurchaseDataEntryForm;
     try
     {
-        // Retrieve base values using Lookup so that any user-edited values remain intact.
+        // Retrieve basic inputs.
         long packSize = (long)P.Lookup("PackSize");
         long packQuantity = (long)P.Lookup("PackQuantity");
         long freePacks = (long)P.Lookup("FreePacks");
@@ -358,43 +355,26 @@ PurchaseDataEntryForm.AnythingChanged = () =>
         double receivedAsUnitQuantity = (double)P.Lookup("ReceivedAsUnitQuantity");
         double freeUnits = (double)P.Lookup("FreeUnits");
 
-        // Obtain provided cost details.
-        // Note: The initial CostPerUnit is provided by the user and is not recalculated.
         double costPerPack = (double)P.Lookup("CostPerPack");
         double costPerUnit = (double)P.Lookup("CostPerUnit");
         double discountAbsolute = (double)P.Lookup("DiscountAbsolute");
         double vatAbsolute = (double)P.Lookup("VatAbsolute");
         bool isVatADisallowed = (bool)P.Lookup("IsVatADisallowedInputTax");
 
-        // Calculate the total number of units, including free items.
-        double totalUnits = ((packQuantity + freePacks) * packSize)
-                            + receivedAsUnitQuantity
-                            + freeUnits;
-
-        // Compute the gross total: only the cost that is actually charged.
-        double grossTotal = (packQuantity * costPerPack)
-                            + (receivedAsUnitQuantity * costPerUnit);
-
-        // Compute net total price (price after discount, before tax).
+        // Compute quantities and totals.
+        double totalUnits = ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
+        double grossTotal = (packQuantity * costPerPack) + (receivedAsUnitQuantity * costPerUnit);
         double netTotalPrice = grossTotal - discountAbsolute;
-
-        // Calculate the final amount due including VAT.
         double totalAmountDue = netTotalPrice + vatAbsolute;
-
-        // Calculate cost per unit values (costs averaged over all physical units).
-        // GrossCostPerUnit considers the cost divided over the total units received.
         double grossCostPerUnit = totalUnits > 0 ? grossTotal / totalUnits : 0.0;
-
-        // NetCostPerUnit uses either the net price or the final amount due based on whether VAT is reclaimable.
         double netCostPerUnit = totalUnits > 0
             ? (isVatADisallowed ? totalAmountDue / totalUnits : netTotalPrice / totalUnits)
             : 0.0;
 
-        // Now compute the incurred cost, renamed as NetTotalCost.
-        // When VAT cannot be reclaimed, include VAT as an incurred extra cost.
+        // Incurred cost includes VAT if it cannot be reclaimed.
         double netTotalCost = isVatADisallowed ? totalAmountDue : netTotalPrice;
 
-        // Update computed fields and disable editing for calculated values.
+        // Update computed fields and disable editing.
         P.SetValue("TotalUnits", totalUnits); P.Disable("TotalUnits");
         P.SetValue("GrossTotal", grossTotal); P.Disable("GrossTotal");
         P.SetValue("NetTotalPrice", netTotalPrice); P.Disable("NetTotalPrice");
@@ -403,16 +383,58 @@ PurchaseDataEntryForm.AnythingChanged = () =>
         P.SetValue("NetCostPerUnit", netCostPerUnit); P.Disable("NetCostPerUnit");
         P.SetValue("NetTotalCost", netTotalCost); P.Disable("NetTotalCost");
 
+        // Retrieve the SellingPrice TextBox from the Eto input dictionary 
+        // and cache its focus state.
+        Eto.Forms.TextBox sellingPriceTextBox = (Eto.Forms.TextBox)P._Einputs["SellingPrice"];
+        bool isSellingPriceFocused = sellingPriceTextBox.HasFocus;
+
+        // If the SellingPrice TextBox is not focused, update its value based on current margin.
+        if (!isSellingPriceFocused)
+        {
+            double currentMarkupPercentage = P.Lookup("GrossMarkupPercentage") is double d ? d : 0.0;
+            double newSellingPrice = netTotalCost * (1 + (currentMarkupPercentage / 100.0));
+
+            P.SetValue("SellingPrice", newSellingPrice);
+            sellingPriceTextBox.Text = newSellingPrice.ToString("F2");
+
+            double newGrossMarkupAbsolute = newSellingPrice - netTotalCost;
+            double newGrossMarkupPercentage = netTotalCost != 0.0
+                ? (newGrossMarkupAbsolute / netTotalCost) * 100.0
+                : 0.0;
+            P.SetValue("GrossMarkupAbsolute", newGrossMarkupAbsolute);
+            P.SetValue("GrossMarkupPercentage", newGrossMarkupPercentage);
+        }
+
+        // Attach the event handler only once by using the Tag property.
+        if (!(sellingPriceTextBox.Tag is bool handlerAttached && handlerAttached))
+        {
+            sellingPriceTextBox.TextChanged += (sender, e) =>
+            {
+                if (double.TryParse(sellingPriceTextBox.Text, out double updatedSellingPrice))
+                {
+                    double grossMarkupAbsolute = updatedSellingPrice - netTotalCost;
+                    double grossMarkupPercentage = netTotalCost != 0.0
+                        ? (grossMarkupAbsolute / netTotalCost) * 100.0
+                        : 0.0;
+                    P.SetValue("GrossMarkupAbsolute", grossMarkupAbsolute);
+                    P.SetValue("GrossMarkupPercentage", grossMarkupPercentage);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid SellingPrice input");
+                }
+            };
+            // Mark that the event handler has been attached.
+            sellingPriceTextBox.Tag = true;
+        }
     }
     catch (Exception ex)
     {
-        // Handle or log exceptions as necessary.
-        Console.WriteLine("Error recalculating computed fields: " + ex.Message + ex.StackTrace);
+        Console.WriteLine("Error during recalculations: " + ex.Message + ex.StackTrace);
     }
 
-
-    //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
 };
+
 
 PurchasingUIButton.Click += (_, _) =>
 {

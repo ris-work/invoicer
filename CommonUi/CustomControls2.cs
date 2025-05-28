@@ -26,6 +26,7 @@ namespace CommonUi
     {
         // Built-in DateTimePicker control.
         private DateTimePicker datePicker;
+        private Action? GlobalChangeHandler;
 
         // An optional read-only TextBox that may display lookup results.
         private TextBox lookupResultTextBox;
@@ -35,6 +36,7 @@ namespace CommonUi
         private readonly Dictionary<string, Action<object>> setMap =
             new Dictionary<string, Action<object>>();
         private Action? moveNext;
+        private Action? GlobalWatchHandler;
 
         /// <summary>
         /// Optional lookup delegate that takes the selected date and returns lookup information.
@@ -69,8 +71,8 @@ namespace CommonUi
                 {
                     new TableRow(new Label { Text = "Select Date:" }),
                     new TableRow(datePicker),
-                    new TableRow(new Label { Text = "Lookup Result:" }),
-                    new TableRow(lookupResultTextBox),
+                    //new TableRow(new Label { Text = "Lookup Result:" }),
+                    //new TableRow(lookupResultTextBox),
                 },
             };
 
@@ -126,6 +128,11 @@ namespace CommonUi
             setMap.Add(fieldNames[0], (val) => datePicker.Value = (DateTime)val);
             setMap.Add(fieldNames[1], (val) => lookupResultTextBox.Text = (string)val);
         }
+
+        public void SetGlobalChangeWatcher(Action GlobalWatchHandler)
+        {
+            this.GlobalWatchHandler = GlobalWatchHandler;
+        }
     }
 
     #endregion
@@ -150,6 +157,7 @@ namespace CommonUi
         private readonly Dictionary<string, Action<object>> setMap =
             new Dictionary<string, Action<object>>();
         private Action? moveNext;
+        private Action? GlobalChangeHandler = null;
 
         /// <summary>
         /// Set this list externally so that the lookup can use LINQ queries against it.
@@ -262,6 +270,10 @@ namespace CommonUi
             setMap.Add(fieldNames[0], (val) => vatCategoryIdTextBox.Text = val.ToString());
             setMap.Add(fieldNames[1], (val) => vatDetailsTextBox.Text = (string)val);
         }
+
+        public void SetGlobalChangeWatcher(Action GlobalChangeHandler) {
+            this.GlobalChangeHandler = GlobalChangeHandler;
+        }
     }
 
     #endregion
@@ -286,6 +298,7 @@ namespace CommonUi
         private readonly Dictionary<string, Action<object>> setMap =
             new Dictionary<string, Action<object>>();
         private Action? moveNext;
+        private Action? GlobalChangeHandler = null;
 
         /// <summary>
         /// Set this external list so that the lookup can query for a matching phone number.
@@ -395,6 +408,11 @@ namespace CommonUi
         {
             setMap.Add(fieldNames[0], (val) => phoneNumberTextBox.Text = val.ToString());
             setMap.Add(fieldNames[1], (val) => customerNameTextBox.Text = (string)val);
+        }
+
+        public void SetGlobalChangeWatcher(Action GlobalChangeHandler)
+        {
+            this.GlobalChangeHandler = GlobalChangeHandler;
         }
     }
 

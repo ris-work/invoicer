@@ -18,5 +18,6 @@ namespace CommonUi
         public void SetOriginalValues(object[] OriginalValues);
         public void SetOriginalValue(string Key, object Value);
         public void MapSetValues(string[] fieldNames);
+        public void SetGlobalChangeWatcher(Action SomethingChanged);
     }
 }

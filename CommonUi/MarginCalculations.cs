@@ -8,6 +8,7 @@ namespace CommonUi
     public class DiscountMarkupPanel : Panel, ILookupSupportedChildPanel
     {
         private Action? MoveNext = null;
+        private Action? GlobalWatchHandler = null;
 
         // Private controls
         private readonly Label absoluteLabel;
@@ -372,6 +373,11 @@ namespace CommonUi
         {
             AbsoluteValue = (double)OriginalValues[0];
             PercentageValue = (double)OriginalValues[1];
+        }
+
+        public void SetGlobalChangeWatcher(Action? GlobalWatchHandler)
+        {
+            this.GlobalWatchHandler = GlobalWatchHandler;
         }
     }
 }
