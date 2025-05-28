@@ -14,6 +14,7 @@ namespace CommonUi
             (string, object, string?)
         > ConvertToUISerialization(string SimpleJsonNoArrays)
         {
+            Console.WriteLine($"UI generation requested for: ${SimpleJsonNoArrays}");
             Dictionary<string, (string, object, string?)> Output = new();
             var JsonDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
                 SimpleJsonNoArrays

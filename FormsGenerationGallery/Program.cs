@@ -161,7 +161,8 @@ if (args.Length >= 1 && File.Exists(args[0]))
         Console.WriteLine($"Error reading {args[0]}: {E.ToString()}, {E.StackTrace}");
     }
 }
-
+JsonSerializerOptions JSOptions = new();
+JSOptions.Converters.Add(new ForceDoubleConverter());
 /*
 new Eto.Forms.Application().Run(
     new Form()
@@ -236,7 +237,7 @@ List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
 SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
 var PurchaseDataEntryForm = new GenEtoUI(
                 SimpleJsonToUISerialization.ConvertToUISerialization(
-                    JsonSerializer.Serialize(LP[0])
+                    JsonSerializer.Serialize(LP[0], JSOptions)
                 ),
                 (e) =>
                 {
@@ -275,8 +276,52 @@ var PurchaseDataEntryForm = new GenEtoUI(
                 }
             );
 PurchaseDataEntryForm.AnythingChanged = () => {
-    double PackSize = double.Parse(((TextBox)PurchaseDataEntryForm._Einputs["PackSize"]).Text);
-    Eto.Forms.MessageBox.Show($"{PackSize.ToString()}, {PurchaseDataEntryForm.Lookup("PackSize")}", "Title");
+    //double PackSize = double.Parse(((TextBox)PurchaseDataEntryForm._Einputs["PackSize"]).Text);
+    //Eto.Forms.MessageBox.Show($"{PackSize.ToString()}, {PurchaseDataEntryForm.Lookup("PackSize")}", "Title");
+    //ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
+    var P = PurchaseDataEntryForm;
+    try
+    {
+        // Retrieve the underlying values using Lookup() so that
+        // we do not overwrite any user-edited uncomputed values.
+        long packSize = (long)P.Lookup("PackSize");
+        long packQuantity = (long)P.Lookup("PackQuantity");
+        long freePacks = (long)P.Lookup("FreePacks");
+        Console.WriteLine("Did not except yet");
+
+        double receivedAsUnitQuantity = (double)P.Lookup("ReceivedAsUnitQuantity");
+        double freeUnits = (double)P.Lookup("FreeUnits");
+        Console.WriteLine("Did not except yet");
+
+        double costPerPack = (double)P.Lookup("CostPerPack");
+        double costPerUnit = (double)P.Lookup("CostPerUnit");
+        double discountAbsolute = (double)P.Lookup("DiscountAbsolute");
+        double vatAbsolute = (double)P.Lookup("VatAbsolute");
+        Console.WriteLine("Did not except yet");
+
+        // Calculate total units including both paid and free units.
+        double totalUnits = ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
+
+        // Compute the GrossTotal using the updated formula.
+        // Note that free packs/units are not charged.
+        double grossTotal = (packQuantity * costPerPack) + (receivedAsUnitQuantity * costPerUnit);
+
+        // Calculate the net total price and the total amount due.
+        double netTotalPrice = grossTotal - discountAbsolute;
+        double totalAmountDue = netTotalPrice + vatAbsolute;
+
+        // Update computed fields only so that user-edited values remain unchanged.
+        P.SetValue("TotalUnits", totalUnits);
+        P.SetValue("GrossTotal", grossTotal);
+        P.SetValue("NetTotalPrice", netTotalPrice);
+        P.SetValue("TotalAmountDue", totalAmountDue);
+    }
+    catch (Exception ex)
+    {
+        // Log or handle the exception as necessary.
+        Console.WriteLine("Error recalculating computed fields: " + ex.Message + ex.StackTrace);
+    }
+    //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
 };
 
 PurchasingUIButton.Click += (_, _) =>
@@ -331,10 +376,7 @@ ExternalCalculateButton.Click += (_, _) =>
 var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calculated" };
 GeneratedEtoUISample.AnythingChanged = () =>
 {
-    ExternalLabelCalculated.Text = GeneratedEtoUISample.SerializeIfValid();
-    GeneratedEtoUISample.SetValue("float", 3.1415);
-    GeneratedEtoUISample.SetValue("adiscount", 3.1415);
-    //((TextBox)GeneratedEtoUISample._Einputs["float"]).Text = (long.Parse(((TextBox)GeneratedEtoUISample._Einputs["long"]).Text)/3).ToString(); --> Works
+
 };
 var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)
 { };
