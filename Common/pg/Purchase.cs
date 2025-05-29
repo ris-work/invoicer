@@ -66,4 +66,6 @@ public partial class Purchase
     public bool IsVatADisallowedInputTax { get; set; }
 
     public double NetCostPerUnit { get; set; }
+
+    public long LineNumber { get; set; }
 }

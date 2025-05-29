@@ -418,6 +418,7 @@ namespace CommonUi
         {
             this.GlobalWatchHandler = GlobalWatchHandler;
         }
+
         public int RowSpan()
         {
             return 4;

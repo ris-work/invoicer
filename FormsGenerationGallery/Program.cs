@@ -296,10 +296,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             MessageBoxType.Information
         );
         Eto.Forms.MessageBox.Show(
-            JsonSerializer
-                .Deserialize<Purchase>(JsonSerializer.Serialize(e))
-                .Validate()
-                .Error,
+            JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().Error,
             "Validation status"
         );
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
@@ -314,10 +311,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             MessageBoxType.Information
         );
         Eto.Forms.MessageBox.Show(
-            JsonSerializer
-                .Deserialize<Purchase>(JsonSerializer.Serialize(e))
-                .Validate()
-                .Error,
+            JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().Error,
             "Validation status"
         );
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
@@ -366,22 +360,30 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
         bool isVatADisallowed = (bool)P.Lookup("IsVatADisallowedInputTax");
 
         log.AppendLine("Basic Inputs:");
-        log.AppendLine($"  PackSize={packSize}, PackQuantity={packQuantity}, FreePacks={freePacks}");
+        log.AppendLine(
+            $"  PackSize={packSize}, PackQuantity={packQuantity}, FreePacks={freePacks}"
+        );
         log.AppendLine($"  ReceivedAsUnitQuantity={receivedAsUnitQuantity}, FreeUnits={freeUnits}");
-        log.AppendLine($"  CostPerPack={costPerPack}, CostPerUnit={costPerUnit}, DiscountAbsolute={discountAbsolute}, VatAbsolute={vatAbsolute}");
+        log.AppendLine(
+            $"  CostPerPack={costPerPack}, CostPerUnit={costPerUnit}, DiscountAbsolute={discountAbsolute}, VatAbsolute={vatAbsolute}"
+        );
         log.AppendLine($"  IsVatADisallowed={isVatADisallowed}");
 
         // Compute quantities and totals.
-        double totalUnits = ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
+        double totalUnits =
+            ((packQuantity + freePacks) * packSize) + receivedAsUnitQuantity + freeUnits;
         double grossTotal = (packQuantity * costPerPack) + (receivedAsUnitQuantity * costPerUnit);
         double netTotalPrice = grossTotal - discountAbsolute;
         double totalAmountDue = netTotalPrice + vatAbsolute;
         double grossCostPerUnit = totalUnits > 0 ? grossTotal / totalUnits : 0.0;
-        double netCostPerUnit = totalUnits > 0
-            ? (isVatADisallowed ? totalAmountDue / totalUnits : netTotalPrice / totalUnits)
-            : 0.0;
+        double netCostPerUnit =
+            totalUnits > 0
+                ? (isVatADisallowed ? totalAmountDue / totalUnits : netTotalPrice / totalUnits)
+                : 0.0;
         log.AppendLine("Computed Totals:");
-        log.AppendLine($"  TotalUnits={totalUnits}, GrossTotal={grossTotal}, NetTotalPrice={netTotalPrice}, TotalAmountDue={totalAmountDue}");
+        log.AppendLine(
+            $"  TotalUnits={totalUnits}, GrossTotal={grossTotal}, NetTotalPrice={netTotalPrice}, TotalAmountDue={totalAmountDue}"
+        );
         log.AppendLine($"  GrossCostPerUnit={grossCostPerUnit}, NetCostPerUnit={netCostPerUnit}");
 
         // Determine incurred cost.
@@ -419,7 +421,9 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
         // Compute a selling price from markup percentages.
         double currentMarkupPercentage = P.Lookup("GrossMarkupPercentage") is double d ? d : 0.0;
         double computedSellingPrice = netCostPerUnit * (1 + (currentMarkupPercentage / 100.0));
-        log.AppendLine($"Computed SellingPrice from markup: {computedSellingPrice} (Markup {currentMarkupPercentage}%)");
+        log.AppendLine(
+            $"Computed SellingPrice from markup: {computedSellingPrice} (Markup {currentMarkupPercentage}%)"
+        );
 
         // Set a threshold for updating (e.g. if difference > 0.01).
         const double priceDiffThreshold = 0.01;
@@ -428,20 +432,27 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
         if (isSellingPriceFocused)
         {
             // If focused, the user is updating the selling price. Use its current value to update the markup fields.
-            log.AppendLine("SellingPrice is focused. Updating markup based on user-entered selling price.");
+            log.AppendLine(
+                "SellingPrice is focused. Updating markup based on user-entered selling price."
+            );
             if (double.TryParse(sellingPriceTextBox.Text, out double updatedSellingPrice))
             {
                 double markupAbsolute = updatedSellingPrice - netCostPerUnit;
-                double markupPercentage = netCostPerUnit != 0.0 ? (markupAbsolute / netCostPerUnit) * 100.0 : 0.0;
+                double markupPercentage =
+                    netCostPerUnit != 0.0 ? (markupAbsolute / netCostPerUnit) * 100.0 : 0.0;
                 if (Math.Abs(updatedSellingPrice - netCostPerUnit) < 0.001)
                 {
-                    log.AppendLine("User-entered SellingPrice is nearly equal to NetCostPerUnit; forcing zero margin.");
+                    log.AppendLine(
+                        "User-entered SellingPrice is nearly equal to NetCostPerUnit; forcing zero margin."
+                    );
                     markupAbsolute = 0.0;
                     markupPercentage = 0.0;
                 }
                 SetValueIfNotInCurrentControl("GrossMarkupAbsolute", markupAbsolute);
                 SetValueIfNotInCurrentControl("GrossMarkupPercentage", markupPercentage);
-                log.AppendLine($"Updated markup from focused SellingPrice: Absolute={markupAbsolute}, Percentage={markupPercentage}");
+                log.AppendLine(
+                    $"Updated markup from focused SellingPrice: Absolute={markupAbsolute}, Percentage={markupPercentage}"
+                );
             }
             else
             {
@@ -456,26 +467,37 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
                 double diff = Math.Abs(computedSellingPrice - currentSellingPrice);
                 if (diff > priceDiffThreshold)
                 {
-                    log.AppendLine($"Difference {diff} exceeds threshold {priceDiffThreshold}. Updating SellingPrice to computed value.");
+                    log.AppendLine(
+                        $"Difference {diff} exceeds threshold {priceDiffThreshold}. Updating SellingPrice to computed value."
+                    );
                     SetValueIfNotInCurrentControl("SellingPrice", computedSellingPrice);
                     sellingPriceTextBox.Text = computedSellingPrice.ToString("F2");
                 }
                 else
                 {
-                    log.AppendLine($"Difference {diff} is within threshold. Keeping current SellingPrice.");
+                    log.AppendLine(
+                        $"Difference {diff} is within threshold. Keeping current SellingPrice."
+                    );
                 }
                 // Regardless, update the markup fields based on the computed selling price.
                 double newGrossMarkupAbsolute = computedSellingPrice - netCostPerUnit;
-                double newGrossMarkupPercentage = (netCostPerUnit != 0.0) ? (newGrossMarkupAbsolute / netCostPerUnit) * 100.0 : 0.0;
+                double newGrossMarkupPercentage =
+                    (netCostPerUnit != 0.0)
+                        ? (newGrossMarkupAbsolute / netCostPerUnit) * 100.0
+                        : 0.0;
                 if (Math.Abs(computedSellingPrice - netCostPerUnit) < 0.001)
                 {
                     newGrossMarkupAbsolute = 0.0;
                     newGrossMarkupPercentage = 0.0;
-                    log.AppendLine("Computed SellingPrice is nearly equal to NetCostPerUnit; forcing zero margin for markup.");
+                    log.AppendLine(
+                        "Computed SellingPrice is nearly equal to NetCostPerUnit; forcing zero margin for markup."
+                    );
                 }
                 SetValueIfNotInCurrentControl("GrossMarkupAbsolute", newGrossMarkupAbsolute);
                 SetValueIfNotInCurrentControl("GrossMarkupPercentage", newGrossMarkupPercentage);
-                log.AppendLine($"Updated markup based on computed SellingPrice: Absolute={newGrossMarkupAbsolute}, Percentage={newGrossMarkupPercentage}");
+                log.AppendLine(
+                    $"Updated markup based on computed SellingPrice: Absolute={newGrossMarkupAbsolute}, Percentage={newGrossMarkupPercentage}"
+                );
             }
             else
             {
@@ -496,20 +518,29 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
                     {
                         innerLog.AppendLine($"User updated SellingPrice to {updatedSellingPrice}");
                         double markupAbsolute = updatedSellingPrice - netCostPerUnit;
-                        double markupPercentage = (netCostPerUnit != 0.0) ? (markupAbsolute / netCostPerUnit) * 100.0 : 0.0;
+                        double markupPercentage =
+                            (netCostPerUnit != 0.0)
+                                ? (markupAbsolute / netCostPerUnit) * 100.0
+                                : 0.0;
                         if (Math.Abs(updatedSellingPrice - netCostPerUnit) < 0.001)
                         {
                             markupAbsolute = 0.0;
                             markupPercentage = 0.0;
-                            innerLog.AppendLine("Updated SellingPrice nearly equals NetCostPerUnit; forcing zero margin.");
+                            innerLog.AppendLine(
+                                "Updated SellingPrice nearly equals NetCostPerUnit; forcing zero margin."
+                            );
                         }
                         SetValueIfNotInCurrentControl("GrossMarkupAbsolute", markupAbsolute);
                         SetValueIfNotInCurrentControl("GrossMarkupPercentage", markupPercentage);
-                        innerLog.AppendLine($"Updated markup from TextChanged: Absolute={markupAbsolute}, Percentage={markupPercentage}");
+                        innerLog.AppendLine(
+                            $"Updated markup from TextChanged: Absolute={markupAbsolute}, Percentage={markupPercentage}"
+                        );
                     }
                     else
                     {
-                        innerLog.AppendLine("Failed to parse SellingPrice during TextChanged event.");
+                        innerLog.AppendLine(
+                            "Failed to parse SellingPrice during TextChanged event."
+                        );
                     }
                 }
                 Console.WriteLine(innerLog.ToString());
@@ -528,8 +559,6 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
     // Output the entire accumulated log in one big Console.WriteLine.
     Console.WriteLine(log.ToString());
 };
-
-
 
 PurchasingUIButton.Click += (_, _) =>
 {

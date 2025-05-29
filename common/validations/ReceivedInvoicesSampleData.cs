@@ -1,6 +1,6 @@
-﻿using RV.InvNew.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using RV.InvNew.Common;
 
 namespace SampleDataGenerator
 {
@@ -44,7 +44,10 @@ namespace SampleDataGenerator
                 double markupPercentage = 22.0;
                 p1.SellingPrice = p1.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p1.GrossMarkupAbsolute = p1.SellingPrice - p1.NetCostPerUnit;
-                p1.GrossMarkupPercentage = p1.NetCostPerUnit > 0 ? (p1.GrossMarkupAbsolute / p1.NetCostPerUnit) * 100.0 : 0.0;
+                p1.GrossMarkupPercentage =
+                    p1.NetCostPerUnit > 0
+                        ? (p1.GrossMarkupAbsolute / p1.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p1.VatPercentage = 12;
                 p1.VatCategory = 1;
                 p1.VatCategoryName = "Standard";
@@ -77,7 +80,10 @@ namespace SampleDataGenerator
                 markupPercentage = 18.0;
                 p2.SellingPrice = p2.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p2.GrossMarkupAbsolute = p2.SellingPrice - p2.NetCostPerUnit;
-                p2.GrossMarkupPercentage = p2.NetCostPerUnit > 0 ? (p2.GrossMarkupAbsolute / p2.NetCostPerUnit) * 100.0 : 0.0;
+                p2.GrossMarkupPercentage =
+                    p2.NetCostPerUnit > 0
+                        ? (p2.GrossMarkupAbsolute / p2.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p2.VatPercentage = 12;
                 p2.VatCategory = 1;
                 p2.VatCategoryName = "Standard";
@@ -110,7 +116,10 @@ namespace SampleDataGenerator
                 markupPercentage = 16.0;
                 p3.SellingPrice = p3.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p3.GrossMarkupAbsolute = p3.SellingPrice - p3.NetCostPerUnit;
-                p3.GrossMarkupPercentage = p3.NetCostPerUnit > 0 ? (p3.GrossMarkupAbsolute / p3.NetCostPerUnit) * 100.0 : 0.0;
+                p3.GrossMarkupPercentage =
+                    p3.NetCostPerUnit > 0
+                        ? (p3.GrossMarkupAbsolute / p3.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p3.VatPercentage = 12;
                 p3.VatCategory = 1;
                 p3.VatCategoryName = "Standard";
@@ -141,7 +150,10 @@ namespace SampleDataGenerator
                 markupPercentage = 20.0;
                 p4.SellingPrice = p4.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p4.GrossMarkupAbsolute = p4.SellingPrice - p4.NetCostPerUnit;
-                p4.GrossMarkupPercentage = p4.NetCostPerUnit > 0 ? (p4.GrossMarkupAbsolute / p4.NetCostPerUnit) * 100.0 : 0.0;
+                p4.GrossMarkupPercentage =
+                    p4.NetCostPerUnit > 0
+                        ? (p4.GrossMarkupAbsolute / p4.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p4.VatPercentage = 12;
                 p4.VatCategory = 1;
                 p4.VatCategoryName = "Standard";
@@ -183,7 +195,10 @@ namespace SampleDataGenerator
                 double markupPercentage = 20.0;
                 p1.SellingPrice = p1.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p1.GrossMarkupAbsolute = p1.SellingPrice - p1.NetCostPerUnit;
-                p1.GrossMarkupPercentage = p1.NetCostPerUnit > 0 ? (p1.GrossMarkupAbsolute / p1.NetCostPerUnit) * 100.0 : 0.0;
+                p1.GrossMarkupPercentage =
+                    p1.NetCostPerUnit > 0
+                        ? (p1.GrossMarkupAbsolute / p1.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p1.VatPercentage = 15;
                 p1.VatCategory = 1;
                 p1.VatCategoryName = "Standard";
@@ -218,7 +233,10 @@ namespace SampleDataGenerator
                 markupPercentage = 15.0;
                 p2.SellingPrice = p2.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p2.GrossMarkupAbsolute = p2.SellingPrice - p2.NetCostPerUnit;
-                p2.GrossMarkupPercentage = p2.NetCostPerUnit > 0 ? (p2.GrossMarkupAbsolute / p2.NetCostPerUnit) * 100.0 : 0.0;
+                p2.GrossMarkupPercentage =
+                    p2.NetCostPerUnit > 0
+                        ? (p2.GrossMarkupAbsolute / p2.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p2.VatPercentage = 10;
                 p2.VatCategory = 2;
                 p2.VatCategoryName = "Reduced";
@@ -249,7 +267,10 @@ namespace SampleDataGenerator
                 markupPercentage = 18.0;
                 p3.SellingPrice = p3.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p3.GrossMarkupAbsolute = p3.SellingPrice - p3.NetCostPerUnit;
-                p3.GrossMarkupPercentage = p3.NetCostPerUnit > 0 ? (p3.GrossMarkupAbsolute / p3.NetCostPerUnit) * 100.0 : 0.0;
+                p3.GrossMarkupPercentage =
+                    p3.NetCostPerUnit > 0
+                        ? (p3.GrossMarkupAbsolute / p3.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p3.VatPercentage = 12;
                 p3.VatCategory = 1;
                 p3.VatCategoryName = "Standard";
@@ -280,7 +301,10 @@ namespace SampleDataGenerator
                 markupPercentage = 25.0;
                 p4.SellingPrice = p4.NetCostPerUnit * (1 + markupPercentage / 100.0);
                 p4.GrossMarkupAbsolute = p4.SellingPrice - p4.NetCostPerUnit;
-                p4.GrossMarkupPercentage = p4.NetCostPerUnit > 0 ? (p4.GrossMarkupAbsolute / p4.NetCostPerUnit) * 100.0 : 0.0;
+                p4.GrossMarkupPercentage =
+                    p4.NetCostPerUnit > 0
+                        ? (p4.GrossMarkupAbsolute / p4.NetCostPerUnit) * 100.0
+                        : 0.0;
                 p4.VatPercentage = 8;
                 p4.VatCategory = 1;
                 p4.VatCategoryName = "Standard";

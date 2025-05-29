@@ -117,10 +117,10 @@ namespace CommonUi
                 lookupResultTextBox.Text = DateLookupHandler(datePicker?.Value ?? DateTime.Now);
             else
                 lookupResultTextBox.Text = datePicker?.Value.ToString();
-            if (originalValues.Length > 0 && originalValues[0] is string dti) { 
-            datePicker.Value = DateTime.Parse(dti);
-                
-        }
+            if (originalValues.Length > 0 && originalValues[0] is string dti)
+            {
+                datePicker.Value = DateTime.Parse(dti);
+            }
             System.Console.WriteLine($"DateControl received: {originalValues[0]}");
             GlobalWatchHandler();
         }
@@ -136,7 +136,9 @@ namespace CommonUi
             else
                 lookupResultTextBox.Text = datePicker?.Value.ToString();
             datePicker.Value = DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")));
-            System.Console.WriteLine($"DateControl received: {value?.GetType()}, {DateTime.Parse((string)(value??DateTime.Now.ToString("O")))}");
+            System.Console.WriteLine(
+                $"DateControl received: {value?.GetType()}, {DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")))}"
+            );
         }
 
         public void MapSetValues(string[] fieldNames)
@@ -149,10 +151,11 @@ namespace CommonUi
         {
             this.GlobalWatchHandler = GlobalWatchHandler;
         }
-        public int RowSpan() {
+
+        public int RowSpan()
+        {
             return 1;
         }
-
     }
 
     #endregion
@@ -296,6 +299,7 @@ namespace CommonUi
         {
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
+
         public int RowSpan()
         {
             return 4;
@@ -440,6 +444,7 @@ namespace CommonUi
         {
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
+
         public int RowSpan()
         {
             return 4;

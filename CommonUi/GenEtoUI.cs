@@ -477,7 +477,8 @@ namespace CommonUi
             {
                 if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
                 {
-                    if (e.Value.Item2 == null) System.Console.WriteLine($"Null: {e.Key}");
+                    if (e.Value.Item2 == null)
+                        System.Console.WriteLine($"Null: {e.Key}");
                     Type T = e.Value.Item2.GetType();
                     if (T == typeof(long))
                     {
