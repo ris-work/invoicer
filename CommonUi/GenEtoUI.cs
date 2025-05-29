@@ -477,6 +477,7 @@ namespace CommonUi
             {
                 if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
                 {
+                    if (e.Value.Item2 == null) System.Console.WriteLine($"Null: {e.Key}");
                     Type T = e.Value.Item2.GetType();
                     if (T == typeof(long))
                     {
@@ -1012,7 +1013,7 @@ namespace CommonUi
                         {
                             GoToNextFromPanel(SupplementalControl);
                         });
-
+                        CurrentNo += GeneratedCustom.RowSpan();
                         //EControl.Cells.Add(GeneratedCustom);
                     }
                     else if (
@@ -1054,9 +1055,10 @@ namespace CommonUi
                         {
                             GoToNextFromPanel(SupplementalControl);
                         });
+                        CurrentNo += GeneratedCustom.RowSpan();
                     }
                     EInput.KeyUp += (_, _) => AnythingChanged([kv.Key]);
-                    if (CurrentNo < EMid)
+                    if (CurrentNo < EMid + 6)
                     {
                         EControlsL.Add(EControl);
                         if (SupplementalControl != null)

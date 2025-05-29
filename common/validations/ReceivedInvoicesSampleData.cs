@@ -48,6 +48,8 @@ namespace SampleDataGenerator
                 p1.VatPercentage = 12;
                 p1.VatCategory = 1;
                 p1.VatCategoryName = "Standard";
+                p1.ProductName = "P1";
+                p1.ManufacturerBatchId = "P1";
 
                 // Purchase 2 (Group 2)
                 Purchase p2 = new Purchase();
@@ -79,6 +81,8 @@ namespace SampleDataGenerator
                 p2.VatPercentage = 12;
                 p2.VatCategory = 1;
                 p2.VatCategoryName = "Standard";
+                p2.ProductName = "P1";
+                p2.ManufacturerBatchId = "P1";
 
                 // Purchase 3 (Group 2)
                 Purchase p3 = new Purchase();
@@ -183,6 +187,10 @@ namespace SampleDataGenerator
                 p1.VatPercentage = 15;
                 p1.VatCategory = 1;
                 p1.VatCategoryName = "Standard";
+                p1.ProductName = "P1";
+                p1.ManufacturerBatchId = "P1";
+                p1.ManufacturingDate = DateTime.Now;
+                p1.ExpiryDate = DateTime.Now;
 
                 // Purchase 2 (Group 1)
                 Purchase p2 = new Purchase();

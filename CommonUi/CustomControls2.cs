@@ -35,7 +35,7 @@ namespace CommonUi
         private readonly Dictionary<string, Action<object>> setMap =
             new Dictionary<string, Action<object>>();
         private Action? moveNext;
-        private Action? GlobalWatchHandler;
+        private Action? GlobalWatchHandler = () => { };
 
         /// <summary>
         /// Optional lookup delegate that takes the selected date and returns lookup information.
@@ -113,14 +113,30 @@ namespace CommonUi
                 datePicker.Value = dt;
             if (originalValues.Length > 1 && originalValues[1] is string s)
                 lookupResultTextBox.Text = s;
+            if (DateLookupHandler != null)
+                lookupResultTextBox.Text = DateLookupHandler(datePicker?.Value ?? DateTime.Now);
+            else
+                lookupResultTextBox.Text = datePicker?.Value.ToString();
+            if (originalValues.Length > 0 && originalValues[0] is string dti) { 
+            datePicker.Value = DateTime.Parse(dti);
+                
+        }
+            System.Console.WriteLine($"DateControl received: {originalValues[0]}");
+            GlobalWatchHandler();
         }
 
         public void SetOriginalValue(string key, object value)
         {
             if (setMap.ContainsKey(key))
             {
-                setMap[key](value);
+                setMap[key](DateTime.Parse((string)value));
             }
+            if (DateLookupHandler != null)
+                lookupResultTextBox.Text = DateLookupHandler(datePicker?.Value ?? DateTime.Now);
+            else
+                lookupResultTextBox.Text = datePicker?.Value.ToString();
+            datePicker.Value = DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")));
+            System.Console.WriteLine($"DateControl received: {value?.GetType()}, {DateTime.Parse((string)(value??DateTime.Now.ToString("O")))}");
         }
 
         public void MapSetValues(string[] fieldNames)
@@ -133,6 +149,10 @@ namespace CommonUi
         {
             this.GlobalWatchHandler = GlobalWatchHandler;
         }
+        public int RowSpan() {
+            return 1;
+        }
+
     }
 
     #endregion
@@ -276,6 +296,10 @@ namespace CommonUi
         {
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
+        public int RowSpan()
+        {
+            return 4;
+        }
     }
 
     #endregion
@@ -415,6 +439,10 @@ namespace CommonUi
         public void SetGlobalChangeWatcher(Action GlobalChangeHandler)
         {
             this.GlobalChangeHandler = GlobalChangeHandler;
+        }
+        public int RowSpan()
+        {
+            return 4;
         }
     }
 
