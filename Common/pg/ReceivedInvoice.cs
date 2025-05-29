@@ -21,17 +21,27 @@ public partial class ReceivedInvoice
 
     public double TransportCharges { get; set; }
 
-    public double EffectiveDiscount { get; set; }
+    public double EffectiveDiscountAbsoluteTotal { get; set; }
 
     public double DefaultVatPercentage { get; set; }
 
     public long DefaultVatCategory { get; set; }
 
-    public double DiscountPercentage { get; set; }
+    public double EffectiveDiscountPercentageTotal { get; set; }
 
     public bool IsSettled { get; set; }
 
     public string DefaultVatCategoryName { get; set; } = null!;
 
-    public double WholeInvoiceDiscount { get; set; }
+    public double WholeInvoiceDiscountAbsolute { get; set; }
+
+    public double WholeInvoiceDiscountPercentage { get; set; }
+
+    public double EffectiveDiscountPercentageFromEnteredItems { get; set; }
+
+    public double EffectiveDiscountAbsoluteFromEnteredItems { get; set; }
+
+    public double VatTotal { get; set; }
+
+    public double EffectiveVatPercentage { get; set; }
 }

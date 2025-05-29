@@ -809,8 +809,21 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("default_VAT_category_name");
             entity.Property(e => e.DefaultVatPercentage).HasColumnName("default_VAT_percentage");
-            entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
-            entity.Property(e => e.EffectiveDiscount).HasColumnName("effective_discount");
+            entity
+                .Property(e => e.EffectiveDiscountAbsoluteFromEnteredItems)
+                .HasColumnName("effective_discount_absolute_from_entered_items");
+            entity
+                .Property(e => e.EffectiveDiscountAbsoluteTotal)
+                .HasColumnName("effective_discount_absolute_total");
+            entity
+                .Property(e => e.EffectiveDiscountPercentageFromEnteredItems)
+                .HasColumnName("effective_discount_percentage_from_entered_items");
+            entity
+                .Property(e => e.EffectiveDiscountPercentageTotal)
+                .HasColumnName("effective_discount_percentage_total");
+            entity
+                .Property(e => e.EffectiveVatPercentage)
+                .HasColumnName("effective_vat_percentage");
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
             entity.Property(e => e.IsPosted).HasDefaultValue(false).HasColumnName("is_posted");
             entity.Property(e => e.IsSettled).HasDefaultValue(false).HasColumnName("is_settled");
@@ -822,7 +835,13 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("supplier_name");
             entity.Property(e => e.TransportCharges).HasColumnName("transport_charges");
-            entity.Property(e => e.WholeInvoiceDiscount).HasColumnName("whole_invoice_discount");
+            entity.Property(e => e.VatTotal).HasColumnName("vat_total");
+            entity
+                .Property(e => e.WholeInvoiceDiscountAbsolute)
+                .HasColumnName("whole_invoice_discount_absolute");
+            entity
+                .Property(e => e.WholeInvoiceDiscountPercentage)
+                .HasColumnName("whole_invoice_discount_percentage");
         });
 
         modelBuilder.Entity<Request>(entity =>

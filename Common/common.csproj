@@ -6,6 +6,9 @@
         <Platforms>AnyCPU;x64</Platforms>
     </PropertyGroup>
     <ItemGroup>
+        <None Remove="validations\PurchaseHeaderExtensions.cs_" />
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.6.0" />
         <PackageReference Include="Magick.NET.Core" Version="14.6.0" />
         <PackageReference
