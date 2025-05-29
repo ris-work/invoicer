@@ -61,21 +61,24 @@ namespace CommonUi
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
-        public void Disable(string key) {
+
+        public void Disable(string key)
+        {
             object? Out = null;
             if (_Inputs.ContainsKey(key))
             {
                 var e = _Inputs.Where(e => e.Key == key).First();
                 _Einputs[e.Key].Enabled = false;
             }
-            }
+        }
+
         public object Lookup(string key)
         {
             object? Out = null;
             if (_Inputs.ContainsKey(key))
             {
                 var e = _Inputs.Where(e => e.Key == key).First();
-                
+
                 Type T = OriginalTypes[e.Key];
                 if (T == typeof(long))
                 {
@@ -999,9 +1002,10 @@ namespace CommonUi
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
                             );
-                            
                         }
-                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key.Concat([kv.Key]).ToArray()));
+                        GeneratedCustom.SetGlobalChangeWatcher(() =>
+                            AnythingChanged(Fields.Key.Concat([kv.Key]).ToArray())
+                        );
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
                         GeneratedCustom.SetMoveNext(() =>
@@ -1042,7 +1046,6 @@ namespace CommonUi
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
                             );
-                            
                         }
                         GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
                         EControl = new TableRow(EFieldName, (Control)GeneratedCustom);

@@ -272,7 +272,8 @@ namespace CommonUi
             setMap.Add(fieldNames[1], (val) => vatDetailsTextBox.Text = (string)val);
         }
 
-        public void SetGlobalChangeWatcher(Action GlobalChangeHandler) {
+        public void SetGlobalChangeWatcher(Action GlobalChangeHandler)
+        {
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
     }

@@ -118,9 +118,6 @@ namespace CommonUi
                 MapLookupValues(Mappings);
         }
 
-
-
-
         /// <summary>
         /// Builds the UI layout based on the specified orientation.
         /// </summary>
@@ -136,8 +133,8 @@ namespace CommonUi
                     Spacing = new Size(5, 5),
                     Rows =
                     {
-                        new TableRow(absoluteLabel, absoluteTextBox),
                         new TableRow(percentageLabel, percentageTextBox),
+                        new TableRow(absoluteLabel, absoluteTextBox),
                     },
                 };
             }
@@ -149,10 +146,10 @@ namespace CommonUi
                     Spacing = new Size(5, 5),
                     Rows =
                     {
-                        new TableRow(new TableCell(absoluteLabel, true)),
-                        new TableRow(new TableCell(absoluteTextBox, true)),
                         new TableRow(new TableCell(percentageLabel, true)),
                         new TableRow(new TableCell(percentageTextBox, true)),
+                        new TableRow(new TableCell(absoluteLabel, true)),
+                        new TableRow(new TableCell(absoluteTextBox, true)),
                     },
                 };
             }
@@ -161,20 +158,17 @@ namespace CommonUi
                 if (a.Key == Keys.Enter)
                     percentageTextBox.Focus();
                 GlobalWatchHandler();
-                
             };
             percentageTextBox.KeyUp += (_, a) =>
             {
                 if (a.Key == Keys.Enter && this.MoveNext != null)
                     this.MoveNext();
                 GlobalWatchHandler();
-
             };
             //absoluteTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
             //percentageTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
 
-
-            // Optionally, keep the KeyUp behavior for Enter: 
+            // Optionally, keep the KeyUp behavior for Enter:
             absoluteTextBox.KeyUp += (_, a) =>
             {
                 if (a.Key == Keys.Enter)
@@ -204,8 +198,6 @@ namespace CommonUi
                     GlobalWatchHandler?.Invoke();
                 }
             };
-
-
 
             this.Content = layout;
         }
