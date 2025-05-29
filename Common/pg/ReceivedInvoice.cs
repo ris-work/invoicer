@@ -21,7 +21,7 @@ public partial class ReceivedInvoice
 
     public double TransportCharges { get; set; }
 
-    public double Discount { get; set; }
+    public double EffectiveDiscount { get; set; }
 
     public double DefaultVatPercentage { get; set; }
 
@@ -32,4 +32,6 @@ public partial class ReceivedInvoice
     public bool IsSettled { get; set; }
 
     public string DefaultVatCategoryName { get; set; } = null!;
+
+    public double WholeInvoiceDiscount { get; set; }
 }
