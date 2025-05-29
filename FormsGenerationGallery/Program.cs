@@ -10,7 +10,7 @@ using Microsoft.Maui.Hosting;
 using MyAOTFriendlyExtensions;
 using MyImageProcessing;
 using MySkiaApp;
-using Rv.InvNew.Common;
+//using Rv.InvNew.Common;
 using RV.InvNew.Common;
 using Terminal.Gui;
 
@@ -282,8 +282,8 @@ string[] fieldOrder = new string[]
 };
 
 var SamplePurchasePanel = new PurchasePanel();
-List<Purchase> LP = SampleDataGenerator.GetSampleValidPurchases();
-SamplePurchasePanel.Render(SampleDataGenerator.GetSampleValidPurchases());
+List<Purchase> LP = SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases();
+SamplePurchasePanel.Render(SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases());
 var PurchaseDataEntryForm = new GenEtoUI(
     SimpleJsonToUISerialization.ConvertToUISerialization(
         JsonSerializer.Serialize(LP[0], JSOptions)
@@ -299,7 +299,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             JsonSerializer
                 .Deserialize<Purchase>(JsonSerializer.Serialize(e))
                 .Validate()
-                .ErrorDescription,
+                .Error,
             "Validation status"
         );
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
@@ -309,7 +309,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
     (e) =>
     {
         Eto.Forms.MessageBox.Show(
-            $"{JsonSerializer.Serialize(e)}, {JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().ErrorDescription}",
+            $"{JsonSerializer.Serialize(e)}, {JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)).Validate().Error}",
             "Serialized",
             MessageBoxType.Information
         );
@@ -317,7 +317,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
             JsonSerializer
                 .Deserialize<Purchase>(JsonSerializer.Serialize(e))
                 .Validate()
-                .ErrorDescription,
+                .Error,
             "Validation status"
         );
         LP.Add(JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(e)));
