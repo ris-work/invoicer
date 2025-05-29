@@ -344,6 +344,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
 );
 PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
 {
+    Console.WriteLine($"Global watch handler called with: {string.Join(',',currentControlGroup)}");
     var P = PurchaseDataEntryForm;
     try
     {
@@ -381,6 +382,7 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
             {
                 P.SetValue(key, value);
             }
+            else Console.WriteLine($"{key} present in the currentControlsList");
         };
 
         // Update computed fields only if they are not part of the current control set.

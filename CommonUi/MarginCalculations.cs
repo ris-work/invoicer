@@ -160,13 +160,15 @@ namespace CommonUi
             {
                 if (a.Key == Keys.Enter)
                     percentageTextBox.Focus();
+                GlobalWatchHandler();
                 
             };
             percentageTextBox.KeyUp += (_, a) =>
             {
                 if (a.Key == Keys.Enter && this.MoveNext != null)
                     this.MoveNext();
-                
+                GlobalWatchHandler();
+
             };
             //absoluteTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
             //percentageTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
