@@ -342,7 +342,7 @@ var PurchaseDataEntryForm = new GenEtoUI(
         { ["GrossMarkupAbsolute", "GrossMarkupPercentage"], ("MarkupPanel", "NetCostPerUnit") }
     }, fieldOrder
 );
-PurchaseDataEntryForm.AnythingChanged = () =>
+PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
 {
     var P = PurchaseDataEntryForm;
     try
@@ -374,35 +374,45 @@ PurchaseDataEntryForm.AnythingChanged = () =>
         // Incurred cost includes VAT if it cannot be reclaimed.
         double netTotalCost = isVatADisallowed ? totalAmountDue : netTotalPrice;
 
-        // Update computed fields and disable editing.
-        P.SetValue("TotalUnits", totalUnits); P.Disable("TotalUnits");
-        P.SetValue("GrossTotal", grossTotal); P.Disable("GrossTotal");
-        P.SetValue("NetTotalPrice", netTotalPrice); P.Disable("NetTotalPrice");
-        P.SetValue("TotalAmountDue", totalAmountDue); P.Disable("TotalAmountDue");
-        P.SetValue("GrossCostPerUnit", grossCostPerUnit); P.Disable("GrossCostPerUnit");
-        P.SetValue("NetCostPerUnit", netCostPerUnit); P.Disable("NetCostPerUnit");
-        P.SetValue("NetTotalCost", netTotalCost); P.Disable("NetTotalCost");
+        // Define an inline helper that checks if a control is allowed to be updated.
+        Action<string, object> SetValueIfNotInCurrentControl = (key, value) =>
+        {
+            if (!currentControlGroup.Contains(key))
+            {
+                P.SetValue(key, value);
+            }
+        };
+
+        // Update computed fields only if they are not part of the current control set.
+        SetValueIfNotInCurrentControl("TotalUnits", totalUnits);
+        SetValueIfNotInCurrentControl("GrossTotal", grossTotal);
+        SetValueIfNotInCurrentControl("NetTotalPrice", netTotalPrice);
+        SetValueIfNotInCurrentControl("TotalAmountDue", totalAmountDue);
+        SetValueIfNotInCurrentControl("GrossCostPerUnit", grossCostPerUnit);
+        SetValueIfNotInCurrentControl("NetCostPerUnit", netCostPerUnit);
+        SetValueIfNotInCurrentControl("NetTotalCost", netTotalCost);
 
         // Retrieve the SellingPrice TextBox from the Eto input dictionary 
         // and cache its focus state.
         Eto.Forms.TextBox sellingPriceTextBox = (Eto.Forms.TextBox)P._Einputs["SellingPrice"];
         bool isSellingPriceFocused = sellingPriceTextBox.HasFocus;
 
-        // If the SellingPrice TextBox is not focused, update its value based on current margin.
-        if (!isSellingPriceFocused)
+        // If the SellingPrice TextBox is not focused and not part of the current control group,
+        // update its value based on current markup.
+        if (!isSellingPriceFocused && !currentControlGroup.Contains("SellingPrice"))
         {
             double currentMarkupPercentage = P.Lookup("GrossMarkupPercentage") is double d ? d : 0.0;
-            double newSellingPrice = netTotalCost * (1 + (currentMarkupPercentage / 100.0));
+            double newUnitSellingPrice = netCostPerUnit * (1 + (currentMarkupPercentage / 100.0));
 
-            P.SetValue("SellingPrice", newSellingPrice);
-            sellingPriceTextBox.Text = newSellingPrice.ToString("F2");
+            SetValueIfNotInCurrentControl("SellingPrice", newUnitSellingPrice);
+            sellingPriceTextBox.Text = newUnitSellingPrice.ToString("F2");
 
-            double newGrossMarkupAbsolute = newSellingPrice - netTotalCost;
-            double newGrossMarkupPercentage = netTotalCost != 0.0
-                ? (newGrossMarkupAbsolute / netTotalCost) * 100.0
+            double newGrossMarkupAbsolute = newUnitSellingPrice - netCostPerUnit;
+            double newGrossMarkupPercentage = netCostPerUnit != 0.0
+                ? (newGrossMarkupAbsolute / netCostPerUnit) * 100.0
                 : 0.0;
-            P.SetValue("GrossMarkupAbsolute", newGrossMarkupAbsolute);
-            P.SetValue("GrossMarkupPercentage", newGrossMarkupPercentage);
+            SetValueIfNotInCurrentControl("GrossMarkupAbsolute", newGrossMarkupAbsolute);
+            SetValueIfNotInCurrentControl("GrossMarkupPercentage", newGrossMarkupPercentage);
         }
 
         // Attach the event handler only once by using the Tag property.
@@ -410,18 +420,22 @@ PurchaseDataEntryForm.AnythingChanged = () =>
         {
             sellingPriceTextBox.TextChanged += (sender, e) =>
             {
-                if (double.TryParse(sellingPriceTextBox.Text, out double updatedSellingPrice))
+                // Do not update the computed percentages if SellingPrice is in the currentControlGroup.
+                if (!currentControlGroup.Contains("SellingPrice"))
                 {
-                    double grossMarkupAbsolute = updatedSellingPrice - netTotalCost;
-                    double grossMarkupPercentage = netTotalCost != 0.0
-                        ? (grossMarkupAbsolute / netTotalCost) * 100.0
-                        : 0.0;
-                    P.SetValue("GrossMarkupAbsolute", grossMarkupAbsolute);
-                    P.SetValue("GrossMarkupPercentage", grossMarkupPercentage);
-                }
-                else
-                {
-                    Console.WriteLine("Invalid SellingPrice input");
+                    if (double.TryParse(sellingPriceTextBox.Text, out double updatedUnitSellingPrice))
+                    {
+                        double grossMarkupAbsolute = updatedUnitSellingPrice - netCostPerUnit;
+                        double grossMarkupPercentage = netCostPerUnit != 0.0
+                            ? (grossMarkupAbsolute / netCostPerUnit) * 100.0
+                            : 0.0;
+                        SetValueIfNotInCurrentControl("GrossMarkupAbsolute", grossMarkupAbsolute);
+                        SetValueIfNotInCurrentControl("GrossMarkupPercentage", grossMarkupPercentage);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid SellingPrice input");
+                    }
                 }
             };
             // Mark that the event handler has been attached.
@@ -432,7 +446,6 @@ PurchaseDataEntryForm.AnythingChanged = () =>
     {
         Console.WriteLine("Error during recalculations: " + ex.Message + ex.StackTrace);
     }
-
 };
 
 
@@ -482,7 +495,7 @@ ExternalCalculateButton.Click += (_, _) =>
     );
 };
 var ExternalLabelCalculated = new Eto.Forms.Button() { Text = "Externally calculated" };
-GeneratedEtoUISample.AnythingChanged = () => { };
+GeneratedEtoUISample.AnythingChanged = (_) => { };
 var ExternalWatcher = new Eto.Forms.StackLayout(ExternalCalculateButton, ExternalLabelCalculated)
 { };
 

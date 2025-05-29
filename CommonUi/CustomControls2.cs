@@ -26,7 +26,6 @@ namespace CommonUi
     {
         // Built-in DateTimePicker control.
         private DateTimePicker datePicker;
-        private Action? GlobalChangeHandler;
 
         // An optional read-only TextBox that may display lookup results.
         private TextBox lookupResultTextBox;
@@ -61,6 +60,7 @@ namespace CommonUi
                     lookupResultTextBox.Text = DateLookupHandler(datePicker?.Value ?? DateTime.Now);
                 else
                     lookupResultTextBox.Text = datePicker?.Value.ToString();
+                GlobalWatchHandler();
             };
 
             // Create a vertical layout.
@@ -195,6 +195,7 @@ namespace CommonUi
                 {
                     vatDetailsTextBox.Text = "Invalid ID";
                 }
+                GlobalChangeHandler();
             };
 
             Content = new TableLayout

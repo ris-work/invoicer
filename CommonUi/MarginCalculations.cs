@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+using Microsoft.Maui.Platform;
 
 namespace CommonUi
 {
@@ -9,6 +11,7 @@ namespace CommonUi
     {
         private Action? MoveNext = null;
         private Action? GlobalWatchHandler = null;
+        private System.Timers.Timer updateTimer;
 
         // Private controls
         private readonly Label absoluteLabel;
@@ -115,6 +118,9 @@ namespace CommonUi
                 MapLookupValues(Mappings);
         }
 
+
+
+
         /// <summary>
         /// Builds the UI layout based on the specified orientation.
         /// </summary>
@@ -154,12 +160,51 @@ namespace CommonUi
             {
                 if (a.Key == Keys.Enter)
                     percentageTextBox.Focus();
+                
+            };
+            percentageTextBox.KeyUp += (_, a) =>
+            {
+                if (a.Key == Keys.Enter && this.MoveNext != null)
+                    this.MoveNext();
+                
+            };
+            //absoluteTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
+            //percentageTextBox.LostFocus += (_, _) => { if (GlobalWatchHandler != null) GlobalWatchHandler(); };
+
+
+            // Optionally, keep the KeyUp behavior for Enter: 
+            absoluteTextBox.KeyUp += (_, a) =>
+            {
+                if (a.Key == Keys.Enter)
+                    percentageTextBox.Focus();
             };
             percentageTextBox.KeyUp += (_, a) =>
             {
                 if (a.Key == Keys.Enter && this.MoveNext != null)
                     this.MoveNext();
             };
+            absoluteTextBox.LostFocus += async (_, __) =>
+            {
+                // Wait a brief moment to let focus settle.
+                await Task.Delay(100);
+                // Only call GlobalWatchHandler if neither textbox is focused.
+                if (!absoluteTextBox.HasFocus && !percentageTextBox.HasFocus)
+                {
+                    GlobalWatchHandler?.Invoke();
+                }
+            };
+
+            percentageTextBox.LostFocus += async (_, __) =>
+            {
+                await Task.Delay(100);
+                if (!absoluteTextBox.HasFocus && !percentageTextBox.HasFocus)
+                {
+                    GlobalWatchHandler?.Invoke();
+                }
+            };
+
+
+
             this.Content = layout;
         }
 

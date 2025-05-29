@@ -36,7 +36,7 @@ namespace CommonUi
         );
         public bool ChangesOnly = false;
         public string Context = "default";
-        public Action AnythingChanged = () => { };
+        public Action<string[]> AnythingChanged = (_) => { };
         public IReadOnlyDictionary<string, object> Values
         {
             get => _Values;
@@ -753,7 +753,7 @@ namespace CommonUi
                             {
                                 EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                                 {
-                                    AnythingChanged();
+                                    AnythingChanged([kv.Key]);
                                     if (e is TextBox tb)
                                     {
                                         tb.BackgroundColor = ChangedBackgroundColor;
@@ -786,7 +786,7 @@ namespace CommonUi
                             {
                                 EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                                 {
-                                    AnythingChanged();
+                                    AnythingChanged([kv.Key]);
                                     if (e is TextBox tb)
                                     {
                                         tb.BackgroundColor = ChangedBackgroundColor;
@@ -816,7 +816,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
-                                AnythingChanged();
+                                AnythingChanged([kv.Key]);
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -840,7 +840,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
-                                AnythingChanged();
+                                AnythingChanged([kv.Key]);
                                 if (e is CheckBox cb)
                                 {
                                     cb.BackgroundColor = ChangedBackgroundColor;
@@ -860,7 +860,7 @@ namespace CommonUi
                         {
                             EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                             {
-                                AnythingChanged();
+                                AnythingChanged([kv.Key]);
                                 if (e is TextBox tb)
                                 {
                                     tb.BackgroundColor = ChangedBackgroundColor;
@@ -885,7 +885,7 @@ namespace CommonUi
                     {
                         EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
                         {
-                            AnythingChanged();
+                            AnythingChanged([kv.Key]);
                             if (e is CheckBox cb)
                             {
                                 cb.BackgroundColor = ChangedBackgroundColor;
@@ -906,7 +906,7 @@ namespace CommonUi
                     {
                         EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
                         {
-                            AnythingChanged();
+                            AnythingChanged([kv.Key]);
                             if (e is TextBox tb)
                             {
                                 tb.BackgroundColor = ChangedBackgroundColor;
@@ -999,7 +999,9 @@ namespace CommonUi
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
                             );
+                            
                         }
+                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
                         GeneratedCustom.SetMoveNext(() =>
@@ -1040,7 +1042,9 @@ namespace CommonUi
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
                             );
+                            
                         }
+                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
                         EControl = new TableRow(EFieldName, (Control)GeneratedCustom);
                         EFocusableList.Add((Control)GeneratedCustom);
                         GeneratedCustom.SetMoveNext(() =>
@@ -1048,7 +1052,7 @@ namespace CommonUi
                             GoToNextFromPanel(SupplementalControl);
                         });
                     }
-                    EInput.KeyUp += (_, _) => AnythingChanged();
+                    EInput.KeyUp += (_, _) => AnythingChanged([kv.Key]);
                     if (CurrentNo < EMid)
                     {
                         EControlsL.Add(EControl);
