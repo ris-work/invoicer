@@ -284,6 +284,7 @@ string[] fieldOrder = new string[]
 var SamplePurchasePanel = new PurchasePanel();
 List<Purchase> LP = SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases();
 SamplePurchasePanel.Render(SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases());
+var InvoiceHeaderForm = new GenEtoUI(SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(SampleDataGenerator.SampleDataGenerator.GetSampleValidInvoice(0), JSOptions)), (_) => { return 0; }, (_) => { return 0;  }, ActionsMap, "");
 var PurchaseDataEntryForm = new GenEtoUI(
     SimpleJsonToUISerialization.ConvertToUISerialization(
         JsonSerializer.Serialize(LP[0], JSOptions)
@@ -559,6 +560,85 @@ PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
     // Output the entire accumulated log in one big Console.WriteLine.
     Console.WriteLine(log.ToString());
 };
+InvoiceHeaderForm.AnythingChanged = (string[] currentControlGroup) =>
+{
+    // Begin logging.
+    var log = new System.Text.StringBuilder();
+    log.AppendLine("=== Starting Global Invoice Header Recalculation ===");
+
+    // Terse reference to the header form.
+    var P = InvoiceHeaderForm;
+
+
+    // --- Compute Aggregated Values from the Global Purchase List (LP) ---
+    double computedGrossTotal = LP.Sum(p => p.GrossTotal);
+    double computedTotalDiscountAbsolute = LP.Sum(p => p.DiscountAbsolute);
+    double weightedDiscountPctFromItems = computedGrossTotal > 0
+        ? (computedTotalDiscountAbsolute / computedGrossTotal) * 100
+        : 0;
+    double computedVatTotal = LP.Sum(p => p.VatAbsolute);
+    double computedTotalAmountDue = LP.Sum(p => p.TotalAmountDue);
+
+    // Retrieve whole-invoice discount values entered by the user.
+    double userWholeInvoiceDiscountAbsolute = (double)P.Lookup("WholeInvoiceDiscountAbsolute");
+    double userWholeInvoiceDiscountPercentage = (double)P.Lookup("WholeInvoiceDiscountPercentage");
+
+    // Calculate effective discount totals.
+    double effectiveDiscountAbsoluteTotal = userWholeInvoiceDiscountAbsolute + computedTotalDiscountAbsolute;
+    double effectiveDiscountPercentageTotal = userWholeInvoiceDiscountPercentage + weightedDiscountPctFromItems;
+
+    // Calculate VAT effective percentage.
+    double taxableBase = computedGrossTotal - computedTotalDiscountAbsolute;
+    double computedEffectiveVatPercentage = taxableBase > 0
+        ? (computedVatTotal / taxableBase) * 100
+        : 0;
+
+    // Log each computed value.
+    log.AppendLine($"Computed GrossTotal: {computedGrossTotal}");
+    log.AppendLine($"Computed TotalDiscountAbsolute (items): {computedTotalDiscountAbsolute}");
+    log.AppendLine($"Weighted Discount Percentage (items): {weightedDiscountPctFromItems}");
+    log.AppendLine($"User WholeInvoiceDiscountAbsolute: {userWholeInvoiceDiscountAbsolute}");
+    log.AppendLine($"User WholeInvoiceDiscountPercentage: {userWholeInvoiceDiscountPercentage}");
+    log.AppendLine($"EffectiveDiscountAbsoluteTotal: {effectiveDiscountAbsoluteTotal}");
+    log.AppendLine($"EffectiveDiscountPercentageTotal: {effectiveDiscountPercentageTotal}");
+    log.AppendLine($"Computed VatTotal: {computedVatTotal}");
+    log.AppendLine($"TaxableBase: {taxableBase}");
+    log.AppendLine($"Computed EffectiveVatPercentage: {computedEffectiveVatPercentage}");
+    log.AppendLine($"Computed TotalAmountDue: {computedTotalAmountDue}");
+
+    // --- Helper for Computed Fields (fields the user should never alter manually) ---
+    Action<string, object> UpdateComputedField = (key, value) =>
+    {
+        P.SetValue(key, value);
+        log.AppendLine($"Updated computed field '{key}' to {value}");
+        // Disable field to prevent manual editing.
+        P.Disable(key);
+        log.AppendLine($"Disabled field '{key}' from user input.");
+    };
+
+    // --- Update Computed Invoice Header Fields ---
+    UpdateComputedField("GrossTotal", computedGrossTotal);
+    UpdateComputedField("EffectiveDiscountAbsoluteFromEnteredItems", computedTotalDiscountAbsolute);
+    UpdateComputedField("EffectiveDiscountPercentageFromEnteredItems", weightedDiscountPctFromItems);
+    UpdateComputedField("EffectiveDiscountAbsoluteTotal", effectiveDiscountAbsoluteTotal);
+    UpdateComputedField("EffectiveDiscountPercentageTotal", effectiveDiscountPercentageTotal);
+    UpdateComputedField("VatTotal", computedVatTotal);
+    UpdateComputedField("EffectiveVatPercentage", computedEffectiveVatPercentage);
+    UpdateComputedField("TotalAmountDue", computedTotalAmountDue);
+
+    // --- Update LastSavedAt ---
+    DateTime now = DateTime.Now;
+    P.SetValue("LastSavedAt", now);
+    P.Disable("LastSavedAt");
+    log.AppendLine($"Updated and disabled 'LastSavedAt' to {now}");
+
+    log.AppendLine("=== Completed Global Invoice Header Recalculation ===");
+
+    // One final output.
+    Console.WriteLine(log.ToString());
+};
+SamplePurchasePanel.AnythingHappened = InvoiceHeaderForm.AnythingChanged;
+
 
 PurchasingUIButton.Click += (_, _) =>
 {
@@ -570,7 +650,7 @@ PurchasingUIButton.Click += (_, _) =>
     };
     var F = new Eto.Forms.Form()
     {
-        Content = new Eto.Forms.StackLayout(PurchaseDataEntryForm, SamplePurchasePanel),
+        Content = new Eto.Forms.Scrollable() { Content = new Eto.Forms.StackLayout(InvoiceHeaderForm, PurchaseDataEntryForm, SamplePurchasePanel), }
     };
     F.Show();
 };

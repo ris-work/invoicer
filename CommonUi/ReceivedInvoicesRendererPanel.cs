@@ -15,6 +15,7 @@ namespace CommonUi
         private readonly GridView _gridView;
         private readonly Label _indexLabel;
         private List<Purchase> _purchases = new List<Purchase>();
+        public Action<string[]> AnythingHappened = (_) => { };
 
         /// <summary>
         /// When left empty, the panel automatically hides:
@@ -205,6 +206,7 @@ namespace CommonUi
                     DeleteReceivedInvoiceItem(_gridView.SelectedRow);
                 }
             };
+            AnythingHappened([]);
         }
     }
 }

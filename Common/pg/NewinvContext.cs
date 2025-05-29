@@ -801,6 +801,10 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.ReceivedInvoiceNo).HasColumnName("received_invoice_no");
             entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity
                 .Property(e => e.DefaultVatCategory)
                 .HasDefaultValue(0L)
                 .HasColumnName("default_VAT_category");
@@ -827,6 +831,11 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
             entity.Property(e => e.IsPosted).HasDefaultValue(false).HasColumnName("is_posted");
             entity.Property(e => e.IsSettled).HasDefaultValue(false).HasColumnName("is_settled");
+            entity
+                .Property(e => e.LastSavedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("last_saved_at");
+            entity.Property(e => e.PostedAt).HasColumnName("posted_at");
             entity.Property(e => e.Reference).HasColumnName("reference");
             entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
             entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
@@ -834,6 +843,7 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.SupplierName)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("supplier_name");
+            entity.Property(e => e.TotalAmountDue).HasColumnName("total_amount_due");
             entity.Property(e => e.TransportCharges).HasColumnName("transport_charges");
             entity.Property(e => e.VatTotal).HasColumnName("vat_total");
             entity

@@ -44,4 +44,12 @@ public partial class ReceivedInvoice
     public double VatTotal { get; set; }
 
     public double EffectiveVatPercentage { get; set; }
+
+    public DateTime? PostedAt { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime LastSavedAt { get; set; }
+
+    public double TotalAmountDue { get; set; }
 }
