@@ -1001,7 +1001,7 @@ namespace CommonUi
                             );
                             
                         }
-                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
+                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key.Concat([kv.Key]).ToArray()));
                         SupplementalControl = (Panel)GeneratedCustom;
                         EFocusableList.Add(SupplementalControl);
                         GeneratedCustom.SetMoveNext(() =>
