@@ -47,7 +47,14 @@ namespace CommonUi
         private SaveHandler _SaveNewHandler;
         private SaveHandler _SaveExistingHandler;
         List<Eto.Forms.TableRow> _EControlsAll = new();
-        OrderedDictionary<(Eto.Forms.Control LabelControl, Eto.Forms.Control MainControl, Eto.Forms.Control Supplemental), int> LayoutNext = new();
+        OrderedDictionary<
+            (
+                Eto.Forms.Control LabelControl,
+                Eto.Forms.Control MainControl,
+                Eto.Forms.Control Supplemental
+            ),
+            int
+        > LayoutNext = new();
         List<Eto.Forms.TableRow> _EControlsL = new();
         List<Eto.Forms.TableRow> _EControlsR = new();
         public Dictionary<string, Eto.Forms.Control> _Einputs = new();
@@ -60,7 +67,8 @@ namespace CommonUi
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
         Dictionary<string, Type> OriginalTypesCustomPanels = new();
         Dictionary<string, ILookupSupportedChildPanel> FieldsHandlerMapping = new();
-        List<List<(Eto.Forms.Control? LabelControl, Eto.Forms.Control MainControl)>> AllRows = new();
+        List<List<(Eto.Forms.Control? LabelControl, Eto.Forms.Control MainControl)>> AllRows =
+            new();
         int nColumns = 3;
         public OrderedDictionary<string, (string, object, string?)> _Inputs;
         public string Identity = "";
@@ -1053,7 +1061,7 @@ namespace CommonUi
                                 s,
                                 (ILookupSupportedChildPanel)GeneratedCustom
                             );
-                            
+
                             GeneratedCustom.SetOriginalValue(
                                 s,
                                 Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
@@ -1069,41 +1077,60 @@ namespace CommonUi
                         });
                         CurrentNo += GeneratedCustom.RowSpan();
                     }
-                    if(EInput != null)EInput.KeyUp += (_, _) => AnythingChanged([kv.Key]);
+                    if (EInput != null)
+                        EInput.KeyUp += (_, _) => AnythingChanged([kv.Key]);
                     _EControlsAll.Add(EControl);
-                    if (EInput != null) LayoutNext.Add((EFieldName, new StackLayout(EInput, ELegend) { Orientation = Orientation.Horizontal, HorizontalContentAlignment = HorizontalAlignment.Stretch }, (Control)GeneratedCustom), CurrentNo);
-                    else { LayoutNext.Add((EFieldName, (Control)GeneratedCustom, null), CurrentNo); }
-                        //AllRows.Add()
-                        /*if (CurrentNo < EMid + 2)
-                        {
-                            EControlsL.Add(EControl);
-                            if (SupplementalControl != null)
-                                EControlsL.Add(new TableRow(null, SupplementalControl));
-                        }
-                        else
-                        {
-                            EControlsR.Add(EControl);
-                            if (SupplementalControl != null)
-                                EControlsR.Add(new TableRow(null, SupplementalControl));
-                        }*/
-                        CurrentNo++;
+                    if (EInput != null)
+                        LayoutNext.Add(
+                            (
+                                EFieldName,
+                                new StackLayout(EInput, ELegend)
+                                {
+                                    Orientation = Orientation.Horizontal,
+                                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                                },
+                                (Control)GeneratedCustom
+                            ),
+                            CurrentNo
+                        );
+                    else
+                    {
+                        LayoutNext.Add((EFieldName, (Control)GeneratedCustom, null), CurrentNo);
+                    }
+                    //AllRows.Add()
+                    /*if (CurrentNo < EMid + 2)
+                    {
+                        EControlsL.Add(EControl);
+                        if (SupplementalControl != null)
+                            EControlsL.Add(new TableRow(null, SupplementalControl));
+                    }
+                    else
+                    {
+                        EControlsR.Add(EControl);
+                        if (SupplementalControl != null)
+                            EControlsR.Add(new TableRow(null, SupplementalControl));
+                    }*/
+                    CurrentNo++;
                 }
             }
             _EControlsL = EControlsL;
             _EControlsR = EControlsR;
             int maxRowOffset = LayoutNext.Max(x => x.Value);
             int nRows = maxRowOffset / nColumns;
-            for (int i=0; i< nRows; i++)
+            for (int i = 0; i < nRows; i++)
             {
                 AllRows.Add(new List<(Eto.Forms.Control, Eto.Forms.Control)>());
             }
-            
-            foreach(var x in LayoutNext)
+
+            foreach (var x in LayoutNext)
             {
-                int currentRowIndex = (int)Math.Floor((double)nRows*x.Value/(maxRowOffset+1));
-                System.Console.WriteLine($"[Layouting] Current control column: {currentRowIndex}, {nColumns}*{x.Value}/{maxRowOffset}");
+                int currentRowIndex = (int)Math.Floor((double)nRows * x.Value / (maxRowOffset + 1));
+                System.Console.WriteLine(
+                    $"[Layouting] Current control column: {currentRowIndex}, {nColumns}*{x.Value}/{maxRowOffset}"
+                );
                 AllRows[currentRowIndex].Add((x.Key.LabelControl, x.Key.MainControl));
-                if(x.Key.Supplemental!= null)AllRows[currentRowIndex].Add((null, x.Key.Supplemental));
+                if (x.Key.Supplemental != null)
+                    AllRows[currentRowIndex].Add((null, x.Key.Supplemental));
             }
 
             Button NewButton = new Button()
@@ -1295,7 +1322,11 @@ namespace CommonUi
             };
             ;*/
             //var tableLayout2 = new TableLayout(false,AllRows.Select(x => new TableRow( x.Select)).ToArray()) { Padding = 5, Spacing = new Eto.Drawing.Size(10, 3) };
-            var tableLayout2 = MainTableLayoutGenerator.GenerateMainTableLayout(LayoutNext, nColumns, maxRowOffset);
+            var tableLayout2 = MainTableLayoutGenerator.GenerateMainTableLayout(
+                LayoutNext,
+                nColumns,
+                maxRowOffset
+            );
 
             var GeneratedControls = tableLayout2;
 

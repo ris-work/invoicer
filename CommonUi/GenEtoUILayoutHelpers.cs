@@ -1,8 +1,9 @@
-﻿using Eto.Forms;
-using Eto.Drawing;
-using System;
-using System.Linq;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Eto.Drawing;
+using Eto.Forms;
+
 //using Eto.Collections; // Ensure the proper namespace for OrderedDictionary
 
 public static class MainTableLayoutGenerator
@@ -26,9 +27,13 @@ public static class MainTableLayoutGenerator
     /// <param name="maxRowOffset">The maximum row offset (for normalization purposes).</param>
     /// <returns>A TableLayout that arranges the fields into multiple columns.</returns>
     public static TableLayout GenerateMainTableLayout(
-        OrderedDictionary<(Control LabelControl, Control MainControl, Control Supplemental), int> layoutNext,
+        OrderedDictionary<
+            (Control LabelControl, Control MainControl, Control Supplemental),
+            int
+        > layoutNext,
         int nColumns,
-        int maxRowOffset)
+        int maxRowOffset
+    )
     {
         // Create bins (one per column) to temporarily hold (leftControl, rightControl) pairs.
         var columnBins = new List<List<(Control, Control)>>();
@@ -38,7 +43,8 @@ public static class MainTableLayoutGenerator
         // Distribute each item into the appropriate column based on its row offset.
         foreach (var kvp in layoutNext)
         {
-            int currentColumnIndex = (int)Math.Floor((double)nColumns * kvp.Value / (maxRowOffset + 1));
+            int currentColumnIndex = (int)
+                Math.Floor((double)nColumns * kvp.Value / (maxRowOffset + 1));
             if (currentColumnIndex >= nColumns)
                 currentColumnIndex = nColumns - 1;
 
@@ -82,8 +88,8 @@ public static class MainTableLayoutGenerator
             }
             var colLayout = new TableLayout(rows.ToArray())
             {
-                Spacing = new Size(5, 5),
-                Padding = new Padding(0)
+                Spacing = new Size(3, 3),
+                Padding = new Padding(0),
             };
             columnTables.Add(colLayout);
         }
@@ -93,7 +99,7 @@ public static class MainTableLayoutGenerator
         var outerLayout = new TableLayout(new[] { outerRow })
         {
             Spacing = new Size(10, 10),
-            Padding = new Padding(10)
+            Padding = new Padding(10),
         };
 
         return outerLayout;

@@ -283,8 +283,9 @@ string[] fieldOrder = new string[]
 
 var SamplePurchasePanel = new PurchasePanel();
 List<Purchase> LP = SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases();
-LP = LP.Concat(LP.Concat(LP.ToArray()).ToArray()).ToList();
-LP = LP.Concat(LP.Concat(LP.ToArray()).ToArray()).ToList();
+var CloneEFCoreObject = (Purchase O) => { return JsonSerializer.Deserialize<Purchase>(JsonSerializer.Serialize(O)); };
+LP = LP.SelectMany(x => { return new[] { (Purchase)CloneEFCoreObject(x), (Purchase)CloneEFCoreObject(x) }; }).ToList();
+LP = LP.SelectMany(x => { return new[] { (Purchase)CloneEFCoreObject(x), (Purchase)CloneEFCoreObject(x) }; }).ToList();
 SamplePurchasePanel.Render(LP);
 var InvoiceHeaderForm = new GenEtoUI(SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(SampleDataGenerator.SampleDataGenerator.GetSampleValidInvoice(0), JSOptions)), (_) => { return 0; }, (_) => { return 0;  }, ActionsMap, "");
 var PurchaseDataEntryForm = new GenEtoUI(
@@ -652,7 +653,7 @@ PurchasingUIButton.Click += (_, _) =>
     };
     var F = new Eto.Forms.Form()
     {
-        Content = new Eto.Forms.Scrollable() { Content = new Eto.Forms.StackLayout(InvoiceHeaderForm, PurchaseDataEntryForm, SamplePurchasePanel), }
+        Content = new ReceivedInvoicePanel()
     };
     F.Show();
 };

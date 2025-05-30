@@ -84,13 +84,13 @@ namespace CommonUi
             // Create the two textboxes.
             absoluteTextBox = new TextBox()
             {
-                Width = ColorSettings.InnerControlWidth ?? 200,
+                Width = ColorSettings.InnerControlWidth ?? 100,
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
             percentageTextBox = new TextBox()
             {
-                Width = ColorSettings.InnerControlWidth ?? 200,
+                Width = ColorSettings.InnerControlWidth ?? 100,
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
