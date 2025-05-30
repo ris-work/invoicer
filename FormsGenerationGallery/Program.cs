@@ -283,7 +283,9 @@ string[] fieldOrder = new string[]
 
 var SamplePurchasePanel = new PurchasePanel();
 List<Purchase> LP = SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases();
-SamplePurchasePanel.Render(SampleDataGenerator.SampleDataGenerator.GetSampleValidPurchases());
+LP = LP.Concat(LP.Concat(LP.ToArray()).ToArray()).ToList();
+LP = LP.Concat(LP.Concat(LP.ToArray()).ToArray()).ToList();
+SamplePurchasePanel.Render(LP);
 var InvoiceHeaderForm = new GenEtoUI(SimpleJsonToUISerialization.ConvertToUISerialization(JsonSerializer.Serialize(SampleDataGenerator.SampleDataGenerator.GetSampleValidInvoice(0), JSOptions)), (_) => { return 0; }, (_) => { return 0;  }, ActionsMap, "");
 var PurchaseDataEntryForm = new GenEtoUI(
     SimpleJsonToUISerialization.ConvertToUISerialization(
