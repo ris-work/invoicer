@@ -169,6 +169,7 @@ public class Program
         Console.WriteLine(Eto.Platforms.WinForms);
         Console.WriteLine(Eto.Platforms.Wpf);
         TranslationHelper.LoadTranslations("translations.toml");
+        TranslationHelper.LoadTranslations("translations_2.toml");
         TranslationHelper.LoadTranslations("terminal.toml");
         Program.lang = (string)ConfigDict.GetValueOrDefault("Language", "en");
         TranslationHelper.Lang = Program.lang;

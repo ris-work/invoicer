@@ -84,6 +84,7 @@
         <None Remove="NotoSans-Regular.ttf" />
         <None Remove="Terminal.toml" />
         <None Remove="translations.toml" />
+        <None Remove="translations_2.toml" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="icons\pos_exe.ico" />
@@ -107,6 +108,9 @@
         </EmbeddedResource>
         <EmbeddedResource Include="translations.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
+        <EmbeddedResource Include="translations_2.toml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
     </ItemGroup>
     <!--<PropertyGroup>
@@ -170,11 +174,7 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target
-        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
-        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
-        Condition="'$(IsWindowsTarget)' != 'true'"
-    >
+    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />

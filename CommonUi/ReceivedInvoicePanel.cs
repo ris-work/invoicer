@@ -237,6 +237,7 @@ namespace CommonUi
             );
             PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
             {
+                Console.WriteLine($"Purchase data: Event raised by: {string.Join(',', currentControlGroup)}");
                 // Accumulate detailed log messages.
                 var log = new System.Text.StringBuilder();
                 log.AppendLine("=== Starting Global Update Recalculation ===");
@@ -447,7 +448,7 @@ namespace CommonUi
                     // Attach the SellingPrice TextChanged event handler (only once) for live updates.
                     if (!(sellingPriceTextBox.Tag is bool handlerAttached && handlerAttached))
                     {
-                        sellingPriceTextBox.TextChanged += (sender, e) =>
+                        sellingPriceTextBox.KeyUp += (sender, e) =>
                         {
                             var innerLog = new System.Text.StringBuilder();
                             innerLog.AppendLine("=== SellingPrice TextChanged event triggered ===");
