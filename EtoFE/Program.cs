@@ -65,6 +65,8 @@ public class Program
     public static int? InnerEditorWidth = null;
     public static bool ExpandContentHeight = false;
     public static bool ExpandContentWidth = true;
+    public static int? MaxControlWidth = null;
+    public static int? ControlWidth = null;
 
     [STAThread]
     public static void Main()
@@ -136,6 +138,8 @@ public class Program
         InnerLabelHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerLabelHeight", null);
         InnerEditorWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorWidth", null);
         InnerEditorHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorHeight", null);
+        ControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("ControlWidth", null);
+        MaxControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("MaxControlWidth", null);
         ExpandContentWidth = (bool)ConfigDict.GetValueOrDefault("ExpandContentWidth", true);
         ExpandContentHeight = (bool)ConfigDict.GetValueOrDefault("ExpandContentHeight", false);
         Console.WriteLine("Hello, World!");
@@ -144,6 +148,8 @@ public class Program
         CommonUi.ColorSettings.InnerLabelHeight = InnerLabelHeight;
         CommonUi.ColorSettings.ExpandContentHeight = ExpandContentHeight;
         CommonUi.ColorSettings.ExpandContentWidth = ExpandContentWidth;
+        CommonUi.ColorSettings.ControlWidth = ControlWidth;
+        CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");

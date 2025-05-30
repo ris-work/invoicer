@@ -93,7 +93,7 @@ namespace EtoFE
                                         ),
                                         (
                                             "📥 Goods Receipt",
-                                            new LoadOncePanel<Panel>(),
+                                            new LoadOncePanel<ReceivedInvoicePanel>(),
                                             "GoodsReceipt"
                                         ),
                                         (

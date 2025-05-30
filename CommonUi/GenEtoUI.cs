@@ -941,10 +941,10 @@ namespace CommonUi
                         ((TextBox)EInput).Font = TFont;
                         ((TextBox)EInput).KeyUp += GoToNext;
                     }
-                    EInput.Width = 200;
+                    EInput.Width = ColorSettings.ControlWidth ?? 100;
                     if (EInput is TextBox TB)
                     {
-                        TB.Width = 200;
+                        TB.Width = ColorSettings.ControlWidth ?? 100;
                     }
                     Label EFieldName = new Label()
                     {

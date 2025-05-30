@@ -98,8 +98,8 @@ public static class MainTableLayoutGenerator
         var outerRow = new TableRow(columnTables.Select(ct => new TableCell(ct, true)).ToArray());
         var outerLayout = new TableLayout(new[] { outerRow })
         {
-            Spacing = new Size(10, 10),
-            Padding = new Padding(10),
+            Spacing = new Size(2, 2),
+            Padding = new Padding(2),
         };
 
         return outerLayout;
