@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eto.Drawing;
 using Eto.Forms;
+//using MS.WindowsAPICodePack.Internal;
 using RV.InvNew.Common;
+
+//using MS.WindowsAPICodePack.Internal;
 
 namespace CommonUi
 {
@@ -31,14 +35,61 @@ namespace CommonUi
         /// </summary>
         public int SelectedItemIndex => _gridView.SelectedRow;
 
-        public PurchasePanel()
+        public PurchasePanel(PanelSettings? LocalColors = null)
         {
+            var Colors = new PanelSettings()
+            {
+                AlternatingColor1 =
+                    LocalColors?.AlternatingColor1 ?? ColorSettings.AlternatingColor1,
+                AlternatingColor2 =
+                    LocalColors?.AlternatingColor2 ?? ColorSettings.AlternatingColor2,
+                SelectedColumnColor =
+                    LocalColors?.SelectedColumnColor ?? ColorSettings.SelectedColumnColor,
+                LesserForegroundColor =
+                    LocalColors?.LesserForegroundColor ?? ColorSettings.LesserForegroundColor,
+                LesserBackgroundColor =
+                    LocalColors?.LesserBackgroundColor ?? ColorSettings.LesserBackgroundColor,
+                ForegroundColor = LocalColors?.ForegroundColor ?? ColorSettings.ForegroundColor,
+                BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
+            };
             _gridView = new GridView();
             _gridView.SelectionChanged += (sender, e) =>
             {
                 _indexLabel.Text =
                     $"Selected Index: {(_gridView.SelectedRow >= 0 ? _gridView.SelectedRow.ToString() : "None")}";
             };
+            _gridView.CellFormatting += (e, a) =>
+            {
+                a.Font = Eto.Drawing.Fonts.Monospace(11);
+                a.BackgroundColor = Colors.BackgroundColor;
+                a.ForegroundColor = Colors.ForegroundColor;
+                //Colour the column first
+                if (a.Column.DisplayIndex % 2 == 1)
+                {
+                    a.BackgroundColor = Colors.AlternatingColor2;
+                    a.ForegroundColor = Colors.ForegroundColor;
+                }
+                //Override with row colours
+                if (a.Row % 2 == 0)
+                {
+                    a.BackgroundColor = Colors.AlternatingColor1;
+                    a.ForegroundColor = Colors.ForegroundColor;
+                }
+                if (a.Row == _gridView.SelectedRow)
+                {
+                    a.Column.AutoSize = true;
+                    a.BackgroundColor = Colors.SelectedColumnColor;
+                    a.ForegroundColor = Colors.ForegroundColor;
+                    a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
+                }
+            };
+            _gridView.RowFormatting += (e, a) =>
+            {
+                a.BackgroundColor = Colors.LesserBackgroundColor;
+            };
+            _gridView.DisableLines();
+            _gridView.ApplyDarkGridHeaders();
+            _gridView.ConfigureForPlatform();
 
             _indexLabel = new Label { Text = "Selected Index: None" };
 

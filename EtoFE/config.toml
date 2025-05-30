@@ -14,7 +14,7 @@ CustomFonts=false
 #InnerEditorWidth =300 #Use with WinForms Native Port only
 #InnerEditorHeight =30 #Use with WinForms Native Port only
 ControlWidth = 170
-#MaxControlWidth = 200
+MaxControlWidth = 170
 
 
 ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast

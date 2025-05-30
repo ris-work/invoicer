@@ -13,7 +13,10 @@ namespace RV.InvNew.Common
         /// <param name="purchases">List of Purchase entries.</param>
         /// <param name="invoice">The invoice header to update.</param>
         /// <returns>The updated invoice header.</returns>
-        public static ReceivedInvoice CalculateInvoice(this List<Purchase> purchases, ReceivedInvoice invoice)
+        public static ReceivedInvoice CalculateInvoice(
+            this List<Purchase> purchases,
+            ReceivedInvoice invoice
+        )
         {
             if (purchases == null)
                 throw new ArgumentNullException(nameof(purchases));
@@ -23,9 +26,10 @@ namespace RV.InvNew.Common
             // Calculate aggregated values from the purchase list.
             double computedGrossTotal = purchases.Sum(p => p.GrossTotal);
             double computedTotalDiscountAbsolute = purchases.Sum(p => p.DiscountAbsolute);
-            double weightedDiscountPctFromItems = computedGrossTotal > 0
-                ? (computedTotalDiscountAbsolute / computedGrossTotal) * 100
-                : 0;
+            double weightedDiscountPctFromItems =
+                computedGrossTotal > 0
+                    ? (computedTotalDiscountAbsolute / computedGrossTotal) * 100
+                    : 0;
             double computedVatTotal = purchases.Sum(p => p.VatAbsolute);
             double computedTotalAmountDue = purchases.Sum(p => p.TotalAmountDue);
 
@@ -33,14 +37,15 @@ namespace RV.InvNew.Common
             invoice.GrossTotal = computedGrossTotal;
             invoice.EffectiveDiscountAbsoluteFromEnteredItems = computedTotalDiscountAbsolute;
             invoice.EffectiveDiscountPercentageFromEnteredItems = weightedDiscountPctFromItems;
-            invoice.EffectiveDiscountAbsoluteTotal = invoice.WholeInvoiceDiscountAbsolute + computedTotalDiscountAbsolute;
-            invoice.EffectiveDiscountPercentageTotal = invoice.WholeInvoiceDiscountPercentage + weightedDiscountPctFromItems;
+            invoice.EffectiveDiscountAbsoluteTotal =
+                invoice.WholeInvoiceDiscountAbsolute + computedTotalDiscountAbsolute;
+            invoice.EffectiveDiscountPercentageTotal =
+                invoice.WholeInvoiceDiscountPercentage + weightedDiscountPctFromItems;
             invoice.VatTotal = computedVatTotal;
 
             double taxableBase = computedGrossTotal - computedTotalDiscountAbsolute;
-            invoice.EffectiveVatPercentage = taxableBase > 0
-                ? (computedVatTotal / taxableBase) * 100
-                : 0;
+            invoice.EffectiveVatPercentage =
+                taxableBase > 0 ? (computedVatTotal / taxableBase) * 100 : 0;
 
             invoice.TotalAmountDue = computedTotalAmountDue;
 
@@ -68,9 +73,15 @@ namespace RV.InvNew.Common
                 return (false, "GrossTotal cannot be negative.");
             if (invoice.TransportCharges < 0)
                 return (false, "TransportCharges cannot be negative.");
-            if (invoice.WholeInvoiceDiscountAbsolute < 0 || invoice.WholeInvoiceDiscountPercentage < 0)
+            if (
+                invoice.WholeInvoiceDiscountAbsolute < 0
+                || invoice.WholeInvoiceDiscountPercentage < 0
+            )
                 return (false, "WholeInvoiceDiscount values cannot be negative.");
-            if (invoice.EffectiveDiscountAbsoluteTotal < 0 || invoice.EffectiveDiscountPercentageTotal < 0)
+            if (
+                invoice.EffectiveDiscountAbsoluteTotal < 0
+                || invoice.EffectiveDiscountPercentageTotal < 0
+            )
                 return (false, "EffectiveDiscountTotal values cannot be negative.");
             if (invoice.VatTotal < 0)
                 return (false, "VatTotal cannot be negative.");
@@ -93,12 +104,16 @@ namespace RV.InvNew.Common
         /// <param name="purchases">The list of Purchase entries.</param>
         /// <param name="matchThreshold">Allowed tolerance (default 0.01).</param>
         /// <returns>A tuple (bool Valid, string Error) indicating overall validity.</returns>
-        public static (bool Valid, string Error) ValidateInvoice(this ReceivedInvoice invoice, List<Purchase> purchases, double matchThreshold = 0.01)
+        public static (bool Valid, string Error) ValidateInvoice(
+            this ReceivedInvoice invoice,
+            List<Purchase> purchases,
+            double matchThreshold = 0.01
+        )
         {
             // Assume that List<Purchase> has its own Validate() extension.
             //var purchaseValidation = purchases.V();
             //if (!purchaseValidation.Valid)
-                //return purchaseValidation;
+            //return purchaseValidation;
 
             var invoiceValidation = invoice.Validate();
             if (!invoiceValidation.Valid)
@@ -109,19 +124,37 @@ namespace RV.InvNew.Common
                 return (false, "GrossTotal mismatch.");
 
             double computedDiscountAbs = purchases.Sum(p => p.DiscountAbsolute);
-            if (Math.Abs(invoice.EffectiveDiscountAbsoluteFromEnteredItems - computedDiscountAbs) > matchThreshold)
+            if (
+                Math.Abs(invoice.EffectiveDiscountAbsoluteFromEnteredItems - computedDiscountAbs)
+                > matchThreshold
+            )
                 return (false, "EffectiveDiscountAbsoluteFromEnteredItems mismatch.");
 
-            double computedDiscountPct = computedGrossTotal > 0 ? (computedDiscountAbs / computedGrossTotal) * 100 : 0;
-            if (Math.Abs(invoice.EffectiveDiscountPercentageFromEnteredItems - computedDiscountPct) > matchThreshold)
+            double computedDiscountPct =
+                computedGrossTotal > 0 ? (computedDiscountAbs / computedGrossTotal) * 100 : 0;
+            if (
+                Math.Abs(invoice.EffectiveDiscountPercentageFromEnteredItems - computedDiscountPct)
+                > matchThreshold
+            )
                 return (false, "EffectiveDiscountPercentageFromEnteredItems mismatch.");
 
-            double computedEffectiveDiscountAbsoluteTotal = invoice.WholeInvoiceDiscountAbsolute + computedDiscountAbs;
-            if (Math.Abs(invoice.EffectiveDiscountAbsoluteTotal - computedEffectiveDiscountAbsoluteTotal) > matchThreshold)
+            double computedEffectiveDiscountAbsoluteTotal =
+                invoice.WholeInvoiceDiscountAbsolute + computedDiscountAbs;
+            if (
+                Math.Abs(
+                    invoice.EffectiveDiscountAbsoluteTotal - computedEffectiveDiscountAbsoluteTotal
+                ) > matchThreshold
+            )
                 return (false, "EffectiveDiscountAbsoluteTotal mismatch.");
 
-            double computedEffectiveDiscountPercentageTotal = invoice.WholeInvoiceDiscountPercentage + computedDiscountPct;
-            if (Math.Abs(invoice.EffectiveDiscountPercentageTotal - computedEffectiveDiscountPercentageTotal) > matchThreshold)
+            double computedEffectiveDiscountPercentageTotal =
+                invoice.WholeInvoiceDiscountPercentage + computedDiscountPct;
+            if (
+                Math.Abs(
+                    invoice.EffectiveDiscountPercentageTotal
+                        - computedEffectiveDiscountPercentageTotal
+                ) > matchThreshold
+            )
                 return (false, "EffectiveDiscountPercentageTotal mismatch.");
 
             double computedVatTotal = purchases.Sum(p => p.VatAbsolute);
@@ -129,8 +162,12 @@ namespace RV.InvNew.Common
                 return (false, "VatTotal mismatch.");
 
             double taxableBase = computedGrossTotal - computedDiscountAbs;
-            double computedEffectiveVatPercentage = taxableBase > 0 ? (computedVatTotal / taxableBase) * 100 : 0;
-            if (Math.Abs(invoice.EffectiveVatPercentage - computedEffectiveVatPercentage) > matchThreshold)
+            double computedEffectiveVatPercentage =
+                taxableBase > 0 ? (computedVatTotal / taxableBase) * 100 : 0;
+            if (
+                Math.Abs(invoice.EffectiveVatPercentage - computedEffectiveVatPercentage)
+                > matchThreshold
+            )
                 return (false, "EffectiveVatPercentage mismatch.");
 
             double computedTotalAmountDue = purchases.Sum(p => p.TotalAmountDue);

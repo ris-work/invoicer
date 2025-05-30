@@ -73,24 +73,28 @@ namespace CommonUi
                 Text = Translate("Absolute " + discountTypeText),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
             };
             percentageLabel = new Label
             {
                 Text = Translate("Percentage " + discountTypeText),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
             };
 
             // Create the two textboxes.
             absoluteTextBox = new TextBox()
             {
-                Width = ColorSettings.InnerControlWidth ?? 100,
+                Width = ColorSettings.ControlWidth ?? 100,
+
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
+
             percentageTextBox = new TextBox()
             {
-                Width = ColorSettings.InnerControlWidth ?? 100,
+                Width = ColorSettings.ControlWidth ?? 100,
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
@@ -146,10 +150,10 @@ namespace CommonUi
                     Spacing = new Size(5, 5),
                     Rows =
                     {
-                        new TableRow(new TableCell(percentageLabel, true)),
-                        new TableRow(new TableCell(percentageTextBox, true)),
-                        new TableRow(new TableCell(absoluteLabel, true)),
-                        new TableRow(new TableCell(absoluteTextBox, true)),
+                        new TableRow(new TableCell(percentageLabel, false)),
+                        new TableRow(new TableCell(percentageTextBox, false)),
+                        new TableRow(new TableCell(absoluteLabel, false)),
+                        new TableRow(new TableCell(absoluteTextBox, false)),
                     },
                 };
             }

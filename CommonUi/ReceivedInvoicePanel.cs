@@ -640,7 +640,14 @@ namespace CommonUi
                 };
                 F.Show();
             };
-            Content = new Eto.Forms.Scrollable() { Content = new Eto.Forms.StackLayout(InvoiceHeaderForm, PurchaseDataEntryForm, SamplePurchasePanel), };
+            Content = new Eto.Forms.Scrollable()
+            {
+                Content = new Eto.Forms.StackLayout(
+                    InvoiceHeaderForm,
+                    PurchaseDataEntryForm,
+                    SamplePurchasePanel
+                ),
+            };
         }
     }
 }
