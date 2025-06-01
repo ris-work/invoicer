@@ -28,7 +28,7 @@ namespace CommonUi
         ///     except "GrossMarkupPercentage" and "VatPercentage".
         /// You can also supply specific field names to hide via this list.
         /// </summary>
-        public List<string> HiddenItems { get; set; } = new List<string>();
+        public List<string> HiddenItems { get; set; } = new List<string>() { "ManufacturerBatchId", "GrossMarkupPercentage",  };
 
         /// <summary>
         /// Returns the currently selected row's index.
@@ -52,7 +52,7 @@ namespace CommonUi
                 ForegroundColor = LocalColors?.ForegroundColor ?? ColorSettings.ForegroundColor,
                 BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
             };
-            _gridView = new GridView();
+            _gridView = new GridView() { Height = 300 };
             _gridView.SelectionChanged += (sender, e) =>
             {
                 _indexLabel.Text =
@@ -80,7 +80,7 @@ namespace CommonUi
                     a.Column.AutoSize = true;
                     a.BackgroundColor = Colors.SelectedColumnColor;
                     a.ForegroundColor = Colors.ForegroundColor;
-                    a.Font = Eto.Drawing.Fonts.Monospace(11, FontStyle.Bold);
+                    a.Font = Eto.Drawing.Fonts.Monospace(9, FontStyle.Bold);
                 }
             };
             _gridView.RowFormatting += (e, a) =>
@@ -143,7 +143,9 @@ namespace CommonUi
                         _purchases.IndexOf(purchase).ToString()
                     ),
                 },
-                Width = 50,
+                Width = 20,
+                
+                
             };
             _gridView.Columns.Add(indexColumn);
 
@@ -153,50 +155,50 @@ namespace CommonUi
                 // Although "ReceivedInvoiceId" is defined, auto-hide logic will remove it.
                 ("ReceivedInvoiceId", purchase => purchase.ReceivedInvoiceId.ToString(), 80),
                 // Core product and packaging fields.
-                ("Itemcode", purchase => purchase.Itemcode.ToString(), 80),
+                ("Itemcode", purchase => purchase.Itemcode.ToString(), 50),
                 ("ProductName", purchase => purchase.ProductName, 150),
                 (
                     "ManufacturerBatchId",
                     purchase => purchase.ManufacturerBatchId ?? string.Empty,
                     120
                 ),
-                ("PackSize", purchase => purchase.PackSize.ToString(), 80),
-                ("PackQuantity", purchase => purchase.PackQuantity.ToString(), 80),
+                ("PackSize", purchase => purchase.PackSize.ToString(), 30),
+                ("PackQuantity", purchase => purchase.PackQuantity.ToString(), 30),
                 (
                     "ReceivedAsUnitQuantity",
                     purchase => purchase.ReceivedAsUnitQuantity.ToString(),
                     80
                 ),
-                ("FreePacks", purchase => purchase.FreePacks.ToString(), 80),
-                ("FreeUnits", purchase => purchase.FreeUnits.ToString(), 80),
-                ("TotalUnits", purchase => purchase.TotalUnits.ToString("F2"), 80),
+                ("FreePacks", purchase => purchase.FreePacks.ToString(), 30),
+                ("FreeUnits", purchase => purchase.FreeUnits.ToString(), 30),
+                ("TotalUnits", purchase => purchase.TotalUnits.ToString("F2"), 50),
                 (
                     "ManufacturingDate",
                     purchase => purchase.ManufacturingDate?.ToString("d") ?? string.Empty,
-                    100
+                    20
                 ),
-                ("ExpiryDate", purchase => purchase.ExpiryDate.ToString("d"), 100),
-                ("AddedDate", purchase => purchase.AddedDate.ToString("g"), 120),
+                ("ExpiryDate", purchase => purchase.ExpiryDate.ToString("d"), 50),
+                ("AddedDate", purchase => purchase.AddedDate.ToString("g"), 50),
                 // Pricing details.
-                ("DiscountAbsolute", purchase => purchase.DiscountAbsolute.ToString("F2"), 80),
+                ("DiscountAbsolute", purchase => purchase.DiscountAbsolute.ToString("F2"), 50),
                 (
                     "GrossMarkupPercentage",
                     purchase => purchase.GrossMarkupPercentage.ToString("F2"),
-                    80
+                    50
                 ),
                 (
                     "GrossMarkupAbsolute",
                     purchase => purchase.GrossMarkupAbsolute.ToString("F2"),
-                    80
+                    50
                 ),
-                ("CostPerUnit", purchase => purchase.CostPerUnit.ToString("F2"), 80),
-                ("CostPerPack", purchase => purchase.CostPerPack.ToString("F2"), 80),
-                ("GrossCostPerUnit", purchase => purchase.GrossCostPerUnit.ToString("F2"), 80),
-                ("SellingPrice", purchase => purchase.SellingPrice.ToString("F2"), 80),
+                ("CostPerUnit", purchase => purchase.CostPerUnit.ToString("F2"), 50),
+                ("CostPerPack", purchase => purchase.CostPerPack.ToString("F2"), 50),
+                ("GrossCostPerUnit", purchase => purchase.GrossCostPerUnit.ToString("F2"), 50),
+                ("SellingPrice", purchase => purchase.SellingPrice.ToString("F2"), 50),
                 // Final summary fields.
                 ("NetTotalPrice", purchase => purchase.NetTotalPrice.ToString("F2"), 100),
-                ("VatPercentage", purchase => purchase.VatPercentage.ToString("F2"), 80),
-                ("VatAbsolute", purchase => purchase.VatAbsolute.ToString("F2"), 80),
+                ("VatPercentage", purchase => purchase.VatPercentage.ToString("F2"), 20),
+                ("VatAbsolute", purchase => purchase.VatAbsolute.ToString("F2"), 50),
                 ("TotalAmountDue", purchase => purchase.TotalAmountDue.ToString("F2"), 100),
             };
 
@@ -238,12 +240,15 @@ namespace CommonUi
 
                 var gridColumn = new GridColumn
                 {
-                    HeaderText = col.Title,
+                    HeaderText = TranslationHelper.Translate(col.Title, col.Title, ColorSettings.Lang),
                     DataCell = new TextBoxCell
                     {
                         Binding = new DelegateBinding<Purchase, string>(col.Getter),
+                        TextAlignment = double.TryParse(col.Getter(new Purchase()), out _) ? TextAlignment.Right : TextAlignment.Left
                     },
                     Width = col.Width,
+
+
                 };
 
                 _gridView.Columns.Add(gridColumn);

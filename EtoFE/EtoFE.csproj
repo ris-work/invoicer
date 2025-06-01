@@ -160,6 +160,7 @@
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
         <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+		<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>

@@ -121,7 +121,17 @@ namespace CommonUi
                 );
             }
 
-            return result;
+            return ColorSettings.NoEmojis ? EmojiRemover.SMPRemover.RemoveSMPCharacters(result) : result;
+        }
+
+        public static string Translate(string Key, string Language)
+        {
+            return Translate(Key, Key, Language);
+        }
+
+        public static string Translate(string Key)
+        {
+            return Translate(Key, Key, ColorSettings.Lang);
         }
     }
 }

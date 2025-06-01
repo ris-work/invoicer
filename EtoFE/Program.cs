@@ -67,6 +67,7 @@ public class Program
     public static bool ExpandContentWidth = true;
     public static int? MaxControlWidth = null;
     public static int? ControlWidth = null;
+    public static bool NoEmojis = false;
 
     [STAThread]
     public static void Main()
@@ -142,6 +143,7 @@ public class Program
         MaxControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("MaxControlWidth", null);
         ExpandContentWidth = (bool)ConfigDict.GetValueOrDefault("ExpandContentWidth", true);
         ExpandContentHeight = (bool)ConfigDict.GetValueOrDefault("ExpandContentHeight", false);
+        NoEmojis = (bool)ConfigDict.GetValueOrDefault("NoEmojis", false);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
         CommonUi.ColorSettings.InnerLabelWidth = InnerLabelWidth;
@@ -150,6 +152,7 @@ public class Program
         CommonUi.ColorSettings.ExpandContentWidth = ExpandContentWidth;
         CommonUi.ColorSettings.ControlWidth = ControlWidth;
         CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
+        ColorSettings.Lang = Program.lang;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
         ResourceExtractor.EnsureTranslationsFile("translations.toml");
@@ -184,6 +187,8 @@ public class Program
             CurrentUI = Eto.Platforms.Gtk;
         if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d"))
             CurrentUI = Eto.Platforms.Direct2D;
+        if (CurrentUIConfigured.ToLowerInvariant() == ("wpf"))
+            CurrentUI = Eto.Platforms.Wpf;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winui"))
             CurrentUI = Eto.Platforms.Wpf;
 
@@ -296,6 +301,7 @@ public class MyForm : Form
             Program.UIFontMono = FontFamilies.Monospace;
         }
 
+        ColorSettings.NoEmojis = Program.NoEmojis;
         ColorSettings.UIFont = Program.UIFont;
         ColorSettings.UIFontMono = Eto.Drawing.FontFamilies.Monospace;
         Console.WriteLine($"Fonts: {ColorSettings.UIFont.Name}, {ColorSettings.UIFontMono.Name}!");

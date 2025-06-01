@@ -748,7 +748,7 @@ namespace CommonUi
                     var ChangedForegroundColor = FGc;
                     Eto.Forms.Control? SupplementalControl = null;
                     Eto.Forms.TableRow EControl;
-                    Eto.Forms.Label? ELegend = null;
+                    Eto.Forms.Label? ELegend = new Label() { Width = 10,};
                     Eto.Forms.Control EInput = new Label();
                     Console.WriteLine(
                         $"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}"

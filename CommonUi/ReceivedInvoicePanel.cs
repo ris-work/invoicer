@@ -619,7 +619,12 @@ namespace CommonUi
                 Console.WriteLine(log.ToString());
             };
             SamplePurchasePanel.AnythingHappened = InvoiceHeaderForm.AnythingChanged;
-
+            SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
+            {
+                System.Console.WriteLine($"Requested to remove: {i}");
+                LP.RemoveAt(i);
+                SamplePurchasePanel.Render(LP);
+            };
             PurchasingUIButton.Click += (_, _) =>
             {
                 SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
