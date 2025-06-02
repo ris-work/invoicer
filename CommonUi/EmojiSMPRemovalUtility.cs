@@ -27,7 +27,8 @@ namespace EmojiRemover
         {
             // This pattern matches any code point from U+10000 to U+10FFFF.
             // Note: Some environments may require RegexOptions or proper handling for inline Unicode escapes.
-            return Regex.Replace(input, @"\p{Cs}", "");
+            string inprogress = Regex.Replace(input, @"(⚙️|♿|👓|⛑|🖨️)", "");
+            return Regex.Replace(inprogress, @"\p{Cs}", "");
         }
     }
 }

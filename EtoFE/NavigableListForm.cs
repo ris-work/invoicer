@@ -289,7 +289,7 @@ namespace EtoFE
             Padding = 10;
             Button EnableAccessibilityButton = new Button()
             {
-                Text = " Enable Accessibility... ♿👓 ",
+                Text = TranslationHelper.Translate(" Enable Accessibility... ♿👓 "),
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
                 MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = ColorSettings.BackgroundColor,
