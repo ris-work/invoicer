@@ -34,6 +34,7 @@ namespace CommonUi
         public static bool ExpandContentHeight = false;
         public static int? MaxControlWidth = null;
         public static int? ControlWidth = null;
+        public static int? ControlHeight = null;
         public static string Lang = "en";
         public static bool NoEmojis = false;
 

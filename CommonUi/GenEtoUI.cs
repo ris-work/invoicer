@@ -962,16 +962,16 @@ namespace CommonUi
                         T.ShowBorder = false;
 
                         //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                        EControl = new TableRow(EFieldName, new TableCell(T, true), ELegend)
+                        EControl = new TableRow(EFieldName, new TableCell(T, ColorSettings.ExpandContentWidth), ELegend)
                         {
-                            ScaleHeight = false,
+                            ScaleHeight = ColorSettings.ExpandContentHeight,
                         };
                     }
                     else
                     {
-                        EControl = new TableRow(EFieldName, new TableCell(EInput, true), ELegend)
+                        EControl = new TableRow(EFieldName, new TableCell(EInput, ColorSettings.ExpandContentWidth), ELegend)
                         {
-                            ScaleHeight = false,
+                            ScaleHeight = ColorSettings.ExpandContentHeight,
                         };
                     }
                     if (DenyList.Contains(kv.Key))

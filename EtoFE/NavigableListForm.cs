@@ -204,6 +204,8 @@ namespace EtoFE
                     CornerRadius = 2,
                     HoverBorderColor = ColorSettings.LesserForegroundColor,
                     BorderColor = ColorSettings.LesserBackgroundColor,
+                    Enabled = true,
+                    CanFocus = true
                 };
 
                 //B.VerticalAlignment = VerticalAlignment.Center;
@@ -294,6 +296,8 @@ namespace EtoFE
                 MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
+                Height = Program.ControlHeight ?? 30,
             };
             Label CurrentClientTimeLabel = new Label()
             {
@@ -302,6 +306,8 @@ namespace EtoFE
                 TextColor = ColorSettings.LesserForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                Width  = Program.ControlWidth ?? 150,
+                Height = Program.ControlHeight ?? 30,
             };
             Label CurrentServerTimeLabel = new Label()
             {
@@ -310,6 +316,8 @@ namespace EtoFE
                 TextColor = ColorSettings.ForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                Width = Program.ControlWidth ?? 150,
+                Height = Program.ControlHeight ?? 30,
             };
             Label HueRotateLabel = new Label()
             {
@@ -321,6 +329,8 @@ namespace EtoFE
                 TextAlignment = TextAlignment.Center,
 
                 Font = new Eto.Drawing.Font(Program.UIFont, 5),
+                Width = Program.ControlWidth / 3 ?? 50,
+                Height = Program.ControlHeight ?? 30,
             };
             Label IncreaseLightnessLabel = new Label()
             {
@@ -332,6 +342,8 @@ namespace EtoFE
                 TextAlignment = TextAlignment.Center,
 
                 Font = new Eto.Drawing.Font(Program.UIFont, 5),
+                Width = Program.ControlWidth / 3 ?? 50,
+                Height = Program.ControlHeight ?? 30,
             };
             Label IncreaseContrastLabel = new Label()
             {
@@ -343,6 +355,8 @@ namespace EtoFE
                 TextAlignment = TextAlignment.Center,
 
                 Font = new Eto.Drawing.Font(Program.UIFont, 5),
+                Width = Program.ControlWidth / 3 ?? 50,
+                Height = Program.ControlHeight ?? 30,
             };
 
             HueRotateLabel.MouseDown += (_, _) =>

@@ -314,7 +314,7 @@ namespace CommonUi
                 BackgroundColor = Colors.BackgroundColor,
                 TextColor = Colors.ForegroundColor,
             };
-
+            
             StackLayout SearchOptions = new StackLayout()
             {
                 Items =
@@ -1012,7 +1012,22 @@ namespace CommonUi
                 }
                 //MessageBox.Show($"{RBLSearchCriteria.SelectedIndex.ToString()}", "SelectedIndex");
             };
-
+            if (ColorSettings.ControlWidth != null)
+            {
+                SearchCriteria.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchCaseSensitivity.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchCasePosition.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchSpellingNormalization.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                GBExportOptions.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+            }
+            if (ColorSettings.ControlHeight != null)
+            {
+                SearchCriteria.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchCaseSensitivity.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchCasePosition.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchSpellingNormalization.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                GBExportOptions.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+            }
             this.KeyDown += ProcessKeyDown;
         }
     }

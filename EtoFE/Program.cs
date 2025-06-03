@@ -67,6 +67,7 @@ public class Program
     public static bool ExpandContentWidth = true;
     public static int? MaxControlWidth = null;
     public static int? ControlWidth = null;
+    public static int? ControlHeight = null;
     public static bool NoEmojis = false;
 
     [STAThread]
@@ -140,6 +141,7 @@ public class Program
         InnerEditorWidth = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorWidth", null);
         InnerEditorHeight = (int?)(long?)ConfigDict.GetValueOrDefault("InnerEditorHeight", null);
         ControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("ControlWidth", null);
+        ControlHeight = (int?)(long?)ConfigDict.GetValueOrDefault("ControlHeight", null);
         MaxControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("MaxControlWidth", null);
         ExpandContentWidth = (bool)ConfigDict.GetValueOrDefault("ExpandContentWidth", true);
         ExpandContentHeight = (bool)ConfigDict.GetValueOrDefault("ExpandContentHeight", false);
@@ -151,6 +153,7 @@ public class Program
         CommonUi.ColorSettings.ExpandContentHeight = ExpandContentHeight;
         CommonUi.ColorSettings.ExpandContentWidth = ExpandContentWidth;
         CommonUi.ColorSettings.ControlWidth = ControlWidth;
+        CommonUi.ColorSettings.ControlHeight = ControlHeight;
         CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
         ColorSettings.Lang = Program.lang;
         ColorSettings.RotateAll(HueRotationDegrees);
@@ -377,6 +380,7 @@ public class MyForm : Form
             label =>
             {
                 label.Font = new Font(new Eto.Drawing.FontFamily("Sans-serif"), 15);
+                label.ConfigureForPlatformForFlatBorders();
             }
         );
         Title = "My Cross-Platform App";

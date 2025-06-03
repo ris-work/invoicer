@@ -883,6 +883,10 @@ namespace CommonUi
         background-image: none;
         background-color: #000000;
     }
+.no-border {
+        border: 0;
+        border-radius: 0;
+    }
 "
                     );
                     Gtk.StyleContext.AddProviderForScreen(
@@ -890,11 +894,66 @@ namespace CommonUi
                         cssProvider,
                         Gtk.StyleProviderPriority.Application
                     );
-                    gtkButton.StyleContext.AddClass("black-bg");
+                    //gtkButton.StyleContext.AddClass("black-bg");
                 }
             }
             // No modifications are required for WPF or other backends.
         }
+        /// <summary>
+        /// Extension method for Eto.Forms.Button that enables its border on WinForms (FlatStyle) and GTK.
+        /// Evaluates the provided variable P against the current Eto backend.
+        /// </summary>
+        /// <param name="button">The Eto.Forms.Button to configure.</param>
+        /// <param name="P">A string representing the current Eto backend platform.</param>
+        public static void ConfigureForPlatformForFlatBorders(this Eto.Forms.Button button)
+        {
+            var P = Eto.Platform.Instance.ToString();
+#if WINDOWS || WINFORMS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                // Access the native System.Windows.Forms.Button control via ControlObject.
+                var winButton = button.ControlObject as System.Windows.Forms.Button;
+                Console.WriteLine($"{button.ControlObject.GetType()}, winButton: {winButton}");
+                if (winButton != null)
+                {
+                    winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                    winButton.FlatAppearance.BorderSize = 1;
+                    
+                }
+            }
+#endif
+            if (P == Eto.Platform.Get(Eto.Platforms.Gtk)?.ToString())
+            {
+                // Access the native Gtk.Button control using ControlObject.
+                var gtkButton = button.ControlObject as Gtk.Button;
+                if (gtkButton != null)
+                {
+                    // Disable borders by setting the Relief style to None.
+                    gtkButton.Relief = Gtk.ReliefStyle.Normal;
+                    var cssProvider = new Gtk.CssProvider();
+                    cssProvider.LoadFromData(
+                        @"
+    .black-bg {
+        background-image: none;
+        background-color: #000000;
+    }
+.no-border {
+        border: 1px solid black;
+        border-radius: 0;
+    }
+"
+                    );
+                    Gtk.StyleContext.AddProviderForScreen(
+                        gtkButton.Screen,
+                        cssProvider,
+                        Gtk.StyleProviderPriority.Application
+                    );
+                    //gtkButton.StyleContext.AddClass("black-bg");
+                }
+            }
+            // No modifications are required for WPF or other backends.
+        }
+
 
         /// <summary>
         /// Extension method to apply a dark theme for scrollbars on an Eto.Forms.Container.

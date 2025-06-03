@@ -316,6 +316,7 @@ namespace EtoFE
                 MinimumSize = new Eto.Drawing.Size(30, 30),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
             };
             Button QuitCurrentPanelButton = new Button()
             {

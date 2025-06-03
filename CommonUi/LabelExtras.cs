@@ -50,6 +50,7 @@ namespace CommonUi
             };
 
             // You can also attach MouseDown, Click, etc., as needed.
+            CanFocus = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -109,6 +110,7 @@ namespace CommonUi
             path.CloseFigure();
             return path;
         }
+        public override bool Enabled { get => base.Enabled; set => base.Enabled = value; }
     }
 
     public class RoundedLabel : Drawable
@@ -167,6 +169,7 @@ namespace CommonUi
             };
 
             // Click events and additional mouse events remain available.
+            CanFocus = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)
