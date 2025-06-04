@@ -47,7 +47,7 @@ namespace CommonUi
         {
             var cw = ColorSettings.ControlWidth ?? -1;
             var ch = ColorSettings.ControlHeight ?? -1;
-            datePicker = new DateTimePicker(){Width = cw, Height = ch};
+            datePicker = new DateTimePicker() { Width = cw, Height = ch };
             lookupResultTextBox = new TextBox
             {
                 ReadOnly = true,
@@ -64,19 +64,31 @@ namespace CommonUi
                     lookupResultTextBox.Text = datePicker?.Value.ToString();
                 GlobalWatchHandler();
             };
-            
+
             // Create a vertical layout.
             Content = new TableLayout
             {
                 Spacing = new Size(5, 5),
                 Rows =
                 {
-                    new TableRow(new TableCell(new Label { Text = "Select Date:", Width = cw, Height = ch }, scaleWidth: false)){ ScaleHeight = false},
-                    new TableRow(new TableCell(datePicker, false)){ScaleHeight = false},
+                    new TableRow(
+                        new TableCell(
+                            new Label
+                            {
+                                Text = "Select Date:",
+                                Width = cw,
+                                Height = ch,
+                            },
+                            scaleWidth: false
+                        )
+                    )
+                    {
+                        ScaleHeight = false,
+                    },
+                    new TableRow(new TableCell(datePicker, false)) { ScaleHeight = false },
                     //new TableRow(new Label { Text = "Lookup Result:" }),
                     //new TableRow(lookupResultTextBox),
                 },
-                
             };
 
             if (mappings != null)

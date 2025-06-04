@@ -28,7 +28,8 @@ namespace CommonUi
         ///     except "GrossMarkupPercentage" and "VatPercentage".
         /// You can also supply specific field names to hide via this list.
         /// </summary>
-        public List<string> HiddenItems { get; set; } = new List<string>() { "ManufacturerBatchId", "GrossMarkupPercentage",  };
+        public List<string> HiddenItems { get; set; } =
+            new List<string>() { "ManufacturerBatchId", "GrossMarkupPercentage" };
 
         /// <summary>
         /// Returns the currently selected row's index.
@@ -144,8 +145,6 @@ namespace CommonUi
                     ),
                 },
                 Width = 20,
-                
-                
             };
             _gridView.Columns.Add(indexColumn);
 
@@ -240,15 +239,19 @@ namespace CommonUi
 
                 var gridColumn = new GridColumn
                 {
-                    HeaderText = TranslationHelper.Translate(col.Title, col.Title, ColorSettings.Lang),
+                    HeaderText = TranslationHelper.Translate(
+                        col.Title,
+                        col.Title,
+                        ColorSettings.Lang
+                    ),
                     DataCell = new TextBoxCell
                     {
                         Binding = new DelegateBinding<Purchase, string>(col.Getter),
-                        TextAlignment = double.TryParse(col.Getter(new Purchase()), out _) ? TextAlignment.Right : TextAlignment.Left
+                        TextAlignment = double.TryParse(col.Getter(new Purchase()), out _)
+                            ? TextAlignment.Right
+                            : TextAlignment.Left,
                     },
                     Width = col.Width,
-
-
                 };
 
                 _gridView.Columns.Add(gridColumn);

@@ -314,7 +314,7 @@ namespace CommonUi
                 BackgroundColor = Colors.BackgroundColor,
                 TextColor = Colors.ForegroundColor,
             };
-            
+
             StackLayout SearchOptions = new StackLayout()
             {
                 Items =
@@ -433,7 +433,7 @@ namespace CommonUi
                     DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 },
                     HeaderTextAlignment = Header.Item2,
                     Sortable = true,
-                    MinWidth = 40,
+                    MinWidth = 80,
                 };
 
                 Results.Columns.Add(HI);
@@ -1014,19 +1014,29 @@ namespace CommonUi
             };
             if (ColorSettings.ControlWidth != null)
             {
-                SearchCriteria.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
-                SearchCaseSensitivity.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
-                SearchCasePosition.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
-                SearchSpellingNormalization.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
-                GBExportOptions.Width = (int)Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchCriteria.Width = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchCaseSensitivity.Width = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchCasePosition.Width = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                SearchSpellingNormalization.Width = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                GBExportOptions.Width = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
             }
             if (ColorSettings.ControlHeight != null)
             {
-                SearchCriteria.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
-                SearchCaseSensitivity.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
-                SearchCasePosition.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
-                SearchSpellingNormalization.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
-                GBExportOptions.Height = (int)Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchCriteria.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchCaseSensitivity.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchCasePosition.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                SearchSpellingNormalization.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                GBExportOptions.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
             }
             this.KeyDown += ProcessKeyDown;
         }

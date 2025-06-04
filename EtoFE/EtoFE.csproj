@@ -110,7 +110,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
         <EmbeddedResource Include="translations_2.toml">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </EmbeddedResource>
     </ItemGroup>
     <!--<PropertyGroup>
@@ -160,7 +160,7 @@
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
         <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+        <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
@@ -175,7 +175,11 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
+    <Target
+        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
+        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
+        Condition="'$(IsWindowsTarget)' != 'true'"
+    >
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />

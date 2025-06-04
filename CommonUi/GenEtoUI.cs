@@ -748,7 +748,7 @@ namespace CommonUi
                     var ChangedForegroundColor = FGc;
                     Eto.Forms.Control? SupplementalControl = null;
                     Eto.Forms.TableRow EControl;
-                    Eto.Forms.Label? ELegend = new Label() { Width = 10,};
+                    Eto.Forms.Label? ELegend = new Label() { Width = 10 };
                     Eto.Forms.Control EInput = new Label();
                     Console.WriteLine(
                         $"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}"
@@ -962,14 +962,22 @@ namespace CommonUi
                         T.ShowBorder = false;
 
                         //EControl = new TableRow(EFieldName, new RoundedDrawable<TextBox>() { InnerControl = T, Width = T.Width, Enabled = true, }, ELegend) { };
-                        EControl = new TableRow(EFieldName, new TableCell(T, ColorSettings.ExpandContentWidth), ELegend)
+                        EControl = new TableRow(
+                            EFieldName,
+                            new TableCell(T, ColorSettings.ExpandContentWidth),
+                            ELegend
+                        )
                         {
                             ScaleHeight = ColorSettings.ExpandContentHeight,
                         };
                     }
                     else
                     {
-                        EControl = new TableRow(EFieldName, new TableCell(EInput, ColorSettings.ExpandContentWidth), ELegend)
+                        EControl = new TableRow(
+                            EFieldName,
+                            new TableCell(EInput, ColorSettings.ExpandContentWidth),
+                            ELegend
+                        )
                         {
                             ScaleHeight = ColorSettings.ExpandContentHeight,
                         };
@@ -1225,7 +1233,7 @@ namespace CommonUi
             )
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 2,
+                Spacing = 4,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
             };
             //BorderType = BorderType.None;

@@ -899,6 +899,7 @@ namespace CommonUi
             }
             // No modifications are required for WPF or other backends.
         }
+
         /// <summary>
         /// Extension method for Eto.Forms.Button that enables its border on WinForms (FlatStyle) and GTK.
         /// Evaluates the provided variable P against the current Eto backend.
@@ -918,7 +919,6 @@ namespace CommonUi
                 {
                     winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
                     winButton.FlatAppearance.BorderSize = 1;
-                    
                 }
             }
 #endif
@@ -953,7 +953,6 @@ namespace CommonUi
             }
             // No modifications are required for WPF or other backends.
         }
-
 
         /// <summary>
         /// Extension method to apply a dark theme for scrollbars on an Eto.Forms.Container.
@@ -1073,6 +1072,28 @@ namespace CommonUi
                 }
             }
             // No modifications are required for WPF or other backends.
+        }
+
+        public static void ConfigureForPlatform(this Eto.Forms.Drawable drawable)
+        {
+            var p = Eto.Platform.Instance.ToString();
+            if (p == Eto.Platform.Get(Eto.Platforms.WinForms)?.ToString())
+            {
+                // Access the native WinForms control.
+                var control = drawable.ControlObject as System.Windows.Forms.Control;
+                if (control != null)
+                {
+                    // Mark the control as selectable in WinForms.
+                    control.TabStop = true;
+                    // Set the ControlStyles.Selectable style flag so that the control can receive focus.
+                    //control.SetStyle(System.Windows.Forms.ControlStyles.Selectable, true);
+
+                    // If needed, force the control to be redrawn with standard focus rectangles by enabling user paint.
+                    //control.SetStyle(System.Windows.Forms.ControlStyles.UserPaint, true);
+                    // Optionally, you could override the OnGotFocus/OnLostFocus events in your drawable subclass
+                    // to draw a focus cue manually.
+                }
+            }
         }
     }
 }

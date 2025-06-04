@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using Eto.Drawing;
 using Eto.Forms;
 using Microsoft.Maui.Platform;
@@ -110,7 +111,12 @@ namespace CommonUi
             path.CloseFigure();
             return path;
         }
-        public override bool Enabled { get => base.Enabled; set => base.Enabled = value; }
+
+        public override bool Enabled
+        {
+            get => base.Enabled;
+            set => base.Enabled = value;
+        }
     }
 
     public class RoundedLabel : Drawable
@@ -250,6 +256,16 @@ namespace CommonUi
 
             path.CloseFigure();
             return path;
+        }
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
         }
     }
 

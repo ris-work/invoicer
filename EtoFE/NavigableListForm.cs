@@ -205,8 +205,10 @@ namespace EtoFE
                     HoverBorderColor = ColorSettings.LesserForegroundColor,
                     BorderColor = ColorSettings.LesserBackgroundColor,
                     Enabled = true,
-                    CanFocus = true
+                    CanFocus = true,
+                    TabIndex = 2,
                 };
+                B.ConfigureForPlatform();
 
                 //B.VerticalAlignment = VerticalAlignment.Center;
                 B.Height = 60;
@@ -238,6 +240,35 @@ namespace EtoFE
                 };
                 B.TabIndex = i;
                 B.MouseDown += (e, a) =>
+                {
+                    RoundedLabel ClickedLabel = ((RoundedLabel)e);
+                    //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
+
+                    CurrentPanel.Content = (Control)
+                        (
+                            (ILoadOncePanel<object>)
+                                ROD.GetValueOrDefault<string, object?>(
+                                    (string)((string)ClickedLabel.Text),
+                                    null
+                                )
+                        ).GetInnerAsObject();
+                    SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
+                    foreach (RoundedLabel L in Buttons)
+                    {
+                        L.TextColor = ColorSettings.ForegroundColor;
+                        L.BackgroundColor = ColorSettings.BackgroundColor;
+                        System.Console.WriteLine($"Adding button: {L.Text}");
+                        //L.Invalidate(true);
+                    }
+
+                    ClickedLabel.TextColor = ColorSettings.BackgroundColor;
+                    ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate(true);
+                    this.TriggerStyleChanged();
+                    Title = $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
+                };
+                B.KeyUp += (e, a) =>
                 {
                     RoundedLabel ClickedLabel = ((RoundedLabel)e);
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
@@ -306,7 +337,7 @@ namespace EtoFE
                 TextColor = ColorSettings.LesserForegroundColor,
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
-                Width  = Program.ControlWidth ?? 150,
+                Width = Program.ControlWidth ?? 150,
                 Height = Program.ControlHeight ?? 30,
             };
             Label CurrentServerTimeLabel = new Label()
@@ -440,6 +471,7 @@ namespace EtoFE
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Spacing = 4,
                     VerticalContentAlignment = VerticalAlignment.Stretch,
+                    TabIndex = 2,
                 },
                 new Panel() { Width = 3, BackgroundColor = ColorSettings.ForegroundColor },
                 new StackLayoutItem(CurrentPanel, true)

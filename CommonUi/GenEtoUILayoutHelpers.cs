@@ -88,8 +88,8 @@ public static class MainTableLayoutGenerator
             }
             var colLayout = new TableLayout(rows.ToArray())
             {
-                Spacing = new Size(3, 3),
-                Padding = new Padding(0),
+                Spacing = new Size(5, 3),
+                Padding = new Padding(4),
             };
             columnTables.Add(colLayout);
         }

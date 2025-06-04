@@ -237,7 +237,9 @@ namespace CommonUi
             );
             PurchaseDataEntryForm.AnythingChanged = (string[] currentControlGroup) =>
             {
-                Console.WriteLine($"Purchase data: Event raised by: {string.Join(',', currentControlGroup)}");
+                Console.WriteLine(
+                    $"Purchase data: Event raised by: {string.Join(',', currentControlGroup)}"
+                );
                 // Accumulate detailed log messages.
                 var log = new System.Text.StringBuilder();
                 log.AppendLine("=== Starting Global Update Recalculation ===");
