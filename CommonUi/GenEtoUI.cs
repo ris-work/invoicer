@@ -993,6 +993,7 @@ namespace CommonUi
                         EFieldName.BackgroundColor = LegendBG;
                         EFieldName.TextColor = LegendFG;
                         EFieldName.Font = LegendTFont;
+                        EFieldName.Wrap = WrapMode.None;
                     }
                     _EFieldNames.Add(kv.Key, EFieldName);
                     _ELegends.Add(kv.Key, ELegend);

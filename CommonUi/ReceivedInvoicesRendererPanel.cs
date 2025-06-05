@@ -58,10 +58,11 @@ namespace CommonUi
             {
                 _indexLabel.Text =
                     $"Selected Index: {(_gridView.SelectedRow >= 0 ? _gridView.SelectedRow.ToString() : "None")}";
+                _gridView.Invalidate(true);
             };
             _gridView.CellFormatting += (e, a) =>
             {
-                a.Font = Eto.Drawing.Fonts.Monospace(11);
+                a.Font = Eto.Drawing.Fonts.Monospace(9);
                 a.BackgroundColor = Colors.BackgroundColor;
                 a.ForegroundColor = Colors.ForegroundColor;
                 //Colour the column first
@@ -88,6 +89,7 @@ namespace CommonUi
             {
                 a.BackgroundColor = Colors.LesserBackgroundColor;
             };
+            _gridView.BackgroundColor = Colors.BackgroundColor;
             _gridView.DisableLines();
             _gridView.ApplyDarkGridHeaders();
             _gridView.ConfigureForPlatform();
@@ -99,6 +101,7 @@ namespace CommonUi
             layout.Add(_indexLabel);
             layout.Add(_gridView, yscale: true);
             this.Content = layout;
+            this.Invalidate(true);
         }
 
         /// <summary>
@@ -250,12 +253,19 @@ namespace CommonUi
                         TextAlignment = double.TryParse(col.Getter(new Purchase()), out _)
                             ? TextAlignment.Right
                             : TextAlignment.Left,
+                        
                     },
                     Width = col.Width,
                 };
 
                 _gridView.Columns.Add(gridColumn);
             }
+            int _gww = -1;
+            if(ColorSettings.ControlWidth != null)
+            {
+                _gww = (int)Math.Ceiling((double)(ColorSettings.ControlWidth ?? -1) * 5);
+            }
+            _gridView.Width = _gww;
 
             _gridView.DataStore = _purchases;
             _gridView.KeyUp += (e, a) =>

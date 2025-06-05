@@ -1072,6 +1072,61 @@ namespace CommonUi
                 }
             }
             // No modifications are required for WPF or other backends.
+            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.WinForms)?.ToString())
+            {
+                // Access the native WinForms DataGridView control from the Eto grid.
+                var winGrid = targetGridView.ControlObject as System.Windows.Forms.DataGridView;
+                if (winGrid != null)
+                {
+                    // Disable default header visual styles so custom colors can be applied.
+                    winGrid.EnableHeadersVisualStyles = false;
+
+                    // Convert the Eto global color to a System.Drawing.Color using the byte properties.
+                    System.Drawing.Color selectedBackColor = System.Drawing.Color.FromArgb(
+                        255,
+                        ColorSettings.SelectedColumnColor.Rb,
+                        ColorSettings.SelectedColumnColor.Gb,
+                        ColorSettings.SelectedColumnColor.Bb);
+                    System.Drawing.Color HeaderBack = System.Drawing.Color.FromArgb(
+                        255,
+                        ColorSettings.LesserBackgroundColor.Rb,
+                        ColorSettings.LesserBackgroundColor.Gb,
+                        ColorSettings.LesserBackgroundColor.Bb);
+                    System.Drawing.Color HeaderFore = System.Drawing.Color.FromArgb(
+                        255,
+                        ColorSettings.ForegroundColor.Rb,
+                        ColorSettings.ForegroundColor.Gb,
+                        ColorSettings.ForegroundColor.Bb);
+                    System.Drawing.Color LesserFore = System.Drawing.Color.FromArgb(
+                        255,
+                        ColorSettings.LesserForegroundColor.Rb,
+                        ColorSettings.LesserForegroundColor.Gb,
+                        ColorSettings.LesserForegroundColor.Bb);
+
+                    // Apply the converted color to the default cell style for selected cells.
+                    winGrid.DefaultCellStyle.SelectionBackColor = selectedBackColor;
+                    winGrid.DefaultCellStyle.SelectionForeColor = HeaderFore;
+                    winGrid.ColumnHeadersDefaultCellStyle.BackColor = HeaderBack;
+                    
+                    winGrid.ColumnHeadersDefaultCellStyle.ForeColor = HeaderFore;
+                    winGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = HeaderBack;
+
+                    winGrid.ColumnHeadersDefaultCellStyle.SelectionForeColor = HeaderFore;
+
+                    // Optionally enforce the custom selection color in the CellPainting event.
+                    /*winGrid.CellPainting += (sender, e) =>
+                    {
+                        if (winGrid.Rows[e.RowIndex].Selected)
+                        {
+                            e.CellStyle.BackColor = selectedBackColor;
+                        }
+                    };*/
+
+                    // Trigger a redraw whenever selection changes.
+                    //winGrid.SelectionChanged += (sender, e) => winGrid.Invalidate();
+                }
+            }
+
         }
 
         public static void ConfigureForPlatform(this Eto.Forms.Drawable drawable)

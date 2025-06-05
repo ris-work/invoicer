@@ -195,6 +195,7 @@ namespace CommonUi
                 Padding = 5,
                 BackgroundColor = Colors.BackgroundColor,
                 TextColor = Colors.ForegroundColor,
+                
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
@@ -1024,6 +1025,7 @@ namespace CommonUi
                     Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
                 GBExportOptions.Width = (int)
                     Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
+                
             }
             if (ColorSettings.ControlHeight != null)
             {
@@ -1037,6 +1039,12 @@ namespace CommonUi
                     Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
                 GBExportOptions.Height = (int)
                     Math.Ceiling((decimal)(ColorSettings.ControlHeight * 5));
+                RBLSearchCaseSensitivity.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 4.5));
+                RBLSearchCriteria.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 4.5));
+                RBLSearchPosition.Height = (int)
+                    Math.Ceiling((decimal)(ColorSettings.ControlHeight * 4.5));
             }
             this.KeyDown += ProcessKeyDown;
         }
