@@ -1,220 +1,271 @@
-﻿
+﻿// File: CustomDrawableScrollbars.cs
+
 using System;
-using System.ComponentModel;
-using System.Drawing;               // System.Drawing.Point/Rectangle/Size/SolidBrush
 using System.Linq;
-using System.Windows.Forms;         // Panel, VScrollBar, HScrollBar, PaintEventArgs, ScrollEventArgs
-using Eto.Forms;
+using SD = System.Drawing;           // System.Drawing types
+using SWF = System.Windows.Forms;     // WinForms types
+using Eto.Forms;                      // Eto.Forms.Scrollable, Drawable, MouseEventArgs, MouseButtons
+using EP = Eto;             // Eto.Platform.Get
+using ED = Eto.Drawing;               // Eto.Drawing.Graphics, Color, Point, PointF, Size, Rectangle
 using Eto;
-using CommonUi;
 
 namespace MyApp
 {
   static class ColorExtensions
   {
-    public static System.Drawing.Color ToSystemColor(this Eto.Drawing.Color c)
-      => System.Drawing.Color.FromArgb(c.Ab, c.Rb, c.Gb, c.Bb);
+    public static SD.Color ToSystemColor(this ED.Color c)
+      => SD.Color.FromArgb(c.Ab, c.Rb, c.Gb, c.Bb);
+
+    public static ED.Color ToEtoColor(this SD.Color c)
+      => ED.Color.FromArgb(c.A, c.R, c.G, c.B);
   }
 
-  // -------------------------------------------------------------------
-  // Your owner-drawn vertical scrollbar
-  // -------------------------------------------------------------------
-  public class ModernVScrollBar : System.Windows.Forms.VScrollBar
+  // ==================================================================
+  // Eto‐drawn vertical scrollbar
+  // ==================================================================
+  public class EtoVScrollBar : Drawable
   {
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color ThumbColor { get; set; }
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color TrackColor { get; set; }
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color ArrowColor { get; set; }
+    public ED.Color ThumbColor     { get; set; }
+    public ED.Color TrackColor     { get; set; }
+    public ED.Color ArrowColor     { get; set; }
+    public int     ScrollbarWidth  { get; set; }
+    public int     ArrowButtonSize { get; set; }
 
-    public ModernVScrollBar()
+    public int Minimum     { get; set; }
+    public int Maximum     { get; set; }
+    public int LargeChange { get; set; }
+    public int Value       { get; set; }
+
+    public event EventHandler ValueChanged;
+
+    bool            _dragging;
+    ED.PointF       _dragStart;
+    double          _valueStart;
+
+    public EtoVScrollBar()
     {
-      SetStyle(
-        System.Windows.Forms.ControlStyles.UserPaint |
-        System.Windows.Forms.ControlStyles.OptimizedDoubleBuffer,
-        true);
-      BackColor = ColorSettings.BackgroundColor.ToSystemColor();
+      ScrollbarWidth  = 12;
+      ArrowButtonSize = 16;
+      Size            = new ED.Size(ScrollbarWidth, 0);
+
+      MouseDown += (object s, MouseEventArgs e) =>
+      {
+        if (e.Buttons.HasFlag(MouseButtons.Primary))
+        {
+          _dragging   = true;
+          _dragStart  = e.Location;   // Eto.Drawing.PointF
+          _valueStart = Value;
+        }
+      };
+      MouseMove += (object s, MouseEventArgs e) =>
+      {
+        if (_dragging && Maximum > 0 && e.Buttons.HasFlag(MouseButtons.Primary))
+        {
+          float dy = e.Location.Y - _dragStart.Y;
+          float trackLen = Height - ArrowButtonSize*2;
+          if (trackLen <= 0) return;
+          double delta = dy*(Maximum - Minimum)/trackLen;
+          Value = (int)Math.Max(Minimum,
+                    Math.Min(Maximum,
+                      Math.Round(_valueStart + delta)));
+          Invalidate();
+          ValueChanged?.Invoke(this, EventArgs.Empty);
+        }
+      };
+      MouseUp += (object s, MouseEventArgs e) => { _dragging = false; };
     }
 
-    protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
+    protected override void OnPaint(Eto.Forms.PaintEventArgs pe)
     {
-      var g = e.Graphics;
+      var g = pe.Graphics;
       int w = Width, h = Height;
-      g.Clear(BackColor);
 
-      // Track
-      int arrowH = System.Windows.Forms.SystemInformation.VerticalScrollBarArrowHeight;
-      if (arrowH <= 0) arrowH = Math.Max(8, h / 10);
-      var trackRect = new Rectangle(0, arrowH, w, h - 2 * arrowH);
-      using (var br = new System.Drawing.SolidBrush(TrackColor.ToSystemColor()))
-        g.FillRectangle(br, trackRect);
+      // clear
+      g.Clear(BackgroundColor);
 
-      // Thumb
+      // arrow region
+      int a = ArrowButtonSize > 0 ? ArrowButtonSize
+        : SWF.SystemInformation.VerticalScrollBarArrowHeight;
+      if (a <= 0) a = Math.Max(8, h/10);
+
+      // track
+      var trackRect = new ED.Rectangle(0, a, w, h - a*2);
+      g.FillRectangle(TrackColor, trackRect);
+
+      // thumb
       if (Maximum > 0)
       {
         double trackLen = trackRect.Height;
         double thumbLen = Math.Max(8.0,
-          LargeChange / (double)(Maximum + LargeChange) * trackLen);
+          LargeChange/(double)(Maximum + LargeChange)*trackLen);
         double maxOff   = trackLen - thumbLen;
-        double frac     = Value / (double)Maximum;
-        double y        = trackRect.Top + frac * maxOff;
-        var thumbRect   = new Rectangle(0, (int)y, w, (int)thumbLen);
-        using (var br = new System.Drawing.SolidBrush(ThumbColor.ToSystemColor()))
-          g.FillRectangle(br, thumbRect);
+        double frac     = Value/(double)Maximum;
+        double y        = trackRect.Y + frac*maxOff;
+        var thumbRect   = new ED.Rectangle(0, (int)y, w, (int)thumbLen);
+        g.FillRectangle(ThumbColor, thumbRect);
       }
 
-      // Up arrow
+      // up arrow
       var upPts = new[]
       {
-        new Point(w/2,      arrowH/4),
-        new Point(w/4,      arrowH - arrowH/4),
-        new Point(3*w/4,    arrowH - arrowH/4),
+        new ED.PointF(w/2f,    a/4f),
+        new ED.PointF(w/4f,    a - a/4f),
+        new ED.PointF(3f*w/4f, a - a/4f),
       };
-      using (var br = new System.Drawing.SolidBrush(ArrowColor.ToSystemColor()))
-        g.FillPolygon(br, upPts);
+      g.FillPolygon(ArrowColor, upPts);
 
-      // Down arrow
+      // down arrow
       var dnPts = new[]
       {
-        new Point(w/2,      h - arrowH/4),
-        new Point(w/4,      h - arrowH + arrowH/4),
-        new Point(3*w/4,    h - arrowH + arrowH/4),
+        new ED.PointF(w/2f,         h - a/4f),
+        new ED.PointF(w/4f,         h - a + a/4f),
+        new ED.PointF(3f*w/4f,      h - a + a/4f),
       };
-      using (var br = new System.Drawing.SolidBrush(ArrowColor.ToSystemColor()))
-        g.FillPolygon(br, dnPts);
+      g.FillPolygon(ArrowColor, dnPts);
     }
   }
 
-  // -------------------------------------------------------------------
-  // Your owner-drawn horizontal scrollbar
-  // -------------------------------------------------------------------
-  public class ModernHScrollBar : System.Windows.Forms.HScrollBar
+  // ==================================================================
+  // Eto‐drawn horizontal scrollbar
+  // ==================================================================
+  public class EtoHScrollBar : Drawable
   {
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color ThumbColor { get; set; }
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color TrackColor { get; set; }
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Eto.Drawing.Color ArrowColor { get; set; }
+    public ED.Color ThumbColor      { get; set; }
+    public ED.Color TrackColor      { get; set; }
+    public ED.Color ArrowColor      { get; set; }
+    public int     ScrollbarHeight  { get; set; }
+    public int     ArrowButtonSize  { get; set; }
 
-    public ModernHScrollBar()
+    public int Minimum     { get; set; }
+    public int Maximum     { get; set; }
+    public int LargeChange { get; set; }
+    public int Value       { get; set; }
+
+    public event EventHandler ValueChanged;
+
+    bool            _dragging;
+    ED.PointF       _dragStart;
+    double          _valueStart;
+
+    public EtoHScrollBar()
     {
-      SetStyle(
-        System.Windows.Forms.ControlStyles.UserPaint |
-        System.Windows.Forms.ControlStyles.OptimizedDoubleBuffer,
-        true);
-      BackColor = ColorSettings.BackgroundColor.ToSystemColor();
+      ScrollbarHeight = 12;
+      ArrowButtonSize = 16;
+      Size             = new ED.Size(0, ScrollbarHeight);
+
+      MouseDown += (object s, MouseEventArgs e) =>
+      {
+        if (e.Buttons.HasFlag(MouseButtons.Primary))
+        {
+          _dragging   = true;
+          _dragStart  = e.Location;  // Eto.Drawing.PointF
+          _valueStart = Value;
+        }
+      };
+      MouseMove += (object s, MouseEventArgs e) =>
+      {
+        if (_dragging && Maximum > 0 && e.Buttons.HasFlag(MouseButtons.Primary))
+        {
+          float dx = e.Location.X - _dragStart.X;
+          float trackLen = Width - ArrowButtonSize*2;
+          if (trackLen <= 0) return;
+          double delta = dx*(Maximum - Minimum)/trackLen;
+          Value = (int)Math.Max(Minimum,
+                    Math.Min(Maximum,
+                      Math.Round(_valueStart + delta)));
+          Invalidate();
+          ValueChanged?.Invoke(this, EventArgs.Empty);
+        }
+      };
+      MouseUp += (object s, MouseEventArgs e) => { _dragging = false; };
     }
 
-    protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
+    protected override void OnPaint(Eto.Forms.PaintEventArgs pe)
     {
-      var g = e.Graphics;
+      var g = pe.Graphics;
       int w = Width, h = Height;
-      g.Clear(BackColor);
 
-      // Track
-      int arrowW = System.Windows.Forms.SystemInformation.HorizontalScrollBarArrowWidth;
-      if (arrowW <= 0) arrowW = Math.Max(8, w / 10);
-      var trackRect = new Rectangle(arrowW, 0, w - 2 * arrowW, h);
-      using (var br = new System.Drawing.SolidBrush(TrackColor.ToSystemColor()))
-        g.FillRectangle(br, trackRect);
+      g.Clear(BackgroundColor);
 
-      // Thumb
+      int a = ArrowButtonSize > 0 ? ArrowButtonSize
+        : SWF.SystemInformation.HorizontalScrollBarArrowWidth;
+      if (a <= 0) a = Math.Max(8, w/10);
+
+      // track
+      var trackRect = new ED.Rectangle(a, 0, w - a*2, h);
+      g.FillRectangle(TrackColor, trackRect);
+
+      // thumb
       if (Maximum > 0)
       {
         double trackLen = trackRect.Width;
         double thumbLen = Math.Max(8.0,
-          LargeChange / (double)(Maximum + LargeChange) * trackLen);
+          LargeChange/(double)(Maximum + LargeChange)*trackLen);
         double maxOff   = trackLen - thumbLen;
-        double frac     = Value / (double)Maximum;
-        double x        = trackRect.Left + frac * maxOff;
-        var thumbRect   = new Rectangle((int)x, 0, (int)thumbLen, h);
-        using (var br = new System.Drawing.SolidBrush(ThumbColor.ToSystemColor()))
-          g.FillRectangle(br, thumbRect);
+        double frac     = Value/(double)Maximum;
+        double x        = trackRect.X + frac*maxOff;
+        var thumbRect   = new ED.Rectangle((int)x, 0, (int)thumbLen, h);
+        g.FillRectangle(ThumbColor, thumbRect);
       }
 
-      // Left arrow
+      // left arrow
       var lfPts = new[]
       {
-        new Point(arrowW/4,      h/2),
-        new Point(arrowW - arrowW/4,  h/4),
-        new Point(arrowW - arrowW/4,  3*h/4),
+        new ED.PointF(a/4f,    h/2f),
+        new ED.PointF(a - a/4f,  h/4f),
+        new ED.PointF(a - a/4f,  3f*h/4f),
       };
-      using (var br = new System.Drawing.SolidBrush(ArrowColor.ToSystemColor()))
-        g.FillPolygon(br, lfPts);
+      g.FillPolygon(ArrowColor, lfPts);
 
-      // Right arrow
+      // right arrow
       var rtPts = new[]
       {
-        new Point(w - arrowW/4,      h/2),
-        new Point(w - arrowW + arrowW/4,  h/4),
-        new Point(w - arrowW + arrowW/4,  3*h/4),
+        new ED.PointF(w - a/4f,    h/2f),
+        new ED.PointF(w - a + a/4f,  h/4f),
+        new ED.PointF(w - a + a/4f,  3f*h/4f),
       };
-      using (var br = new System.Drawing.SolidBrush(ArrowColor.ToSystemColor()))
-        g.FillPolygon(br, rtPts);
+      g.FillPolygon(ArrowColor, rtPts);
     }
   }
 
-  // -------------------------------------------------------------------
-  // Extension to inject ModernV/HScrollBar into an Eto.Forms.Scrollable
-  // -------------------------------------------------------------------
+  // ==================================================================
+  // Extension to inject these drawables into a WinForms Scrollable
+  // ==================================================================
   public static class ScrollableExtensions
   {
-    public static void UseModernScrollbars(
-      this Eto.Forms.Scrollable scrollable,
-      Eto.Drawing.Color thumbColor,
-      Eto.Drawing.Color trackColor,
-      Eto.Drawing.Color arrowColor,
-      int thickness = 12)
+    public static void UseModernDrawnScrollbars(
+      this Scrollable scrollable,
+      ED.Color thumbColor,
+      ED.Color trackColor,
+      ED.Color arrowColor,
+      int scrollbarSize,
+      int arrowButtonSize)
     {
       // only on WinForms backend
-      var wfId = Platform.Get(Platforms.WinForms)?.ToString();
-      if (Platform.Instance.ToString() != wfId)
-      {
-        Console.Error.WriteLine("[ERR] Skipping – not WinForms backend");
-        return;
-      }
-      Console.Error.WriteLine("[ERR] WinForms backend confirmed");
+      var wfId = EP.Platform.Get(Platforms.WinForms)?.ToString();
+      if (Platform.Instance.ToString() != wfId) return;
 
-      // prevent Eto from auto‐expanding content
-      scrollable.ExpandContentWidth  = false;
-      scrollable.ExpandContentHeight = false;
-
-      // grab native panel
-      var panel = scrollable.ControlObject as System.Windows.Forms.Panel;
-      if (panel == null)
-      {
-        Console.Error.WriteLine("[ERR] scrollable.ControlObject is not Panel");
-        return;
-      }
-      // disable the built‐in WinForms scrollbars
+      var panel = scrollable.ControlObject as SWF.Panel;
+      if (panel == null) return;
       panel.AutoScroll = false;
 
       bool injected = false;
-      ModernVScrollBar vbar = null;
-      ModernHScrollBar hbar = null;
+      EtoVScrollBar vbar = null;
+      EtoHScrollBar hbar = null;
       bool syncing = false;
 
-      // union child‐bounds to find the real content size
-      System.Drawing.Size GetContentSize()
-      {
-        var union = System.Drawing.Rectangle.Empty;
-        foreach (System.Windows.Forms.Control c in panel.Controls)
-        {
-          if (c is ModernVScrollBar || c is ModernHScrollBar) continue;
-          union = System.Drawing.Rectangle.Union(union, c.Bounds);
-        }
-        return union.Size;
-      }
-
-      // recompute ranges/enablement/initial values
       void UpdateRanges()
       {
-        var contentSize = GetContentSize();
+        var union = SD.Rectangle.Empty;
+        foreach (SWF.Control c in panel.Controls)
+        {
+          var nv = vbar?.ControlObject as SWF.Control;
+          var nh = hbar?.ControlObject as SWF.Control;
+          if (c == nv || c == nh) continue;
+          union = SD.Rectangle.Union(union, c.Bounds);
+        }
+        var contentSize = union.Size;
         var visibleSize = panel.ClientSize;
-        Console.Error.WriteLine(
-          $"[ERR] Content={contentSize.Width}×{contentSize.Height}, Viewport={visibleSize.Width}×{visibleSize.Height}");
 
         // vertical
         vbar.Minimum     = 0;
@@ -228,17 +279,18 @@ namespace MyApp
         hbar.Maximum     = Math.Max(0, contentSize.Width - visibleSize.Width);
         hbar.Enabled     = hbar.Maximum > 0;
 
-        Console.Error.WriteLine(
-          $"[ERR] Ranges → VMax={vbar.Maximum}, VPage={vbar.LargeChange}, " +
-          $"HMax={hbar.Maximum}, HPage={hbar.LargeChange}");
+        // sync thumbs
+        vbar.Value = Math.Min(vbar.Maximum, scrollable.ScrollPosition.Y);
+        hbar.Value = Math.Min(hbar.Maximum, scrollable.ScrollPosition.X);
+
+        vbar.Invalidate();
+        hbar.Invalidate();
       }
 
-      // inject as soon as the panel is parented & has a handle (or resized)
-      void TryInject(object s, EventArgs e)
+      void TryInject(object s, System.EventArgs e)
       {
-        Console.Error.WriteLine(
-          $"[ERR] TryInject – parent? {panel.Parent!=null}, handle? {panel.IsHandleCreated}");
-        if (injected || panel.Parent == null || !panel.IsHandleCreated) return;
+        if (injected) return;
+        if (panel.Parent == null || !panel.IsHandleCreated) return;
         injected = true;
 
         panel.ParentChanged    -= TryInject;
@@ -246,87 +298,80 @@ namespace MyApp
         panel.SizeChanged      -= TryInject;
         scrollable.SizeChanged -= TryInject;
 
-        Console.Error.WriteLine("[ERR] Injecting modern scrollbars");
-        var parent = panel.Parent;
+        vbar = new EtoVScrollBar
+        {
+          BackgroundColor  = scrollable.BackgroundColor,
+          ThumbColor       = thumbColor,
+          TrackColor       = trackColor,
+          ArrowColor       = arrowColor,
+          ScrollbarWidth   = scrollbarSize,
+          ArrowButtonSize  = arrowButtonSize
+        };
+        hbar = new EtoHScrollBar
+        {
+          BackgroundColor  = scrollable.BackgroundColor,
+          ThumbColor       = thumbColor,
+          TrackColor       = trackColor,
+          ArrowColor       = arrowColor,
+          ScrollbarHeight  = scrollbarSize,
+          ArrowButtonSize  = arrowButtonSize
+        };
 
-        // create & dock
-        vbar = new ModernVScrollBar
-        {
-          Dock       = DockStyle.Right,
-          Width      = thickness,
-          ThumbColor = thumbColor,
-          TrackColor = trackColor,
-          ArrowColor = arrowColor
-        };
-        hbar = new ModernHScrollBar
-        {
-          Dock       = DockStyle.Bottom,
-          Height     = thickness,
-          ThumbColor = thumbColor,
-          TrackColor = trackColor,
-          ArrowColor = arrowColor
-        };
+        var nativeV = vbar.ControlObject as SWF.Control;
+        var nativeH = hbar.ControlObject as SWF.Control;
+        var parent  = panel.Parent;
 
         parent.SuspendLayout();
-          parent.Controls.Add(vbar);
-          parent.Controls.Add(hbar);
-        parent.ResumeLayout();
+          parent.Controls.Add(nativeV);
+          parent.Controls.Add(nativeH);
+          nativeV.BringToFront();
+          nativeH.BringToFront();
+        parent.ResumeLayout(true);
 
-        vbar.BringToFront();
-        hbar.BringToFront();
+        nativeV.Dock = SWF.DockStyle.Right;
+        nativeH.Dock = SWF.DockStyle.Bottom;
 
-        // WinForms → Eto
-        vbar.Scroll += (vs, ve) =>
+        // WinForms → Eto.Forms.Scrollable
+        vbar.ValueChanged += (vs, ve) =>
         {
-          Console.Error.WriteLine($"[ERR] vbar.Scroll → NewValue={ve.NewValue}");
           if (syncing) return;
           syncing = true;
-          scrollable.ScrollPosition = new Eto.Drawing.Point(
-            scrollable.ScrollPosition.X, ve.NewValue);
+          scrollable.ScrollPosition =
+            new ED.Point(scrollable.ScrollPosition.X, vbar.Value);
           syncing = false;
         };
-        hbar.Scroll += (hs, he) =>
+        hbar.ValueChanged += (hs, he) =>
         {
-          Console.Error.WriteLine($"[ERR] hbar.Scroll → NewValue={he.NewValue}");
           if (syncing) return;
           syncing = true;
-          scrollable.ScrollPosition = new Eto.Drawing.Point(
-            he.NewValue, scrollable.ScrollPosition.Y);
+          scrollable.ScrollPosition =
+            new ED.Point(hbar.Value, scrollable.ScrollPosition.Y);
           syncing = false;
         };
 
-        // Eto → WinForms
+        // Eto.Forms.Scrollable → WinForms‐drawn
         scrollable.Scroll += (ss, se) =>
         {
-          var p = scrollable.ScrollPosition;
-          Console.Error.WriteLine($"[ERR] Eto.Scroll → {p}");
           if (syncing) return;
           syncing = true;
-          vbar.Value = Math.Min(vbar.Maximum, p.Y);
-          hbar.Value = Math.Min(hbar.Maximum, p.X);
+          vbar.Value = Math.Min(vbar.Maximum, scrollable.ScrollPosition.Y);
+          hbar.Value = Math.Min(hbar.Maximum, scrollable.ScrollPosition.X);
           syncing = false;
         };
 
-        // recalc on size or content‐control changes
-        panel.SizeChanged      += (ss, ea) => { Console.Error.WriteLine("[ERR] panel.SizeChanged"); UpdateRanges(); };
-        scrollable.SizeChanged += (ss, ea) => { Console.Error.WriteLine("[ERR] scrollable.SizeChanged"); UpdateRanges(); };
-        panel.ControlAdded     += (ss, ea) => { Console.Error.WriteLine("[ERR] panel.ControlAdded"); UpdateRanges(); };
-        panel.ControlRemoved   += (ss, ea) => { Console.Error.WriteLine("[ERR] panel.ControlRemoved"); UpdateRanges(); };
+        panel.SizeChanged      += (ss, ea2) => UpdateRanges();
+        panel.ControlAdded     += (ss, ea2) => UpdateRanges();
+        panel.ControlRemoved   += (ss, ea2) => UpdateRanges();
+        scrollable.SizeChanged += (ss, ea2) => UpdateRanges();
 
-        // initial
         UpdateRanges();
-        var pos = scrollable.ScrollPosition;
-        vbar.Value = Math.Min(vbar.Maximum, pos.Y);
-        hbar.Value = Math.Min(hbar.Maximum, pos.X);
-        Console.Error.WriteLine(
-          $"[ERR] Initial thumb → v={vbar.Value}, h={hbar.Value}");
       }
 
       panel.ParentChanged    += TryInject;
       panel.HandleCreated    += TryInject;
       panel.SizeChanged      += TryInject;
       scrollable.SizeChanged += TryInject;
-      TryInject(panel, EventArgs.Empty);
+      TryInject(panel, System.EventArgs.Empty);
     }
   }
 }

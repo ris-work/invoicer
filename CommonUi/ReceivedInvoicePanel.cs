@@ -670,7 +670,13 @@ namespace CommonUi
                 ExpandContentHeight = ColorSettings.ExpandContentHeight,
                 ExpandContentWidth = ColorSettings.ExpandContentWidth,
             };
-            outerSc.UseModernScrollbars(ColorSettings.BackgroundColor, ColorSettings.ForegroundColor, ColorSettings.BackgroundColor, 24);
+            outerSc.UseModernDrawnScrollbars(
+  Eto.Drawing.Colors.DarkGray,  // thumb
+  Eto.Drawing.Colors.Gray, // track
+  Eto.Drawing.Colors.Black,     // arrows
+  scrollbarSize: 24,
+  arrowButtonSize: 25
+);
             Content = outerSc;
         }
     }
