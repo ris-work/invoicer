@@ -185,7 +185,11 @@ public class Program
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             CurrentUI = Eto.Platforms.Gtk;
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
+        {
+            //Eto.WinForms.Platform.Add<Eto.Forms.Scrollable.IHandler>(
+    //() => new MyApp.NoNativeScrollPanel());
             CurrentUI = Eto.Platforms.WinForms;
+        }
         if (CurrentUIConfigured.ToLowerInvariant() == ("gtk"))
             CurrentUI = Eto.Platforms.Gtk;
         if (CurrentUIConfigured.ToLowerInvariant() == ("direct2d"))
