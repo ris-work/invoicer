@@ -253,7 +253,6 @@ namespace CommonUi
                         TextAlignment = double.TryParse(col.Getter(new Purchase()), out _)
                             ? TextAlignment.Right
                             : TextAlignment.Left,
-                        
                     },
                     Width = col.Width,
                 };
@@ -261,7 +260,7 @@ namespace CommonUi
                 _gridView.Columns.Add(gridColumn);
             }
             int _gww = -1;
-            if(ColorSettings.ControlWidth != null)
+            if (ColorSettings.ControlWidth != null)
             {
                 _gww = (int)Math.Ceiling((double)(ColorSettings.ControlWidth ?? -1) * 5);
             }

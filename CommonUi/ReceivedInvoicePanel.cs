@@ -639,30 +639,33 @@ namespace CommonUi
                 var innerSc = new Eto.Forms.Scrollable()
                 {
                     Content = new Eto.Forms.StackLayout(
-                            InvoiceHeaderForm,
-                            PurchaseDataEntryForm,
-                            SamplePurchasePanel
-                        ),
+                        InvoiceHeaderForm,
+                        PurchaseDataEntryForm,
+                        SamplePurchasePanel
+                    ),
                 };
                 //innerSc.UseModernScrollbars(ColorSettings.ForegroundColor, ColorSettings.BackgroundColor);
-                var F = new Eto.Forms.Form()
-                {
-                    Content = innerSc,
-                };
+                var F = new Eto.Forms.Form() { Content = innerSc };
                 F.Show();
             };
-            int sw = -1, sh = -1;
-            if(ColorSettings.ControlWidth != null)
-            sw = (int)Math.Floor((double)(ColorSettings.ControlWidth ?? 200) * 5.5);
+            int sw = -1,
+                sh = -1;
+            if (ColorSettings.ControlWidth != null)
+                sw = (int)Math.Floor((double)(ColorSettings.ControlWidth ?? 200) * 5.5);
             if (ColorSettings.ControlHeight != null)
-                sh = (int)Math.Floor((double)(ColorSettings.ControlHeight ?? 30)  * 80);
+                sh = (int)Math.Floor((double)(ColorSettings.ControlHeight ?? 30) * 80);
             var innerSc = new Eto.Forms.StackLayout(
-                    InvoiceHeaderForm,
-                    PurchaseDataEntryForm,
-                    SamplePurchasePanel,
-                    new Panel() { Width = 500, Height = 2, BackgroundColor = Eto.Drawing.Colors.Green }
-                );
-            
+                InvoiceHeaderForm,
+                PurchaseDataEntryForm,
+                SamplePurchasePanel,
+                new Panel()
+                {
+                    Width = 500,
+                    Height = 2,
+                    BackgroundColor = Eto.Drawing.Colors.Green,
+                }
+            );
+
             var outerSc = new Eto.Forms.Scrollable()
             {
                 Content = innerSc,
@@ -670,12 +673,15 @@ namespace CommonUi
                 Height = sh,
                 ExpandContentHeight = ColorSettings.ExpandContentHeight,
                 ExpandContentWidth = ColorSettings.ExpandContentWidth,
-                
             };
             //outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
-//);
-            Content = outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
-); ;
+            //);
+            Content = outerSc.WrapInCustomScrollbars(
+                alwaysShowH: true,
+                alwaysShowV: true,
+                thicknessPx: 20
+            );
+            ;
         }
     }
 }
