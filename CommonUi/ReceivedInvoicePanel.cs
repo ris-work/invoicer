@@ -674,8 +674,8 @@ namespace CommonUi
   Eto.Drawing.Colors.DarkGray,  // thumb
   Eto.Drawing.Colors.Gray, // track
   Eto.Drawing.Colors.Black,     // arrows
-  scrollbarSize: 24,
-  arrowButtonSize: 25
+  scrollbarSize: 50,
+  arrowSize: 50
 );
             Content = outerSc;
         }
