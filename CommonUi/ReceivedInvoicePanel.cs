@@ -5,8 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Eto.Forms;
-using MyApp;
 using RV.InvNew.Common;
+using YourApp.Extensions;
 
 namespace CommonUi
 {
@@ -669,13 +669,9 @@ namespace CommonUi
                 Height = sh,
                 ExpandContentHeight = ColorSettings.ExpandContentHeight,
                 ExpandContentWidth = ColorSettings.ExpandContentWidth,
+                
             };
-            outerSc.UseModernDrawnScrollbars(
-  Eto.Drawing.Colors.DarkGray,  // thumb
-  Eto.Drawing.Colors.Gray, // track
-  Eto.Drawing.Colors.Black,     // arrows
-  scrollbarSize: 50,
-  arrowSize: 50
+            outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
 );
             Content = outerSc;
         }
