@@ -29,10 +29,14 @@ namespace YourApp.Extensions
             {
                 swc.HorizontalScroll.Visible = false;
                 swc.VerticalScroll.Visible = false;
+                Console.Error.WriteLine($"===========Successfully casted ${swc.GetType()} to ScrollableControl============");
+                swc.HideNativeScrollBars();
             }
-
+            else {
+                Console.Error.WriteLine($"===========Not succeddful :( casting object to ScrollableControl============");
+            }
             // wrap it in our decorated panel
-            return new ScrollableWithCustomBars(scrollable, alwaysShowH, alwaysShowV, thicknessPx);
+                return new ScrollableWithCustomBars(scrollable, alwaysShowH, alwaysShowV, thicknessPx);
         }
     }
 
@@ -296,6 +300,7 @@ namespace YourApp.Extensions
             Console.Error.WriteLine(
                 $"Vbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newY={newY}"
             );
+            vbar.Invalidate();
         }
 
         void Vbar_MouseUp(object sender, MouseEventArgs e)
@@ -306,6 +311,7 @@ namespace YourApp.Extensions
                 draggingV = false;
                 vbar.ReleaseMouseCapture();
             }
+            vbar.Invalidate();
         }
 
         // ---------- Hbar Mouse ----------
@@ -375,6 +381,7 @@ namespace YourApp.Extensions
             Console.Error.WriteLine(
                 $"Hbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newX={newX}"
             );
+            hbar.Invalidate();
         }
 
         void Hbar_MouseUp(object sender, MouseEventArgs e)
@@ -385,6 +392,7 @@ namespace YourApp.Extensions
                 draggingH = false;
                 hbar.ReleaseMouseCapture();
             }
+            hbar.Invalidate();
         }
     }
 }
