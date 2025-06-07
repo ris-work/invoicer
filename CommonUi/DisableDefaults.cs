@@ -1112,6 +1112,19 @@ namespace CommonUi
                     winGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = HeaderBack;
 
                     winGrid.ColumnHeadersDefaultCellStyle.SelectionForeColor = HeaderFore;
+                    winGrid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+                    if (winGrid.Columns.Count > 0)
+                    {
+                        int extraPadding = 40; // desired inner padding in pixels
+                        var lastColumn = winGrid.Columns[winGrid.Columns.Count - 1];
+                        var currentPadding = lastColumn.DefaultCellStyle.Padding;
+                        lastColumn.DefaultCellStyle.Padding = new Padding(
+                            currentPadding.Left,
+                            currentPadding.Top,
+                            currentPadding.Right + extraPadding,
+                            currentPadding.Bottom);
+                    }
+
 
                     // Optionally enforce the custom selection color in the CellPainting event.
                     /*winGrid.CellPainting += (sender, e) =>
@@ -1147,6 +1160,23 @@ namespace CommonUi
                     //control.SetStyle(System.Windows.Forms.ControlStyles.UserPaint, true);
                     // Optionally, you could override the OnGotFocus/OnLostFocus events in your drawable subclass
                     // to draw a focus cue manually.
+                }
+            }
+        }
+        public static void ConfigureForPlatform(this Eto.Forms.Label drawable)
+        {
+            var p = Eto.Platform.Instance.ToString();
+            if (p == Eto.Platform.Get(Eto.Platforms.WinForms)?.ToString())
+            {
+                // Access the native WinForms control.
+                var control = drawable.ControlObject as System.Windows.Forms.Label;
+                if (control != null)
+                {
+                    control.AutoSize = false;
+                    control.AutoEllipsis = true;
+                    if(ColorSettings.ControlWidth != null && ColorSettings.ControlHeight != null)
+                    control.MaximumSize = new System.Drawing.Size(ColorSettings.ControlWidth?? 300, ColorSettings.ControlHeight??30);
+
                 }
             }
         }

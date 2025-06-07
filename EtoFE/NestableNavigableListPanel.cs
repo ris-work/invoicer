@@ -164,7 +164,7 @@ namespace EtoFE
                     Button ClickedLabel = ((Button)e);
                     var CurrentButtonHolderPanel = ButtonsContainer[Buttons.IndexOf(ClickedLabel)];
                     //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
-
+                    CurrentPanel.SuspendLayout();
                     CurrentPanel.Content = (Control)
                         (
                             (ILoadOncePanel<object>)
@@ -173,6 +173,7 @@ namespace EtoFE
                                     null
                                 )
                         ).GetInnerAsObject();
+                    CurrentPanel.ResumeLayout();
                     SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
                     SelectedItemIndex = SelectedButtonIndex;
                     foreach (Button L in Buttons)
@@ -206,7 +207,7 @@ namespace EtoFE
                             Buttons.IndexOf(ClickedLabel)
                         ];
                         //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
-
+                        CurrentPanel.SuspendLayout();
                         CurrentPanel.Content = (Control)
                             (
                                 (ILoadOncePanel<object>)
@@ -215,6 +216,7 @@ namespace EtoFE
                                         null
                                     )
                             ).GetInnerAsObject();
+                        CurrentPanel.ResumeLayout();
                         SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
                         SelectedItemIndex = SelectedButtonIndex;
                         foreach (Button L in Buttons)

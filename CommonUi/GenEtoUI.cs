@@ -749,6 +749,7 @@ namespace CommonUi
                     Eto.Forms.Control? SupplementalControl = null;
                     Eto.Forms.TableRow EControl;
                     Eto.Forms.Label? ELegend = new Label() { Width = 10 };
+                    ELegend.ConfigureForPlatform();
                     Eto.Forms.Control EInput = new Label();
                     Console.WriteLine(
                         $"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}"
@@ -957,6 +958,7 @@ namespace CommonUi
                         ),
                         TextColor = CurrentPanelColours.ForegroundColor,
                     };
+                    EFieldName.ConfigureForPlatform();
                     if (EInput is Eto.Forms.TextBox T)
                     {
                         T.ShowBorder = false;
@@ -1078,7 +1080,7 @@ namespace CommonUi
                         }
                         rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                         GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
-                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom);
+                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom,ELegend);
                         EFocusableList.Add((Control)GeneratedCustom);
                         GeneratedCustom.SetMoveNext(() =>
                         {
@@ -1093,11 +1095,11 @@ namespace CommonUi
                         LayoutNext.Add(
                             (
                                 EFieldName,
-                                new StackLayout(EInput, ELegend)
+                                /*new StackLayout(EInput, ELegend)
                                 {
                                     Orientation = Orientation.Horizontal,
                                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                                },
+                                }*/ EInput,
                                 (Control)GeneratedCustom
                             ),
                             CurrentNo

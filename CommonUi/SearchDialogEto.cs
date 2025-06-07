@@ -180,6 +180,7 @@ namespace CommonUi
             bool NormalizeSpelling = false;
             bool AnythingAnywhere = false;
             bool ReverseSort = false;
+            RBLSearchCaseSensitivity.Children.Where((r) => { r.Height = ColorSettings.ControlHeight ?? 30; return true; }).ToList();
 
             CBNormalizeSpelling.CheckedChanged += (e, a) =>
             {
