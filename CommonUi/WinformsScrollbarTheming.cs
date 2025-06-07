@@ -55,16 +55,20 @@ namespace YourApp.Extensions
             this.thickness = thickness;
             this.alwaysShowH = alwaysShowH;
             this.alwaysShowV = alwaysShowV;
-
+            Console.Error.WriteLine($"====================Scrollable NativeType: {scrollable.ControlObject.GetType()}");
             // re-hide scrollbars in case someone reset them
-            if (scrollable.ControlObject is System.Windows.Forms.ScrollableControl swc)
+            if (scrollable.ControlObject is System.Windows.Forms.Panel swc)
             {
                 swc.HorizontalScroll.Visible = false;
                 swc.VerticalScroll.Visible = false;
+                Console.Error.WriteLine($"======= CAST PASSED Scrollable NativeType: {scrollable.GetType()}");
             }
-
+            else
+            {
+                Console.Error.WriteLine($"Scrollable NativeType: {scrollable.GetType()}");
+            }
             // build two 50px tracks
-            vbar = new Drawable { Width = thickness, BackgroundColor = ColorSettings.LesserBackgroundColor };
+                vbar = new Drawable { Width = thickness, BackgroundColor = ColorSettings.LesserBackgroundColor };
             hbar = new Drawable { Height = thickness, BackgroundColor = ColorSettings.LesserBackgroundColor };
             corner = new Panel
             {
@@ -88,7 +92,15 @@ namespace YourApp.Extensions
 
             // repaint on any change
             scrollable.Scroll += (s, e) => { vbar.Invalidate(); hbar.Invalidate(); };
-            scrollable.SizeChanged += (s, e) => { vbar.Invalidate(); hbar.Invalidate(); };
+            scrollable.SizeChanged += (s, e) => {
+                /*if (scrollable.ControlObject is System.Windows.Forms.Panel swc)
+                {
+                    swc.HorizontalScroll.Visible = false;
+                    swc.VerticalScroll.Visible = false;
+                    Console.Error.WriteLine($"======= CAST PASSED Scrollable NativeType: {scrollable.GetType()}");
+                }*/
+                vbar.Invalidate(); hbar.Invalidate(); 
+            };
 
             // layout [scrollable|vbar] / [hbar|corner]
             Content = new TableLayout
