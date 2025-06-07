@@ -671,8 +671,8 @@ namespace CommonUi
                 ExpandContentWidth = ColorSettings.ExpandContentWidth,
                 
             };
-            outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
-);
+            //outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
+//);
             Content = outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
 ); ;
         }
