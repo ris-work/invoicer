@@ -659,7 +659,8 @@ namespace CommonUi
             var innerSc = new Eto.Forms.StackLayout(
                     InvoiceHeaderForm,
                     PurchaseDataEntryForm,
-                    SamplePurchasePanel
+                    SamplePurchasePanel,
+                    new Panel() { Width = 500, Height = 2, BackgroundColor = Eto.Drawing.Colors.Green }
                 );
             
             var outerSc = new Eto.Forms.Scrollable()
