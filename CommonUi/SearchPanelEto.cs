@@ -195,7 +195,6 @@ namespace CommonUi
                 Padding = 5,
                 BackgroundColor = Colors.BackgroundColor,
                 TextColor = Colors.ForegroundColor,
-                
             };
             RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
             {
@@ -1025,7 +1024,6 @@ namespace CommonUi
                     Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
                 GBExportOptions.Width = (int)
                     Math.Ceiling((decimal)(ColorSettings.ControlWidth * 1.2));
-                
             }
             if (ColorSettings.ControlHeight != null)
             {

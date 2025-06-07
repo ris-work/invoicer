@@ -1072,7 +1072,10 @@ namespace CommonUi
                 }
             }
             // No modifications are required for WPF or other backends.
-            if (Eto.Platform.Instance.ToString() == Eto.Platform.Get(Eto.Platforms.WinForms)?.ToString())
+            if (
+                Eto.Platform.Instance.ToString()
+                == Eto.Platform.Get(Eto.Platforms.WinForms)?.ToString()
+            )
             {
                 // Access the native WinForms DataGridView control from the Eto grid.
                 var winGrid = targetGridView.ControlObject as System.Windows.Forms.DataGridView;
@@ -1086,28 +1089,32 @@ namespace CommonUi
                         255,
                         ColorSettings.SelectedColumnColor.Rb,
                         ColorSettings.SelectedColumnColor.Gb,
-                        ColorSettings.SelectedColumnColor.Bb);
+                        ColorSettings.SelectedColumnColor.Bb
+                    );
                     System.Drawing.Color HeaderBack = System.Drawing.Color.FromArgb(
                         255,
                         ColorSettings.LesserBackgroundColor.Rb,
                         ColorSettings.LesserBackgroundColor.Gb,
-                        ColorSettings.LesserBackgroundColor.Bb);
+                        ColorSettings.LesserBackgroundColor.Bb
+                    );
                     System.Drawing.Color HeaderFore = System.Drawing.Color.FromArgb(
                         255,
                         ColorSettings.ForegroundColor.Rb,
                         ColorSettings.ForegroundColor.Gb,
-                        ColorSettings.ForegroundColor.Bb);
+                        ColorSettings.ForegroundColor.Bb
+                    );
                     System.Drawing.Color LesserFore = System.Drawing.Color.FromArgb(
                         255,
                         ColorSettings.LesserForegroundColor.Rb,
                         ColorSettings.LesserForegroundColor.Gb,
-                        ColorSettings.LesserForegroundColor.Bb);
+                        ColorSettings.LesserForegroundColor.Bb
+                    );
 
                     // Apply the converted color to the default cell style for selected cells.
                     winGrid.DefaultCellStyle.SelectionBackColor = selectedBackColor;
                     winGrid.DefaultCellStyle.SelectionForeColor = HeaderFore;
                     winGrid.ColumnHeadersDefaultCellStyle.BackColor = HeaderBack;
-                    
+
                     winGrid.ColumnHeadersDefaultCellStyle.ForeColor = HeaderFore;
                     winGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = HeaderBack;
 
@@ -1122,9 +1129,9 @@ namespace CommonUi
                             currentPadding.Left,
                             currentPadding.Top,
                             currentPadding.Right + extraPadding,
-                            currentPadding.Bottom);
+                            currentPadding.Bottom
+                        );
                     }
-
 
                     // Optionally enforce the custom selection color in the CellPainting event.
                     /*winGrid.CellPainting += (sender, e) =>
@@ -1139,7 +1146,6 @@ namespace CommonUi
                     //winGrid.SelectionChanged += (sender, e) => winGrid.Invalidate();
                 }
             }
-
         }
 
         public static void ConfigureForPlatform(this Eto.Forms.Drawable drawable)
@@ -1163,6 +1169,7 @@ namespace CommonUi
                 }
             }
         }
+
         public static void ConfigureForPlatform(this Eto.Forms.Label drawable)
         {
             var p = Eto.Platform.Instance.ToString();
@@ -1174,9 +1181,11 @@ namespace CommonUi
                 {
                     control.AutoSize = false;
                     control.AutoEllipsis = true;
-                    if(ColorSettings.ControlWidth != null && ColorSettings.ControlHeight != null)
-                    control.MaximumSize = new System.Drawing.Size(ColorSettings.ControlWidth?? 300, ColorSettings.ControlHeight??30);
-
+                    if (ColorSettings.ControlWidth != null && ColorSettings.ControlHeight != null)
+                        control.MaximumSize = new System.Drawing.Size(
+                            ColorSettings.ControlWidth ?? 300,
+                            ColorSettings.ControlHeight ?? 30
+                        );
                 }
             }
         }

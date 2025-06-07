@@ -1080,7 +1080,7 @@ namespace CommonUi
                         }
                         rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                         GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
-                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom,ELegend);
+                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom, ELegend);
                         EFocusableList.Add((Control)GeneratedCustom);
                         GeneratedCustom.SetMoveNext(() =>
                         {
@@ -1099,7 +1099,7 @@ namespace CommonUi
                                 {
                                     Orientation = Orientation.Horizontal,
                                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                                }*/ EInput,
+                                }*/EInput,
                                 (Control)GeneratedCustom
                             ),
                             CurrentNo
