@@ -673,7 +673,8 @@ namespace CommonUi
             };
             outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
 );
-            Content = outerSc;
+            Content = outerSc.WrapInCustomScrollbars(alwaysShowH: true, alwaysShowV: true
+); ;
         }
     }
 }
