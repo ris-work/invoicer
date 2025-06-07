@@ -11,89 +11,73 @@ namespace YourApp.Extensions
     public static class ScrollableExtensions
     {
         /// <summary>
-        /// WinForms only: hides native scrollbars and replaces them with custom
-        /// 50px scrollbars (arrows + draggable thumb).  No-op elsewhere.
+        /// WinForms only: hides the native scrollbars and wraps this Scrollable
+        /// in a 2×2 grid with custom 50px scrollbars (arrows + proportional thumb).
+        /// No-op elsewhere.
         /// </summary>
         public static Control WrapInCustomScrollbars(this Scrollable scrollable,
             bool alwaysShowH = false, bool alwaysShowV = false, int thicknessPx = 50)
         {
             Console.Error.WriteLine("▶ WrapInCustomScrollbars()");
             var inst = Platform.Instance.ToString();
-            var wfId = Platform.Get(Platforms.WinForms)?.ToString();
-            Console.Error.WriteLine($"   Platform={inst}, WinForms={wfId}");
-            if (inst != wfId)
-                return scrollable;
+            var wf = Platform.Get(Platforms.WinForms)?.ToString();
+            Console.Error.WriteLine($"   Platform.Instance={inst}, WinForms={wf}");
+            if (inst != wf) return scrollable;
 
-            // hide built-in WinForms scrollbars
+            // hide only the *visible* WinForms scrollbars—leave AutoScroll = true
             if (scrollable.ControlObject is System.Windows.Forms.ScrollableControl swc)
             {
-                swc.AutoScroll = false;
                 swc.HorizontalScroll.Visible = false;
                 swc.VerticalScroll.Visible = false;
             }
 
-            // extract content
-            var content = scrollable.Content;
-            scrollable.Content = null;
-            Console.Error.WriteLine($"   Extracted content={content}");
-
-            // return our custom viewer
-            return new CustomScrollViewer(content, alwaysShowH, alwaysShowV, thicknessPx);
+            // wrap it in our decorated panel
+            return new ScrollableWithCustomBars(scrollable, alwaysShowH, alwaysShowV, thicknessPx);
         }
     }
 
-    internal class CustomScrollViewer : Panel
+    class ScrollableWithCustomBars : Panel
     {
-        readonly Panel viewport;
-        readonly Control content;
+        readonly Scrollable scrollable;
         readonly Drawable vbar, hbar;
         readonly Panel corner;
         readonly int thickness;
         readonly bool alwaysShowH, alwaysShowV;
 
-        int scrollX, scrollY;
         bool draggingH, draggingV;
         float dragOffX, dragOffY;
 
-        public CustomScrollViewer(Control content, bool alwaysShowH, bool alwaysShowV, int thickness)
+        public ScrollableWithCustomBars(Scrollable scrollable,
+            bool alwaysShowH, bool alwaysShowV, int thickness)
         {
-            Console.Error.WriteLine("▶ CustomScrollViewer.ctor()");
-            this.content = content;
+            Console.Error.WriteLine("▶ ScrollableWithCustomBars()");
+            this.scrollable = scrollable;
+            this.thickness = thickness;
             this.alwaysShowH = alwaysShowH;
             this.alwaysShowV = alwaysShowV;
-            this.thickness = thickness;
 
-            // clipped viewport
-            viewport = new Panel
+            // re-hide scrollbars in case someone reset them
+            if (scrollable.ControlObject is System.Windows.Forms.ScrollableControl swc)
             {
-                //Border = BorderType.None,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                Content = content
-            };
-            if (viewport.ControlObject is System.Windows.Forms.Panel vp)
-            {
-                vp.AutoScroll = false;
-                vp.HorizontalScroll.Visible = false;
-                vp.VerticalScroll.Visible = false;
+                swc.HorizontalScroll.Visible = false;
+                swc.VerticalScroll.Visible = false;
             }
 
-            // custom bars
+            // build two 50px tracks
             vbar = new Drawable { Width = thickness, BackgroundColor = ColorSettings.LesserBackgroundColor };
             hbar = new Drawable { Height = thickness, BackgroundColor = ColorSettings.LesserBackgroundColor };
-
-            // filler
             corner = new Panel
             {
                 Width = thickness,
                 Height = thickness,
-                BackgroundColor = ColorSettings.BackgroundColor
+                BackgroundColor = scrollable.BackgroundColor
             };
 
-            // paint hooks
+            // hook paint
             vbar.Paint += Vbar_Paint;
             hbar.Paint += Hbar_Paint;
 
-            // mouse hooks
+            // hook mouse
             vbar.MouseDown += Vbar_MouseDown;
             vbar.MouseMove += Vbar_MouseMove;
             vbar.MouseUp += Vbar_MouseUp;
@@ -102,19 +86,18 @@ namespace YourApp.Extensions
             hbar.MouseMove += Hbar_MouseMove;
             hbar.MouseUp += Hbar_MouseUp;
 
-            // re-paint on resize
-            viewport.SizeChanged += (s, e) => { Console.Error.WriteLine("viewport.SizeChanged"); InvalidateBars(); };
-            if (content != null)
-                content.SizeChanged += (s, e) => { Console.Error.WriteLine("content.SizeChanged"); InvalidateBars(); };
+            // repaint on any change
+            scrollable.Scroll += (s, e) => { vbar.Invalidate(); hbar.Invalidate(); };
+            scrollable.SizeChanged += (s, e) => { vbar.Invalidate(); hbar.Invalidate(); };
 
-            // layout: [viewport|vbar] / [hbar|corner]
+            // layout [scrollable|vbar] / [hbar|corner]
             Content = new TableLayout
             {
                 Spacing = Size.Empty,
                 Rows =
                 {
                     new TableRow(
-                        new TableCell(viewport) { ScaleWidth  = true },
+                        new TableCell(scrollable) { ScaleWidth  = true },
                         new TableCell(vbar)
                     ) { ScaleHeight = true },
 
@@ -124,176 +107,195 @@ namespace YourApp.Extensions
                     )
                 }
             };
-
-            UpdateContent();
         }
 
-        void InvalidateBars()
+        // read the true WinForms sizes
+        void GetSizes(out int viewW, out int viewH, out int contentW, out int contentH)
         {
-            Console.Error.WriteLine("InvalidateBars()");
-            vbar?.Invalidate();
-            hbar?.Invalidate();
+            if (scrollable.ControlObject is System.Windows.Forms.ScrollableControl swc)
+            {
+                viewW = swc.ClientSize.Width;
+                viewH = swc.ClientSize.Height;
+                contentW = swc.DisplayRectangle.Width;
+                contentH = swc.DisplayRectangle.Height;
+            }
+            else
+            {
+                // fallback
+                viewW = scrollable.ClientSize.Width;
+                viewH = scrollable.ClientSize.Height;
+                contentW = scrollable.ScrollSize.Width;
+                contentH = scrollable.ScrollSize.Height;
+            }
         }
 
-        void UpdateContent()
-        {
-            Console.Error.WriteLine($"UpdateContent() scrollX={scrollX}, scrollY={scrollY}");
-            if (viewport.ControlObject is System.Windows.Forms.Panel p && p.Controls.Count > 0)
-                p.Controls[0].Location = new System.Drawing.Point(-scrollX, -scrollY);
-        }
-
-        //----- Vbar Paint -----
+        // ---------- Vbar Paint ----------
         void Vbar_Paint(object sender, PaintEventArgs e)
         {
-            Console.Error.WriteLine("Vbar_Paint()");
             var g = e.Graphics;
             var r = e.ClipRectangle;
-            var viewH = viewport.ClientSize.Height;
-            var contentH = content?.Bounds.Height ?? 0;
+            GetSizes(out _, out int viewH, out _, out int contentH);
             bool canScroll = contentH > viewH;
 
+            // fill track
             g.FillRectangle(vbar.BackgroundColor, r);
             if (!canScroll && !alwaysShowV) return;
 
-            // arrows
+            // draw arrows
             var cx = r.Width / 2f;
             g.FillPolygon(ColorSettings.ForegroundColor, new[]
             {
                 new PointF(cx,                10),
-                new PointF(10,               thickness - 10),
-                new PointF(r.Width - 10,     thickness - 10)
+                new PointF(10,               thickness-10),
+                new PointF(r.Width-10,       thickness-10)
             });
             g.FillPolygon(ColorSettings.ForegroundColor, new[]
             {
-                new PointF(10,               r.Height - thickness + 10),
-                new PointF(r.Width - 10,     r.Height - thickness + 10),
-                new PointF(cx,               r.Height - 10)
+                new PointF(10,               r.Height-thickness+10),
+                new PointF(r.Width-10,       r.Height-thickness+10),
+                new PointF(cx,               r.Height-10)
             });
 
-            if (canScroll)
-            {
-                float trackY = thickness;
-                float trackH = r.Height - 2 * thickness;
-                float contentRange = contentH - viewH;
-                float thumbH = Math.Max(thickness, viewH / (float)contentH * trackH);
-                float dragRange = trackH - thumbH;
-                float thumbY = trackY + (scrollY / (float)contentRange) * dragRange;
-                g.FillRectangle(
-                    ColorSettings.ForegroundColor,
-                    new RectangleF(0, thumbY, r.Width, thumbH)
-                );
-            }
+            // thumb
+            float trackY = thickness;
+            float trackH = r.Height - 2 * thickness;
+            float contentRange = Math.Max(1, contentH - viewH);
+            float thumbH = canScroll
+                ? Math.Max(thickness, viewH / (float)contentH * trackH)
+                : trackH;
+            float dragRange = trackH - thumbH;
+            float thumbY = canScroll
+                ? trackY + (scrollable.ScrollPosition.Y / contentRange) * dragRange
+                : trackY;
+
+            g.FillRectangle(
+                ColorSettings.ForegroundColor,
+                new RectangleF(0, thumbY, r.Width, thumbH)
+            );
+
+            // one-line debug
+            Console.Error.WriteLine(
+                $"Vbar_Paint viewH={viewH} contentH={contentH} trackY={trackY} trackH={trackH} " +
+                $"thumbH={thumbH} dragRange={dragRange} thumbY={thumbY}"
+            );
         }
 
-        //----- Hbar Paint -----
+        // ---------- Hbar Paint ----------
         void Hbar_Paint(object sender, PaintEventArgs e)
         {
-            Console.Error.WriteLine("Hbar_Paint()");
             var g = e.Graphics;
             var r = e.ClipRectangle;
-            var viewW = viewport.ClientSize.Width;
-            var contentW = content?.Bounds.Width ?? 0;
+            GetSizes(out int viewW, out _, out int contentW, out _);
             bool canScroll = contentW > viewW;
 
+            // fill track
             g.FillRectangle(hbar.BackgroundColor, r);
             if (!canScroll && !alwaysShowH) return;
 
-            // arrows
+            // draw arrows
             g.FillPolygon(ColorSettings.ForegroundColor, new[]
             {
-                new PointF(thickness - 10,    10),
-                new PointF(10,               r.Height/2f),
-                new PointF(thickness - 10,   r.Height - 10)
+                new PointF(thickness-10,   10),
+                new PointF(10,             r.Height/2f),
+                new PointF(thickness-10,   r.Height-10)
             });
             g.FillPolygon(ColorSettings.ForegroundColor, new[]
             {
-                new PointF(r.Width - thickness + 10, 10),
-                new PointF(r.Width - 10,              r.Height/2f),
-                new PointF(r.Width - thickness + 10,  r.Height - 10)
+                new PointF(r.Width-thickness+10, 10),
+                new PointF(r.Width-10,            r.Height/2f),
+                new PointF(r.Width-thickness+10, r.Height-10)
             });
 
-            if (canScroll)
-            {
-                float trackX = thickness;
-                float trackW = r.Width - 2 * thickness;
-                float contentRange = contentW - viewW;
-                float thumbW = Math.Max(thickness, viewW / (float)contentW * trackW);
-                float dragRange = trackW - thumbW;
-                float thumbX = trackX + (scrollX / (float)contentRange) * dragRange;
-                g.FillRectangle(
-                    ColorSettings.ForegroundColor,
-                    new RectangleF(thumbX, 0, thumbW, r.Height)
-                );
-            }
+            // thumb
+            float trackX = thickness;
+            float trackW = r.Width - 2 * thickness;
+            float contentRange = Math.Max(1, contentW - viewW);
+            float thumbW = canScroll
+                ? Math.Max(thickness, viewW / (float)contentW * trackW)
+                : trackW;
+            float dragRange = trackW - thumbW;
+            float thumbX = canScroll
+                ? trackX + (scrollable.ScrollPosition.X / contentRange) * dragRange
+                : trackX;
+
+            g.FillRectangle(
+                ColorSettings.ForegroundColor,
+                new RectangleF(thumbX, 0, thumbW, r.Height)
+            );
+
+            Console.Error.WriteLine(
+                $"Hbar_Paint viewW={viewW} contentW={contentW} trackX={trackX} trackW={trackW} " +
+                $"thumbW={thumbW} dragRange={dragRange} thumbX={thumbX}"
+            );
         }
 
-        //----- Vbar Mouse -----
+        // ---------- Vbar Mouse ----------
         void Vbar_MouseDown(object sender, MouseEventArgs e)
         {
             Console.Error.WriteLine($"Vbar_MouseDown @ {e.Location}");
-            var viewH = viewport.ClientSize.Height;
-            var contentH = content?.Bounds.Height ?? 0;
+            GetSizes(out _, out int viewH, out _, out int contentH);
             var r = vbar.Bounds;
             var y = e.Location.Y;
-            bool canScroll = contentH > viewH;
 
-            // up
+            // arrow up?
             if (y < thickness)
             {
-                Console.Error.WriteLine(" Vbar: arrow up");
-                if (canScroll)
-                    scrollY = Math.Max(0, scrollY - thickness);
-                UpdateContent(); vbar.Invalidate();
+                scrollable.ScrollPosition = new Point(
+                    scrollable.ScrollPosition.X,
+                    Math.Max(0, scrollable.ScrollPosition.Y - thickness)
+                );
                 return;
             }
-            // down
+            // arrow down?
             if (y > r.Height - thickness)
             {
-                Console.Error.WriteLine(" Vbar: arrow down");
-                if (canScroll)
-                    scrollY = Math.Min(contentH - viewH, scrollY + thickness);
-                UpdateContent(); vbar.Invalidate();
+                scrollable.ScrollPosition = new Point(
+                    scrollable.ScrollPosition.X,
+                    Math.Min(contentH - viewH,
+                             scrollable.ScrollPosition.Y + thickness)
+                );
                 return;
             }
-            // drag start?
-            if (canScroll)
+            if (contentH <= viewH) return;
+
+            // thumb drag start?
+            float trackY = thickness;
+            float trackH = r.Height - 2 * thickness;
+            float contentRange = contentH - viewH;
+            float thumbH = Math.Max(thickness, viewH / (float)contentH * trackH);
+            float dragRange = trackH - thumbH;
+            float thumbY = trackY + (scrollable.ScrollPosition.Y / contentRange) * dragRange;
+            var thumbRect = new RectangleF(0, thumbY, r.Width, thumbH);
+            if (thumbRect.Contains(e.Location))
             {
-                float trackY = thickness;
-                float trackH = r.Height - 2 * thickness;
-                float thumbH = Math.Max(thickness, viewH / (float)contentH * trackH);
-                float contentRange = contentH - viewH;
-                float dragRange = trackH - thumbH;
-                float thumbY = trackY + (scrollY / (float)contentRange) * dragRange;
-                var thumbRect = new RectangleF(0, thumbY, r.Width, thumbH);
-                if (thumbRect.Contains(e.Location))
-                {
-                    Console.Error.WriteLine(" Vbar: start drag");
-                    draggingV = true;
-                    dragOffY = e.Location.Y - thumbY;
-                    vbar.CaptureMouse();
-                }
+                draggingV = true;
+                dragOffY = e.Location.Y - thumbY;
+                vbar.CaptureMouse();
+                Console.Error.WriteLine(
+                    $"Vbar startDrag dragOffY={dragOffY} thumbY={thumbY}"
+                );
             }
         }
 
         void Vbar_MouseMove(object sender, MouseEventArgs e)
         {
             if (!draggingV) return;
-            Console.Error.WriteLine($"Vbar_MouseMove @ {e.Location}");
-            var viewH = viewport.ClientSize.Height;
-            var contentH = content?.Bounds.Height ?? 0;
             var r = vbar.Bounds;
-
             float trackY = thickness;
             float trackH = r.Height - 2 * thickness;
+            GetSizes(out _, out int viewH, out _, out int contentH);
+            float contentRange = Math.Max(1, contentH - viewH);
             float thumbH = Math.Max(thickness, viewH / (float)contentH * trackH);
             float dragRange = trackH - thumbH;
-            if (dragRange <= 0) return;
 
             float delta = e.Location.Y - dragOffY - trackY;
             float frac = Math.Max(0f, Math.Min(1f, delta / dragRange));
-            scrollY = (int)(frac * (contentH - viewH));
+            int newY = (int)(frac * contentRange);
 
-            UpdateContent(); vbar.Invalidate();
+            scrollable.ScrollPosition = new Point(scrollable.ScrollPosition.X, newY);
+            Console.Error.WriteLine(
+                $"Vbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newY={newY}"
+            );
         }
 
         void Vbar_MouseUp(object sender, MouseEventArgs e)
@@ -306,73 +308,73 @@ namespace YourApp.Extensions
             }
         }
 
-        //----- Hbar Mouse -----
+        // ---------- Hbar Mouse ----------
         void Hbar_MouseDown(object sender, MouseEventArgs e)
         {
             Console.Error.WriteLine($"Hbar_MouseDown @ {e.Location}");
-            var viewW = viewport.ClientSize.Width;
-            var contentW = content?.Bounds.Width ?? 0;
+            GetSizes(out int viewW, out _, out int contentW, out _);
             var r = hbar.Bounds;
             var x = e.Location.X;
-            bool canScroll = contentW > viewW;
 
-            // left
+            // arrow left?
             if (x < thickness)
             {
-                Console.Error.WriteLine(" Hbar: arrow left");
-                if (canScroll)
-                    scrollX = Math.Max(0, scrollX - thickness);
-                UpdateContent(); hbar.Invalidate();
+                scrollable.ScrollPosition = new Point(
+                    Math.Max(0, scrollable.ScrollPosition.X - thickness),
+                    scrollable.ScrollPosition.Y
+                );
                 return;
             }
-            // right
+            // arrow right?
             if (x > r.Width - thickness)
             {
-                Console.Error.WriteLine(" Hbar: arrow right");
-                if (canScroll)
-                    scrollX = Math.Min(contentW - viewW, scrollX + thickness);
-                UpdateContent(); hbar.Invalidate();
+                scrollable.ScrollPosition = new Point(
+                    Math.Min(contentW - viewW,
+                             scrollable.ScrollPosition.X + thickness),
+                    scrollable.ScrollPosition.Y
+                );
                 return;
             }
-            // drag start?
-            if (canScroll)
+            if (contentW <= viewW) return;
+
+            // thumb drag start?
+            float trackX = thickness;
+            float trackW = r.Width - 2 * thickness;
+            float contentRange = contentW - viewW;
+            float thumbW = Math.Max(thickness, viewW / (float)contentW * trackW);
+            float dragRange = trackW - thumbW;
+            float thumbX = trackX + (scrollable.ScrollPosition.X / contentRange) * dragRange;
+            var thumbRect = new RectangleF(thumbX, 0, thumbW, r.Height);
+            if (thumbRect.Contains(e.Location))
             {
-                float trackX = thickness;
-                float trackW = r.Width - 2 * thickness;
-                float thumbW = Math.Max(thickness, viewW / (float)contentW * trackW);
-                float contentRange = contentW - viewW;
-                float dragRange = trackW - thumbW;
-                float thumbX = trackX + (scrollX / (float)contentRange) * dragRange;
-                var thumbRect = new RectangleF(thumbX, 0, thumbW, r.Height);
-                if (thumbRect.Contains(e.Location))
-                {
-                    Console.Error.WriteLine(" Hbar: start drag");
-                    draggingH = true;
-                    dragOffX = e.Location.X - thumbX;
-                    hbar.CaptureMouse();
-                }
+                draggingH = true;
+                dragOffX = e.Location.X - thumbX;
+                hbar.CaptureMouse();
+                Console.Error.WriteLine(
+                    $"Hbar startDrag dragOffX={dragOffX} thumbX={thumbX}"
+                );
             }
         }
 
         void Hbar_MouseMove(object sender, MouseEventArgs e)
         {
             if (!draggingH) return;
-            Console.Error.WriteLine($"Hbar_MouseMove @ {e.Location}");
-            var viewW = viewport.ClientSize.Width;
-            var contentW = content?.Bounds.Width ?? 0;
             var r = hbar.Bounds;
-
             float trackX = thickness;
             float trackW = r.Width - 2 * thickness;
+            GetSizes(out int viewW, out _, out int contentW, out _);
+            float contentRange = Math.Max(1, contentW - viewW);
             float thumbW = Math.Max(thickness, viewW / (float)contentW * trackW);
             float dragRange = trackW - thumbW;
-            if (dragRange <= 0) return;
 
             float delta = e.Location.X - dragOffX - trackX;
             float frac = Math.Max(0f, Math.Min(1f, delta / dragRange));
-            scrollX = (int)(frac * (contentW - viewW));
+            int newX = (int)(frac * contentRange);
 
-            UpdateContent(); hbar.Invalidate();
+            scrollable.ScrollPosition = new Point(newX, scrollable.ScrollPosition.Y);
+            Console.Error.WriteLine(
+                $"Hbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newX={newX}"
+            );
         }
 
         void Hbar_MouseUp(object sender, MouseEventArgs e)
