@@ -350,16 +350,17 @@ namespace YourApp.Extensions
                 if (y < thickness)
                 {
                     Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, y: {y}, thickness: {thickness}");
-                    var nY = Math.Max(0, swc.Location.Y + thickness);
+                    var nY = -Math.Max(0, Math.Abs(swc.Location.Y) - thickness);
                     swc.Location = new System.Drawing.Point(
                         swc.Location.X,
                         nY
                     );
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {swc.Location.Y + thickness}");
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {nY}");
                     float dragRangeN = trackH - thumbH;
                     int maxOffsetN = contentH - viewH;
-                    float frac = -nY / dragRange;
+                    float frac = -nY / dragRangeN;
                     int newScroll = (int)Math.Round(frac * maxOffset);
+                    scrollV = newScroll; 
                     vbar.Invalidate(true);
                     return;
                 }
@@ -367,16 +368,18 @@ namespace YourApp.Extensions
                 if (y > r.Height - thickness)
                 {
                     Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, y: {y}, thickness: {thickness}");
-                    var nY = swc.Location.Y - thickness;
+                    var nY = -Math.Min(contentH - viewH, Math.Abs(swc.Location.Y) + thickness);
                     swc.Location = new System.Drawing.Point(
                         swc.Location.X,
                         nY
                     );
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {swc.Location.Y - thickness}");
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {nY}");
                     float dragRangeN = trackH - thumbH;
                     int maxOffsetN = contentH - viewH;
-                    float frac = -nY / dragRange;
+                    float frac = -nY / dragRangeN;
+                    
                     int newScroll = (int)Math.Round(frac * maxOffset);
+                    scrollV = newScroll;
                     vbar.Invalidate(true);
                     return;
                 }
