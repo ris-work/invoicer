@@ -487,7 +487,7 @@ namespace YourApp.Extensions
                         $"HScrollbar_MouseDown: ({swc.Location.X}, {swc.Location.Y}) => ({TargetX}, {swc.Location.Y}) Early return: Left arrow"
                     );
                     int maxOffset = contentW - viewW;
-                    float frac = Math.Max(0f, Math.Min(1f, Math.Abs(TargetX) - viewW / maxOffset));
+                    float frac =  -TargetX/(float)maxOffset;
                     int newScroll = (int)Math.Round(frac * maxOffset);
                     scrollH = newScroll;
                     hbar.Invalidate();
@@ -502,7 +502,7 @@ namespace YourApp.Extensions
                         $"HScrollbar_MouseDown: ({swc.Location.X}, {swc.Location.Y}) => ({TargetX}, {swc.Location.Y})  Early return: Right arrow"
                     );
                     int maxOffset = contentW - viewW;
-                    float frac = Math.Max(0f, Math.Min(1f, Math.Abs(TargetX) - viewW / maxOffset));
+                    float frac = -TargetX / (float)maxOffset;
                     int newScroll = (int)Math.Round(frac * maxOffset);
                     scrollH = newScroll;
                     hbar.Invalidate(true);
