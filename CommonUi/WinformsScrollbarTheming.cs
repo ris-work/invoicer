@@ -5,6 +5,8 @@ using CommonUi; // for ColorSettings
 using Eto;
 using Eto.Drawing;
 using Eto.Forms;
+using Microsoft.Maui.Controls.PlatformConfiguration;
+using Terminal.Gui;
 
 namespace YourApp.Extensions
 {
@@ -60,6 +62,7 @@ namespace YourApp.Extensions
         readonly bool alwaysShowH,
             alwaysShowV;
         int scrollV = 0;
+        int scrollH = 0;
 
         // drag parameters (initialized in MouseDown)
         int dragViewH; // viewport height at drag-start
@@ -302,8 +305,8 @@ namespace YourApp.Extensions
             float thumbW = Math.Max(thickness, Math.Min(trackW, rawThumbW));
             float dragRange = trackW - thumbW;
             int maxOffset = contentW - viewW;
-            scrollV = Math.Max(0, Math.Min(maxOffset, scrollV));
-            float frac = scrollV / (float)maxOffset;
+            scrollH = Math.Max(0, Math.Min(maxOffset, scrollH));
+            float frac = scrollH / (float)maxOffset;
             float thumbX = trackX + frac * dragRange;
 
             g.FillRectangle(
@@ -326,45 +329,63 @@ namespace YourApp.Extensions
             Console.Error.WriteLine(
                 $"[MouseDown] clickY={e.Location.Y}, viewH={viewH}, contentH={contentH}"
             );
-            
-                var y = e.Location.Y;
-            if (contentH <= viewH)
-                return;
-            // arrow up?
-            if (
-                scrollable.ControlObject is System.Windows.Forms.Panel swc
-            )
-            {
-                if (y < thickness)
-                {
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, y: {y}, thickness: {thickness}");
-                    swc.Location = new System.Drawing.Point(
-                        swc.Location.X,
-                        - Math.Max(0, Math.Abs(swc.Location.Y) - thickness)-40
-                    );
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {-Math.Max(0, Math.Abs(swc.Location.Y) - thickness)}");
-                    return;
-                }
-                // arrow down?
-                if (y > r.Height - thickness)
-                {
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, y: {y}, thickness: {thickness}");
-                    swc.Location = new System.Drawing.Point(
-                        swc.Location.X,
-                        - Math.Min(contentH - viewH, Math.Abs(swc.Location.Y) + thickness) - 60
-                    );
-                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {-Math.Min(contentH - viewH, Math.Abs(swc.Location.Y) + thickness)}");
-                    return;
-                }
-            }
-
-            // 2) compute thumb geometry
             float A = thickness;
             float trackH = vbar.Size.Height - 2 * A;
             float rawThumbH = viewH / (float)contentH * trackH;
             float thumbH = Math.Max(A, Math.Min(trackH, rawThumbH));
             float dragRange = trackH - thumbH;
             int maxOffset = contentH - viewH;
+
+            var y = e.Location.Y;
+            if (contentH <= viewH)
+                return;
+            
+            if (
+                scrollable.ControlObject is System.Windows.Forms.Panel sw
+            )
+            {
+                var swc = sw.Controls[0];
+
+                // arrow up?
+                if (y < thickness)
+                {
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, y: {y}, thickness: {thickness}");
+                    var nY = Math.Max(0, swc.Location.Y + thickness);
+                    swc.Location = new System.Drawing.Point(
+                        swc.Location.X,
+                        nY
+                    );
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {swc.Location.Y + thickness}");
+                    float dragRangeN = trackH - thumbH;
+                    int maxOffsetN = contentH - viewH;
+                    float frac = -nY / dragRange;
+                    int newScroll = (int)Math.Round(frac * maxOffset);
+                    vbar.Invalidate(true);
+                    return;
+                }
+                // arrow down?
+                if (y > r.Height - thickness)
+                {
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, y: {y}, thickness: {thickness}");
+                    var nY = swc.Location.Y - thickness;
+                    swc.Location = new System.Drawing.Point(
+                        swc.Location.X,
+                        nY
+                    );
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {swc.Location.Y - thickness}");
+                    float dragRangeN = trackH - thumbH;
+                    int maxOffsetN = contentH - viewH;
+                    float frac = -nY / dragRange;
+                    int newScroll = (int)Math.Round(frac * maxOffset);
+                    vbar.Invalidate(true);
+                    return;
+                }
+            }
+
+            // 2) compute thumb geometry
+            
+
+
 
             Console.Error.WriteLine(
                 $"[MouseDown] trackH={trackH:F1}, rawThumbH={rawThumbH:F1}, "
@@ -448,30 +469,52 @@ namespace YourApp.Extensions
         void Hbar_MouseDown(object sender, MouseEventArgs e)
         {
             Console.Error.WriteLine($"Hbar_MouseDown @ {e.Location}");
-            GetSizes(out int viewW, out _, out int contentW, out _);
+            GetViewAndContentWidths(out int viewW, out int contentW);
             var r = hbar.Bounds;
             var x = e.Location.X;
 
-            // arrow left?
-            if (x < thickness)
+            if (
+    scrollable.ControlObject is System.Windows.Forms.Panel sw
+)
             {
-                scrollable.ScrollPosition = new Point(
-                    Math.Max(0, scrollable.ScrollPosition.X - thickness),
-                    scrollable.ScrollPosition.Y
-                );
-                return;
+                var swc = sw.Controls[0];
+                // arrow left?
+                if (x < thickness)
+                {
+                    var TargetX = -Math.Max(0, Math.Abs(swc.Location.X) - thickness);
+                    swc.Location = new System.Drawing.Point(
+                        TargetX,
+                        swc.Location.Y
+                    );
+                    Console.Error.WriteLine($"HScrollbar_MouseDown: ({swc.Location.X}, {swc.Location.Y}) => ({TargetX}, {swc.Location.Y}) Early return: Left arrow");
+                    int maxOffset = contentW - viewW;
+                    float frac = Math.Max(0f, Math.Min(1f, Math.Abs(TargetX) - viewW / maxOffset));
+                    int newScroll = (int)Math.Round(frac * maxOffset);
+                    scrollH = newScroll;
+                    hbar.Invalidate();
+                    return;
+                }
+                // arrow right?
+                if (x > r.Width - thickness)
+                {
+                    var TargetX = -Math.Min(contentW - viewW, Math.Abs(swc.Location.X) + thickness);
+                    swc.Location = new System.Drawing.Point(
+                        TargetX,
+                        swc.Location.Y
+                    );
+                    Console.Error.WriteLine($"HScrollbar_MouseDown: ({swc.Location.X}, {swc.Location.Y}) => ({TargetX}, {swc.Location.Y})  Early return: Right arrow");
+                    int maxOffset = contentW - viewW;
+                    float frac = Math.Max(0f, Math.Min(1f, Math.Abs(TargetX) - viewW / maxOffset));
+                    int newScroll = (int)Math.Round(frac * maxOffset);
+                    scrollH = newScroll;
+                    hbar.Invalidate(true);
+                    return;
+                }
             }
-            // arrow right?
-            if (x > r.Width - thickness)
-            {
-                scrollable.ScrollPosition = new Point(
-                    Math.Min(contentW - viewW, scrollable.ScrollPosition.X + thickness),
-                    scrollable.ScrollPosition.Y
-                );
+            if (contentW <= viewW) {
+                Console.Error.WriteLine($"HScrollbar_MouseDown: Early return: contentW = {contentW} < viewW = {viewW}");
                 return;
-            }
-            if (contentW <= viewW)
-                return;
+        }
 
             // thumb drag start?
             float trackX = thickness;
@@ -481,13 +524,18 @@ namespace YourApp.Extensions
             float dragRange = trackW - thumbW;
             float thumbX = trackX + (scrollable.ScrollPosition.X / contentRange) * dragRange;
             var thumbRect = new RectangleF(thumbX, 0, thumbW, r.Height);
-            if (thumbRect.Contains(e.Location))
+            var thumbRectLeftMax = new RectangleF(0, 0, r.Width - dragRange - r.Height, r.Height);
+            var thumbRectRightMax = new RectangleF(dragRange + r.Height, 0, r.Width, r.Height);
+            bool ThumbRightOOB = thumbX > dragRange+r.Height;
+            bool ThumbLeftOOB = thumbX < 0;
+            if (thumbRect.Contains(e.Location) || (ThumbRightOOB && thumbRectRightMax.Contains(e.Location)) || (ThumbLeftOOB && thumbRectLeftMax.Contains(e.Location)))
             {
                 draggingH = true;
                 dragOffX = e.Location.X - thumbX;
                 hbar.CaptureMouse();
-                Console.Error.WriteLine($"Hbar startDrag dragOffX={dragOffX} thumbX={thumbX}");
+                //Console.Error.WriteLine($"Hbar startDrag dragOffX={dragOffX} thumbX={thumbX} thumbRightOOB={ThumbRightOOB}, thumbLeftOOB={ThumbLeftOOB}");
             }
+            Console.Error.WriteLine($"Hbar startDrag dragOffX={dragOffX} thumbX={thumbX} thumbRightOOB={ThumbRightOOB}, thumbLeftOOB={ThumbLeftOOB}");
         }
 
         void Hbar_MouseMove(object sender, MouseEventArgs e)
@@ -508,14 +556,14 @@ namespace YourApp.Extensions
             int maxOffset = contentW - viewW;
             int newScroll = (int)Math.Round(frac * maxOffset);
 
-            scrollV = newScroll;
+            scrollH = newScroll;
             if (
                 scrollable.ControlObject is System.Windows.Forms.Panel swc
                 && swc.Controls.Count > 0
             )
             {
                 var contentPanel = swc.Controls[0];
-                contentPanel.Location = new System.Drawing.Point(-scrollV, contentPanel.Location.Y);
+                contentPanel.Location = new System.Drawing.Point(-scrollH, contentPanel.Location.Y);
                 Console.Error.WriteLine($"[MouseMove] contentPanel.X={contentPanel.Location.X}");
             }
 
@@ -523,7 +571,7 @@ namespace YourApp.Extensions
             Console.Error.WriteLine(
                 $"Hbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newX={newX}"
             );
-            hbar.Invalidate();
+            hbar.Invalidate(true);
         }
 
         void Hbar_MouseUp(object sender, MouseEventArgs e)
@@ -534,7 +582,7 @@ namespace YourApp.Extensions
                 draggingH = false;
                 hbar.ReleaseMouseCapture();
             }
-            hbar.Invalidate();
+            hbar.Invalidate(true);
         }
 
         void GetViewAndContentHeights(out int viewH, out int contentH)

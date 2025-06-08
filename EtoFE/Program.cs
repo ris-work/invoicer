@@ -201,7 +201,7 @@ public class Program
 
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
 
-        (new Application(CurrentUI)).Run(new MyForm());
+            (new Application(CurrentUI)).Run(new MyForm());
 
         if (EnableTUI)
         {
