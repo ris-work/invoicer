@@ -585,6 +585,7 @@ namespace CommonUi
             string[]? order = null
         )
         {
+            this.SuspendLayout();
             OrderedDictionary<
                 string,
                 (string ControlName, object Value, string? LookupFunctionCallback)
@@ -1359,6 +1360,7 @@ namespace CommonUi
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Top,
             };
+            this.ResumeLayout();
         }
 
         public long Save()

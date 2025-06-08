@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 
@@ -95,7 +96,7 @@ public static class MainTableLayoutGenerator
         }
 
         // Combine all column layouts into one outer TableLayout.
-        var outerRow = new TableRow(columnTables.Select(ct => new TableCell(ct, true)).ToArray());
+        var outerRow = new TableRow(columnTables.Select(ct => new TableCell(ct, ColorSettings.ExpandContentWidth)).ToArray());
         var outerLayout = new TableLayout(new[] { outerRow })
         {
             Spacing = new Size(2, 2),
