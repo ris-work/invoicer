@@ -267,7 +267,7 @@ namespace YourApp.Extensions
         {
             var g = e.Graphics;
             var r = e.ClipRectangle;
-            GetSizes(out int viewW, out _, out int contentW, out _);
+            GetViewAndContentWidths(out int viewW, out int contentW);
             bool canScroll = contentW > viewW;
             const float inset = 4f;
             // fill track
@@ -298,14 +298,13 @@ namespace YourApp.Extensions
             // thumb
             float trackX = thickness;
             float trackW = r.Width - 2 * thickness;
-            float contentRange = Math.Max(1, contentW - viewW);
-            float thumbW = canScroll
-                ? Math.Max(thickness, viewW / (float)contentW * trackW)
-                : trackW;
+            float rawThumbW = viewW / (float)contentW * trackW;
+            float thumbW = Math.Max(thickness, Math.Min(trackW, rawThumbW));
             float dragRange = trackW - thumbW;
-            float thumbX = canScroll
-                ? trackX + (scrollable.ScrollPosition.X / contentRange) * dragRange
-                : trackX;
+            int maxOffset = contentW - viewW;
+            scrollV = Math.Max(0, Math.Min(maxOffset, scrollV));
+            float frac = scrollV / (float)maxOffset;
+            float thumbX = trackX + frac * dragRange;
 
             g.FillRectangle(
                 ColorSettings.ForegroundColor,
@@ -323,11 +322,41 @@ namespace YourApp.Extensions
         {
             // 1) measure once at drag‐start
             GetViewAndContentHeights(out var viewH, out var contentH);
+            var r = vbar.Bounds;
             Console.Error.WriteLine(
                 $"[MouseDown] clickY={e.Location.Y}, viewH={viewH}, contentH={contentH}"
             );
+            
+                var y = e.Location.Y;
             if (contentH <= viewH)
                 return;
+            // arrow up?
+            if (
+                scrollable.ControlObject is System.Windows.Forms.Panel swc
+            )
+            {
+                if (y < thickness)
+                {
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, y: {y}, thickness: {thickness}");
+                    swc.Location = new System.Drawing.Point(
+                        swc.Location.X,
+                        - Math.Max(0, Math.Abs(swc.Location.Y) - thickness)-40
+                    );
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {-Math.Max(0, Math.Abs(swc.Location.Y) - thickness)}");
+                    return;
+                }
+                // arrow down?
+                if (y > r.Height - thickness)
+                {
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, y: {y}, thickness: {thickness}");
+                    swc.Location = new System.Drawing.Point(
+                        swc.Location.X,
+                        - Math.Min(contentH - viewH, Math.Abs(swc.Location.Y) + thickness) - 60
+                    );
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {-Math.Min(contentH - viewH, Math.Abs(swc.Location.Y) + thickness)}");
+                    return;
+                }
+            }
 
             // 2) compute thumb geometry
             float A = thickness;
@@ -468,7 +497,7 @@ namespace YourApp.Extensions
             var r = hbar.Bounds;
             float trackX = thickness;
             float trackW = r.Width - 2 * thickness;
-            GetSizes(out int viewW, out _, out int contentW, out _);
+            GetViewAndContentWidths(out int viewW, out int contentW);
             float contentRange = Math.Max(1, contentW - viewW);
             float thumbW = Math.Max(thickness, viewW / (float)contentW * trackW);
             float dragRange = trackW - thumbW;
@@ -476,8 +505,21 @@ namespace YourApp.Extensions
             float delta = e.Location.X - dragOffX - trackX;
             float frac = Math.Max(0f, Math.Min(1f, delta / dragRange));
             int newX = (int)(frac * contentRange);
+            int maxOffset = contentW - viewW;
+            int newScroll = (int)Math.Round(frac * maxOffset);
 
-            scrollable.ScrollPosition = new Point(newX, scrollable.ScrollPosition.Y);
+            scrollV = newScroll;
+            if (
+                scrollable.ControlObject is System.Windows.Forms.Panel swc
+                && swc.Controls.Count > 0
+            )
+            {
+                var contentPanel = swc.Controls[0];
+                contentPanel.Location = new System.Drawing.Point(-scrollV, contentPanel.Location.Y);
+                Console.Error.WriteLine($"[MouseMove] contentPanel.X={contentPanel.Location.X}");
+            }
+
+            //scrollable.ScrollPosition = new Point(newX, scrollable.ScrollPosition.Y);
             Console.Error.WriteLine(
                 $"Hbar_MouseMove delta={delta:F1} dragRange={dragRange:F1} frac={frac:F2} newX={newX}"
             );
@@ -511,6 +553,25 @@ namespace YourApp.Extensions
                     contentH = +Math.Max(+contentH, Math.Abs(LY) + c.Bottom);
                 System.Console.Error.WriteLine(
                     $"Scroll height: LocationY:{swc.Location.Y} LocationYChild:{LY} viewH: {viewH}, contentH: {contentH}"
+                );
+            }
+        }
+        void GetViewAndContentWidths(out int viewW, out int contentW)
+        {
+            viewW = scrollable.ClientSize.Width;
+            contentW = 0;
+
+            if (scrollable.ControlObject is System.Windows.Forms.Panel swc)
+            {
+                int LX = 0;
+                if (swc.Controls.Count > 0)
+                {
+                    LX = swc.Controls[0].Location.X;
+                }
+                foreach (System.Windows.Forms.Control c in swc.Controls)
+                    contentW = +Math.Max(+contentW, Math.Abs(LX) + c.Right);
+                System.Console.Error.WriteLine(
+                    $"Scroll height: LocationY:{swc.Location.X} LocationYChild:{LX} viewW: {viewW}, contentW: {contentW}"
                 );
             }
         }
