@@ -358,7 +358,7 @@ namespace YourApp.Extensions
                     Console.Error.WriteLine($"Vbar_MouseDown: Arrow up, location to: {nY}");
                     float dragRangeN = trackH - thumbH;
                     int maxOffsetN = contentH - viewH;
-                    float frac = -nY / dragRangeN;
+                    float frac = -nY / (float)maxOffsetN;
                     int newScroll = (int)Math.Round(frac * maxOffset);
                     scrollV = newScroll; 
                     vbar.Invalidate(true);
@@ -374,12 +374,16 @@ namespace YourApp.Extensions
                         nY
                     );
                     Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: {nY}");
+
                     float dragRangeN = trackH - thumbH;
                     int maxOffsetN = contentH - viewH;
-                    float frac = -nY / dragRangeN;
                     
-                    int newScroll = (int)Math.Round(frac * maxOffset);
+                    float pos = (A + thumbH / 2f);
+                    //float frac = -(nY - A + thumbH/2) / dragRangeN;
+                    float frac = -nY / (float)maxOffsetN;
+                    int newScroll = (int)Math.Round(frac * maxOffsetN);
                     scrollV = newScroll;
+                    Console.Error.WriteLine($"Vbar_MouseDown: Arrow down, location to: nY: {nY}, pos: {pos}, frac: {frac}, maxOffsetN: {maxOffsetN}, newScroll: {newScroll}");
                     vbar.Invalidate(true);
                     return;
                 }
