@@ -305,7 +305,7 @@ namespace CommonUi
                 Context,
                 ControlName,
                 "control_size",
-                new Eto.Drawing.Size(10, 24)
+                new Eto.Drawing.Size(ColorSettings.ControlWidth??10, ColorSettings.ControlHeight ?? 30)
             );
             if (ControlName == "Legend")
                 return (
@@ -686,6 +686,8 @@ namespace CommonUi
                 Text = TranslationHelper.Translate("Save", "Save", TranslationHelper.Lang),
                 BackgroundColor = CurrentPanelColours.BackgroundColor,
                 TextColor = CurrentPanelColours.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
+                Height = ColorSettings.ControlHeight ?? 30
             };
             GoToNext = (e, a) =>
             {
@@ -1197,6 +1199,8 @@ namespace CommonUi
                 Text = TranslationHelper.Translate("New", "New", TranslationHelper.Lang),
                 BackgroundColor = CurrentPanelColours.BackgroundColor,
                 TextColor = CurrentPanelColours.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
+                Height = ColorSettings.ControlHeight ?? 30
             };
             //Button SaveButton = new Button() { Text = "Save", BackgroundColor = CurrentPanelColours.BackgroundColor, TextColor = CurrentPanelColours.ForegroundColor };
             Button ViewButton = new Button()
@@ -1204,12 +1208,16 @@ namespace CommonUi
                 Text = TranslationHelper.Translate("View", "View", TranslationHelper.Lang),
                 BackgroundColor = CurrentPanelColours.BackgroundColor,
                 TextColor = CurrentPanelColours.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
+                Height = ColorSettings.ControlHeight ?? 30
             };
             Button CancelButton = new Button()
             {
                 Text = TranslationHelper.Translate("Cancel", "Cancel", TranslationHelper.Lang),
                 BackgroundColor = CurrentPanelColours.BackgroundColor,
                 TextColor = CurrentPanelColours.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100,
+                Height = ColorSettings.ControlHeight ?? 30
             };
             NewButton.Font = NewButtonTheme.TFont;
             NewButton.BackgroundColor = NewButtonTheme.BG;

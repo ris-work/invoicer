@@ -89,6 +89,19 @@ namespace CommonUi
 #endif
         }
 
+        public static void DisableTextBoxAutoSizeAnyway(this Eto.Forms.TextBox GW, System.Action H)
+        {
+            var P = Eto.Platform.Instance.ToString();
+
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.TextBox WinFormsTB = (System.Windows.Forms.TextBox)
+                    GW.ControlObject;
+                //WinFormsTB.Set
+                //((System.Windows.Forms.TextBoxBase)WinFormsTB).Auto
+            }
+        }
+
         public static void DisableLines(this Eto.Forms.GridView GW)
         {
 #if WINDOWS
@@ -846,12 +859,29 @@ namespace CommonUi
         public static void ApplyGlobalScrollBarThumbStyle() { }
 #endif
 
-        /// <summary>
-        /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
-        /// Evaluates the provided variable P against the current Eto backend.
-        /// </summary>
-        /// <param name="button">The Eto.Forms.Button to configure.</param>
-        /// <param name="P">A string representing the current Eto backend platform.</param>
+        public static void AlignLeft(this Eto.Forms.Button button)
+        {
+            var P = Eto.Platform.Instance.ToString();
+#if WINDOWS || WINFORMS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                // Access the native System.Windows.Forms.Button control via ControlObject.
+                var winButton = button.ControlObject as System.Windows.Forms.Button;
+                Console.WriteLine($"{button.ControlObject.GetType()}, winButton: {winButton}");
+                if (winButton != null)
+                {
+                    winButton.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+                }
+            }
+#endif
+        }
+
+            /// <summary>
+            /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
+            /// Evaluates the provided variable P against the current Eto backend.
+            /// </summary>
+            /// <param name="button">The Eto.Forms.Button to configure.</param>
+            /// <param name="P">A string representing the current Eto backend platform.</param>
         public static void ConfigureForPlatform(this Eto.Forms.Button button)
         {
             var P = Eto.Platform.Instance.ToString();
