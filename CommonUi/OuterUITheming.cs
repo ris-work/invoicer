@@ -38,6 +38,7 @@ namespace CommonUi
         public static string Lang = "en";
         public static bool NoEmojis = false;
         public static bool DebugDontRenderLabels = true;
+        public static bool ForceNativeLabels = false;
 
         public static void RotateAll(double degrees)
         {

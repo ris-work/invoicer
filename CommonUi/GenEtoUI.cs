@@ -973,6 +973,7 @@ namespace CommonUi
                     if (
                         ColorSettings.InnerLabelWidth != null
                         && ColorSettings.InnerLabelHeight != null
+                        && ColorSettings.ForceNativeLabels == false
                     )
                     {
                         Console.Error.WriteLine($"GenEtoUI: Generated FixedSizeLabel");
