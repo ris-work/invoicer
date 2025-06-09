@@ -628,7 +628,7 @@ namespace CommonUi
                 LP.RemoveAt(i);
                 SamplePurchasePanel.Render(LP);
             };
-            
+
             PurchasingUIButton.Click += (_, _) =>
             {
                 SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>

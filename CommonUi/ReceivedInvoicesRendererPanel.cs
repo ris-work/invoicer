@@ -54,9 +54,9 @@ namespace CommonUi
                 BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
             };
             var gw = -1;
-            if(ColorSettings.ControlWidth != null)
+            if (ColorSettings.ControlWidth != null)
             {
-                gw = ColorSettings.ControlWidth*7 ?? -1;
+                gw = ColorSettings.ControlWidth * 7 ?? -1;
             }
             _gridView = new GridView() { Height = 300, Width = gw };
             _gridView.SelectionChanged += (sender, e) =>
@@ -92,16 +92,19 @@ namespace CommonUi
             };
             _gridView.RowFormatting += (e, a) =>
             {
-                
                 a.BackgroundColor = Colors.LesserBackgroundColor;
-                
             };
             _gridView.BackgroundColor = Colors.BackgroundColor;
             _gridView.DisableLines();
             _gridView.ApplyDarkGridHeaders();
             _gridView.ConfigureForPlatform();
 
-            _indexLabel = new Label { Text = "Selected Index: None", Width  = 400, Height = ColorSettings.ControlHeight ?? 30 };
+            _indexLabel = new Label
+            {
+                Text = "Selected Index: None",
+                Width = 400,
+                Height = ColorSettings.ControlHeight ?? 30,
+            };
 
             // Stack the label above the grid.
             var layout = new DynamicLayout { Padding = 10, Spacing = new Eto.Drawing.Size(5, 5) };

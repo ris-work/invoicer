@@ -190,7 +190,7 @@ public class Program
         if (CurrentUIConfigured.ToLowerInvariant() == ("winforms"))
         {
             //Eto.WinForms.Platform.Add<Eto.Forms.Scrollable.IHandler>(
-    //() => new MyApp.NoNativeScrollPanel());
+            //() => new MyApp.NoNativeScrollPanel());
             CurrentUI = Eto.Platforms.WinForms;
         }
         if (CurrentUIConfigured.ToLowerInvariant() == ("gtk"))
@@ -204,7 +204,7 @@ public class Program
 
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
 
-            (new Application(CurrentUI)).Run(new MyForm());
+        (new Application(CurrentUI)).Run(new MyForm());
 
         if (EnableTUI)
         {

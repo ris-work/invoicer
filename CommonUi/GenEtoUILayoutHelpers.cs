@@ -79,7 +79,7 @@ public static class MainTableLayoutGenerator
             var rows = new List<TableRow>();
             foreach (var pair in column)
             {
-                var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight};
+                var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
 
                 // If the left control is null, insert an empty control to preserve alignment.
                 Control leftControl = pair.Item1 ?? new Panel { Size = new Size(0, 0) };
@@ -96,7 +96,9 @@ public static class MainTableLayoutGenerator
         }
 
         // Combine all column layouts into one outer TableLayout.
-        var outerRow = new TableRow(columnTables.Select(ct => new TableCell(ct, ColorSettings.ExpandContentWidth)).ToArray());
+        var outerRow = new TableRow(
+            columnTables.Select(ct => new TableCell(ct, ColorSettings.ExpandContentWidth)).ToArray()
+        );
         var outerLayout = new TableLayout(new[] { outerRow })
         {
             Spacing = new Size(2, 2),
