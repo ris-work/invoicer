@@ -38,7 +38,7 @@ public class CustomLabel : Drawable
     /// </summary>
     public Font Font
     {
-        get => font ?? (font = new Font(FontFamilies.Sans, 12));
+        get => font ?? (font = new Font(FontFamilies.Sans, 10));
         set
         {
             if (font != value)
@@ -53,12 +53,13 @@ public class CustomLabel : Drawable
     /// <summary>
     /// The foreground (text) color.
     /// </summary>
-    public Color ForegroundColor { get; set; } = Colors.Black;
+    public Color ForegroundColor { get; set; } = CommonUi.ColorSettings.ForegroundColor;
 
     /// <summary>
     /// The background color.
     /// </summary>
-    public Color BackgroundColor { get; set; } = Colors.Transparent;
+    //public Color BackgroundColor { get; set; } = Colors.Transparent;
+    public Color BackgroundColor { get; set; } = CommonUi.ColorSettings.BackgroundColor;
 
     /// <summary>
     /// Horizontal text alignment.
@@ -72,7 +73,7 @@ public class CustomLabel : Drawable
 
     public CustomLabel()
     {
-        BackgroundColor = Colors.Transparent;
+        BackgroundColor = CommonUi.ColorSettings.BackgroundColor;
 
         // Invalidate caches when the control is resized.
         SizeChanged += (sender, e) =>
@@ -116,7 +117,7 @@ public class CustomLabel : Drawable
                 MaximumWidth = availableWidth,
                 Wrap = FormattedTextWrapMode.None, // Disable wrapping; we want a single line.
                 Trimming = FormattedTextTrimming.WordEllipsis,
-                Alignment = TextAlignment
+                Alignment = TextAlignment,
             };
 
             cachedFormattedText = ft;
@@ -142,35 +143,59 @@ public class CustomLabel : Drawable
             // Create a new bitmap with the current control's dimensions.
             int bmpWidth = (int)controlRect.Width;
             int bmpHeight = (int)controlRect.Height;
-            cachedBitmap = new Bitmap(bmpWidth, bmpHeight, PixelFormat.Format32bppRgba);
+            cachedBitmap = new Bitmap(bmpWidth, bmpHeight, PixelFormat.Format24bppRgb);
             cachedBitmapSize = (Size)controlRect.Size;
-            Console.Error.WriteLine("Graphics cache rebuilt with size: {0}x{1}", bmpWidth, bmpHeight);
+            Console.Error.WriteLine(
+                "Graphics cache rebuilt with size: {0}x{1}",
+                bmpWidth,
+                bmpHeight
+            );
 
             using (var bmpGraphics = new Graphics(cachedBitmap))
             {
-                // Optional: Set smoothing / anti-alias settings to match on-screen drawing.
-                // You may adjust these as needed. For example:
-                // bmpGraphics.AntiAlias = false;  // or true, depending on your needs
-
-                // Set clipping explicitly to the bitmap's bounds.
-                bmpGraphics.SetClip(new RectangleF(PointF.Empty, controlRect.Size));
-
-                // Draw the background into the bitmap.
-                using (var bgBrush = new SolidBrush(BackgroundColor))
+                // Save the current transform state.
+                using (var state = bmpGraphics.SaveTransformState())
                 {
-                    bmpGraphics.FillRectangle(bgBrush, new RectangleF(PointF.Empty, controlRect.Size));
+                    // The transform is now in a known state.
+                    // Set anti-aliasing and other graphics settings as needed.
+                    bmpGraphics.AntiAlias = false; // or AntiAlias.Off if preferred
+
+                    // Set the clipping region to the full bitmap area.
+                    bmpGraphics.SetClip(new RectangleF(PointF.Empty, controlRect.Size));
+
+                    // Draw the background.
+                    using (var bgBrush = new SolidBrush(BackgroundColor))
+                    {
+                        bmpGraphics.FillRectangle(
+                            bgBrush,
+                            new RectangleF(PointF.Empty, controlRect.Size)
+                        );
+                    }
+
+                    // Compute vertical offset based on vertical alignment.
+                    float y = 0;
+                    if (VerticalAlignment == VerticalAlignment.Center)
+                        y = (controlRect.Height - cachedMeasuredSize.Height) / 2;
+                    else if (VerticalAlignment == VerticalAlignment.Bottom)
+                        y = (controlRect.Height - cachedMeasuredSize.Height);
+
+                    // Draw the cached formatted text at (0, y).
+                    bmpGraphics.DrawText(
+                        font,
+                        new SolidBrush(ForegroundColor),
+                        new RectangleF(new PointF(0, y), new PointF(Width, Height)),
+                        cachedFormattedText.Text,
+                        cachedFormattedText.Wrap,
+                        cachedFormattedText.Alignment,
+                        cachedFormattedText.Trimming
+                    );
+
+                    // When the using block ends, state.Dispose() restores the original transform.
                 }
-
-                // Compute vertical offset based on vertical alignment.
-                float y = 0;
-                if (VerticalAlignment == VerticalAlignment.Center)
-                    y = (controlRect.Height - cachedMeasuredSize.Height) / 2;
-                else if (VerticalAlignment == VerticalAlignment.Bottom)
-                    y = (controlRect.Height - cachedMeasuredSize.Height);
-
-                // Draw the cached formatted text into the bitmap.
-                bmpGraphics.DrawText(cachedFormattedText, new PointF(0, y));
+                // Any changes to the transform made above are now undone.
             }
+
+            // When state is disposed, the transform is restored.
         }
     }
 
