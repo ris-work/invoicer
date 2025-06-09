@@ -7,8 +7,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+using Microsoft.Maui.Graphics.Text;
 using Microsoft.Maui.Platform;
-using Microsoft.Win32.SafeHandles;
 using MyAOTFriendlyExtensions;
 using Tomlyn;
 
@@ -61,7 +61,7 @@ namespace CommonUi
         Dictionary<string, Eto.Forms.Control?> _ELegends = new();
         Dictionary<string, bool> _EChangeTracker = new();
         Dictionary<string, object> ConvertedInputs = new();
-        Dictionary<string, Label> _EFieldNames = new();
+        Dictionary<string, Control> _EFieldNames = new();
         Dictionary<string, Type> OriginalTypes = new();
         Dictionary<string, GeneratePanel> PanelGenerators = new();
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
@@ -396,13 +396,29 @@ namespace CommonUi
                     {
                         CumulativeSuccess = false;
                         _EFieldNames[e.Key].BackgroundColor = ColorSettings.AlternatingColor1;
-                        _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
+                        if (_EFieldNames[e.Key] is Label EFNL)
+                        {
+                            EFNL.TextColor = LocalColor?.ForegroundColor ?? LegendFG;
+                        }
+                        else if (_EFieldNames[e.Key] is CustomLabel CL)
+                        {
+                            CL.ForegroundColor = LocalColor?.ForegroundColor ?? LegendFG;
+                            CL.Invalidate();
+                        }
                     }
                     else
                     {
                         _EFieldNames[e.Key].BackgroundColor =
                             LocalColor?.BackgroundColor ?? LegendBG;
-                        _EFieldNames[e.Key].TextColor = LocalColor?.ForegroundColor ?? LegendFG;
+                        if (_EFieldNames[e.Key] is Label EFNL)
+                        {
+                            EFNL.TextColor = LocalColor?.ForegroundColor ?? LegendFG;
+                        }
+                        else if (_EFieldNames[e.Key] is CustomLabel CL)
+                        {
+                            CL.ForegroundColor = LocalColor?.ForegroundColor ?? LegendFG;
+                            CL.Invalidate();
+                        }
                     }
                     ;
                 }
@@ -948,20 +964,49 @@ namespace CommonUi
                     {
                         TB.Width = ColorSettings.ControlWidth ?? 100;
                     }
-                    Label EFieldName = new Label()
+                    Control EFieldName;
+                    Console.Error.WriteLine(
+                        $"GenEtoUI: ILW: {ColorSettings.InnerLabelWidth}, ILH: {ColorSettings.InnerLabelHeight}, CW: {ColorSettings.ControlWidth}, CH: {ColorSettings.ControlHeight}"
+                    );
+                    if (
+                        ColorSettings.InnerLabelWidth != null
+                        && ColorSettings.InnerLabelHeight != null
+                    )
                     {
-                        Width = ColorSettings.InnerLabelWidth ?? -1,
-                        Height = ColorSettings.InnerLabelHeight ?? -1,
-                        Text = ColorSettings.DebugDontRenderLabels
-                            ? ""
-                            : TranslationHelper.Translate(
-                                kv.Value.ControlName,
-                                kv.Value.Item1,
-                                TranslationHelper.Lang
-                            ),
-                        TextColor = CurrentPanelColours.ForegroundColor,
-                    };
-                    EFieldName.ConfigureForPlatform();
+                        Console.Error.WriteLine($"GenEtoUI: Generated FixedSizeLabel");
+                        EFieldName = new CustomLabel()
+                        {
+                            Width = ColorSettings.InnerLabelWidth ?? -1,
+                            Height = ColorSettings.InnerLabelHeight ?? -1,
+                            Text = ColorSettings.DebugDontRenderLabels
+                                ? ""
+                                : TranslationHelper.Translate(
+                                    kv.Value.ControlName,
+                                    kv.Value.Item1,
+                                    TranslationHelper.Lang
+                                ),
+                            ForegroundColor = CurrentPanelColours.ForegroundColor,
+                        };
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine($"GenEtoUI: Generated Label");
+                        EFieldName = new Label()
+                        {
+                            Width = ColorSettings.InnerLabelWidth ?? -1,
+                            Height = ColorSettings.InnerLabelHeight ?? -1,
+                            Text = ColorSettings.DebugDontRenderLabels
+                                ? ""
+                                : TranslationHelper.Translate(
+                                    kv.Value.ControlName,
+                                    kv.Value.Item1,
+                                    TranslationHelper.Lang
+                                ),
+                            TextColor = CurrentPanelColours.ForegroundColor,
+                        };
+                    }
+                    if (EFieldName is Label EFNL)
+                        EFNL.ConfigureForPlatform();
                     if (EInput is Eto.Forms.TextBox T)
                     {
                         T.ShowBorder = false;
@@ -993,12 +1038,12 @@ namespace CommonUi
                     }
                     EFocusableList.Add(EInput);
                     _Einputs.Add(kv.Key, EInput);
-                    if (EFieldName != null)
+                    if (EFieldName != null && EFieldName is Eto.Forms.Label EL)
                     {
-                        EFieldName.BackgroundColor = LegendBG;
-                        EFieldName.TextColor = LegendFG;
-                        EFieldName.Font = LegendTFont;
-                        EFieldName.Wrap = WrapMode.None;
+                        EL.BackgroundColor = LegendBG;
+                        EL.TextColor = LegendFG;
+                        EL.Font = LegendTFont;
+                        EL.Wrap = WrapMode.None;
                     }
                     _EFieldNames.Add(kv.Key, EFieldName);
                     _ELegends.Add(kv.Key, ELegend);
