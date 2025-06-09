@@ -37,6 +37,7 @@ namespace CommonUi
         public static int? ControlHeight = null;
         public static string Lang = "en";
         public static bool NoEmojis = false;
+        public static bool DebugDontRenderLabels = true;
 
         public static void RotateAll(double degrees)
         {

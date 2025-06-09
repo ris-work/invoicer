@@ -53,7 +53,12 @@ namespace CommonUi
                 ForegroundColor = LocalColors?.ForegroundColor ?? ColorSettings.ForegroundColor,
                 BackgroundColor = LocalColors?.BackgroundColor ?? ColorSettings.BackgroundColor,
             };
-            _gridView = new GridView() { Height = 300 };
+            var gw = -1;
+            if(ColorSettings.ControlWidth != null)
+            {
+                gw = ColorSettings.ControlWidth*7 ?? -1;
+            }
+            _gridView = new GridView() { Height = 300, Width = gw };
             _gridView.SelectionChanged += (sender, e) =>
             {
                 _indexLabel.Text =
@@ -62,7 +67,8 @@ namespace CommonUi
             };
             _gridView.CellFormatting += (e, a) =>
             {
-                a.Font = Eto.Drawing.Fonts.Monospace(9);
+                a.Column.AutoSize = false;
+                //a.Font = Eto.Drawing.Fonts.Monospace(9);
                 a.BackgroundColor = Colors.BackgroundColor;
                 a.ForegroundColor = Colors.ForegroundColor;
                 //Colour the column first
@@ -79,22 +85,23 @@ namespace CommonUi
                 }
                 if (a.Row == _gridView.SelectedRow)
                 {
-                    a.Column.AutoSize = true;
                     a.BackgroundColor = Colors.SelectedColumnColor;
                     a.ForegroundColor = Colors.ForegroundColor;
-                    a.Font = Eto.Drawing.Fonts.Monospace(9, FontStyle.Bold);
+                    //a.Font = Eto.Drawing.Fonts.Monospace(9, FontStyle.Bold);
                 }
             };
             _gridView.RowFormatting += (e, a) =>
             {
+                
                 a.BackgroundColor = Colors.LesserBackgroundColor;
+                
             };
             _gridView.BackgroundColor = Colors.BackgroundColor;
             _gridView.DisableLines();
             _gridView.ApplyDarkGridHeaders();
             _gridView.ConfigureForPlatform();
 
-            _indexLabel = new Label { Text = "Selected Index: None" };
+            _indexLabel = new Label { Text = "Selected Index: None", Width  = 400, Height = ColorSettings.ControlHeight ?? 30 };
 
             // Stack the label above the grid.
             var layout = new DynamicLayout { Padding = 10, Spacing = new Eto.Drawing.Size(5, 5) };
@@ -260,11 +267,11 @@ namespace CommonUi
                 _gridView.Columns.Add(gridColumn);
             }
             int _gww = -1;
-            if (ColorSettings.ControlWidth != null)
+            /*if (ColorSettings.ControlWidth != null)
             {
                 _gww = (int)Math.Ceiling((double)(ColorSettings.ControlWidth ?? -1) * 5);
             }
-            _gridView.Width = _gww;
+            _gridView.Width = _gww;*/
 
             _gridView.DataStore = _purchases;
             _gridView.KeyUp += (e, a) =>

@@ -952,7 +952,7 @@ namespace CommonUi
                     {
                         Width = ColorSettings.InnerLabelWidth ?? -1,
                         Height = ColorSettings.InnerLabelHeight ?? -1,
-                        Text = TranslationHelper.Translate(
+                        Text = ColorSettings.DebugDontRenderLabels ? "" : TranslationHelper.Translate(
                             kv.Value.ControlName,
                             kv.Value.Item1,
                             TranslationHelper.Lang
@@ -1239,6 +1239,8 @@ namespace CommonUi
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
+                Height = ColorSettings.ControlHeight ?? -1,
+
             };
             //BorderType = BorderType.None;
             // Assuming EControlsL and EControlsR are IEnumerable<TableRow>

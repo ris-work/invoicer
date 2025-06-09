@@ -628,6 +628,7 @@ namespace CommonUi
                 LP.RemoveAt(i);
                 SamplePurchasePanel.Render(LP);
             };
+            
             PurchasingUIButton.Click += (_, _) =>
             {
                 SamplePurchasePanel.DeleteReceivedInvoiceItem = (i) =>
@@ -651,7 +652,7 @@ namespace CommonUi
             int sw = -1,
                 sh = -1;
             if (ColorSettings.ControlWidth != null)
-                sw = (int)Math.Floor((double)(ColorSettings.ControlWidth ?? 200) * 5.5);
+                sw = (int)Math.Floor((double)(ColorSettings.ControlWidth ?? 200) * 7);
             if (ColorSettings.ControlHeight != null)
                 sh = (int)Math.Floor((double)(ColorSettings.ControlHeight ?? 30) * 80);
             var innerSc = new Eto.Forms.StackLayout(

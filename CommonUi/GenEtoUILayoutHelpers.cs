@@ -79,12 +79,12 @@ public static class MainTableLayoutGenerator
             var rows = new List<TableRow>();
             foreach (var pair in column)
             {
-                var row = new TableRow();
+                var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight};
 
                 // If the left control is null, insert an empty control to preserve alignment.
                 Control leftControl = pair.Item1 ?? new Panel { Size = new Size(0, 0) };
-                row.Cells.Add(new TableCell(leftControl, false)); // false => do not expand, so labels align
-                row.Cells.Add(new TableCell(pair.Item2, true));
+                row.Cells.Add(new TableCell(leftControl, ColorSettings.ExpandContentWidth) { }); // false => do not expand, so labels align
+                row.Cells.Add(new TableCell(pair.Item2, ColorSettings.ExpandContentWidth));
                 rows.Add(row);
             }
             var colLayout = new TableLayout(rows.ToArray())

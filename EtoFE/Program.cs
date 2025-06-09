@@ -69,6 +69,7 @@ public class Program
     public static int? ControlWidth = null;
     public static int? ControlHeight = null;
     public static bool NoEmojis = false;
+    public static bool DebugDontRenderLabels = false;
 
     [STAThread]
     public static void Main()
@@ -145,6 +146,7 @@ public class Program
         MaxControlWidth = (int?)(long?)ConfigDict.GetValueOrDefault("MaxControlWidth", null);
         ExpandContentWidth = (bool)ConfigDict.GetValueOrDefault("ExpandContentWidth", true);
         ExpandContentHeight = (bool)ConfigDict.GetValueOrDefault("ExpandContentHeight", false);
+        DebugDontRenderLabels = (bool)ConfigDict.GetValueOrDefault("DebugDontRenderLabels", false);
         NoEmojis = (bool)ConfigDict.GetValueOrDefault("NoEmojis", false);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
@@ -155,6 +157,7 @@ public class Program
         CommonUi.ColorSettings.ControlWidth = ControlWidth;
         CommonUi.ColorSettings.ControlHeight = ControlHeight;
         CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
+        CommonUi.ColorSettings.DebugDontRenderLabels = DebugDontRenderLabels;
         ColorSettings.Lang = Program.lang;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
