@@ -35,6 +35,8 @@ namespace CommonUi
         public static int? MaxControlWidth = null;
         public static int? ControlWidth = null;
         public static int? ControlHeight = null;
+        public static long dpiX = 7;
+        public static long dpiY = 15;
         public static string Lang = "en";
         public static bool NoEmojis = false;
         public static bool DebugDontRenderLabels = true;

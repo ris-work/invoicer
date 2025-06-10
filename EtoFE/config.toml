@@ -18,6 +18,8 @@ ExpandContentHeight = false
 ControlWidth = 170
 MaxControlWidth = 170
 NoEmojis = false
+dpiX = 50
+dpiY = 90
 
 
 ForegroundColor       = "#2B381C"  # Dark earthy green text for natural contrast

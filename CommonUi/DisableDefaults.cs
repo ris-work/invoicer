@@ -88,6 +88,23 @@ namespace CommonUi
             }
 #endif
         }
+        public static void ConfigureLegacyBehaviour(this Eto.Forms.Form Frm)
+        {
+#if WINDOWS || WINFORMS
+            var P = Eto.Platform.Instance.ToString();
+
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.Form WF = (System.Windows.Forms.Form)
+                    Frm.ControlObject;
+                WF.AutoScaleMode = AutoScaleMode.Dpi;
+                //WF.AutoScaleDimensions = new System.Drawing.SizeF(ColorSettings.dpiX, ColorSettings.dpiY);
+                WF.AutoScaleBaseSize = new System.Drawing.Size((int)ColorSettings.dpiX, (int)ColorSettings.dpiY);
+                
+                //WF.UseCo
+            }
+#endif
+        }
 
         public static void DisableTextBoxAutoSizeAnyway(this Eto.Forms.TextBox GW, System.Action H)
         {
@@ -895,6 +912,7 @@ namespace CommonUi
                 {
                     winButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
                     winButton.FlatAppearance.BorderSize = 0;
+                    winButton.UseCompatibleTextRendering = true;
                 }
             }
 #endif

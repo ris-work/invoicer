@@ -71,6 +71,8 @@ public class Program
     public static bool NoEmojis = false;
     public static bool DebugDontRenderLabels = false;
     public static bool ForceNativeLabels = false;
+    public static long dpiX = 7;
+    public static long dpiY = 15;
 
     [STAThread]
     public static void Main()
@@ -150,6 +152,8 @@ public class Program
         DebugDontRenderLabels = (bool)ConfigDict.GetValueOrDefault("DebugDontRenderLabels", false);
         ForceNativeLabels = (bool)ConfigDict.GetValueOrDefault("ForceNativeLabels", false);
         NoEmojis = (bool)ConfigDict.GetValueOrDefault("NoEmojis", false);
+        dpiX = (long)ConfigDict.GetValueOrDefault("dpiX", (long)7);
+        dpiY = (long)ConfigDict.GetValueOrDefault("dpiY", (long)15);
         Console.WriteLine("Hello, World!");
         CommonUi.ColorSettings.Initialize(ConfigDict);
         CommonUi.ColorSettings.InnerLabelWidth = InnerLabelWidth;
@@ -161,6 +165,8 @@ public class Program
         CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
         CommonUi.ColorSettings.DebugDontRenderLabels = DebugDontRenderLabels;
         CommonUi.ColorSettings.ForceNativeLabels = ForceNativeLabels;
+        CommonUi.ColorSettings.dpiX = dpiX;
+        CommonUi.ColorSettings.dpiY = dpiY;
         ColorSettings.Lang = Program.lang;
         ColorSettings.RotateAll(HueRotationDegrees);
         ColorSettings.Dump();
@@ -283,6 +289,8 @@ public class MyForm : Form
 
     public MyForm()
     {
+        this.ConfigureLegacyBehaviour();
+        
         if (Program.UseCustomFonts)
         {
             try
@@ -533,8 +541,19 @@ public class MyForm : Form
                 null
             )
         );
-        var LoginButton = new Button(
-            (sender, e) =>
+        var LoginButton = new RoundedLabel()
+        {
+            Text = "Login",
+            Size = new Size(200, 50),
+            Style = "large",
+            BackgroundColor = ColorSettings.BackgroundColor,
+            TextColor = ColorSettings.LesserForegroundColor,
+            Font = new Font(Program.UIFont, 14),
+            Centered = true,
+            
+        }; ;
+        LoginButton.ConfigureForPlatform();
+        LoginButton.KeyUp += (sender, e) =>
             {
                 if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
                 {
@@ -557,16 +576,11 @@ public class MyForm : Form
                     //(new PosTerminal()).Show();
                 }
                 ;
-            }
-        )
-        {
-            Text = "Login",
-            Size = new Size(200, 50),
-            Style = "large",
-            BackgroundColor = ColorSettings.BackgroundColor,
-            TextColor = ColorSettings.LesserForegroundColor,
-            Font = new Font(Program.UIFont, 14),
-        };
+            };
+        
+        
+        //LoginButton.ConfigureForPlatformForFlatBorders();
+        LoginButton.ConfigureForPlatform();
         layout.Rows.Add(
             new TableRow(
                 null,
@@ -585,6 +599,8 @@ public class MyForm : Form
                         BackgroundColor = ColorSettings.BackgroundColor,
                         TextColor = ColorSettings.LesserForegroundColor,
                         Font = new Font(Program.UIFont, 14),
+                        Width = 300,
+                        Height  = 50,
                     }
                 ),
                 null

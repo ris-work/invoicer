@@ -59,7 +59,7 @@ namespace CommonUi
             base.OnPaint(e);
 
             // Define the full area of this control.
-            var rect = new RectangleF(0, 0, (float)Width, (float)Height);
+            var rect = new RectangleF(0, 0, (float)Width - 2, (float)Height - 2);
 
             // Clamp the corner radius:
             // The maximum allowed is half the smallest dimension.
@@ -93,7 +93,7 @@ namespace CommonUi
                 diameter = rect.Height;
 
             // Top-left arc.
-            var arc = new RectangleF(rect.Left, rect.Top, diameter, diameter);
+            var arc = new RectangleF(rect.Left, rect.Top, diameter -2, diameter-2);
             path.AddArc(arc, 180, 90);
 
             // Top-right arc.
@@ -158,6 +158,8 @@ namespace CommonUi
         public float BorderWidth { get; set; } = 1f;
 
         private bool IsHovered { get; set; } = false;
+        public bool Centered = false;
+        public int OffsetRightDown = 0;
 
         public RoundedLabel()
         {
@@ -173,6 +175,16 @@ namespace CommonUi
                 IsHovered = false;
                 Invalidate();
             };
+            GotFocus += (sender, e) =>
+            {
+                IsHovered = true;
+                Invalidate();
+            };
+            LostFocus += (sender, e) =>
+            {
+                IsHovered = false;
+                Invalidate();
+            };
 
             // Click events and additional mouse events remain available.
             CanFocus = true;
@@ -183,7 +195,7 @@ namespace CommonUi
             base.OnPaint(e);
 
             // Define the control’s full bounds.
-            var rect = new RectangleF(0, 0, (float)Width, (float)Height);
+            var rect = new RectangleF(0, 0, (float)Width - OffsetRightDown, (float)Height - OffsetRightDown);
 
             // Optionally, fill the background if BackgroundColor is set.
             if (this.BackgroundColor != null)
@@ -215,7 +227,7 @@ namespace CommonUi
                 var textSize = e.Graphics.MeasureString(Font, Text);
                 float x = (rect.Width - textSize.Width) / 2;
                 float y = (rect.Height - textSize.Height) / 2;
-                x = 0;
+                if(!Centered) x = 0;
                 //y = 0;
                 using (var brush = new SolidBrush(TextColor))
                 {
@@ -307,6 +319,7 @@ namespace CommonUi
         /// Indicates whether the mouse pointer is currently over this control.
         /// </summary>
         public bool IsHovered { get; private set; } = false;
+        public int OffsetRightDown = 0;
 
         public RoundedDrawable()
         {
@@ -328,6 +341,16 @@ namespace CommonUi
                 Invalidate();
             };
             MouseLeave += (sender, e) =>
+            {
+                IsHovered = false;
+                Invalidate();
+            };
+            GotFocus += (sender, e) =>
+            {
+                IsHovered = true;
+                Invalidate();
+            };
+            LostFocus += (sender, e) =>
             {
                 IsHovered = false;
                 Invalidate();
