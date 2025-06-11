@@ -197,6 +197,33 @@ new Eto.Forms.Application().Run(
 
 var AC = new Eto.Forms.Application();
 
+// Instantiate a RoundedC hosting a Button.
+var RC = new RoundedC(new Eto.Forms.Button { Text = "RoundedC Button" })
+{
+    Width = 200,
+    Height = 60,
+    Padding = new Eto.Drawing.Padding(10), // uses Panel.Padding
+    BorderRadius = 15,
+    BackgroundColor = Eto.Drawing.Colors.LightGrey,
+    FocusedBackgroundColor = Eto.Drawing.Colors.DarkGray,
+    BorderColor = Eto.Drawing.Colors.Black,
+    FocusedBorderColor = Eto.Drawing.Colors.Red
+};
+
+// Instantiate a RoundedD hosting a TextBox.
+var RD = new RoundedD(new TextBox { PlaceholderText = "Enter text..." })
+{
+    Width = 200,
+    Height = 60,
+    Padding = new Eto.Drawing.Padding(10),
+    BorderRadius = 15,
+    BackgroundColor = Eto.Drawing.Colors.LightYellow,
+    FocusedBackgroundColor = Eto.Drawing.Colors.Gold,
+    BorderColor = Eto.Drawing.Colors.Black,
+    FocusedBorderColor = Eto.Drawing.Colors.Orange
+};
+
+
 //Image: https://www.flickr.com/photos/ellaolsson/48839117163/
 //Copyright (c) Ella Olson 2019, CC-BY 2.0
 Panel imagePanel = ImagePanelFactory.CreateImagePanel("large_image.jpg", 100);
@@ -737,6 +764,8 @@ AC.Run(
                     Orientation = Eto.Forms.Orientation.Horizontal,
                     HorizontalContentAlignment = Eto.Forms.HorizontalAlignment.Stretch,
                 },
+                RD,
+                RC,
                 ExternalWatcher,
                 PurchasingUIButton,
                 SearchUIButton,
