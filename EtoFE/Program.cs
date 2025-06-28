@@ -290,7 +290,7 @@ public class MyForm : Form
     public MyForm()
     {
         this.ConfigureLegacyBehaviour();
-        
+
         if (Program.UseCustomFonts)
         {
             try
@@ -550,35 +550,33 @@ public class MyForm : Form
             TextColor = ColorSettings.LesserForegroundColor,
             Font = new Font(Program.UIFont, 14),
             Centered = true,
-            
-        }; ;
+        };
+        ;
         LoginButton.ConfigureForPlatform();
         LoginButton.KeyUp += (sender, e) =>
+        {
+            if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
             {
-                if (Login(UsernameBox.Text, PasswordBox.Text, TerminalBox.Text) != true)
+                MessageBox.Show("Cannot login: Network Error or Wrong Creds");
+            }
+            else
+            {
+                MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
+                bool FullMode = (bool)Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
+
+                if (!FullMode)
                 {
-                    MessageBox.Show("Cannot login: Network Error or Wrong Creds");
+                    (new NavigableListForm()).Show();
                 }
                 else
                 {
-                    MessageBox.Show(TryEcho(UsernameBox.Text), MessageBoxType.Information);
-                    bool FullMode = (bool)
-                        Program.ConfigDict.GetValueOrDefault("EnableFullMode", false);
-
-                    if (!FullMode)
-                    {
-                        (new NavigableListForm()).Show();
-                    }
-                    else
-                    {
-                        (new PosTerminal()).Show();
-                    }
-                    //(new PosTerminal()).Show();
+                    (new PosTerminal()).Show();
                 }
-                ;
-            };
-        
-        
+                //(new PosTerminal()).Show();
+            }
+            ;
+        };
+
         //LoginButton.ConfigureForPlatformForFlatBorders();
         LoginButton.ConfigureForPlatform();
         layout.Rows.Add(
@@ -600,7 +598,7 @@ public class MyForm : Form
                         TextColor = ColorSettings.LesserForegroundColor,
                         Font = new Font(Program.UIFont, 14),
                         Width = 300,
-                        Height  = 50,
+                        Height = 50,
                     }
                 ),
                 null
