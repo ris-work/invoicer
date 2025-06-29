@@ -207,7 +207,7 @@ var RC = new RoundedC(new Eto.Forms.Button { Text = "RoundedC Button" })
     BackgroundColor = Eto.Drawing.Colors.LightGrey,
     FocusedBackgroundColor = Eto.Drawing.Colors.DarkGray,
     BorderColor = Eto.Drawing.Colors.Black,
-    FocusedBorderColor = Eto.Drawing.Colors.Red
+    FocusedBorderColor = Eto.Drawing.Colors.Red,
 };
 
 // Instantiate a RoundedD hosting a TextBox.
@@ -220,9 +220,8 @@ var RD = new RoundedD(new TextBox { PlaceholderText = "Enter text..." })
     BackgroundColor = Eto.Drawing.Colors.LightYellow,
     FocusedBackgroundColor = Eto.Drawing.Colors.Gold,
     BorderColor = Eto.Drawing.Colors.Black,
-    FocusedBorderColor = Eto.Drawing.Colors.Orange
+    FocusedBorderColor = Eto.Drawing.Colors.Orange,
 };
-
 
 //Image: https://www.flickr.com/photos/ellaolsson/48839117163/
 //Copyright (c) Ella Olson 2019, CC-BY 2.0

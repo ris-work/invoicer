@@ -5,8 +5,6 @@ namespace RV.InvNew.Common;
 
 public partial class AccountsJournalEntry
 {
-    public long JournalUnivSeq { get; set; }
-
     public int JournalNo { get; set; }
 
     public string? RefNo { get; set; }
@@ -28,4 +26,10 @@ public partial class AccountsJournalEntry
     public DateTime TimeAsEntered { get; set; }
 
     public string? Ref { get; set; }
+
+    public long PrincipalId { get; set; }
+
+    public string PrincipalName { get; set; } = null!;
+
+    public long JournalUnivSeq { get; set; }
 }

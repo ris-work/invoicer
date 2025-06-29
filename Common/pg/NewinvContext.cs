@@ -108,9 +108,10 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        =>
-        optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=newinv;Username=rishi;Password=eeee");
+    {
+        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
+        optionsBuilder.LogTo(Console.WriteLine);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -159,11 +160,8 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
         {
-            entity.HasKey(e => e.JournalUnivSeq).HasName("accounts_journal_entries_pkey");
+            entity.HasNoKey().ToTable("accounts_journal_entries");
 
-            entity.ToTable("accounts_journal_entries");
-
-            entity.Property(e => e.JournalUnivSeq).HasColumnName("journal_univ_seq");
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CreditAccountNo).HasColumnName("credit_account_no");
             entity.Property(e => e.CreditAccountType).HasColumnName("credit_account_type");
@@ -171,6 +169,13 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.JournalNo).HasColumnName("journal_no");
+            entity
+                .Property(e => e.JournalUnivSeq)
+                .ValueGeneratedOnAdd()
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("journal_univ_seq");
+            entity.Property(e => e.PrincipalId).HasColumnName("principal_id");
+            entity.Property(e => e.PrincipalName).HasColumnName("principal_name");
             entity.Property(e => e.Ref).HasColumnName("ref");
             entity.Property(e => e.RefNo).HasColumnName("ref_no");
             entity.Property(e => e.TimeAsEntered).HasColumnName("time_as_entered");

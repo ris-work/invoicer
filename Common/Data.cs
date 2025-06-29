@@ -309,6 +309,7 @@ namespace RV.InvNew.Common
             };
         }
     }
+
     public class JournalEntryDto
     {
         public string RefNo { get; set; }
@@ -320,5 +321,57 @@ namespace RV.InvNew.Common
         public string Description { get; set; }
         public DateTime TimeAsEntered { get; set; }
         public string Ref { get; set; }
+    }
+
+    public static class Helpers
+    {
+        public static AccountsJournalEntry ToEntity(this JournalEntryDto d) =>
+            d is null
+                ? throw new ArgumentNullException(nameof(d))
+                : new AccountsJournalEntry
+                {
+                    RefNo = d.RefNo,
+                    Amount = (double)d.Amount,
+                    DebitAccountType = d.DebitType,
+                    DebitAccountNo = d.DebitNo,
+                    CreditAccountType = d.CreditType,
+                    CreditAccountNo = d.CreditNo,
+                    Description = d.Description,
+                    TimeAsEntered = d.TimeAsEntered,
+                    Ref = d.Ref,
+                };
+
+        public static JournalEntryDto ToDto(this AccountsJournalEntry e) =>
+            e is null
+                ? throw new ArgumentNullException(nameof(e))
+                : new JournalEntryDto
+                {
+                    RefNo = e.RefNo,
+                    Amount = (decimal)e.Amount,
+                    DebitType = e.DebitAccountType,
+                    DebitNo = e.DebitAccountNo,
+                    CreditType = e.CreditAccountType,
+                    CreditNo = e.CreditAccountNo,
+                    Description = e.Description,
+                    TimeAsEntered = e.TimeAsEntered,
+                    Ref = e.Ref,
+                };
+    }
+
+    public readonly struct TimePeriod
+    {
+        public DateTime? From { get; }
+        public DateTime? To { get; }
+
+        public TimePeriod(DateTime? from, DateTime? to)
+        {
+            if (from.HasValue && to.HasValue && from > to)
+                throw new ArgumentException("From must be ≤ To", nameof(from));
+            From = from;
+            To = to;
+        }
+
+        public bool Contains(DateTime x) =>
+            (!From.HasValue || x >= From) && (!To.HasValue || x < To);
     }
 }

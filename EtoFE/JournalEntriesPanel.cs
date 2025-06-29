@@ -308,7 +308,5 @@ namespace EtoFE
             yield return 1001;
             yield return 2002;
         }
-
-        
     }
 }

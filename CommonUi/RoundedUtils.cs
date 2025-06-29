@@ -8,7 +8,11 @@ using Microsoft.Maui.ApplicationModel.Communication;
 //
 public static class GraphicsExtensions
 {
-    public static GraphicsPath CreateRoundedPath(this Graphics graphics, RectangleF rect, float radius)
+    public static GraphicsPath CreateRoundedPath(
+        this Graphics graphics,
+        RectangleF rect,
+        float radius
+    )
     {
         var path = new GraphicsPath();
         if (radius <= 0f)
@@ -31,19 +35,28 @@ public static class GraphicsExtensions
         return path;
     }
 
-    public static void FillRoundedRectangle(this Graphics graphics, Brush brush, Rectangle rect, float radius)
+    public static void FillRoundedRectangle(
+        this Graphics graphics,
+        Brush brush,
+        Rectangle rect,
+        float radius
+    )
     {
         //using (var path = graphics.CreateRoundedPath(rect, radius))
-            //graphics.FillPath(brush, path);
+        //graphics.FillPath(brush, path);
     }
 
-    public static void DrawRoundedRectangle(this Graphics graphics, Pen pen, Rectangle rect, float radius)
+    public static void DrawRoundedRectangle(
+        this Graphics graphics,
+        Pen pen,
+        Rectangle rect,
+        float radius
+    )
     {
         using (var path = graphics.CreateRoundedPath(rect, radius))
             graphics.DrawPath(pen, path);
     }
 }
-
 
 //
 // RoundedD: a Drawable-based control that supports full custom drawing and a hosted child.
@@ -54,6 +67,7 @@ public class RoundedD : Drawable
     public int BorderRadius { get; set; } = 10;
     public int BorderThickness { get; set; } = 1;
     public Padding Padding { get; set; } = Padding.Empty;
+
     // OffsetBottomRight is kept for your own layout logic if needed.
     public Size OffsetBottomRight { get; set; } = Size.Empty;
     public Color FocusedBackgroundColor { get; set; } = Colors.LightBlue;
@@ -92,7 +106,7 @@ public class RoundedD : Drawable
             // Remove borders when hosting a Button or TextBox.
             if (child is Button || child is TextBox)
                 BorderThickness = 1;
-            if(child is TextBox tb)
+            if (child is TextBox tb)
             {
                 tb.ShowBorder = false;
             }
@@ -103,8 +117,6 @@ public class RoundedD : Drawable
         }
         // Set the initial size.
         Size = new Size(Width, Height);
-        
-        
     }
 
     // Returns the hosted child.
@@ -116,7 +128,9 @@ public class RoundedD : Drawable
         // Determine inner available size (subtracting Padding).
         var avail = new Size(Width - Padding.Horizontal, Height - Padding.Vertical);
         if (_child != null)
-            _child.Size = (Size)( (Width > 0 && Height > 0) ? avail : _child.GetPreferredSize(Size.Empty));
+            _child.Size = (Size)(
+                (Width > 0 && Height > 0) ? avail : _child.GetPreferredSize(Size.Empty)
+            );
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -187,7 +201,6 @@ public class RoundedD : Drawable
     }
 }
 
-
 //
 // RoundedC: a Panel-based control that hosts one arbitrary child.
 // Since Panel does not support custom painting by overriding OnPaint,
@@ -198,6 +211,7 @@ public class RoundedC : Panel
 {
     public int BorderRadius { get; set; } = 10;
     public int BorderThickness { get; set; } = 1;
+
     // Use Panel.Padding (available by default) instead of a custom Padding.
     public new Color FocusedBackgroundColor { get; set; } = Colors.LightBlue;
     public Color FocusedForegroundColor { get; set; } = Colors.White;
@@ -269,10 +283,14 @@ public class RoundedC : Panel
                     var border = _focused ? FocusedBorderColor : BorderColor;
                     g.FillRoundedRectangle(new SolidBrush(bg), rect, BorderRadius);
                     if (BorderThickness > 0)
-                        g.DrawRoundedRectangle(new Pen(border, BorderThickness), rect, BorderRadius);
+                        g.DrawRoundedRectangle(
+                            new Pen(border, BorderThickness),
+                            rect,
+                            BorderRadius
+                        );
                 }
                 // Since BackgroundImage is writeable (the Bitmap is cloned internally), assign it directly.
-                
+
                 //BackgroundImage = bmp;
             }
         }
@@ -286,7 +304,9 @@ public class RoundedC : Panel
         {
             // Let the layout system work; if necessary, update the child's size.
             var avail = new Size(Width - Padding.Horizontal, Height - Padding.Vertical);
-            Child.Size = (Size)((Width > 0 && Height > 0) ? avail : Child.GetPreferredSize(Size.Empty));
+            Child.Size = (Size)(
+                (Width > 0 && Height > 0) ? avail : Child.GetPreferredSize(Size.Empty)
+            );
         }
         UpdateBackground();
     }

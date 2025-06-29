@@ -93,7 +93,7 @@ namespace CommonUi
                 diameter = rect.Height;
 
             // Top-left arc.
-            var arc = new RectangleF(rect.Left, rect.Top, diameter -2, diameter-2);
+            var arc = new RectangleF(rect.Left, rect.Top, diameter - 2, diameter - 2);
             path.AddArc(arc, 180, 90);
 
             // Top-right arc.
@@ -195,7 +195,12 @@ namespace CommonUi
             base.OnPaint(e);
 
             // Define the control’s full bounds.
-            var rect = new RectangleF(0, 0, (float)Width - OffsetRightDown, (float)Height - OffsetRightDown);
+            var rect = new RectangleF(
+                0,
+                0,
+                (float)Width - OffsetRightDown,
+                (float)Height - OffsetRightDown
+            );
 
             // Optionally, fill the background if BackgroundColor is set.
             if (this.BackgroundColor != null)
@@ -227,7 +232,8 @@ namespace CommonUi
                 var textSize = e.Graphics.MeasureString(Font, Text);
                 float x = (rect.Width - textSize.Width) / 2;
                 float y = (rect.Height - textSize.Height) / 2;
-                if(!Centered) x = 0;
+                if (!Centered)
+                    x = 0;
                 //y = 0;
                 using (var brush = new SolidBrush(TextColor))
                 {

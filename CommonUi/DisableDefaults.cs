@@ -88,6 +88,7 @@ namespace CommonUi
             }
 #endif
         }
+
         public static void ConfigureLegacyBehaviour(this Eto.Forms.Form Frm)
         {
 #if WINDOWS || WINFORMS
@@ -95,12 +96,14 @@ namespace CommonUi
 
             if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
-                System.Windows.Forms.Form WF = (System.Windows.Forms.Form)
-                    Frm.ControlObject;
+                System.Windows.Forms.Form WF = (System.Windows.Forms.Form)Frm.ControlObject;
                 WF.AutoScaleMode = AutoScaleMode.Dpi;
                 //WF.AutoScaleDimensions = new System.Drawing.SizeF(ColorSettings.dpiX, ColorSettings.dpiY);
-                WF.AutoScaleBaseSize = new System.Drawing.Size((int)ColorSettings.dpiX, (int)ColorSettings.dpiY);
-                
+                WF.AutoScaleBaseSize = new System.Drawing.Size(
+                    (int)ColorSettings.dpiX,
+                    (int)ColorSettings.dpiY
+                );
+
                 //WF.UseCo
             }
 #endif
@@ -893,12 +896,12 @@ namespace CommonUi
 #endif
         }
 
-            /// <summary>
-            /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
-            /// Evaluates the provided variable P against the current Eto backend.
-            /// </summary>
-            /// <param name="button">The Eto.Forms.Button to configure.</param>
-            /// <param name="P">A string representing the current Eto backend platform.</param>
+        /// <summary>
+        /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
+        /// Evaluates the provided variable P against the current Eto backend.
+        /// </summary>
+        /// <param name="button">The Eto.Forms.Button to configure.</param>
+        /// <param name="P">A string representing the current Eto backend platform.</param>
         public static void ConfigureForPlatform(this Eto.Forms.Button button)
         {
             var P = Eto.Platform.Instance.ToString();
