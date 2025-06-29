@@ -32,6 +32,22 @@ namespace InvoicerBackend
                 .Amount += AccJE.Amount;
         }
 
-        public static void ReverseJournalEntry() { }
+        public static void ReverseJournalEntry(long JournalEntryId) {
+            using (var ctx = new NewinvContext())
+            {
+                AccountsJournalEntry JE;
+                JE = ctx.AccountsJournalEntries.Where(e => e.JournalUnivSeq == JournalEntryId).Single();
+                AddJournalEntry(ctx, new JournalEntry() { 
+                    Amount = -JE.Amount,
+                    CreditAccountType = JE.CreditAccountType,
+                    CreditAccountNo = JE.CreditAccountNo,
+                    DebitAccountType = JE.DebitAccountType,
+                    DebitAccountNo = JE.DebitAccountNo,
+                    Description = JE.Description,
+                    TimeAsEntered = JE.TimeAsEntered,
+                });
+                ctx.SaveChanges();
+            }
+        }
     }
 }

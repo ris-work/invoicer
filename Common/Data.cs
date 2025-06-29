@@ -309,4 +309,16 @@ namespace RV.InvNew.Common
             };
         }
     }
+    public class JournalEntryDto
+    {
+        public string RefNo { get; set; }
+        public decimal Amount { get; set; }
+        public int DebitType { get; set; }
+        public long DebitNo { get; set; }
+        public int CreditType { get; set; }
+        public long CreditNo { get; set; }
+        public string Description { get; set; }
+        public DateTime TimeAsEntered { get; set; }
+        public string Ref { get; set; }
+    }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace EtoFE
 {
@@ -308,17 +309,6 @@ namespace EtoFE
             yield return 2002;
         }
 
-        public class JournalEntryDto
-        {
-            public string RefNo { get; set; }
-            public decimal Amount { get; set; }
-            public int DebitType { get; set; }
-            public long DebitNo { get; set; }
-            public int CreditType { get; set; }
-            public long CreditNo { get; set; }
-            public string Description { get; set; }
-            public DateTime TimeAsEntered { get; set; }
-            public string Ref { get; set; }
-        }
+        
     }
 }
