@@ -40,6 +40,24 @@ namespace EtoFE
             );
             LocalColor = ColorSettings.RotateAllToPanelSettings(0);
             BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
+            List<AccountsType> ACs;
+            while (true)
+            {
+                var req = (
+                    SendAuthenticatedRequest<string, List<AccountsType>>.Send(
+                        "Refresh",
+                        "/GetAccountsTypes",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+                    ACs = req.Out;
+                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
+                    break;
+                }
+            }
             TextBox txtRefNo;
             NumericUpDown numAmount;
             ComboBox ddlDebitType;
@@ -166,7 +184,7 @@ namespace EtoFE
                 return;
             }
 
-            var entry = new JournalEntryDto
+            var entry = (new JournalEntryDto
             {
                 RefNo = txtRefNo.Text,
                 Amount = (decimal)numAmount.Value,
@@ -177,7 +195,7 @@ namespace EtoFE
                 Description = txtDescription.Text,
                 TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
                 Ref = txtRef.Text,
-            };
+            }).ToEntity();
 
             string json = JsonSerializer.Serialize(
                 entry,

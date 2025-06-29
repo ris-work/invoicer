@@ -58,11 +58,11 @@ app.AddEarlierDesignedEndpoints();
 app.AddNotificationsHandler();
 app.MapPost(
         "/NewJournalEntry",
-        (AuthenticatedRequest<JournalEntry> AJE) =>
+        (AuthenticatedRequest<AccountsJournalEntry> AJE) =>
         {
             using (var ctx = new NewinvContext() { })
             {
-                JournalEntry AccJE = AJE.Get();
+                AccountsJournalEntry AccJE = AJE.Get();
                 using var Transaction = ctx.Database.BeginTransaction(
                     System.Data.IsolationLevel.Serializable
                 );
@@ -224,6 +224,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
     "Refresh"
 );
 app.AddCatalogueDefaultImageEndpoints();
+app.AddJournalEndpoints();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();

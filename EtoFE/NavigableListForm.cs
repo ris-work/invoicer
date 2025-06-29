@@ -12,6 +12,7 @@ using Eto;
 using Eto.Containers;
 using Eto.Forms;
 using EtoFE;
+using EtoFE.Panels;
 using MyExtensions;
 using RV.InvNew.Common;
 
@@ -133,7 +134,20 @@ namespace EtoFE
                         ),
                         "Inventory"
                     ),
-                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>()), "Accounts"),
+                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>(new NestableNavigableListPanel(
+                                    new List<(string Label, object Content, string Name)>
+                                    {
+                                        (
+                                            "📝 Account Types",
+                                            new LoadOncePanel<AllAccountsTypes>(),
+                                            "Editor"
+                                        ),
+                                        (
+                                            "📋 All Journal Entries",
+                                            new LoadOncePanel<AllJournalEntries>(),
+                                            "BatchEditor"
+                                        ),
+                                    }))), "Accounts"),
                     (
                         $" 👥 HR / {Environment.NewLine} Employees  ",
                         (new LoadOncePanel<Panel>()),
