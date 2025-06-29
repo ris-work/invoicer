@@ -4,7 +4,7 @@ namespace InvoicerBackend
 {
     public static class JournalEntries
     {
-        public static void AddJournalEntry(NewinvContext ctx, JournalEntry AccJE)
+        public static void AddJournalEntry(NewinvContext ctx, AccountsJournalEntry AccJE)
         {
             ctx.AccountsJournalEntries.Add(
                 new AccountsJournalEntry
@@ -42,7 +42,7 @@ namespace InvoicerBackend
                     .Single();
                 AddJournalEntry(
                     ctx,
-                    new JournalEntry()
+                    new AccountsJournalEntry()
                     {
                         Amount = -JE.Amount,
                         CreditAccountType = JE.CreditAccountType,
