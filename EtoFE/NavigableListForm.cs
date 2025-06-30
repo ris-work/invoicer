@@ -134,7 +134,11 @@ namespace EtoFE
                         ),
                         "Inventory"
                     ),
-                    (" 💰 Accounts  ", (new LoadOncePanel<Panel>(new NestableNavigableListPanel(
+                    (
+                        " 💰 Accounts  ",
+                        (
+                            new LoadOncePanel<Panel>(
+                                new NestableNavigableListPanel(
                                     new List<(string Label, object Content, string Name)>
                                     {
                                         (
@@ -152,7 +156,12 @@ namespace EtoFE
                                             new LoadOncePanel<JournalEntriesPanel>(),
                                             "JournalEntry"
                                         ),
-                                    }))), "Accounts"),
+                                    }
+                                )
+                            )
+                        ),
+                        "Accounts"
+                    ),
                     (
                         $" 👥 HR / {Environment.NewLine} Employees  ",
                         (new LoadOncePanel<Panel>()),

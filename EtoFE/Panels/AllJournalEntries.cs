@@ -1,15 +1,15 @@
-﻿using CommonUi;
-using Eto.Forms;
-using RV.InvNew.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonUi;
+using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace EtoFE.Panels
 {
-    public class AllJournalEntries: Panel
+    public class AllJournalEntries : Panel
     {
         public AllJournalEntries()
         {
@@ -37,7 +37,19 @@ namespace EtoFE.Panels
                     break;
                 }
             }
-            Content = SearchPanelUtility.GenerateSearchPanel(JEs, false);
+            Content = SearchPanelUtility.GenerateSearchPanel(
+                JEs,
+                false,
+                null,
+                [
+                    "TimeAsEntered",
+                    "DebitAccountName",
+                    "CreditAccountName",
+                    "Amount",
+                    "JournalNo",
+                    "PrincipalName",
+                ]
+            );
         }
     }
 }

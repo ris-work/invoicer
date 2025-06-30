@@ -109,7 +109,7 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
+        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
     }
 

@@ -54,7 +54,11 @@ namespace EtoFE
                 if (req.Error == false)
                 {
                     AIs = req.Out;
-                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Got this",
+                        MessageBoxType.Information
+                    );
                     break;
                 }
             }
@@ -85,7 +89,7 @@ namespace EtoFE
             // instantiate controls
             txtRefNo = new TextBox();
             numAmount = new NumericUpDown { MinValue = 0, DecimalPlaces = 2 };
-            ddlDebitType = new Button {Width = 100, Height = 30};
+            ddlDebitType = new Button { Width = 100, Height = 30 };
             ddlDebitNo = new Button();
             ddlCreditType = new Button { Width = 100, Height = 30 };
             ddlCreditNo = new Button();
@@ -111,7 +115,13 @@ namespace EtoFE
                     new TableRow("Ref No:", txtRefNo),
                     new TableRow("Amount:", numAmount),
                     new TableRow("Debit Type:", ddlDebitType, "Debit No:", ddlDebitNo, DebitType),
-                    new TableRow("Credit Type:", ddlCreditType, "Credit No:", ddlCreditNo, CreditType),
+                    new TableRow(
+                        "Credit Type:",
+                        ddlCreditType,
+                        "Credit No:",
+                        ddlCreditNo,
+                        CreditType
+                    ),
                     new TableRow("Description:", new TableCell(txtDescription, true)),
                     new TableRow("Time Entered:", dtpEntered),
                     new TableRow("Reference:", txtRef),
@@ -127,7 +137,8 @@ namespace EtoFE
                     ),
                 },
             };
-            ddlCreditType.Click += (_,_) => {
+            ddlCreditType.Click += (_, _) =>
+            {
                 var x = SearchPanelUtility.GenerateSearchDialog(AIs, ddlCreditType);
                 //MessageBox.Show(String.Join('2', x));
                 ddlCreditType.Text = x[0];
@@ -135,26 +146,30 @@ namespace EtoFE
                 CreditType.Text = x[2];
                 //GoToNext(ddlCreditType,new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
             };
-            ddlDebitType.Click += (_, _) => {
+            ddlDebitType.Click += (_, _) =>
+            {
                 var x = SearchPanelUtility.GenerateSearchDialog(AIs, ddlCreditType);
                 ddlDebitType.Text = x[0];
                 ddlDebitNo.Text = x[1];
                 DebitType.Text = x[2];
                 //GoToNext(ddlCreditType, new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
             };
-            btnSave.Click += (_, _) => {
-                var entry = (new JournalEntryDto
-                {
-                    RefNo = txtRefNo.Text,
-                    Amount = (decimal)numAmount.Value,
-                    DebitType = Convert.ToInt32(ddlDebitType.Text),
-                    DebitNo = Convert.ToInt64(ddlDebitNo.Text),
-                    CreditType = Convert.ToInt32(ddlCreditType.Text),
-                    CreditNo = Convert.ToInt64(ddlCreditNo.Text),
-                    Description = txtDescription.Text,
-                    TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
-                    Ref = txtRef.Text,
-                }).ToEntity();
+            btnSave.Click += (_, _) =>
+            {
+                var entry = (
+                    new JournalEntryDto
+                    {
+                        RefNo = txtRefNo.Text,
+                        Amount = (decimal)numAmount.Value,
+                        DebitType = Convert.ToInt32(ddlDebitType.Text),
+                        DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+                        CreditType = Convert.ToInt32(ddlCreditType.Text),
+                        CreditNo = Convert.ToInt64(ddlCreditNo.Text),
+                        Description = txtDescription.Text,
+                        TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
+                        Ref = txtRef.Text,
+                    }
+                ).ToEntity();
                 var req = (
                     SendAuthenticatedRequest<AccountsJournalEntry, long>.Send(
                         entry,
@@ -166,7 +181,11 @@ namespace EtoFE
                 if (req.Error == false)
                 {
                     var resp = req.Out;
-                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Got this",
+                        MessageBoxType.Information
+                    );
                 }
             };
             // focus list & Enter→Next
@@ -202,14 +221,8 @@ namespace EtoFE
                         ? (true, null)
                         : (false, "Reference Number is required."),
                 () => numAmount.Value > 0 ? (true, null) : (false, "Amount must be > 0."),
-                () =>
-                    ddlDebitNo.Text != ""
-                        ? (true, null)
-                        : (false, "Select a Debit Account."),
-                () =>
-                    ddlCreditNo.Text != ""
-                        ? (true, null)
-                        : (false, "Select a Credit Account."),
+                () => ddlDebitNo.Text != "" ? (true, null) : (false, "Select a Debit Account."),
+                () => ddlCreditNo.Text != "" ? (true, null) : (false, "Select a Credit Account."),
             };
 
             // button hooks
@@ -229,18 +242,20 @@ namespace EtoFE
                 return;
             }
 
-            var entry = (new JournalEntryDto
-            {
-                RefNo = txtRefNo.Text,
-                Amount = (decimal)numAmount.Value,
-                DebitType = Convert.ToInt32(ddlDebitType.Text),
-                DebitNo = Convert.ToInt64(ddlDebitNo.Text),
-                CreditType = Convert.ToInt32(ddlCreditType.Text),
-                CreditNo = Convert.ToInt64(ddlCreditNo.Text),
-                Description = txtDescription.Text,
-                TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
-                Ref = txtRef.Text,
-            }).ToEntity();
+            var entry = (
+                new JournalEntryDto
+                {
+                    RefNo = txtRefNo.Text,
+                    Amount = (decimal)numAmount.Value,
+                    DebitType = Convert.ToInt32(ddlDebitType.Text),
+                    DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+                    CreditType = Convert.ToInt32(ddlCreditType.Text),
+                    CreditNo = Convert.ToInt64(ddlCreditNo.Text),
+                    Description = txtDescription.Text,
+                    TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
+                    Ref = txtRef.Text,
+                }
+            ).ToEntity();
 
             string json = JsonSerializer.Serialize(
                 entry,

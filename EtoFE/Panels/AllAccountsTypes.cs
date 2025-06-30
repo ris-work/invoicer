@@ -1,16 +1,16 @@
-﻿using CommonUi;
-using Eto.Forms;
-using RV.InvNew.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CommonUi;
+using Eto.Forms;
+using RV.InvNew.Common;
 
 namespace EtoFE.Panels
 {
-    public class AllAccountsTypes: Panel
+    public class AllAccountsTypes : Panel
     {
         public AllAccountsTypes()
         {
@@ -34,7 +34,11 @@ namespace EtoFE.Panels
                 if (req.Error == false)
                 {
                     ACs = req.Out;
-                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Got this",
+                        MessageBoxType.Information
+                    );
                     break;
                 }
             }

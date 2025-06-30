@@ -16,11 +16,28 @@ namespace InvoicerBackend
                 (AS, LoginInfo) =>
                 {
                     var Entry = (AccountsJournalEntry)AS;
-                    System.Console.WriteLine($"AddJournalEntry: {LoginInfo.UserId}, {LoginInfo.Principal}");
+                    System.Console.WriteLine(
+                        $"AddJournalEntry: {LoginInfo.UserId}, {LoginInfo.Principal}"
+                    );
                     Entry.PrincipalId = (long)LoginInfo.UserId;
                     Entry.PrincipalName = LoginInfo.Principal;
+
                     using (var ctx = new NewinvContext())
                     {
+                        Entry.CreditAccountName = ctx
+                            .AccountsInformations.Where(e =>
+                                e.AccountType == Entry.CreditAccountType
+                                && e.AccountNo == Entry.CreditAccountNo
+                            )
+                            .Single()
+                            .AccountName;
+                        Entry.DebitAccountName = ctx
+                            .AccountsInformations.Where(e =>
+                                e.AccountType == Entry.DebitAccountType
+                                && e.AccountNo == Entry.DebitAccountNo
+                            )
+                            .Single()
+                            .AccountName;
                         JournalEntries.AddJournalEntry(ctx, Entry);
                         ctx.SaveChanges();
                     }
@@ -58,7 +75,11 @@ namespace InvoicerBackend
                     List<AccountsJournalEntry> AccJEList;
                     using (var ctx = new NewinvContext())
                     {
-                        AccJEList = ctx.AccountsJournalEntries.Where(e => e.TimeTai >= TP.From && e.TimeTai <= TP.To).ToList();
+                        AccJEList = ctx
+                            .AccountsJournalEntries.Where(e =>
+                                e.TimeTai >= TP.From && e.TimeTai <= TP.To
+                            )
+                            .ToList();
                     }
                     return AccJEList;
                 },
@@ -69,13 +90,14 @@ namespace InvoicerBackend
                 (AS, LoginInfo) =>
                 {
                     List<AccountsInformation> AI;
-                    using (var ctx = new NewinvContext()) {
+                    using (var ctx = new NewinvContext())
+                    {
                         AI = ctx.AccountsInformations.ToList();
                     }
                     return AI;
                 },
                 "Refresh"
-                );
+            );
             app.AddEndpointWithBearerAuth<string>(
                 "GetAccountsTypes",
                 (AS, LoginInfo) =>
@@ -88,7 +110,7 @@ namespace InvoicerBackend
                     return AI;
                 },
                 "Refresh"
-                );
+            );
             app.AddEndpointWithBearerAuth<string>(
                 "GetAccountsBalances",
                 (AS, LoginInfo) =>
@@ -101,7 +123,7 @@ namespace InvoicerBackend
                     return AB;
                 },
                 "Refresh"
-                );
+            );
             return app;
         }
     }

@@ -1,30 +1,103 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Text.Json;
 using Eto.Drawing;
 using Eto.Forms;
 
 namespace CommonUi
 {
+    public static class StringArrayExtensions
+    {
+        /// <summary>
+        /// Returns a new array where the specified frontKeys appear first (in that order),
+        /// followed by the rest of the source items (in their original order).
+        /// </summary>
+        public static string[] BringToFront(this string[] source, params string[] frontKeys)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (frontKeys == null || frontKeys.Length == 0)
+                return source.ToArray();
+
+            var seen = new HashSet<string>(frontKeys);
+            var result = new List<string>(source.Length);
+
+            // 1) Add any frontKeys that actually exist in source, in the order given
+            foreach (var key in frontKeys)
+            {
+                if (Array.IndexOf(source, key) >= 0)
+                    result.Add(key);
+            }
+
+            // 2) Append all items from source that weren't in frontKeys
+            foreach (var item in source)
+            {
+                if (!seen.Contains(item))
+                    result.Add(item);
+            }
+
+            return result.ToArray();
+        }
+    }
+
+    public static class DictionaryExtensions
+    {
+        /// <summary>
+        /// Returns an OrderedDictionary whose entries are:
+        ///  1) the keys in frontKeys (in that order, if they exist in the source)
+        ///  2) then all remaining entries in the original dictionary’s enumeration order
+        /// </summary>
+        public static OrderedDictionary OrderByKeys<K, V>(
+            this IDictionary<K, V> source,
+            IEnumerable<K> frontKeys
+        )
+        {
+            var result = new OrderedDictionary();
+            var seen = new HashSet<K>(frontKeys);
+
+            // 1) add front‐keys in the requested order
+            foreach (var key in frontKeys)
+            {
+                if (source.TryGetValue(key, out var value))
+                    result.Add(key, value);
+            }
+
+            // 2) add the rest in whatever order the source gives them
+            foreach (var kvp in source)
+            {
+                if (!seen.Contains(kvp.Key))
+                    result.Add(kvp.Key, kvp.Value);
+            }
+
+            return result;
+        }
+    }
+
     //---------------------------------------------------------------------
     // AoT‑Friendly Search Panel Utility (No key prefix in cell values)
     //---------------------------------------------------------------------
     public static class SearchPanelUtility
     {
         public static string[] GenerateSearchDialog<T>(
-                        List<T> items,
-                        Control owner,
+            List<T> items,
+            Control owner,
             bool debug = true,
             PanelSettings? localColors = null
-            )
+        )
         {
             var generated = new Dialog<string[]>();
 
             var searchPanel = GenerateSearchPanel(items);
             generated.Content = searchPanel;
-            searchPanel.OnSelectionMade += () => { generated.Close(searchPanel.Selected); };
+            searchPanel.OnSelectionMade += () =>
+            {
+                generated.Close(searchPanel.Selected);
+            };
             return generated.ShowModal(owner);
         }
+
         /// <summary>
         /// Generates a SearchPanelEto for a list of objects of type T.
         /// Each object is serialized to JSON and deserialized into a dictionary.
@@ -41,7 +114,8 @@ namespace CommonUi
         public static SearchPanelEto GenerateSearchPanel<T>(
             List<T> items,
             bool debug = true,
-            PanelSettings? localColors = null
+            PanelSettings? localColors = null,
+            string[]? order = null
         )
         {
             if (items == null || items.Count == 0)
@@ -57,7 +131,11 @@ namespace CommonUi
             // Serialize the first object to build the column template.
             string firstJson = JsonSerializer.Serialize(items[0]);
             var firstDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(firstJson);
-            List<string> keys = new List<string>(firstDict!.Keys);
+            string[] keys = new List<string>(firstDict!.Keys).ToArray();
+            if (order != null)
+                keys = keys.BringToFront(order);
+            else
+                keys = keys.BringToFront([]);
 
             // Build header entries: if the sample value is numeric, right-align; otherwise, left-align.
             var headerEntries = new List<(string Header, TextAlignment Alignment, bool Visible)>();
@@ -68,7 +146,8 @@ namespace CommonUi
                     (element.ValueKind == JsonValueKind.Number)
                         ? TextAlignment.Right
                         : TextAlignment.Left;
-                headerEntries.Add((key, alignment, true));
+                bool IsNumeric = (firstDict[key]).ValueKind is JsonValueKind.Number;
+                headerEntries.Add((key, alignment, IsNumeric));
             }
             // Append an extra header for the full JSON (typically hidden).
             headerEntries.Add(("JSON", TextAlignment.Left, false));
@@ -78,7 +157,10 @@ namespace CommonUi
             foreach (T item in items)
             {
                 string jsonText = JsonSerializer.Serialize(item);
-                var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonText);
+                IDictionary<string, JsonElement> dict = JsonSerializer.Deserialize<
+                    Dictionary<string, JsonElement>
+                >(jsonText);
+
                 var cells = new List<string>();
 
                 // For each key (using the same order as the header), output ONLY the cell's value.
