@@ -118,11 +118,13 @@ public partial class NewinvContext : DbContext
         modelBuilder.Entity<AccountsBalance>(entity =>
         {
             entity
-                .HasNoKey()
-                .ToTable("accounts_balances", tb => tb.HasComment("Positive is debit"));
+                .HasKey(e => new { e.AccountType, e.AccountNo })
+                .HasName("accounts_balances_pkey");
 
-            entity.Property(e => e.AccountNo).HasColumnName("account_no");
+            entity.ToTable("accounts_balances", tb => tb.HasComment("Positive is debit"));
+
             entity.Property(e => e.AccountType).HasColumnName("account_type");
+            entity.Property(e => e.AccountNo).HasColumnName("account_no");
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.DoneWith).HasDefaultValue(false).HasColumnName("done_with");
             entity
@@ -160,8 +162,14 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
         {
-            entity.HasNoKey().ToTable("accounts_journal_entries");
+            entity.HasKey(e => e.JournalUnivSeq).HasName("accounts_journal_entries_pkey");
 
+            entity.ToTable("accounts_journal_entries");
+
+            entity
+                .Property(e => e.JournalUnivSeq)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("journal_univ_seq");
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CreditAccountNo).HasColumnName("credit_account_no");
             entity.Property(e => e.CreditAccountType).HasColumnName("credit_account_type");
@@ -169,11 +177,6 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.JournalNo).HasColumnName("journal_no");
-            entity
-                .Property(e => e.JournalUnivSeq)
-                .ValueGeneratedOnAdd()
-                .UseIdentityAlwaysColumn()
-                .HasColumnName("journal_univ_seq");
             entity.Property(e => e.PrincipalId).HasColumnName("principal_id");
             entity.Property(e => e.PrincipalName).HasColumnName("principal_name");
             entity.Property(e => e.Ref).HasColumnName("ref");

@@ -140,12 +140,17 @@ namespace EtoFE
                                         (
                                             "📝 Account Types",
                                             new LoadOncePanel<AllAccountsTypes>(),
-                                            "Editor"
+                                            "AccountTypes"
                                         ),
                                         (
                                             "📋 All Journal Entries",
                                             new LoadOncePanel<AllJournalEntries>(),
-                                            "BatchEditor"
+                                            "AllJournalEntries"
+                                        ),
+                                        (
+                                            "📋 Make Journal Entries",
+                                            new LoadOncePanel<JournalEntriesPanel>(),
+                                            "JournalEntry"
                                         ),
                                     }))), "Accounts"),
                     (

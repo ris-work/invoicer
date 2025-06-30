@@ -15,10 +15,10 @@ namespace EtoFE
     {
         TextBox txtRefNo;
         NumericUpDown numAmount;
-        ComboBox ddlDebitType;
-        ComboBox ddlDebitNo;
-        ComboBox ddlCreditType;
-        ComboBox ddlCreditNo;
+        Button ddlDebitType;
+        Button ddlDebitNo;
+        Button ddlCreditType;
+        Button ddlCreditNo;
         TextArea txtDescription;
         DateTimePicker dtpEntered;
         TextBox txtRef;
@@ -40,30 +40,32 @@ namespace EtoFE
             );
             LocalColor = ColorSettings.RotateAllToPanelSettings(0);
             BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
-            List<AccountsType> ACs;
+            List<AccountsInformation> AIs;
             while (true)
             {
                 var req = (
-                    SendAuthenticatedRequest<string, List<AccountsType>>.Send(
+                    SendAuthenticatedRequest<string, List<AccountsInformation>>.Send(
                         "Refresh",
-                        "/GetAccountsTypes",
+                        "/GetAccountsInformation",
                         true
                     )
                 );
                 //req.ShowModal();
                 if (req.Error == false)
                 {
-                    ACs = req.Out;
+                    AIs = req.Out;
                     MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
                     break;
                 }
             }
             TextBox txtRefNo;
             NumericUpDown numAmount;
-            ComboBox ddlDebitType;
-            ComboBox ddlDebitNo;
-            ComboBox ddlCreditType;
-            ComboBox ddlCreditNo;
+            Button ddlDebitType;
+            Button ddlDebitNo;
+            Button ddlCreditType;
+            Button ddlCreditNo;
+            Label CreditType;
+            Label DebitType;
             TextArea txtDescription;
             DateTimePicker dtpEntered;
             TextBox txtRef;
@@ -83,13 +85,15 @@ namespace EtoFE
             // instantiate controls
             txtRefNo = new TextBox();
             numAmount = new NumericUpDown { MinValue = 0, DecimalPlaces = 2 };
-            ddlDebitType = new ComboBox { DataStore = LoadAccountTypes() };
-            ddlDebitNo = new ComboBox();
-            ddlCreditType = new ComboBox { DataStore = LoadAccountTypes() };
-            ddlCreditNo = new ComboBox();
+            ddlDebitType = new Button {Width = 100, Height = 30};
+            ddlDebitNo = new Button();
+            ddlCreditType = new Button { Width = 100, Height = 30 };
+            ddlCreditNo = new Button();
             txtDescription = new TextArea { Height = 60 };
             dtpEntered = new DateTimePicker { Mode = DateTimePickerMode.DateTime };
             txtRef = new TextBox();
+            CreditType = new Label() { Width = 100, Height = 30 };
+            DebitType = new Label() { Width = 100, Height = 30 };
 
             btnSave = new Button { Text = "Save" };
             btnLoad = new Button { Text = "Load" };
@@ -106,8 +110,8 @@ namespace EtoFE
                 {
                     new TableRow("Ref No:", txtRefNo),
                     new TableRow("Amount:", numAmount),
-                    new TableRow("Debit Type:", ddlDebitType, "Debit No:", ddlDebitNo),
-                    new TableRow("Credit Type:", ddlCreditType, "Credit No:", ddlCreditNo),
+                    new TableRow("Debit Type:", ddlDebitType, "Debit No:", ddlDebitNo, DebitType),
+                    new TableRow("Credit Type:", ddlCreditType, "Credit No:", ddlCreditNo, CreditType),
                     new TableRow("Description:", new TableCell(txtDescription, true)),
                     new TableRow("Time Entered:", dtpEntered),
                     new TableRow("Reference:", txtRef),
@@ -123,7 +127,48 @@ namespace EtoFE
                     ),
                 },
             };
-
+            ddlCreditType.Click += (_,_) => {
+                var x = SearchPanelUtility.GenerateSearchDialog(AIs, ddlCreditType);
+                //MessageBox.Show(String.Join('2', x));
+                ddlCreditType.Text = x[0];
+                ddlCreditNo.Text = x[1];
+                CreditType.Text = x[2];
+                //GoToNext(ddlCreditType,new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
+            };
+            ddlDebitType.Click += (_, _) => {
+                var x = SearchPanelUtility.GenerateSearchDialog(AIs, ddlCreditType);
+                ddlDebitType.Text = x[0];
+                ddlDebitNo.Text = x[1];
+                DebitType.Text = x[2];
+                //GoToNext(ddlCreditType, new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
+            };
+            btnSave.Click += (_, _) => {
+                var entry = (new JournalEntryDto
+                {
+                    RefNo = txtRefNo.Text,
+                    Amount = (decimal)numAmount.Value,
+                    DebitType = Convert.ToInt32(ddlDebitType.Text),
+                    DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+                    CreditType = Convert.ToInt32(ddlCreditType.Text),
+                    CreditNo = Convert.ToInt64(ddlCreditNo.Text),
+                    Description = txtDescription.Text,
+                    TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
+                    Ref = txtRef.Text,
+                }).ToEntity();
+                var req = (
+                    SendAuthenticatedRequest<AccountsJournalEntry, long>.Send(
+                        entry,
+                        "/AddJournalEntry",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+                    var resp = req.Out;
+                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Got this", MessageBoxType.Information);
+                }
+            };
             // focus list & Enter→Next
             focusList = new List<Control>
             {
@@ -144,10 +189,10 @@ namespace EtoFE
             }
 
             // dropdown linkage
-            ddlDebitType.SelectedValueChanged += (s, e) =>
+            /*ddlDebitType.SelectedValueChanged += (s, e) =>
                 ddlDebitNo.DataStore = LoadAccountNumbers((int)ddlDebitType.SelectedValue);
             ddlCreditType.SelectedValueChanged += (s, e) =>
-                ddlCreditNo.DataStore = LoadAccountNumbers((int)ddlCreditType.SelectedValue);
+                ddlCreditNo.DataStore = LoadAccountNumbers((int)ddlCreditType.SelectedValue);*/
 
             // validations
             rules = new List<Func<(bool Valid, string Error)>>
@@ -158,17 +203,17 @@ namespace EtoFE
                         : (false, "Reference Number is required."),
                 () => numAmount.Value > 0 ? (true, null) : (false, "Amount must be > 0."),
                 () =>
-                    ddlDebitNo.SelectedValue != null
+                    ddlDebitNo.Text != ""
                         ? (true, null)
                         : (false, "Select a Debit Account."),
                 () =>
-                    ddlCreditNo.SelectedValue != null
+                    ddlCreditNo.Text != ""
                         ? (true, null)
                         : (false, "Select a Credit Account."),
             };
 
             // button hooks
-            btnSave.Click += (s, e) => OnSave();
+            //btnSave.Click += (s, e) => OnSave();
             btnLoad.Click += (s, e) => OnLoad();
             btnUpdate.Click += (s, e) => UpdateEntry();
             btnDelete.Click += (s, e) => DeleteEntry();
@@ -188,10 +233,10 @@ namespace EtoFE
             {
                 RefNo = txtRefNo.Text,
                 Amount = (decimal)numAmount.Value,
-                DebitType = Convert.ToInt32(ddlDebitType.SelectedValue),
-                DebitNo = Convert.ToInt64(ddlDebitNo.SelectedValue),
-                CreditType = Convert.ToInt32(ddlCreditType.SelectedValue),
-                CreditNo = Convert.ToInt64(ddlCreditNo.SelectedValue),
+                DebitType = Convert.ToInt32(ddlDebitType.Text),
+                DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+                CreditType = Convert.ToInt32(ddlCreditType.Text),
+                CreditNo = Convert.ToInt64(ddlCreditNo.Text),
                 Description = txtDescription.Text,
                 TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
                 Ref = txtRef.Text,
@@ -229,12 +274,12 @@ namespace EtoFE
 
             txtRefNo.Text = entry.RefNo;
             numAmount.Value = (double)entry.Amount;
-            ddlDebitType.SelectedValue = entry.DebitType;
-            ddlDebitNo.DataStore = LoadAccountNumbers(entry.DebitType);
-            ddlDebitNo.SelectedValue = entry.DebitNo;
-            ddlCreditType.SelectedValue = entry.CreditType;
-            ddlCreditNo.DataStore = LoadAccountNumbers(entry.CreditType);
-            ddlCreditNo.SelectedValue = entry.CreditNo;
+            ddlDebitType.Text = entry.DebitType.ToString();
+            //ddlDebitNo.DataStore = LoadAccountNumbers(entry.DebitType);
+            ddlDebitNo.Text = entry.DebitNo.ToString();
+            ddlCreditType.Text = entry.CreditType.ToString();
+            //ddlCreditNo.DataStore = LoadAccountNumbers(entry.CreditType);
+            ddlCreditNo.Text = entry.CreditNo.ToString();
             txtDescription.Text = entry.Description;
             dtpEntered.Value = entry.TimeAsEntered;
             txtRef.Text = entry.Ref;
@@ -242,7 +287,7 @@ namespace EtoFE
             MessageBox.Show($"Loaded entry '{entry.RefNo}'", MessageBoxButtons.OK);
         }
 
-        (bool Valid, string Error) ValidateAll()
+        (bool Valid, string? Error) ValidateAll()
         {
             for (int i = 0; i < rules.Count; i++)
             {
@@ -305,10 +350,10 @@ namespace EtoFE
         {
             txtRefNo.Text = "";
             numAmount.Value = 0;
-            ddlDebitType.SelectedValue = null;
-            ddlDebitNo.DataStore = null;
-            ddlCreditType.SelectedValue = null;
-            ddlCreditNo.DataStore = null;
+            ddlDebitType.Text = null;
+            //ddlDebitNo.DataStore = null;
+            ddlCreditType.Text = null;
+            //ddlCreditNo.DataStore = null;
             txtDescription.Text = "";
             dtpEntered.Value = DateTime.Now;
             txtRef.Text = "";

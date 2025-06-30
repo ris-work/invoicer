@@ -7,7 +7,7 @@ namespace InvoicerBackend
         public static void AddJournalEntry(NewinvContext ctx, AccountsJournalEntry AccJE)
         {
             ctx.AccountsJournalEntries.Add(
-                new AccountsJournalEntry
+                /*new AccountsJournalEntry
                 {
                     Amount = AccJE.Amount,
                     CreditAccountType = AccJE.CreditAccountType,
@@ -16,7 +16,8 @@ namespace InvoicerBackend
                     DebitAccountNo = AccJE.DebitAccountNo,
                     Description = AccJE.Description,
                     TimeAsEntered = AccJE.TimeAsEntered,
-                }
+                }*/
+                AccJE
             );
             ctx
                 .AccountsBalances.Where(a =>

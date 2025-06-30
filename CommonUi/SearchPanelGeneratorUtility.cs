@@ -11,6 +11,20 @@ namespace CommonUi
     //---------------------------------------------------------------------
     public static class SearchPanelUtility
     {
+        public static string[] GenerateSearchDialog<T>(
+                        List<T> items,
+                        Control owner,
+            bool debug = true,
+            PanelSettings? localColors = null
+            )
+        {
+            var generated = new Dialog<string[]>();
+
+            var searchPanel = GenerateSearchPanel(items);
+            generated.Content = searchPanel;
+            searchPanel.OnSelectionMade += () => { generated.Close(searchPanel.Selected); };
+            return generated.ShowModal(owner);
+        }
         /// <summary>
         /// Generates a SearchPanelEto for a list of objects of type T.
         /// Each object is serialized to JSON and deserialized into a dictionary.

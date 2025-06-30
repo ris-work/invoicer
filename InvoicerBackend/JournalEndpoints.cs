@@ -16,6 +16,7 @@ namespace InvoicerBackend
                 (AS, LoginInfo) =>
                 {
                     var Entry = (AccountsJournalEntry)AS;
+                    System.Console.WriteLine($"AddJournalEntry: {LoginInfo.UserId}, {LoginInfo.Principal}");
                     Entry.PrincipalId = (long)LoginInfo.UserId;
                     Entry.PrincipalName = LoginInfo.Principal;
                     using (var ctx = new NewinvContext())
