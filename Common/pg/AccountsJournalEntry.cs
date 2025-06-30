@@ -32,4 +32,10 @@ public partial class AccountsJournalEntry
     public string PrincipalName { get; set; } = null!;
 
     public long JournalUnivSeq { get; set; }
+
+    public string DebitAccountName { get; set; } = null!;
+
+    public string CreditAccountName { get; set; } = null!;
+
+    public string? InternalReference { get; set; }
 }

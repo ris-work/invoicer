@@ -171,11 +171,23 @@ public partial class NewinvContext : DbContext
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("journal_univ_seq");
             entity.Property(e => e.Amount).HasColumnName("amount");
+            entity
+                .Property(e => e.CreditAccountName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("credit_account_name");
             entity.Property(e => e.CreditAccountNo).HasColumnName("credit_account_no");
             entity.Property(e => e.CreditAccountType).HasColumnName("credit_account_type");
+            entity
+                .Property(e => e.DebitAccountName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("debit_account_name");
             entity.Property(e => e.DebitAccountNo).HasColumnName("debit_account_no");
             entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity
+                .Property(e => e.InternalReference)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("internal_reference");
             entity.Property(e => e.JournalNo).HasColumnName("journal_no");
             entity.Property(e => e.PrincipalId).HasColumnName("principal_id");
             entity.Property(e => e.PrincipalName).HasColumnName("principal_name");
