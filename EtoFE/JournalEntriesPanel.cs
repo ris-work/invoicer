@@ -166,7 +166,7 @@ namespace EtoFE
                         CreditType = Convert.ToInt32(ddlCreditType.Text),
                         CreditNo = Convert.ToInt64(ddlCreditNo.Text),
                         Description = txtDescription.Text,
-                        TimeAsEntered = dtpEntered.Value ?? DateTime.UtcNow,
+                        TimeAsEntered = dtpEntered.Value?.ToUniversalTime() ?? DateTime.UtcNow,
                         Ref = txtRef.Text,
                     }
                 ).ToEntity();

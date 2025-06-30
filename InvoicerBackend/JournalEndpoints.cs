@@ -1,4 +1,6 @@
-﻿using InvoicerBackend;
+﻿using System.Data;
+using InvoicerBackend;
+using Microsoft.EntityFrameworkCore;
 using RV.InvNew.Common;
 
 namespace InvoicerBackend
@@ -11,9 +13,9 @@ namespace InvoicerBackend
             {
                 return 0;
             };
-            app.AddEndpointWithBearerAuth<AccountsJournalEntry>(
+            app.AddAsyncEndpointWithBearerAuth<AccountsJournalEntry>(
                 "AddJournalEntry",
-                (AS, LoginInfo) =>
+                async (AS, LoginInfo) =>
                 {
                     var Entry = (AccountsJournalEntry)AS;
                     System.Console.WriteLine(
@@ -24,6 +26,9 @@ namespace InvoicerBackend
 
                     using (var ctx = new NewinvContext())
                     {
+                        var tx = await ctx.Database.BeginTransactionAsync(
+                            IsolationLevel.Serializable
+                        );
                         Entry.CreditAccountName = ctx
                             .AccountsInformations.Where(e =>
                                 e.AccountType == Entry.CreditAccountType
@@ -40,6 +45,7 @@ namespace InvoicerBackend
                             .AccountName;
                         JournalEntries.AddJournalEntry(ctx, Entry);
                         ctx.SaveChanges();
+                        await tx.CommitAsync();
                     }
                     return 0;
                 },

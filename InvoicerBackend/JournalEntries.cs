@@ -1,4 +1,5 @@
-﻿using RV.InvNew.Common;
+﻿using Microsoft.EntityFrameworkCore;
+using RV.InvNew.Common;
 
 namespace InvoicerBackend
 {
@@ -33,10 +34,13 @@ namespace InvoicerBackend
                 .Amount += AccJE.Amount;
         }
 
-        public static void ReverseJournalEntry(long JournalEntryId)
+        public static async void ReverseJournalEntry(long JournalEntryId)
         {
             using (var ctx = new NewinvContext())
             {
+                var tx = await ctx.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable
+                );
                 AccountsJournalEntry JE;
                 JE = ctx
                     .AccountsJournalEntries.Where(e => e.JournalUnivSeq == JournalEntryId)
@@ -55,6 +59,7 @@ namespace InvoicerBackend
                     }
                 );
                 ctx.SaveChanges();
+                await tx.CommitAsync();
             }
         }
     }

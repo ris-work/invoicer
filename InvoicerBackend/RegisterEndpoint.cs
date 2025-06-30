@@ -21,6 +21,7 @@ namespace InvoicerBackend
         public readonly record struct LoginDetails(long? UserId, string TokenId, string Principal);
 
         public delegate object DelWithDetails(object o, LoginDetails Login);
+        public delegate Task<object> DelWithDetailsAsync(object o, LoginDetails Login);
         public delegate object PatchDelWithDetails(string JsonPatch, LoginDetails Login);
 
         public static void TryAddPermissionToDatabase(string Permission)
@@ -96,6 +97,56 @@ namespace InvoicerBackend
                                 return (
                                     Results.Json<object>(
                                         D(
+                                            AuthenticatedInner,
+                                            new LoginDetails(
+                                                VerificationResultAndMessage.UserID,
+                                                VerificationResultAndMessage.Token,
+                                                VerificationResultAndMessage.Username
+                                            )
+                                        )
+                                    )
+                                );
+                            }
+                        }
+                        throw new UnauthorizedAccessException();
+                    }
+                )
+                .WithName(Name)
+                .WithOpenApi();
+            TryAddPermissionToDatabase(Permission);
+            return app;
+        }
+
+        public static WebApplication AddAsyncEndpointWithBearerAuth<T>(
+            this WebApplication app,
+            string Name,
+            DelWithDetailsAsync D,
+            string Permission = ""
+        )
+        {
+            app.MapPost(
+                    $"/{Name}",
+                    async (HttpRequest a) =>
+                    {
+                        var VerificationResultAndMessage =
+                            await LoginBearerTokenVerifier.VerifyIfAuthorizationIsOk(
+                                a,
+                                Permission,
+                                Name
+                            );
+                        if (VerificationResultAndMessage.Success)
+                        {
+                            System.Console.WriteLine(
+                                $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
+                            );
+                            var AuthenticatedInner = JsonSerializer.Deserialize<T>(
+                                VerificationResultAndMessage.RequestBody
+                            );
+                            if (AuthenticatedInner != null)
+                            {
+                                return (
+                                    Results.Json<object>(
+                                        await D(
                                             AuthenticatedInner,
                                             new LoginDetails(
                                                 VerificationResultAndMessage.UserID,
