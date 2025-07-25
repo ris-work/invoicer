@@ -51,6 +51,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<InventoryImage> InventoryImages { get; set; }
 
+    public virtual DbSet<InventoryMovement> InventoryMovements { get; set; }
+
     public virtual DbSet<IssuedInvoice> IssuedInvoices { get; set; }
 
     public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
@@ -108,8 +110,9 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
     }
 
@@ -523,6 +526,51 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Imageid).HasDefaultValue(0L).HasColumnName("imageid");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.ImageBase64).HasColumnName("image_base64");
+        });
+
+        modelBuilder.Entity<InventoryMovement>(entity =>
+        {
+            entity.HasNoKey().ToTable("inventory_movements");
+
+            entity
+                .Property(e => e.BatchEnabled)
+                .HasDefaultValue(true)
+                .HasColumnName("batch_enabled");
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.CostPrice).HasColumnName("cost_price");
+            entity
+                .Property(e => e.EnteredTime)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("entered_time");
+            entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity
+                .Property(e => e.Itemcode)
+                .HasDefaultValueSql("nextval('inventory_itemcode_seq'::regclass)")
+                .HasColumnName("itemcode");
+            entity
+                .Property(e => e.LastCountedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("last_counted_at");
+            entity.Property(e => e.MarkedPrice).HasColumnName("marked_price");
+            entity
+                .Property(e => e.MeasurementUnit)
+                .HasDefaultValueSql("'qty'::text")
+                .HasColumnName("measurement_unit");
+            entity.Property(e => e.MfgDate).HasDefaultValueSql("now()").HasColumnName("mfg_date");
+            entity.Property(e => e.PackedSize).HasDefaultValueSql("1").HasColumnName("packed_size");
+            entity.Property(e => e.Reference).HasColumnName("reference");
+            entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
+            entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
+            entity.Property(e => e.Suppliercode).HasDefaultValue(0L).HasColumnName("suppliercode");
+            entity.Property(e => e.Units).HasColumnName("units");
+            entity
+                .Property(e => e.UserDiscounts)
+                .HasDefaultValue(false)
+                .HasColumnName("user_discounts");
+            entity
+                .Property(e => e.VolumeDiscounts)
+                .HasDefaultValue(false)
+                .HasColumnName("volume_discounts");
         });
 
         modelBuilder.Entity<IssuedInvoice>(entity =>
