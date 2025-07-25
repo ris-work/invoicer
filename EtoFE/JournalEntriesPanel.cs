@@ -13,8 +13,9 @@ namespace EtoFE
 {
     public class JournalEntriesPanel : Eto.Forms.Panel
     {
+        Button ddlJournalNumber;
         TextBox txtRefNo;
-        NumericUpDown numAmount;
+        NumericStepper numAmount;
         Button ddlDebitType;
         Button ddlDebitNo;
         Button ddlCreditType;
@@ -41,6 +42,7 @@ namespace EtoFE
             LocalColor = ColorSettings.RotateAllToPanelSettings(0);
             BackgroundColor = LocalColor?.BackgroundColor ?? ColorSettings.BackgroundColor;
             List<AccountsInformation> AIs;
+            List<AccountsJournalInformation> AJIs;
             while (true)
             {
                 var req = (
@@ -62,14 +64,37 @@ namespace EtoFE
                     break;
                 }
             }
+            while (true)
+            {
+                var req = (
+                    SendAuthenticatedRequest<string, List<AccountsJournalInformation>>.Send(
+                        "Refresh",
+                        "/GetAccountsJournalInformation",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+                    AJIs = req.Out;
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Got this",
+                        MessageBoxType.Information
+                    );
+                    break;
+                }
+            }
             TextBox txtRefNo;
-            NumericUpDown numAmount;
+            Button ddlJournalNumber;
+            NumericStepper numAmount;
             Button ddlDebitType;
             Button ddlDebitNo;
             Button ddlCreditType;
             Button ddlCreditNo;
             Label CreditType;
             Label DebitType;
+            Label JournalName;
             TextArea txtDescription;
             DateTimePicker dtpEntered;
             TextBox txtRef;
@@ -88,7 +113,9 @@ namespace EtoFE
 
             // instantiate controls
             txtRefNo = new TextBox();
-            numAmount = new NumericUpDown { MinValue = 0, DecimalPlaces = 2 };
+            ddlJournalNumber = new Button();
+            JournalName = new Label();
+            numAmount = new NumericStepper { MinValue = 0, DecimalPlaces = 2 };
             ddlDebitType = new Button { Width = 100, Height = 30 };
             ddlDebitNo = new Button();
             ddlCreditType = new Button { Width = 100, Height = 30 };
@@ -109,10 +136,11 @@ namespace EtoFE
             Content = new TableLayout
             {
                 Padding = 10,
-                Spacing = Size.Empty,
+                Spacing = new Size(10, 10),
                 Rows =
                 {
                     new TableRow("Ref No:", txtRefNo),
+                    new TableRow("Journal:", ddlJournalNumber, JournalName),
                     new TableRow("Amount:", numAmount),
                     new TableRow("Debit Type:", ddlDebitType, "Debit No:", ddlDebitNo, DebitType),
                     new TableRow(
@@ -154,11 +182,19 @@ namespace EtoFE
                 DebitType.Text = x[2];
                 //GoToNext(ddlCreditType, new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
             };
+            ddlJournalNumber.Click += (_, _) =>
+            {
+                var x = SearchPanelUtility.GenerateSearchDialog(AJIs, ddlJournalNumber);
+                ddlJournalNumber.Text = x[0];
+                JournalName.Text = x[1];
+                //GoToNext(ddlCreditType, new Eto.Forms.KeyEventArgs(Keys.Enter, KeyEventType.KeyDown));
+            };
             btnSave.Click += (_, _) =>
             {
                 var entry = (
                     new JournalEntryDto
                     {
+                        JournalNo = Convert.ToInt64(ddlJournalNumber.Text),
                         RefNo = txtRefNo.Text,
                         Amount = (decimal)numAmount.Value,
                         DebitType = Convert.ToInt32(ddlDebitType.Text),

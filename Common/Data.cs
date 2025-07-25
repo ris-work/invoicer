@@ -312,6 +312,7 @@ namespace RV.InvNew.Common
 
     public class JournalEntryDto
     {
+        public long JournalNo { get; set; }
         public string RefNo { get; set; }
         public decimal Amount { get; set; }
         public int DebitType { get; set; }
@@ -330,6 +331,7 @@ namespace RV.InvNew.Common
                 ? throw new ArgumentNullException(nameof(d))
                 : new AccountsJournalEntry
                 {
+                    JournalNo = (int)d.JournalNo,
                     RefNo = d.RefNo,
                     Amount = (double)d.Amount,
                     DebitAccountType = d.DebitType,
@@ -346,6 +348,7 @@ namespace RV.InvNew.Common
                 ? throw new ArgumentNullException(nameof(e))
                 : new JournalEntryDto
                 {
+                    JournalNo = e.JournalNo,
                     RefNo = e.RefNo,
                     Amount = (decimal)e.Amount,
                     DebitType = e.DebitAccountType,

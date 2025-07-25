@@ -130,6 +130,32 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            app.AddEndpointWithBearerAuth<string>(
+                "GetAccountsJournalInformation",
+                (AS, LoginInfo) =>
+                {
+                    List<AccountsJournalInformation> AB;
+                    using (var ctx = new NewinvContext())
+                    {
+                        AB = ctx.AccountsJournalInformations.ToList();
+                    }
+                    return AB;
+                },
+                "Refresh"
+            );
+            app.AddEndpointWithBearerAuth<string>(
+                "GetAccountBalances",
+                (AS, LoginInfo) =>
+                {
+                    List<AccountsBalance> AB;
+                    using (var ctx = new NewinvContext())
+                    {
+                        AB = ctx.AccountsBalances.ToList();
+                    }
+                    return AB;
+                },
+                "Refresh"
+            );
             return app;
         }
     }

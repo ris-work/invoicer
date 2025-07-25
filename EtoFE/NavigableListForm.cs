@@ -156,6 +156,11 @@ namespace EtoFE
                                             new LoadOncePanel<JournalEntriesPanel>(),
                                             "JournalEntry"
                                         ),
+                                        (
+                                            "📋 All Account Balances",
+                                            new LoadOncePanel<AllAccountsBalances>(),
+                                            "AllAccountBalances"
+                                        ),
                                     }
                                 )
                             )

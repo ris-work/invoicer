@@ -654,8 +654,9 @@ namespace CommonUi
 
             var Search = () =>
             {
-                if (SearchBox.Text.Length > 0 && searching != true)
+                if (SearchBox.Text.Length > -1 && searching != true)
                 {
+                    var len = SearchBox.Text.Length;
                     var SelectedArrayIndex = SelectedSearchIndex;
                     var searchString = SearchBox.Text.ToLowerInvariant();
                     var SearchCaseSensitiveSetting = SearchCaseSensitive;
@@ -1045,6 +1046,7 @@ namespace CommonUi
                     Math.Ceiling((decimal)(ColorSettings.ControlHeight * 4.5));
             }
             this.KeyDown += ProcessKeyDown;
+            Search();
         }
     }
 }
