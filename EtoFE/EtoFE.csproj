@@ -146,8 +146,7 @@
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
-		
+        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0">
 			Suppress warnings (for example, NU1701 warns about unsupported target frameworks)
 			<NoWarn>$(NoWarn);NU1701</NoWarn>

@@ -82,7 +82,8 @@ namespace CommonUi
             bool AnythingAnywhere = false
         )
         {
-            if (s.Length == 0) return true;
+            if (s.Length == 0)
+                return true;
             string x = str;
             string cs = s;
             if (CaseInsensitive == true)

@@ -53,6 +53,35 @@ namespace EtoFE
                 new List<(string Label, object Content, string Name)>()
                 {
                     (
+                        "🛒 Sales / POS",
+                        new LoadOncePanel<Panel>(
+                            new NestableNavigableListPanel(
+                                new List<(string Label, object Content, string Name)>
+                                {
+                                    ("👥 Customers", new LoadOncePanel<Panel>(), "Customers"),
+                                    ("📝 Sales Orders", new LoadOncePanel<Panel>(), "SalesOrders"),
+                                    (
+                                        "💳 POS Terminal",
+                                        new LoadOncePanel<PosTerminalPanel>(),
+                                        "PosTerminal"
+                                    ),
+                                    ("📄 Invoices", new LoadOncePanel<Panel>(), "Invoices"),
+                                    ("📦 Shipments", new LoadOncePanel<Panel>(), "Shipments"),
+                                    ("↩️ Returns", new LoadOncePanel<Panel>(), "Returns"),
+                                    ("🧾 Payments", new LoadOncePanel<Panel>(), "Payments"),
+                                    (
+                                        "📈 Sales Reports",
+                                        new LoadOncePanel<Panel>(),
+                                        "SalesReports"
+                                    ),
+                                    ("🏷️ Price Lists", new LoadOncePanel<Panel>(), "PriceLists"),
+                                    ("🎯 Promotions", new LoadOncePanel<Panel>(), "Promotions"),
+                                }
+                            )
+                        ),
+                        "Sales"
+                    ),
+                    (
                         $" 📦 Inventory ",
                         (
                             new LoadOncePanel<Panel>(
