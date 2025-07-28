@@ -5,15 +5,15 @@ using System.Text.Json;
 using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
-using RV.InvNew.CommonUi;
 
 public class PosPanel : Panel
 {
     const int FWidth = 120, FHeight = 24;
+    const int Columns = 2;  // always two columns
 
-    List<Sale> sales = new List<Sale>();
-    List<Receipt> receipts = new List<Receipt>();
-    IssuedInvoice invoice = new IssuedInvoice();
+    List<Sale> sales;
+    List<Receipt> receipts;
+    IssuedInvoice invoice;
 
     TextBox tbCustomer, tbSalesPerson, tbCurrency;
     Label lblCustomerName, lblSalesPersonName;
@@ -34,117 +34,71 @@ public class PosPanel : Panel
     TextBox tbRcptAcct, tbRcptAmt;
     Label lblAcctName;
     Button btnSaveRcpt, btnResetRcpt;
-
     Label lblRcptTot;
+
     Button btnSaveAll;
 
     public PosPanel()
     {
-        // Invoice
-        tbCustomer = SearchField<Pii>(ListPii, out lblCustomerName, "Customer PII");
-        tbSalesPerson = SearchField<Pii>(ListPii, out lblSalesPersonName, "Sales Person PII");
+        sales = new List<Sale> { new Sale() };
+        receipts = new List<Receipt> { new Receipt() };
+        invoice = new IssuedInvoice();
+
+        InitializeFields();
+        BuildLayout();
+        RecalculateAll();
+    }
+
+    void InitializeFields()
+    {
+        // search fields now take a "next" control to focus after selection
+        tbCustomer = SearchField<Pii>(ListPii, out lblCustomerName, "Customer PII", () => tbSalesPerson);
+        tbSalesPerson = SearchField<Pii>(ListPii, out lblSalesPersonName, "Sales Person PII", () => tbCurrency);
         tbCurrency = NewTextBox("Currency");
         dpInvoiceDate = new DateTimePicker { Value = DateTime.Now, Width = FWidth, Height = FHeight };
         cbIsPosted = new CheckBox { Text = "Posted" };
         taRemarks = new TextArea { Width = 300, Height = 60 };
 
-        var invoiceForm = new TableLayout
-        {
-            Padding = 5,
-            Spacing = new Size(5, 5),
-            Rows =
-            {
-                new TableRow("Customer:",     new StackLayout { Orientation=Orientation.Horizontal, Spacing=5, Items={ tbCustomer, lblCustomerName } }),
-                new TableRow("Sales Person:", new StackLayout { Orientation=Orientation.Horizontal, Spacing=5, Items={ tbSalesPerson, lblSalesPersonName } }),
-                new TableRow("Currency:",     tbCurrency),
-                new TableRow("Date:",         dpInvoiceDate),
-                new TableRow(cbIsPosted,      null),
-                new TableRow("Remarks:",      taRemarks)
-            }
-        };
-
-        // Sales
+        // sales grid
         saleGrid = new GridView { Width = 600, Height = 120, DataStore = sales };
-        saleGrid.Columns.Add(new GridColumn
+        foreach (var (hdr, bind) in new[]
         {
-            HeaderText = "Name",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.ProductName) }
-        });
-        saleGrid.Columns.Add(new GridColumn
+            ("Name",      (Func<Sale,string>)(s=>s.ProductName)),
+            ("Item",      s=>s.Itemcode.ToString()),
+            ("Inventory", s=>s.Batchcode.ToString()),
+            ("Qty",       s=>s.Quantity.ToString("F2")),
+            ("Price",     s=>s.SellingPrice.ToString("C2")),
+            ("Disc%",     s=>s.DiscountRate.ToString("F2")),
+            ("VAT",       s=>s.VatAsCharged.ToString("C2")),
+            ("Total",     s=>s.TotalEffectiveSellingPrice.ToString("C2")),
+        })
         {
-            HeaderText = "Item",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Itemcode.ToString()) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "Inventory",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Batchcode.ToString()) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "Qty",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Quantity.ToString("F2")) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "Price",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.SellingPrice.ToString("C2")) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "Disc%",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.DiscountRate.ToString("F2")) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "VAT",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.VatAsCharged.ToString("C2")) }
-        });
-        saleGrid.Columns.Add(new GridColumn
-        {
-            HeaderText = "Total",
-            DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.TotalEffectiveSellingPrice.ToString("C2")) }
-        });
+            saleGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = hdr,
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(bind) }
+            });
+        }
 
-        tbItem = SearchField<Catalogue>(() => ListCatalogue(), out lblItemName, "Item code");
-        tbInventory = SearchField<Inventory>(() => ListInventory(ParseLong(tbItem.Text)), out lblInventoryName, "Inventory code");
+        tbItem = SearchField<Catalogue>(() => ListCatalogue(), out lblItemName, "Item code", () => tbInventory);
+        tbInventory = SearchField<Inventory>(() => ListInventory(ParseLong(tbItem.Text)), out lblInventoryName, "Inventory code", () => tbQty);
         tbQty = NewTextBox("Quantity");
         tbPrice = NewTextBox("Price");
         tbDisc = NewTextBox("Discount %");
+
         btnSaveSale = new Button { Text = "Save", Width = FWidth, Height = FHeight };
         btnResetSale = new Button { Text = "Reset", Width = FWidth, Height = FHeight };
         btnSaveSale.Click += (_, __) => { AddSale(); ResetSaleForm(); };
         btnResetSale.Click += (_, __) => ResetSaleForm();
 
-        var saleForm = new TableLayout
-        {
-            Padding = 5,
-            Spacing = new Size(5, 5),
-            Rows =
-            {
-                new TableRow("Item:",      new StackLayout { Orientation=Orientation.Horizontal, Spacing=5, Items={ tbItem, lblItemName } }),
-                new TableRow("Inventory:", new StackLayout { Orientation=Orientation.Horizontal, Spacing=5, Items={ tbInventory, lblInventoryName } }),
-                new TableRow("Qty:",       tbQty),
-                new TableRow("Price:",     tbPrice),
-                new TableRow("Disc%:",     tbDisc),
-                null,
-                new TableRow(btnSaveSale, btnResetSale)
-            }
-        };
-
-        // Summary & Payment
-        lblQtyTot = new Label(); lblSubTot = new Label(); lblTaxTot = new Label();
+        // summary & payment
+        lblQtyTot = new Label();
+        lblSubTot = new Label();
+        lblTaxTot = new Label();
         tbPaid = NewTextBox("Paid"); tbPaid.TextChanged += (_, __) => UpdateChange();
         lblChange = new Label();
 
-        var summaryPanel = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 20, Items = { lblQtyTot, lblSubTot, lblTaxTot } };
-        var paymentPanel = new TableLayout
-        {
-            Padding = 5,
-            Rows = { new TableRow("Paid:", tbPaid), new TableRow("Change:", lblChange) }
-        };
-
-        // Receipts
+        // receipts grid
         rcptGrid = new GridView { Width = 600, Height = 100, DataStore = receipts };
         rcptGrid.Columns.Add(new GridColumn
         {
@@ -165,24 +119,54 @@ public class PosPanel : Panel
         btnResetRcpt = new Button { Text = "Reset", Width = FWidth, Height = FHeight };
         btnSaveRcpt.Click += (_, __) => { AddReceipt(); ResetRcptForm(); };
         btnResetRcpt.Click += (_, __) => ResetRcptForm();
-
-        var rcptForm = new TableLayout
-        {
-            Padding = 5,
-            Spacing = new Size(5, 5),
-            Rows =
-            {
-                new TableRow("Acct:", new StackLayout { Orientation=Orientation.Horizontal, Spacing=5, Items={ tbRcptAcct, lblAcctName } }),
-                new TableRow("Amt:",  tbRcptAmt),
-                null,
-                new TableRow(btnSaveRcpt, btnResetRcpt)
-            }
-        };
         lblRcptTot = new Label();
 
-        // Save
+        // final save
         btnSaveAll = new Button { Text = "Save Invoice", Width = 200, Height = 30 };
         btnSaveAll.Click += (_, __) => SaveAll();
+
+        WireEnterKeyChaining();
+    }
+
+    void BuildLayout()
+    {
+        var invoiceForm = BuildNColumnForm(
+            ("Customer:", new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5, Items = { tbCustomer, lblCustomerName } }),
+            ("Sales Person:", new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5, Items = { tbSalesPerson, lblSalesPersonName } }),
+            ("Currency:", tbCurrency),
+            ("Date:", dpInvoiceDate),
+            ("Posted", cbIsPosted),
+            ("Remarks:", taRemarks)
+        );
+
+        var saleForm = BuildNColumnForm(
+            ("Item:", new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5, Items = { tbItem, lblItemName } }),
+            ("Inventory:", new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5, Items = { tbInventory, lblInventoryName } }),
+            ("Qty:", tbQty),
+            ("Price:", tbPrice),
+            ("Disc%:", tbDisc),
+            ("Save", btnSaveSale),
+            ("Reset", btnResetSale)
+        );
+
+        var summaryPanel = new StackLayout
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 20,
+            Items = { lblQtyTot, lblSubTot, lblTaxTot }
+        };
+
+        var paymentPanel = BuildNColumnForm(
+            ("Paid:", tbPaid),
+            ("Change:", lblChange)
+        );
+
+        var rcptForm = BuildNColumnForm(
+            ("Acct:", tbRcptAcct),
+            ("Amt:", tbRcptAmt),
+            ("Save", btnSaveRcpt),
+            ("Reset", btnResetRcpt)
+        );
 
         Content = new StackLayout
         {
@@ -201,17 +185,49 @@ public class PosPanel : Panel
                 btnSaveAll
             }
         };
-
-        RecalculateAll();
     }
 
-    TextBox NewTextBox(string ph) => new TextBox { PlaceholderText = ph, Width = FWidth, Height = FHeight };
-
-    TextBox SearchField<T>(Func<List<T>> fetch, out Label lbl, string ph)
+    TableLayout BuildNColumnForm(params (string Label, Control Control)[] items)
     {
-        var tb = NewTextBox(ph);
+        var layout = new TableLayout
+        {
+            Padding = 5,
+            Spacing = new Size(5, 5)
+        };
+
+        for (int i = 0; i < items.Length; i += Columns)
+        {
+            var row = new TableRow();
+            for (int c = 0; c < Columns; c++)
+            {
+                int idx = i + c;
+                if (idx < items.Length)
+                {
+                    row.Cells.Add(new TableCell(new Label { Text = items[idx].Label }));
+                    row.Cells.Add(new TableCell(items[idx].Control));
+                }
+                else
+                {
+                    row.Cells.Add(new TableCell());
+                    row.Cells.Add(new TableCell());
+                }
+            }
+            layout.Rows.Add(row);
+        }
+
+        return layout;
+    }
+
+    TextBox SearchField<T>(
+        Func<List<T>> fetch,
+        out Label lbl,
+        string placeholder,
+        Func<Control> nextControl
+    )
+    {
+        var tb = new TextBox { PlaceholderText = placeholder, Width = FWidth, Height = FHeight };
         var label = new Label();
-        tb.GotFocus += (s, e) =>
+        tb.GotFocus += async (s, e) =>
         {
             tb.Text = "";
             var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog(fetch(), this);
@@ -221,23 +237,48 @@ public class PosPanel : Panel
                 label.Text = typeof(T) == typeof(Pii)
                     ? LookupHumanFriendlyPii(tb.Text)
                     : LookupHumanFriendlyItemcode(ParseLong(tb.Text));
+
+                // ensure dialog has closed before focusing next field
+                Application.Instance.AsyncInvoke(() => nextControl().Focus());
             }
         };
+
         lbl = label;
         return tb;
     }
 
+    TextBox NewTextBox(string placeholder) =>
+        new TextBox { PlaceholderText = placeholder, Width = FWidth, Height = FHeight };
 
-    bool TryNum(string txt, out double v) => double.TryParse(txt, out v);
-    bool TryNum(string txt, out long v) => long.TryParse(txt, out v);
+    void WireEnterKeyChaining()
+    {
+        tbCustomer.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseLong(tbCustomer.Text, out _)) tbSalesPerson.Focus(); };
+        tbSalesPerson.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseLong(tbSalesPerson.Text, out _)) tbCurrency.Focus(); };
+        tbCurrency.KeyDown += (s, e) => { if (e.Key == Keys.Enter) dpInvoiceDate.Focus(); };
+        dpInvoiceDate.KeyDown += (s, e) => { if (e.Key == Keys.Enter) cbIsPosted.Focus(); };
+        cbIsPosted.KeyDown += (s, e) => { if (e.Key == Keys.Enter) taRemarks.Focus(); };
+        taRemarks.KeyDown += (s, e) => { if (e.Key == Keys.Enter) tbItem.Focus(); };
+
+        tbItem.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseLong(tbItem.Text, out _)) tbInventory.Focus(); };
+        tbInventory.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseLong(tbInventory.Text, out _)) tbQty.Focus(); };
+        tbQty.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseDouble(tbQty.Text, out _)) tbPrice.Focus(); };
+        tbPrice.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseDouble(tbPrice.Text, out _)) tbDisc.Focus(); };
+        tbDisc.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseDouble(tbDisc.Text, out _)) btnSaveSale.Focus(); };
+
+        tbRcptAcct.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseLong(tbRcptAcct.Text, out _)) tbRcptAmt.Focus(); };
+        tbRcptAmt.KeyDown += (s, e) => { if (e.Key == Keys.Enter && TryParseDouble(tbRcptAmt.Text, out _)) btnSaveRcpt.Focus(); };
+    }
+
+    bool TryParseLong(string txt, out long v) => long.TryParse(txt, out v);
+    bool TryParseDouble(string txt, out double v) => double.TryParse(txt, out v);
 
     void AddSale()
     {
-        TryNum(tbItem.Text, out long ic);
-        TryNum(tbInventory.Text, out long inv);
-        TryNum(tbQty.Text, out double q);
-        TryNum(tbPrice.Text, out double pr);
-        TryNum(tbDisc.Text, out double dr);
+        TryParseLong(tbItem.Text, out long ic);
+        TryParseLong(tbInventory.Text, out long inv);
+        TryParseDouble(tbQty.Text, out double q);
+        TryParseDouble(tbPrice.Text, out double pr);
+        TryParseDouble(tbDisc.Text, out double dr);
 
         var s = new Sale
         {
@@ -245,24 +286,28 @@ public class PosPanel : Panel
             Batchcode = inv,
             Quantity = q,
             SellingPrice = pr,
-            DiscountRate = dr
+            DiscountRate = dr,
+            ProductName = LookupHumanFriendlyInventory(ic, inv),
+            Discount = q * pr * dr / 100
         };
-        s.ProductName = LookupHumanFriendlyInventory(ic, inv);
-        s.Discount = q * pr * dr / 100;
         s.VatAsCharged = (q * pr - s.Discount) * s.VatRatePercentage / 100;
         s.TotalEffectiveSellingPrice = q * pr - s.Discount + s.VatAsCharged;
 
         sales.Add(s);
-        saleGrid.DataStore = null; saleGrid.DataStore = sales;
+        saleGrid.DataStore = null;
+        saleGrid.DataStore = sales;
         RecalculateAll();
     }
 
-    void ResetSaleForm() => tbItem.Text = tbInventory.Text = tbQty.Text = tbPrice.Text = tbDisc.Text = "";
+    void ResetSaleForm()
+    {
+        tbItem.Text = tbInventory.Text = tbQty.Text = tbPrice.Text = tbDisc.Text = "";
+    }
 
     void AddReceipt()
     {
-        TryNum(tbRcptAcct.Text, out long ac);
-        TryNum(tbRcptAmt.Text, out double am);
+        TryParseLong(tbRcptAcct.Text, out long ac);
+        TryParseDouble(tbRcptAmt.Text, out double am);
 
         var r = new Receipt
         {
@@ -272,18 +317,24 @@ public class PosPanel : Panel
             TimeReceived = DateTimeOffset.Now
         };
         receipts.Add(r);
-        rcptGrid.DataStore = null; rcptGrid.DataStore = receipts;
+        rcptGrid.DataStore = null;
+        rcptGrid.DataStore = receipts;
         RecalculateAll();
     }
 
-    void ResetRcptForm() => tbRcptAcct.Text = tbRcptAmt.Text = "";
+    void ResetRcptForm()
+    {
+        tbRcptAcct.Text = tbRcptAmt.Text = "";
+    }
 
     void RecalculateAll()
     {
-        TryNum(tbCustomer.Text, out long cust); invoice.Customer = cust;
-        TryNum(tbSalesPerson.Text, out long sp); invoice.SalesPersonId = sp;
+        TryParseLong(tbCustomer.Text, out long cust);
+        invoice.Customer = cust;
+        TryParseLong(tbSalesPerson.Text, out long sp);
+        invoice.SalesPersonId = sp;
         invoice.CurrencyCode = tbCurrency.Text;
-        invoice.InvoiceTime = dpInvoiceDate.Value ?? DateTime.MinValue;
+        invoice.InvoiceTime = dpInvoiceDate.Value ?? DateTime.Now;
         invoice.IsPosted = cbIsPosted.Checked == true;
         invoice.InvoiceHumanFriendly = taRemarks.Text;
 
@@ -291,8 +342,8 @@ public class PosPanel : Panel
         invoice.DiscountTotal = sales.Sum(x => x.Discount);
         invoice.TaxTotal = sales.Sum(x => x.VatAsCharged);
         invoice.GrandTotal = sales.Sum(x => x.TotalEffectiveSellingPrice);
-        invoice.EffectiveDiscountPercentage = invoice.SubTotal > 0
-            ? invoice.DiscountTotal / invoice.SubTotal * 100 : 0;
+        invoice.EffectiveDiscountPercentage =
+            invoice.SubTotal > 0 ? invoice.DiscountTotal / invoice.SubTotal * 100 : 0;
 
         lblQtyTot.Text = $"Qty: {sales.Sum(x => x.Quantity):F2}";
         lblSubTot.Text = $"Sub: {invoice.SubTotal:C}";
@@ -303,7 +354,7 @@ public class PosPanel : Panel
 
     void UpdateChange()
     {
-        TryNum(tbPaid.Text, out double paid);
+        TryParseDouble(tbPaid.Text, out double paid);
         lblChange.Text = $"Change: {(paid - invoice.GrandTotal):C}";
     }
 
@@ -319,9 +370,10 @@ public class PosPanel : Panel
     {
         var data = JsonSerializer.Deserialize<PosData>(json);
         if (data == null) return;
+
         invoice = data.Invoice;
-        sales = data.Sales ?? new List<Sale>();
-        receipts = data.Receipts ?? new List<Receipt>();
+        sales = data.Sales ?? new List<Sale> { new Sale() };
+        receipts = data.Receipts ?? new List<Receipt> { new Receipt() };
 
         tbCustomer.Text = invoice.Customer?.ToString() ?? "";
         lblCustomerName.Text = LookupHumanFriendlyPii(tbCustomer.Text);
@@ -338,15 +390,12 @@ public class PosPanel : Panel
     }
 
     long ParseLong(string txt) => long.TryParse(txt, out var v) ? v : 0;
-
-    // stubs
     string LookupHumanFriendlyPii(string id) => $"TBD PII {id}";
     string LookupHumanFriendlyItemcode(long code) => $"TBD Item {code}";
     string LookupHumanFriendlyInventory(long item, long inv) => $"TBD Inv {item}/{inv}";
     string LookupHumanFriendlyAccount(string id) => $"TBD Acct {id}";
 
-    // data loaders
-    List<Pii> ListPii() => new List<Pii> { new Pii()};
+    List<Pii> ListPii() => new List<Pii> { new Pii() };
     List<Catalogue> ListCatalogue() => new List<Catalogue> { new Catalogue() };
     List<Inventory> ListInventory(long itemcode) => new List<Inventory> { new Inventory() };
 }
