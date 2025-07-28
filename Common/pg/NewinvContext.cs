@@ -112,7 +112,7 @@ public partial class NewinvContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
     }
 
@@ -580,7 +580,13 @@ public partial class NewinvContext : DbContext
             entity.ToTable("issued_invoices", tb => tb.HasComment("Issued invoices only"));
 
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.CurrencyCode).HasColumnName("currency_code");
             entity.Property(e => e.Customer).HasColumnName("customer");
+            entity.Property(e => e.DiscountTotal).HasColumnName("discount_total");
+            entity
+                .Property(e => e.EffectiveDiscountPercentage)
+                .HasColumnName("effective_discount_percentage");
+            entity.Property(e => e.GrandTotal).HasColumnName("grand_total");
             entity.Property(e => e.InvoiceHumanFriendly).HasColumnName("invoice_human_friendly");
             entity
                 .Property(e => e.InvoiceTime)
@@ -595,6 +601,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IsSettled).HasColumnName("is_settled");
             entity.Property(e => e.IssuedValue).HasColumnName("issued_value");
             entity.Property(e => e.PaidValue).HasColumnName("paid_value");
+            entity.Property(e => e.SalesPersonId).HasColumnName("sales_person_id");
+            entity.Property(e => e.SubTotal).HasColumnName("sub_total");
+            entity.Property(e => e.TaxTotal).HasColumnName("tax_total");
         });
 
         modelBuilder.Entity<LoyaltyPoint>(entity =>

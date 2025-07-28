@@ -25,4 +25,18 @@ public partial class IssuedInvoice
     public DateTimeOffset InvoiceTimePosted { get; set; }
 
     public bool IsPosted { get; set; }
+
+    public double SubTotal { get; set; }
+
+    public double DiscountTotal { get; set; }
+
+    public double EffectiveDiscountPercentage { get; set; }
+
+    public double TaxTotal { get; set; }
+
+    public double GrandTotal { get; set; }
+
+    public long SalesPersonId { get; set; }
+
+    public string? CurrencyCode { get; set; }
 }
