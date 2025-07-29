@@ -225,6 +225,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
 );
 app.AddCatalogueDefaultImageEndpoints();
 app.AddJournalEndpoints();
+app.AddAnalyticsEndpoints();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();

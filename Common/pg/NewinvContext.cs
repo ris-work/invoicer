@@ -543,6 +543,7 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("entered_time");
             entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity.Property(e => e.FromUnits).HasColumnName("from_units");
             entity
                 .Property(e => e.Itemcode)
                 .HasDefaultValueSql("nextval('inventory_itemcode_seq'::regclass)")
@@ -562,6 +563,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Remarks).HasDefaultValueSql("''::text").HasColumnName("remarks");
             entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
             entity.Property(e => e.Suppliercode).HasDefaultValue(0L).HasColumnName("suppliercode");
+            entity.Property(e => e.ToUnits).HasColumnName("to_units");
             entity.Property(e => e.Units).HasColumnName("units");
             entity
                 .Property(e => e.UserDiscounts)

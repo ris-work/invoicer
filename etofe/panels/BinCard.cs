@@ -8,18 +8,20 @@ using ScottPlot.Eto;
 using SPColor = ScottPlot.Color;     // Alias for ScottPlot’s Color type
 using Colors = ScottPlot.Colors;    // Alias for ScottPlot’s static Colors class
 using CommonUi;
+using RV.InvNew.Common;
+using EtoFE;
 
 namespace RV.InvNew.EtoFE
 {
     // A single bin‐card entry
-    public class InventoryMovement
+    /*public class InventoryMovement
     {
         public DateTime Date { get; set; }
         public string RefType { get; set; } // e.g. "sale", "purchase", etc.
         public string RefNumber { get; set; }
         public double Quantity { get; set; } // + in, – out
         public double RunningBalance { get; set; }
-    }
+    }*/
 
     // Wraps all movements for one SKU
     public class ItemMovements
@@ -68,6 +70,7 @@ namespace RV.InvNew.EtoFE
             List<(long ItemCode, List<InventoryMovement> BinCard)> data
         )
         {
+            
             // Wrap input tuples
             _items = data
                 .Select(x => new ItemMovements { ItemCode = x.ItemCode, BinCard = x.BinCard })
@@ -203,7 +206,7 @@ namespace RV.InvNew.EtoFE
                 DataCell = new TextBoxCell
                 {
                     Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.Date.ToShortDateString())
+                        x => x.EnteredTime.Date.ToShortDateString())
                 }
             });
             grid.Columns.Add(new GridColumn
@@ -212,7 +215,7 @@ namespace RV.InvNew.EtoFE
                 DataCell = new TextBoxCell
                 {
                     Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.RefType)
+                        x => x.Reference.Split(':')[0])
                 }
             });
             grid.Columns.Add(new GridColumn
@@ -221,7 +224,7 @@ namespace RV.InvNew.EtoFE
                 DataCell = new TextBoxCell
                 {
                     Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.RefNumber)
+                        x => x.Reference)
                 }
             });
             grid.Columns.Add(new GridColumn
@@ -230,7 +233,7 @@ namespace RV.InvNew.EtoFE
                 DataCell = new TextBoxCell
                 {
                     Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.Quantity.ToString("0.##"))
+                        x => x.Units.ToString("0.##"))
                 }
             });
             grid.Columns.Add(new GridColumn

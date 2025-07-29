@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
+using EtoFE;
+using RV.InvNew.EtoFE;
 
 namespace RV.Invnew.EtoFE
 {
@@ -40,9 +42,27 @@ namespace RV.Invnew.EtoFE
         readonly Button _btnNew;
         readonly Button _btnFetch;
         readonly GridView _grid;
+        PosRefresh PR;
 
         public InventoryMovementsPanel()
         {
+            while (true)
+            {
+                var req = (
+                    SendAuthenticatedRequest<string, PosRefresh>.Send(
+                        "Refresh",
+                        "/PosRefreshBearerAuth",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+                    PR = req.Out;
+                    //MessageBox.Show(req.Response.Catalogue.Count.ToString(), "Time", MessageBoxType.Information);
+                    break;
+                }
+            }
             // date defaults
             _dpFrom = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now.AddMonths(-6) };
             _dpTo = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
@@ -55,8 +75,8 @@ namespace RV.Invnew.EtoFE
             {
                 _txtItemCode.Text = "";
                 var sel = CommonUi.SearchPanelUtility
-                            .GenerateSearchDialog<Catalogue>(
-                                new List<Catalogue> { new Catalogue() },
+                            .GenerateSearchDialog<PosCatalogue>(
+                                PR.Catalogue,
                                 this, debug: false
                             );
                 if (sel?.Length > 0)
@@ -137,6 +157,7 @@ namespace RV.Invnew.EtoFE
             _btnFetch = new Button { Text = "Fetch Movements" };
             _btnFetch.Click += async (s, e) =>
             {
+                List<(long ItemCode, List<RV.InvNew.Common.InventoryMovement> BinCard)> Cards = new();
                 foreach (var r in _rows)
                 {
                     if (long.TryParse(r.ItemCode, out var code))
@@ -147,10 +168,13 @@ namespace RV.Invnew.EtoFE
                             StartDate = r.From,
                             EndDate = r.To
                         };
-                        var result = await FetchInventoryMovementsAsync(req);
+                        var result = FetchInventoryMovementsAsync(req);
+                        Cards.Add((code, result));
                         // TODO: handle result
+                        
                     }
                 }
+                new BinCardVisualizerPanel(Cards);
             };
 
             // entry UI
@@ -235,35 +259,31 @@ namespace RV.Invnew.EtoFE
         }
 
         // stub for friendly lookup
-        string LookupHumanFriendlyItemcode(long code) => $"TBD Item {code}";
+        string LookupHumanFriendlyItemcode(long code) => PR.Catalogue.Where(e => e.itemcode == code).FirstOrDefault(new PosCatalogue() { itemdesc = "Unknown"}).itemdesc;
 
         // stub for fetch
-        Task<List<InventoryMovement>> FetchInventoryMovementsAsync(GetInventoryMovementsRequest req)
+        List<InventoryMovement> FetchInventoryMovementsAsync(GetInventoryMovementsRequest req_out)
         {
-            return Task.FromResult(new List<InventoryMovement>
+            List<InventoryMovement> PR;
+            while (true)
             {
-                new InventoryMovement
+                
+                var req = (
+                    SendAuthenticatedRequest<GetInventoryMovementsRequest, List<InventoryMovement>>.Send(
+                        req_out,
+                        "/GetInventoryMovements",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
                 {
-                    Itemcode      = req.ItemCode,
-                    Batchcode     = 0,
-                    BatchEnabled  = false,
-                    MfgDate       = null,
-                    ExpDate       = null,
-                    PackedSize    = 0,
-                    Units         = 0,
-                    MeasurementUnit = "",
-                    MarkedPrice   = 0,
-                    SellingPrice  = 0,
-                    CostPrice     = 0,
-                    VolumeDiscounts = false,
-                    Suppliercode  = 0,
-                    UserDiscounts = false,
-                    LastCountedAt = DateTime.UtcNow,
-                    Remarks       = "",
-                    Reference     = "",
-                    EnteredTime   = DateTime.UtcNow
+                    PR = req.Out;
+                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Time", MessageBoxType.Information);
+                    break;
                 }
-            });
+            }
+            return PR;
         }
     }
 }
