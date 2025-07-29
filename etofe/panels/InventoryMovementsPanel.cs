@@ -174,7 +174,8 @@ namespace RV.Invnew.EtoFE
                         
                     }
                 }
-                new BinCardVisualizerPanel(Cards);
+                var F = new Form() { Content = new BinCardVisualizerPanel(Cards) };
+                F.Show();
             };
 
             // entry UI

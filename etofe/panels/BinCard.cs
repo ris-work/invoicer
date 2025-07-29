@@ -276,7 +276,7 @@ namespace RV.InvNew.EtoFE
                         .Select(m => m.Reference.Split(':')[0] == type ? m.Units : 0)
                         .ToArray();
 
-                    var bar = plt.Add.Bars(vals, positions);
+                    var bar = plt.Add.Bars(positions, vals);
                     //bar.StackGroup = 0;
                     //bar.Bars.ForEach(a => a.) = 0.8;
                     bar.Color = _barColors[t];
