@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
 
-namespace YourAppNamespace
+namespace RV.Invnew.EtoFE
 {
     public class InventoryMovementsPanel : Scrollable
     {
-        // helper type for each row
-        class MovRange
+        const int FWidth = 200;
+        const int FHeight = 25;
+
+        // Make this public so JsonSerializer can see it
+        public class MovRange
         {
             public string ItemCode { get; set; } = "";
             public string FriendlyName { get; set; } = "";
@@ -25,7 +30,6 @@ namespace YourAppNamespace
         readonly List<MovRange> _rows = new List<MovRange>();
         int _editingIndex = -1;
 
-        // entry controls
         readonly TextBox _txtItemCode;
         readonly Label _lblFriendly;
         readonly DateTimePicker _dpFrom;
@@ -39,14 +43,14 @@ namespace YourAppNamespace
 
         public InventoryMovementsPanel()
         {
-            // Initialize defaults
+            // date defaults
             _dpFrom = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now.AddMonths(-6) };
             _dpTo = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
 
+            // item code + friendly label
             _txtItemCode = new TextBox { PlaceholderText = "Click to search…" };
             _lblFriendly = new Label();
 
-            // launch search on focus
             _txtItemCode.GotFocus += (s, e) =>
             {
                 _txtItemCode.Text = "";
@@ -63,33 +67,31 @@ namespace YourAppNamespace
                 }
             };
 
-            // New row button
+            // new, save, cancel, delete
             _btnNew = new Button { Text = "New" };
-            _btnNew.Click += (_, __) => ResetEntry();
-
-            // Save / Cancel / Delete
             _btnSave = new Button { Text = "Save" };
             _btnCancel = new Button { Text = "Cancel" };
             _btnDelete = new Button { Text = "Delete" };
 
+            _btnNew.Click += (_, __) => ResetEntry();
+
             _btnSave.Click += (s, e) =>
             {
-                var itemTxt = _txtItemCode.Text.Trim();
-                if (!long.TryParse(itemTxt, out var code))
-                    return;    // invalid code
+                if (!long.TryParse(_txtItemCode.Text.Trim(), out var code))
+                    return;
 
-                var row = new MovRange
+                var entry = new MovRange
                 {
-                    ItemCode = itemTxt,
+                    ItemCode = _txtItemCode.Text,
                     FriendlyName = _lblFriendly.Text,
                     From = _dpFrom.Value ?? DateTime.MinValue,
                     To = _dpTo.Value ?? DateTime.Now
                 };
 
                 if (_editingIndex < 0)
-                    _rows.Add(row);
+                    _rows.Add(entry);
                 else
-                    _rows[_editingIndex] = row;
+                    _rows[_editingIndex] = entry;
 
                 RefreshGrid();
                 ResetEntry();
@@ -110,12 +112,8 @@ namespace YourAppNamespace
                 ResetEntry();
             };
 
-            // GridView (read-only)
-            _grid = new GridView
-            {
-                DataStore = _rows,
-                AllowMultipleSelection = false
-            };
+            // grid (read‐only columns)
+            _grid = new GridView { DataStore = _rows, AllowMultipleSelection = false };
             _grid.Columns.Add(new GridColumn { HeaderText = "Item Code", DataCell = new TextBoxCell("ItemCode") });
             _grid.Columns.Add(new GridColumn { HeaderText = "Description", DataCell = new TextBoxCell("FriendlyName") });
             _grid.Columns.Add(new GridColumn { HeaderText = "From", DataCell = new TextBoxCell("FromStr") });
@@ -135,7 +133,7 @@ namespace YourAppNamespace
                 }
             };
 
-            // Fetch Movements button
+            // fetch button
             _btnFetch = new Button { Text = "Fetch Movements" };
             _btnFetch.Click += async (s, e) =>
             {
@@ -150,12 +148,12 @@ namespace YourAppNamespace
                             EndDate = r.To
                         };
                         var result = await FetchInventoryMovementsAsync(req);
-                        // TODO: process `result`
+                        // TODO: handle result
                     }
                 }
             };
 
-            // Entry group
+            // entry UI
             var entryLayout = new TableLayout
             {
                 Spacing = new Size(5, 5),
@@ -167,10 +165,9 @@ namespace YourAppNamespace
                     new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete)
                 }
             };
-
             var group = new GroupBox { Text = "Entry", Content = entryLayout };
 
-            // Main layout
+            // main layout
             Content = new TableLayout
             {
                 Padding = 10,
@@ -183,7 +180,6 @@ namespace YourAppNamespace
                 }
             };
 
-            // start with empty entry
             ResetEntry();
         }
 
@@ -202,34 +198,70 @@ namespace YourAppNamespace
             _grid.DataStore = _rows;
         }
 
-        // Stub search-friendly
+        /// <summary>
+        /// Serialize current rows to JSON.
+        /// </summary>
+        public string Serialize()
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            return JsonSerializer.Serialize(_rows, options);
+        }
+
+        /// <summary>
+        /// Replace current rows from a JSON string produced by Serialize().
+        /// </summary>
+        public void Deserialize(string json)
+        {
+            try
+            {
+                var list = JsonSerializer.Deserialize<List<MovRange>>(json);
+                if (list != null)
+                {
+                    _rows.Clear();
+                    _rows.AddRange(list);
+                    // Recompute friendly names if desired:
+                    foreach (var r in _rows)
+                    {
+                        if (long.TryParse(r.ItemCode, out var code))
+                            r.FriendlyName = LookupHumanFriendlyItemcode(code);
+                    }
+                    RefreshGrid();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Failed to load data: {ex.Message}", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
+        }
+
+        // stub for friendly lookup
         string LookupHumanFriendlyItemcode(long code) => $"TBD Item {code}";
 
-        // Stubbed fetch method
+        // stub for fetch
         Task<List<InventoryMovement>> FetchInventoryMovementsAsync(GetInventoryMovementsRequest req)
         {
             return Task.FromResult(new List<InventoryMovement>
             {
                 new InventoryMovement
                 {
-                    Itemcode        = req.ItemCode,
-                    Batchcode       = 0,
-                    BatchEnabled    = false,
-                    MfgDate         = null,
-                    ExpDate         = null,
-                    PackedSize      = 0,
-                    Units           = 0,
+                    Itemcode      = req.ItemCode,
+                    Batchcode     = 0,
+                    BatchEnabled  = false,
+                    MfgDate       = null,
+                    ExpDate       = null,
+                    PackedSize    = 0,
+                    Units         = 0,
                     MeasurementUnit = "",
-                    MarkedPrice     = 0,
-                    SellingPrice    = 0,
-                    CostPrice       = 0,
+                    MarkedPrice   = 0,
+                    SellingPrice  = 0,
+                    CostPrice     = 0,
                     VolumeDiscounts = false,
-                    Suppliercode    = 0,
-                    UserDiscounts   = false,
-                    LastCountedAt   = DateTime.UtcNow,
-                    Remarks         = "",
-                    Reference       = "",
-                    EnteredTime     = DateTime.UtcNow
+                    Suppliercode  = 0,
+                    UserDiscounts = false,
+                    LastCountedAt = DateTime.UtcNow,
+                    Remarks       = "",
+                    Reference     = "",
+                    EnteredTime   = DateTime.UtcNow
                 }
             });
         }

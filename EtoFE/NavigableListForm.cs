@@ -14,8 +14,8 @@ using Eto.Forms;
 using EtoFE;
 using EtoFE.Panels;
 using MyExtensions;
+using RV.Invnew.EtoFE;
 using RV.InvNew.Common;
-using YourAppNamespace;
 
 namespace EtoFE
 {
