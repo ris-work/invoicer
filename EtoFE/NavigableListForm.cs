@@ -15,6 +15,7 @@ using EtoFE;
 using EtoFE.Panels;
 using MyExtensions;
 using RV.InvNew.Common;
+using YourAppNamespace;
 
 namespace EtoFE
 {
@@ -113,6 +114,7 @@ namespace EtoFE
                                         ("📍 Locations", new LoadOncePanel<Panel>(), "Locations"),
                                         ("🔄 Transfers", new LoadOncePanel<Panel>(), "Transfers"),
                                         ("📈 Reports", new LoadOncePanel<Panel>(), "Reports"),
+                                        ("📈 Inventory Movements", new LoadOncePanel<InventoryMovementsPanel>(), "InventoryMovements"),
                                         ("⛑ Alerts", new LoadOncePanel<Panel>(), "Alerts"),
                                         ("🔍 Search", new LoadOncePanel<Panel>(), "Search"),
                                         // Additional standardized ERP modules

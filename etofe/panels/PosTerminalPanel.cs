@@ -6,7 +6,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
 
-public class PosPanel : Panel
+public class PosPanel : Scrollable
 {
     const int FWidth = 120, FHeight = 24;
     const int Columns = 2;  // always two columns
@@ -230,7 +230,7 @@ public class PosPanel : Panel
         tb.GotFocus += async (s, e) =>
         {
             tb.Text = "";
-            var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog(fetch(), this);
+            var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog(fetch(), this, false);
             if (sel?.Length > 0)
             {
                 tb.Text = sel[0];

@@ -377,4 +377,27 @@ namespace RV.InvNew.Common
         public bool Contains(DateTime x) =>
             (!From.HasValue || x >= From) && (!To.HasValue || x < To);
     }
+    /// <summary>
+    /// Defines the parameters for fetching inventory movements
+    /// over a specified date range for a given item code.
+    /// </summary>
+    public class GetInventoryMovementsRequest
+    {
+        /// <summary>
+        /// The item code to filter movements by.
+        /// </summary>
+        public long ItemCode { get; set; }
+
+        /// <summary>
+        /// Optional inclusive start date (UTC).
+        /// If null, no lower bound is applied.
+        /// </summary>
+        public DateTime? StartDate { get; set; }
+
+        /// <summary>
+        /// Optional inclusive end date (UTC).
+        /// If null, no upper bound is applied.
+        /// </summary>
+        public DateTime? EndDate { get; set; }
+    }
 }
