@@ -242,7 +242,7 @@ namespace RV.InvNew.EtoFE
                 DataCell = new TextBoxCell
                 {
                     Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.RunningBalance.ToString("0.##"))
+                        x => x.ToUnits.ToString("0.##"))
                 }
             });
 
@@ -266,14 +266,14 @@ namespace RV.InvNew.EtoFE
 
                 // X positions and labels
                 double[] positions = Enumerable.Range(1, n).Select(i => (double)i).ToArray();
-                string[] labels = movs.Select(m => m.Date.ToString("MM-dd")).ToArray();
+                string[] labels = movs.Select(m => m.EnteredTime.ToString("MM-dd")).ToArray();
 
                 // add one BarPlot per ref-type, stacking them
                 for (int t = 0; t < _refTypes.Length; t++)
                 {
                     string type = _refTypes[t];
                     double[] vals = movs
-                        .Select(m => m.RefType == type ? m.Quantity : 0)
+                        .Select(m => m.Reference.Split(':')[0] == type ? m.Units : 0)
                         .ToArray();
 
                     var bar = plt.Add.Bars(vals, positions);
