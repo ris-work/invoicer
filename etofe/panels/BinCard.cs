@@ -254,36 +254,60 @@ namespace RV.InvNew.EtoFE
 
         void PlotCurrent()
         {
-            var movs = _items[_currentItemIndex].BinCard;
-            int n = movs.Count;
-            var plt = _plotView.Plot;
-            plt.Clear();
-            _seriesMap.Clear();
+            
+                var movs = _items[_currentItemIndex].BinCard;
+                int n = movs.Count;
+                var plt = _plotView.Plot;
+                plt.Clear();
+                _seriesMap.Clear();
 
-            double[] positions = Enumerable.Range(1, n).Select(i => (double)i).ToArray();
-            string[] labels = movs.Select(m => m.Date.ToString("MM-dd")).ToArray();
+                // X positions and labels
+                double[] positions = Enumerable.Range(1, n).Select(i => (double)i).ToArray();
+                string[] labels = movs.Select(m => m.Date.ToString("MM-dd")).ToArray();
 
-            for (int t = 0; t < _refTypes.Length; t++)
-            {
-                string type = _refTypes[t];
-                double[] vals = new double[n];
-                for (int i = 0; i < n; i++)
-                    vals[i] = movs[i].RefType == type ? movs[i].Quantity : 0;
+                // add one BarPlot per ref-type, stacking them
+                for (int t = 0; t < _refTypes.Length; t++)
+                {
+                    string type = _refTypes[t];
+                    double[] vals = movs
+                        .Select(m => m.RefType == type ? m.Quantity : 0)
+                        .ToArray();
 
-                var bar = new ScottPlot.Plottables.BarPlot(vals, positions);
-                bar.StackGroup = 0;
-                bar.BarWidth = 0.8;
-                bar.FillColor = _barColors[t];
-                bar.Label = type;
-                bar.IsVisible = _checkMap[type].Checked == true;
+                    var bar = plt.Add.Bars(vals, positions);
+                    //bar.StackGroup = 0;
+                    //bar.Bars.ForEach(a => a.) = 0.8;
+                    bar.Color = _barColors[t];
+                    bar.LegendText = type;
+                    bar.IsVisible = _checkMap[type].Checked == true;
 
-                _seriesMap[type] = new List<ScottPlot.Plottables.BarPlot> { bar };
-            }
+                    _seriesMap[type] = new List<ScottPlot.Plottables.BarPlot> { bar };
+                }
 
-            //plt.XTicks(positions, labels);
-            //plt.Legend(location: legendPosition.upperRight);
-            //plt.AxisAuto();
-            _plotView.Refresh();
+                // custom X-axis tick labels
+                var tickGen = new ScottPlot.TickGenerators.NumericManual();
+                for (int i = 0; i < positions.Length; i++)
+                    tickGen.AddMajor(positions[i], labels[i]);
+                plt.Axes.Bottom.TickGenerator = tickGen;
+
+                // manual legend entries
+                plt.Legend.ManualItems.Clear();
+                for (int t = 0; t < _refTypes.Length; t++)
+                    plt.Legend.ManualItems.Add(new LegendItem
+                    {
+                        LabelText = _refTypes[t],
+                        FillColor = _barColors[t]
+                    });
+                plt.Legend.Orientation = ScottPlot.Orientation.Horizontal;
+                plt.ShowLegend(ScottPlot.Alignment.UpperRight);
+
+                // tighten margins and auto-scale
+                plt.Axes.Margins(bottom: 0, top: .3);
+                plt.Axes.AutoScale();
+
+                _plotView.Refresh();
+
+
+            
         }
     }
 }
