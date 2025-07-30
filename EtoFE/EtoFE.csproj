@@ -11,6 +11,7 @@
         <Platforms>AnyCPU;x64</Platforms>
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
+		<UseExperimentalCoreSWF>True</UseExperimentalCoreSWF>
         <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
@@ -155,6 +156,22 @@
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
+	<ItemGroup
+	  Condition="
+      '$(UseExperimentalCoreSWF)' == 'True'
+      Or
+      '$(IsWindowsTarget)' == 'False'
+    ">
+		<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+	</ItemGroup>
+	<PropertyGroup Condition="
+      '$(UseExperimentalCoreSWF)' != 'True'
+      And
+      '$(IsWindowsTarget)' == 'True'
+    ">
+		<!-- tells the WindowsDesktop SDK to add WinForms references -->
+		<UseWindowsForms>true</UseWindowsForms>
+	</PropertyGroup>
     <PropertyGroup>
         <!-- Set to true/false or even override it via command-line -->
         <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
@@ -163,10 +180,16 @@
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
         <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-        <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+        <!--<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
+	<PropertyGroup Condition="'$(IsWindowsTarget)' != 'True'">
+		<UseWpf>false</UseWpf>
+		<UseWindowsForms>false</UseWindowsForms>
+		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+	</PropertyGroup>
     <ItemGroup>
         <None Update="icons\posprogram_export.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -197,4 +220,8 @@
         <!-- Replace the version below with the appropriate package version you wish to target -->
         <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
     </ItemGroup>
+	<PropertyGroup>
+		<!-- Suppress “reference assemblies for WPF not found” error -->
+		<NoWarn>$(NoWarn);MSB3644</NoWarn>
+	</PropertyGroup>
 </Project>

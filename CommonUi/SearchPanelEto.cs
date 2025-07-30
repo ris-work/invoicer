@@ -140,7 +140,9 @@ namespace CommonUi
             List<(string[] SearchText, Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue,
             List<(string Header, TextAlignment Alignment, bool NumericalSort)> HeaderEntries,
             bool Debug = true,
-            PanelSettings? LocalColors = null
+            PanelSettings? LocalColors = null,
+            int GWW = 600,
+            int GWH = 300
         )
         {
             var SC = SearchCatalogue;
@@ -451,7 +453,7 @@ namespace CommonUi
             //ApplyScrollBarLineButtonStyle();
             //ApplyScrollBarThumbStyle();
             Results.BackgroundColor = Colors.LesserBackgroundColor;
-            Results.Size = new Size(600, 300);
+            Results.Size = new Size(GWW, GWH);
             (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
                 Eto.Drawing.Color?,
                 Eto.Drawing.Color?

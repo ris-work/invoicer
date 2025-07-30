@@ -82,7 +82,7 @@ namespace RV.InvNew.EtoFE
                 new List<(string Header, TextAlignment Alignment, bool NumericalSort)> {
                     ("ItemCode", TextAlignment.Left, true)
                 },
-                Debug: false, LocalColors: null
+                Debug: false, LocalColors: null, GWH: 150, GWW: 300
             );
             _itemSearch.OnSelectionMade = () =>
             {
@@ -95,6 +95,7 @@ namespace RV.InvNew.EtoFE
                     PlotCurrent();
                 }
             };
+            _itemSearch.Size = new Eto.Drawing.Size(300, 200);
 
             // 2) Pagination
             _btnBinPrev = new Button { Text = "< Prev" };
@@ -290,16 +291,16 @@ namespace RV.InvNew.EtoFE
                 var tickGen = new ScottPlot.TickGenerators.NumericManual();
                 for (int i = 0; i < positions.Length; i++)
                     tickGen.AddMajor(positions[i], labels[i]);
-                plt.Axes.Bottom.TickGenerator = tickGen;
+                //plt.Axes.Bottom.TickGenerator = tickGen;
 
                 // manual legend entries
-                plt.Legend.ManualItems.Clear();
+                /*plt.Legend.ManualItems.Clear();
                 for (int t = 0; t < _refTypes.Length; t++)
                     plt.Legend.ManualItems.Add(new LegendItem
                     {
                         LabelText = _refTypes[t],
                         FillColor = _barColors[t]
-                    });
+                    });*/
                 plt.Legend.Orientation = ScottPlot.Orientation.Horizontal;
                 plt.ShowLegend(ScottPlot.Alignment.UpperRight);
 
