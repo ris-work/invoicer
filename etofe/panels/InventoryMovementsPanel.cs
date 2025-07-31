@@ -71,13 +71,14 @@ namespace RV.Invnew.EtoFE
             _txtItemCode = new TextBox { PlaceholderText = "Click to search…" };
             _lblFriendly = new Label();
 
-            _txtItemCode.GotFocus += (s, e) =>
+            _txtItemCode.MouseUp += (s, e) =>
             {
+                //_dpFrom.Focus();
                 _txtItemCode.Text = "";
                 var sel = CommonUi.SearchPanelUtility
                             .GenerateSearchDialog<PosCatalogue>(
                                 PR.Catalogue,
-                                this, debug: false
+                                _dpFrom, debug: false
                             );
                 if (sel?.Length > 0)
                 {
@@ -85,6 +86,7 @@ namespace RV.Invnew.EtoFE
                     if (long.TryParse(sel[0], out var code))
                         _lblFriendly.Text = LookupHumanFriendlyItemcode(code);
                 }
+                
             };
 
             // new, save, cancel, delete
@@ -153,11 +155,13 @@ namespace RV.Invnew.EtoFE
                 }
             };
 
+            _grid.RowFormatting += (e, a) => { };
+
             // fetch button
             _btnFetch = new Button { Text = "Fetch Movements" };
             _btnFetch.Click += async (s, e) =>
             {
-                List<(long ItemCode, List<RV.InvNew.Common.InventoryMovement> BinCard)> Cards = new();
+                List<(long ItemCode, string Description, List<RV.InvNew.Common.InventoryMovement> BinCard)> Cards = new();
                 foreach (var r in _rows)
                 {
                     if (long.TryParse(r.ItemCode, out var code))
@@ -169,7 +173,7 @@ namespace RV.Invnew.EtoFE
                             EndDate = r.To
                         };
                         var result = FetchInventoryMovementsAsync(req);
-                        Cards.Add((code, result));
+                        Cards.Add((code, LookupHumanFriendlyItemcode(code), result));
                         // TODO: handle result
                         
                     }

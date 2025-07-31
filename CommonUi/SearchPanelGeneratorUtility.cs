@@ -83,13 +83,13 @@ namespace CommonUi
         public static string[] GenerateSearchDialog<T>(
             List<T> items,
             Control owner,
-            bool debug = true,
+            bool debug = false,
             PanelSettings? localColors = null
         )
         {
             var generated = new Dialog<string[]>();
 
-            var searchPanel = GenerateSearchPanel(items);
+            var searchPanel = GenerateSearchPanel(items, debug);
             generated.Content = searchPanel;
             searchPanel.OnSelectionMade += () =>
             {

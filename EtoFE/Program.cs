@@ -205,6 +205,10 @@ public class Program
             //Eto.WinForms.Platform.Add<Eto.Forms.Scrollable.IHandler>(
             //() => new MyApp.NoNativeScrollPanel());
             CurrentUI = Eto.Platforms.WinForms;
+            var asm = typeof(System.Windows.Forms.Form).Assembly;
+            Console.WriteLine("WinForms Provider: Location: " + asm.Location);
+            var companyAttr = asm.GetCustomAttribute<AssemblyCompanyAttribute>();
+            Console.WriteLine("WinForms Provider: Company: " + companyAttr?.Company);
         }
         if (CurrentUIConfigured.ToLowerInvariant() == ("gtk"))
             CurrentUI = Eto.Platforms.Gtk;

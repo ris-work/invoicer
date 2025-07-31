@@ -134,7 +134,7 @@ namespace CommonUi
                 Eto.Drawing.Color? ForegroundColor
             )> SC,
             List<(string Title, TextAlignment Alignment, bool)> HeaderEntries,
-            bool Debug = true
+            bool Debug = false
         )
         {
             IEnumerable<(
