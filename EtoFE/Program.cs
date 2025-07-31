@@ -26,10 +26,8 @@ using Tomlyn.Model;
 //using Eto.WinUI;
 #endif
 
-public static class GlobalState
-{
+public static class GlobalState { }
 
-}
 public static class Mock
 {
     public static List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue;

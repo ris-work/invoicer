@@ -1,18 +1,18 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using Eto.Forms;
+using CommonUi;
 using Eto.Drawing;
+using Eto.Forms;
+using EtoFE;
+//using ImageMagick;
+using RV.InvNew.Common;
 using ScottPlot;
 using ScottPlot.Eto;
-using SPColor = ScottPlot.Color;     // Alias for ScottPlot’s Color type
-using Colors = ScottPlot.Colors;    // Alias for ScottPlot’s static Colors class
-using CommonUi;
-using RV.InvNew.Common;
-using EtoFE;
-using System.Collections;
-using System.Data;
-using ImageMagick;
+using Colors = ScottPlot.Colors; // Alias for ScottPlot’s static Colors class
+using SPColor = ScottPlot.Color; // Alias for ScottPlot’s Color type
 
 namespace RV.InvNew.EtoFE
 {
@@ -32,6 +32,7 @@ namespace RV.InvNew.EtoFE
         public long ItemCode { get; set; }
         public string Description { get; set; }
         public List<InventoryMovement> BinCard { get; set; } = new();
+
         public override string ToString() => ItemCode.ToString();
     }
 
@@ -40,36 +41,46 @@ namespace RV.InvNew.EtoFE
     {
         // Map each action to its desired background color.
         // Sale and Purchase now have distinct hues.
-        new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<string, Eto.Drawing.Color>(StringComparer.OrdinalIgnoreCase)
-{
-    // Good actions
-    { "sale",           Eto.Drawing.Colors.LightGreen },
-    { "purchase",       Eto.Drawing.Colors.LightSkyBlue },
-    { "production",     Eto.Drawing.Colors.LightGreen },
-
-    // Bad or neutral actions
-    { "consumption",    Eto.Drawing.Colors.LightSalmon },
-    { "issue",          Eto.Drawing.Colors.LightSalmon },
-    { "salesreturn",    Eto.Drawing.Colors.LightSalmon },
-    { "purchasereturn", Eto.Drawing.Colors.LightSalmon },
-    { "adjustment",     Eto.Drawing.Colors.LightGoldenrodYellow },
-    { "deprecated",     Eto.Drawing.Colors.LightGrey }
-};
+        new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
+            string,
+            Eto.Drawing.Color
+        >(StringComparer.OrdinalIgnoreCase)
+        {
+            // Good actions
+            { "sale", Eto.Drawing.Colors.LightGreen },
+            { "purchase", Eto.Drawing.Colors.LightSkyBlue },
+            { "production", Eto.Drawing.Colors.LightGreen },
+            // Bad or neutral actions
+            { "consumption", Eto.Drawing.Colors.LightSalmon },
+            { "issue", Eto.Drawing.Colors.LightSalmon },
+            { "salesreturn", Eto.Drawing.Colors.LightSalmon },
+            { "purchasereturn", Eto.Drawing.Colors.LightSalmon },
+            { "adjustment", Eto.Drawing.Colors.LightGoldenrodYellow },
+            { "deprecated", Eto.Drawing.Colors.LightGrey },
+        };
         const int PageSize = 20;
 
         readonly List<ItemMovements> _items;
         int _currentItemIndex = 0;
         int _currentBinPage = 0;
-        readonly string[] _refTypes = {
-            "sale","consumption","issue","production",
-            "salesreturn","purchase","purchasereturn",
-            "adjustment","deprecated"
+        readonly string[] _refTypes =
+        {
+            "sale",
+            "consumption",
+            "issue",
+            "production",
+            "salesreturn",
+            "purchase",
+            "purchasereturn",
+            "adjustment",
+            "deprecated",
         };
         readonly Dictionary<string, CheckBox> _checkMap = new();
         readonly Dictionary<string, List<ScottPlot.Plottables.BarPlot>> _seriesMap = new();
 
         // Use ScottPlot.Colors.<Name> only
-        static readonly SPColor[] _barColors = {
+        static readonly SPColor[] _barColors =
+        {
             Colors.Red,
             Colors.Orange,
             Colors.Yellow,
@@ -78,11 +89,12 @@ namespace RV.InvNew.EtoFE
             Colors.Purple,
             Colors.Pink,
             Colors.Gray,
-            Colors.Brown
+            Colors.Brown,
         };
 
         readonly SearchPanelEto _itemSearch;
-        readonly Button _btnBinPrev, _btnBinNext;
+        readonly Button _btnBinPrev,
+            _btnBinNext;
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
@@ -100,20 +112,35 @@ namespace RV.InvNew.EtoFE
             List<(long ItemCode, string Description, List<InventoryMovement> BinCard)> data
         )
         {
-            
             // Wrap input tuples
-            _items = data
-                .Select(x => new ItemMovements { ItemCode = x.ItemCode, Description = x.Description, BinCard = x.BinCard })
+            _items = data.Select(x => new ItemMovements
+                {
+                    ItemCode = x.ItemCode,
+                    Description = x.Description,
+                    BinCard = x.BinCard,
+                })
                 .ToList();
 
             // 1) Search dropdown
             _itemSearch = new SearchPanelEto(
-                _items.Select(im => (new[] { im.ItemCode.ToString(), im.Description }, (Eto.Drawing.Color?)null, (Eto.Drawing.Color?)null)).ToList(),
-                new List<(string Header, TextAlignment Alignment, bool NumericalSort)> {
+                _items
+                    .Select(im =>
+                        (
+                            new[] { im.ItemCode.ToString(), im.Description },
+                            (Eto.Drawing.Color?)null,
+                            (Eto.Drawing.Color?)null
+                        )
+                    )
+                    .ToList(),
+                new List<(string Header, TextAlignment Alignment, bool NumericalSort)>
+                {
                     ("ItemCode", TextAlignment.Left, true),
-                    ("Description", TextAlignment.Left, false)
+                    ("Description", TextAlignment.Left, false),
                 },
-                Debug: false, LocalColors: null, GWH: 150, GWW: 300
+                Debug: false,
+                LocalColors: null,
+                GWH: 150,
+                GWW: 300
             );
             _itemSearch.OnSelectionMade = () =>
             {
@@ -155,7 +182,7 @@ namespace RV.InvNew.EtoFE
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
-                Items = { _btnBinPrev, _lblBinPage, _btnBinNext }
+                Items = { _btnBinPrev, _lblBinPage, _btnBinNext },
             };
             _binCardContainer = new Panel();
 
@@ -165,7 +192,7 @@ namespace RV.InvNew.EtoFE
             var chkLayout = new StackLayout
             {
                 Orientation = Eto.Forms.Orientation.Vertical,
-                Spacing = 2
+                Spacing = 2,
             };
             for (int i = 0; i < _refTypes.Length; i++)
             {
@@ -187,28 +214,26 @@ namespace RV.InvNew.EtoFE
             var bottomLayout = new TableLayout
             {
                 Spacing = new Size(10, 0),
-                Rows = {
+                Rows =
+                {
                     new TableRow(
                         new TableCell(_plotView, scaleWidth: true),
-                        new TableCell(new GroupBox
-                        {
-                            Text    = "Show Types",
-                            Content = chkLayout
-                        })
-                    )
-                }
+                        new TableCell(new GroupBox { Text = "Show Types", Content = chkLayout })
+                    ),
+                },
             };
 
             Content = new TableLayout
             {
                 Padding = 10,
                 Spacing = new Size(10, 10),
-                Rows = {
+                Rows =
+                {
                     new TableRow(_itemSearch),
                     new TableRow(binPager),
                     new TableRow(_binCardContainer),
-                    new TableRow(bottomLayout)
-                }
+                    new TableRow(bottomLayout),
+                },
             };
 
             // Initial load
@@ -226,57 +251,67 @@ namespace RV.InvNew.EtoFE
             int totalPages = GetTotalBinPages();
             _lblBinPage.Text = $"Page {_currentBinPage + 1} of {totalPages}";
 
-            var page = movs
-                .Skip(_currentBinPage * PageSize)
-                .Take(PageSize)
-                .ToList();
+            var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
             var grid = new GridView { DataStore = page };
-            grid.Columns.Add(new GridColumn
-            {
-                HeaderText = "Date",
-                DataCell = new TextBoxCell
+            grid.Columns.Add(
+                new GridColumn
                 {
-                    Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.EnteredTime.Date.ToShortDateString())
+                    HeaderText = "Date",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x =>
+                            x.EnteredTime.Date.ToShortDateString()
+                        ),
+                    },
                 }
-            });
-            grid.Columns.Add(new GridColumn
-            {
-                HeaderText = "Type",
-                DataCell = new TextBoxCell
+            );
+            grid.Columns.Add(
+                new GridColumn
                 {
-                    Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.Reference.Split(':')[0])
+                    HeaderText = "Type",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x =>
+                            x.Reference.Split(':')[0]
+                        ),
+                    },
                 }
-            });
-            grid.Columns.Add(new GridColumn
-            {
-                HeaderText = "Ref No.",
-                DataCell = new TextBoxCell
+            );
+            grid.Columns.Add(
+                new GridColumn
                 {
-                    Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.Reference)
+                    HeaderText = "Ref No.",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x => x.Reference),
+                    },
                 }
-            });
-            grid.Columns.Add(new GridColumn
-            {
-                HeaderText = "Qty",
-                DataCell = new TextBoxCell
+            );
+            grid.Columns.Add(
+                new GridColumn
                 {
-                    Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.Units.ToString("0.##"))
+                    HeaderText = "Qty",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x =>
+                            x.Units.ToString("0.##")
+                        ),
+                    },
                 }
-            });
-            grid.Columns.Add(new GridColumn
-            {
-                HeaderText = "Balance",
-                DataCell = new TextBoxCell
+            );
+            grid.Columns.Add(
+                new GridColumn
                 {
-                    Binding = Binding.Delegate<InventoryMovement, string>(
-                        x => x.ToUnits.ToString("0.##"))
+                    HeaderText = "Balance",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x =>
+                            x.ToUnits.ToString("0.##")
+                        ),
+                    },
                 }
-            });
+            );
             grid.RowFormatting += (sender, e) =>
             {
                 // A) Inspect the raw e.Item
@@ -290,13 +325,17 @@ namespace RV.InvNew.EtoFE
                 // B) Ensure it’s an IList (string[] and List<string> both implement IList)
                 if (!(item is IList rowItems))
                 {
-                    Console.WriteLine($"RowFormatting: e.Item is {item.GetType().Name}, not IList (remove this conditions later)");
+                    Console.WriteLine(
+                        $"RowFormatting: e.Item is {item.GetType().Name}, not IList (remove this conditions later)"
+                    );
                     //return;
                 }
 
-                if(!(item is InventoryMovement im))
+                if (!(item is InventoryMovement im))
                 {
-                    Console.WriteLine($"RowFormatting: e.Item is {item.GetType().Name}, not InventoryMovement");
+                    Console.WriteLine(
+                        $"RowFormatting: e.Item is {item.GetType().Name}, not InventoryMovement"
+                    );
                     return;
                 }
 
@@ -311,12 +350,11 @@ namespace RV.InvNew.EtoFE
                 var raw = im.Reference?.ToString() ?? string.Empty;
 
                 // E) Split on ':' and normalize
-                var key = raw
-                    .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
-                    .FirstOrDefault()?
-                    .Trim()
-                    .ToLowerInvariant()
-                    ?? string.Empty;
+                var key =
+                    raw.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
+                        .FirstOrDefault()
+                        ?.Trim()
+                        .ToLowerInvariant() ?? string.Empty;
 
                 // F) Lookup color
                 if (!actionColors.TryGetValue(key, out var bg))
@@ -340,104 +378,116 @@ namespace RV.InvNew.EtoFE
 
         void PlotCurrent()
         {
-
-
             var movs = _items[_currentItemIndex].BinCard;
-                int n = movs.Count;
-                var plt = _plotView.Plot;
-                plt.Clear();
-                _seriesMap.Clear();
+            int n = movs.Count;
+            var plt = _plotView.Plot;
+            plt.Clear();
+            _seriesMap.Clear();
             var summary = movs
-// 1. Project out the refType and date
-.Select(im => new
-{
-    RefType = im.Reference != null && im.Reference.Contains(';')
-        ? im.Reference.Substring(0, im.Reference.IndexOf(';'))
-        : im.Reference,
-    Date = im.EnteredTime.Date,
-    im.Units,
-    im.FromUnits,
-    im.ToUnits
-})
-// 2. Filter only the refTypes you care about
-.Where(x => _refTypes.Contains(x.RefType!))
-// 3. Group by refType + date
-.GroupBy(x => new { x.RefType, x.Date })
-// 4. Project your sums
-.Select(g => new InventoryMovementSummary
-{
-    RefType = g.Key.RefType!,
-    Date = g.Key.Date,
-    TotalUnits = g.Sum(y => y.Units),
-    TotalFrom = g.Sum(y => y.FromUnits),
-    TotalTo = g.Sum(y => y.ToUnits)
-})
-.ToList();
+            // 1. Project out the refType and date
+            .Select(im => new
+                {
+                    RefType = im.Reference != null && im.Reference.Contains(':')
+                        ? im.Reference.Substring(0, im.Reference.IndexOf(':'))
+                        : im.Reference,
+                    Date = im.EnteredTime.Date,
+                    im.Units,
+                    im.FromUnits,
+                    im.ToUnits,
+                })
+                // 2. Filter only the refTypes you care about
+                .Where(x => _refTypes.Contains(x.RefType!))
+                // 3. Group by refType + date
+                .GroupBy(x => new { x.RefType, x.Date })
+                // 4. Project your sums
+                .Select(g => new InventoryMovementSummary
+                {
+                    RefType = g.Key.RefType!,
+                    Date = g.Key.Date,
+                    TotalUnits = g.Sum(y => y.Units),
+                    TotalFrom = g.Sum(y => y.FromUnits),
+                    TotalTo = g.Sum(y => y.ToUnits),
+                })
+                .ToList();
 
             // X positions and labels
             double[] positions = Enumerable.Range(1, n).Select(i => (double)i).ToArray();
-                string[] labels = movs.Select(m => m.EnteredTime.ToString("MM-dd")).ToArray();
+            string[] labels = movs.Select(m => m.EnteredTime.ToString("MM-dd")).ToArray();
 
-                // add one BarPlot per ref-type, stacking them
-                for (int t = 0; t < _refTypes.Length; t++)
-                {
-                    string type = _refTypes[t];
-                    double[] vals = movs
-                        .Select(m => m.Reference.Split(':')[0] == type ? m.Units : 0)
-                        .ToArray();
-                var Series = movs.Select(m => m.EnteredTime.ToString("MM-dd")).To
-                Bar[] barsCollection = movs;
+            // add one BarPlot per ref-type, stacking them
+            for (int t = 0; t < _refTypes.Length; t++)
+            {
+                string type = _refTypes[t];
+                Console.WriteLine(type);
+                double[] vals = movs.Select(m => m.Reference.Split(':')[0] == type ? m.Units : 0)
+                    .ToArray();
+                var Series = movs.Select(m => m.EnteredTime.ToString("MM-dd"));
+                Bar[] barsCollection = summary.Where(s => s.RefType == type).Select(s => new Bar { Value = s.TotalUnits, Position = s.Date.ToOADate()}).ToArray();
 
-                    var bar = plt.Add.Bars(labels, vals);
-                    //bar.StackGroup = 0;
-                    //bar.Bars.ForEach(a => a.) = 0.8;
-                    bar.Color = _barColors[t];
-                    bar.LegendText = type;
-                    bar.IsVisible = _checkMap[type].Checked == true;
+                var bar = plt.Add.Bars(barsCollection);
+                System.Console.WriteLine($"summary: {summary.Count()}, {type}: {barsCollection.Count()}");
+                //bar.StackGroup = 0;
+                //bar.Bars.ForEach(a => a.) = 0.8;
+                bar.Color = _barColors[t].WithAlpha(150);
+                bar.LegendText = type;
+                bar.IsVisible = _checkMap[type].Checked == true;
 
-                    _seriesMap[type] = new List<ScottPlot.Plottables.BarPlot> { bar };
-                }
+                _seriesMap[type] = new List<ScottPlot.Plottables.BarPlot> { bar };
+            }
             //We do the actual stock count here
             double[] endStock = movs.Select(m => m.ToUnits).ToArray();
-            var line = plt.Add.Scatter(positions, endStock);
+            
+            //var movs = _items[_currentItemIndex].BinCard;
+            var dailyEndOfDay = movs
+    // Group by the calendar date of the movement
+    .GroupBy(m => m.EnteredTime.Date)
+    // For each date, pick the record with the most recent timestamp
+    .Select(g => g
+        .OrderByDescending(x => x.EnteredTime)
+        .First())
+    // Project out the date + quantity
+    .Select(m => new
+    {
+        Date = m.EnteredTime.Date,
+        Quantity = m.ToUnits
+    })
+    .ToList();
+            var line = plt.Add.Scatter(dailyEndOfDay.Select(d => d.Date.ToOADate()).ToArray(), dailyEndOfDay.Select(d => d.Quantity).ToArray());
             line.LegendText = "Current quantity";
             line.IsVisible = true;
 
-                // custom X-axis tick labels
-                var tickGen = new ScottPlot.TickGenerators.NumericManual();
-                for (int i = 0; i < positions.Length; i++)
-                    tickGen.AddMajor(positions[i], labels[i]);
-                //plt.Axes.Bottom.TickGenerator = tickGen;
+            // custom X-axis tick labels
+            var tickGen = new ScottPlot.TickGenerators.NumericManual();
+            for (int i = 0; i < positions.Length; i++)
+                tickGen.AddMajor(positions[i], labels[i]);
+            //plt.Axes.Bottom.TickGenerator = tickGen;
 
-                // manual legend entries
-                /*plt.Legend.ManualItems.Clear();
-                for (int t = 0; t < _refTypes.Length; t++)
-                    plt.Legend.ManualItems.Add(new LegendItem
-                    {
-                        LabelText = _refTypes[t],
-                        FillColor = _barColors[t]
-                    });*/
-                plt.Legend.Orientation = ScottPlot.Orientation.Horizontal;
-                plt.ShowLegend(ScottPlot.Alignment.UpperRight);
+            // manual legend entries
+            /*plt.Legend.ManualItems.Clear();
+            for (int t = 0; t < _refTypes.Length; t++)
+                plt.Legend.ManualItems.Add(new LegendItem
+                {
+                    LabelText = _refTypes[t],
+                    FillColor = _barColors[t]
+                });*/
+            plt.Legend.Orientation = ScottPlot.Orientation.Horizontal;
+            plt.ShowLegend(ScottPlot.Alignment.UpperRight);
 
-                // tighten margins and auto-scale
-                plt.Axes.Margins(bottom: 0, top: .3);
-                plt.Axes.AutoScale();
+            // tighten margins and auto-scale
+            plt.Axes.Margins(bottom: 0, top: .3);
+            plt.Axes.AutoScale();
+            plt.Axes.DateTimeTicksBottom();
 
-                _plotView.Refresh();
-
-
-            
+            _plotView.Refresh();
         }
+
         string GetRefType(string reference)
         {
             if (string.IsNullOrEmpty(reference))
                 return reference;
 
             var idx = reference.IndexOf(':');
-            return idx >= 0
-                ? reference.Substring(0, idx)
-                : reference;
+            return idx >= 0 ? reference.Substring(0, idx) : reference;
         }
     }
 }

@@ -11,7 +11,7 @@
         <Platforms>AnyCPU;x64</Platforms>
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
-		<UseExperimentalCoreSWF>True</UseExperimentalCoreSWF>
+        <UseExperimentalCoreSWF>True</UseExperimentalCoreSWF>
         <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
@@ -156,22 +156,25 @@
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
-	<ItemGroup
-	  Condition="
+    <ItemGroup
+        Condition="
       '$(UseExperimentalCoreSWF)' == 'True'
       Or
       '$(IsWindowsTarget)' == 'False'
-    ">
-		<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
-	</ItemGroup>
-	<PropertyGroup Condition="
+    "
+    >
+        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+    </ItemGroup>
+    <PropertyGroup
+        Condition="
       '$(UseExperimentalCoreSWF)' != 'True'
       And
       '$(IsWindowsTarget)' == 'True'
-    ">
-		<!-- tells the WindowsDesktop SDK to add WinForms references -->
-		<UseWindowsForms>true</UseWindowsForms>
-	</PropertyGroup>
+    "
+    >
+        <!-- tells the WindowsDesktop SDK to add WinForms references -->
+        <UseWindowsForms>true</UseWindowsForms>
+    </PropertyGroup>
     <PropertyGroup>
         <!-- Set to true/false or even override it via command-line -->
         <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
@@ -184,12 +187,12 @@
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
-	<PropertyGroup Condition="'$(IsWindowsTarget)' != 'True'">
-		<UseWpf>false</UseWpf>
-		<UseWindowsForms>false</UseWindowsForms>
-		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
-		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(IsWindowsTarget)' != 'True'">
+        <UseWpf>false</UseWpf>
+        <UseWindowsForms>false</UseWindowsForms>
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
+    </PropertyGroup>
     <ItemGroup>
         <None Update="icons\posprogram_export.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -201,7 +204,11 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
+    <Target
+        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
+        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
+        Condition="'$(IsWindowsTarget)' != 'true'"
+    >
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
@@ -220,8 +227,8 @@
         <!-- Replace the version below with the appropriate package version you wish to target -->
         <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
     </ItemGroup>
-	<PropertyGroup>
-		<!-- Suppress “reference assemblies for WPF not found” error -->
-		<NoWarn>$(NoWarn);MSB3644</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup>
+        <!-- Suppress “reference assemblies for WPF not found” error -->
+        <NoWarn>$(NoWarn);MSB3644</NoWarn>
+    </PropertyGroup>
 </Project>

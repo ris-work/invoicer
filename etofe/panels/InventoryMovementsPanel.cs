@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Eto.Forms;
 using Eto.Drawing;
-using RV.InvNew.Common;
+using Eto.Forms;
 using EtoFE;
+using RV.InvNew.Common;
 using RV.InvNew.EtoFE;
 
 namespace RV.Invnew.EtoFE
@@ -64,7 +64,11 @@ namespace RV.Invnew.EtoFE
                 }
             }
             // date defaults
-            _dpFrom = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now.AddMonths(-6) };
+            _dpFrom = new DateTimePicker
+            {
+                Mode = DateTimePickerMode.Date,
+                Value = DateTime.Now.AddMonths(-6),
+            };
             _dpTo = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
 
             // item code + friendly label
@@ -75,18 +79,17 @@ namespace RV.Invnew.EtoFE
             {
                 //_dpFrom.Focus();
                 _txtItemCode.Text = "";
-                var sel = CommonUi.SearchPanelUtility
-                            .GenerateSearchDialog<PosCatalogue>(
-                                PR.Catalogue,
-                                _dpFrom, debug: false
-                            );
+                var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog<PosCatalogue>(
+                    PR.Catalogue,
+                    _dpFrom,
+                    debug: false
+                );
                 if (sel?.Length > 0)
                 {
                     _txtItemCode.Text = sel[0];
                     if (long.TryParse(sel[0], out var code))
                         _lblFriendly.Text = LookupHumanFriendlyItemcode(code);
                 }
-                
             };
 
             // new, save, cancel, delete
@@ -107,7 +110,7 @@ namespace RV.Invnew.EtoFE
                     ItemCode = _txtItemCode.Text,
                     FriendlyName = _lblFriendly.Text,
                     From = _dpFrom.Value ?? DateTime.MinValue,
-                    To = _dpTo.Value ?? DateTime.Now
+                    To = _dpTo.Value ?? DateTime.Now,
                 };
 
                 if (_editingIndex < 0)
@@ -136,10 +139,22 @@ namespace RV.Invnew.EtoFE
 
             // grid (read‐only columns)
             _grid = new GridView { DataStore = _rows, AllowMultipleSelection = false };
-            _grid.Columns.Add(new GridColumn { HeaderText = "Item Code", DataCell = new TextBoxCell("ItemCode") });
-            _grid.Columns.Add(new GridColumn { HeaderText = "Description", DataCell = new TextBoxCell("FriendlyName") });
-            _grid.Columns.Add(new GridColumn { HeaderText = "From", DataCell = new TextBoxCell("FromStr") });
-            _grid.Columns.Add(new GridColumn { HeaderText = "To", DataCell = new TextBoxCell("ToStr") });
+            _grid.Columns.Add(
+                new GridColumn { HeaderText = "Item Code", DataCell = new TextBoxCell("ItemCode") }
+            );
+            _grid.Columns.Add(
+                new GridColumn
+                {
+                    HeaderText = "Description",
+                    DataCell = new TextBoxCell("FriendlyName"),
+                }
+            );
+            _grid.Columns.Add(
+                new GridColumn { HeaderText = "From", DataCell = new TextBoxCell("FromStr") }
+            );
+            _grid.Columns.Add(
+                new GridColumn { HeaderText = "To", DataCell = new TextBoxCell("ToStr") }
+            );
 
             _grid.SelectionChanged += (s, e) =>
             {
@@ -161,7 +176,12 @@ namespace RV.Invnew.EtoFE
             _btnFetch = new Button { Text = "Fetch Movements" };
             _btnFetch.Click += async (s, e) =>
             {
-                List<(long ItemCode, string Description, List<RV.InvNew.Common.InventoryMovement> BinCard)> Cards = new();
+                List<(
+                    long ItemCode,
+                    string Description,
+                    List<RV.InvNew.Common.InventoryMovement> BinCard
+                )> Cards = new();
+                if (_rows.Count() < 1) return;
                 foreach (var r in _rows)
                 {
                     if (long.TryParse(r.ItemCode, out var code))
@@ -170,12 +190,11 @@ namespace RV.Invnew.EtoFE
                         {
                             ItemCode = code,
                             StartDate = r.From,
-                            EndDate = r.To
+                            EndDate = r.To,
                         };
                         var result = FetchInventoryMovementsAsync(req);
                         Cards.Add((code, LookupHumanFriendlyItemcode(code), result));
                         // TODO: handle result
-                        
                     }
                 }
                 var F = new Form() { Content = new BinCardVisualizerPanel(Cards) };
@@ -188,11 +207,11 @@ namespace RV.Invnew.EtoFE
                 Spacing = new Size(5, 5),
                 Rows =
                 {
-                    new TableRow(new Label { Text="Item Code:" }, _txtItemCode, _lblFriendly),
-                    new TableRow(new Label { Text="From:"      }, _dpFrom),
-                    new TableRow(new Label { Text="To:"        }, _dpTo),
-                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete)
-                }
+                    new TableRow(new Label { Text = "Item Code:" }, _txtItemCode, _lblFriendly),
+                    new TableRow(new Label { Text = "From:" }, _dpFrom),
+                    new TableRow(new Label { Text = "To:" }, _dpTo),
+                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete),
+                },
             };
             var group = new GroupBox { Text = "Entry", Content = entryLayout };
 
@@ -201,12 +220,7 @@ namespace RV.Invnew.EtoFE
             {
                 Padding = 10,
                 Spacing = new Size(10, 10),
-                Rows =
-                {
-                    group,
-                    _grid,
-                    _btnFetch
-                }
+                Rows = { group, _grid, _btnFetch },
             };
 
             ResetEntry();
@@ -259,12 +273,21 @@ namespace RV.Invnew.EtoFE
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Failed to load data: {ex.Message}", MessageBoxButtons.OK, MessageBoxType.Error);
+                MessageBox.Show(
+                    this,
+                    $"Failed to load data: {ex.Message}",
+                    MessageBoxButtons.OK,
+                    MessageBoxType.Error
+                );
             }
         }
 
         // stub for friendly lookup
-        string LookupHumanFriendlyItemcode(long code) => PR.Catalogue.Where(e => e.itemcode == code).FirstOrDefault(new PosCatalogue() { itemdesc = "Unknown"}).itemdesc;
+        string LookupHumanFriendlyItemcode(long code) =>
+            PR
+                .Catalogue.Where(e => e.itemcode == code)
+                .FirstOrDefault(new PosCatalogue() { itemdesc = "Unknown" })
+                .itemdesc;
 
         // stub for fetch
         List<InventoryMovement> FetchInventoryMovementsAsync(GetInventoryMovementsRequest req_out)
@@ -272,19 +295,21 @@ namespace RV.Invnew.EtoFE
             List<InventoryMovement> PR;
             while (true)
             {
-                
                 var req = (
-                    SendAuthenticatedRequest<GetInventoryMovementsRequest, List<InventoryMovement>>.Send(
-                        req_out,
-                        "/GetInventoryMovements",
-                        true
-                    )
+                    SendAuthenticatedRequest<
+                        GetInventoryMovementsRequest,
+                        List<InventoryMovement>
+                    >.Send(req_out, "/GetInventoryMovements", true)
                 );
                 //req.ShowModal();
                 if (req.Error == false)
                 {
                     PR = req.Out;
-                    MessageBox.Show(JsonSerializer.Serialize(req.Out), "Time", MessageBoxType.Information);
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Time",
+                        MessageBoxType.Information
+                    );
                     break;
                 }
             }
