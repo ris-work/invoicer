@@ -422,10 +422,15 @@ namespace RV.InvNew.EtoFE
                 double[] vals = movs.Select(m => m.Reference.Split(':')[0] == type ? m.Units : 0)
                     .ToArray();
                 var Series = movs.Select(m => m.EnteredTime.ToString("MM-dd"));
-                Bar[] barsCollection = summary.Where(s => s.RefType == type).Select(s => new Bar { Value = s.TotalUnits, Position = s.Date.ToOADate()}).ToArray();
+                Bar[] barsCollection = summary
+                    .Where(s => s.RefType == type)
+                    .Select(s => new Bar { Value = s.TotalUnits, Position = s.Date.ToOADate() })
+                    .ToArray();
 
                 var bar = plt.Add.Bars(barsCollection);
-                System.Console.WriteLine($"summary: {summary.Count()}, {type}: {barsCollection.Count()}");
+                System.Console.WriteLine(
+                    $"summary: {summary.Count()}, {type}: {barsCollection.Count()}"
+                );
                 //bar.StackGroup = 0;
                 //bar.Bars.ForEach(a => a.) = 0.8;
                 bar.Color = _barColors[t].WithAlpha(150);
@@ -436,23 +441,20 @@ namespace RV.InvNew.EtoFE
             }
             //We do the actual stock count here
             double[] endStock = movs.Select(m => m.ToUnits).ToArray();
-            
+
             //var movs = _items[_currentItemIndex].BinCard;
             var dailyEndOfDay = movs
-    // Group by the calendar date of the movement
-    .GroupBy(m => m.EnteredTime.Date)
-    // For each date, pick the record with the most recent timestamp
-    .Select(g => g
-        .OrderByDescending(x => x.EnteredTime)
-        .First())
-    // Project out the date + quantity
-    .Select(m => new
-    {
-        Date = m.EnteredTime.Date,
-        Quantity = m.ToUnits
-    })
-    .ToList();
-            var line = plt.Add.Scatter(dailyEndOfDay.Select(d => d.Date.ToOADate()).ToArray(), dailyEndOfDay.Select(d => d.Quantity).ToArray());
+            // Group by the calendar date of the movement
+            .GroupBy(m => m.EnteredTime.Date)
+                // For each date, pick the record with the most recent timestamp
+                .Select(g => g.OrderByDescending(x => x.EnteredTime).First())
+                // Project out the date + quantity
+                .Select(m => new { Date = m.EnteredTime.Date, Quantity = m.ToUnits })
+                .ToList();
+            var line = plt.Add.Scatter(
+                dailyEndOfDay.Select(d => d.Date.ToOADate()).ToArray(),
+                dailyEndOfDay.Select(d => d.Quantity).ToArray()
+            );
             line.LegendText = "Current quantity";
             line.IsVisible = true;
 

@@ -181,7 +181,8 @@ namespace RV.Invnew.EtoFE
                     string Description,
                     List<RV.InvNew.Common.InventoryMovement> BinCard
                 )> Cards = new();
-                if (_rows.Count() < 1) return;
+                if (_rows.Count() < 1)
+                    return;
                 foreach (var r in _rows)
                 {
                     if (long.TryParse(r.ItemCode, out var code))
