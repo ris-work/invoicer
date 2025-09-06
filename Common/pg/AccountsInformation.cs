@@ -20,4 +20,20 @@ public partial class AccountsInformation
     public double AccountMax { get; set; }
 
     public string? HumanFriendlyId { get; set; }
+
+    public bool AllowCreditOnPos { get; set; }
+
+    public bool AllowDebitOnPos { get; set; }
+
+    public bool IsBank { get; set; }
+
+    public bool IsCash { get; set; }
+
+    public bool IsReserve { get; set; }
+
+    public bool IsReconcilable { get; set; }
+
+    public bool IsInventoryTracked { get; set; }
+
+    public bool IsDefaultCashRegister { get; set; }
 }

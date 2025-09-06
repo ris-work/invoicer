@@ -65,6 +65,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<NotificationType> NotificationTypes { get; set; }
 
+    public virtual DbSet<Payment> Payments { get; set; }
+
     public virtual DbSet<PermissionsExtendedApiCall> PermissionsExtendedApiCalls { get; set; }
 
     public virtual DbSet<PermissionsList> PermissionsLists { get; set; }
@@ -89,6 +91,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Sale> Sales { get; set; }
 
+    public virtual DbSet<ScheduledPayment> ScheduledPayments { get; set; }
+
     public virtual DbSet<Sih> Sihs { get; set; }
 
     public virtual DbSet<SihCurrent> SihCurrents { get; set; }
@@ -112,7 +116,7 @@ public partial class NewinvContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
         optionsBuilder.LogTo(Console.WriteLine);
     }
 
@@ -160,7 +164,30 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("account_min");
             entity.Property(e => e.AccountName).HasColumnName("account_name");
             entity.Property(e => e.AccountPii).HasColumnName("account_pii");
+            entity
+                .Property(e => e.AllowCreditOnPos)
+                .HasDefaultValue(false)
+                .HasColumnName("allow_credit_on_pos");
+            entity
+                .Property(e => e.AllowDebitOnPos)
+                .HasDefaultValue(false)
+                .HasColumnName("allow_debit_on_pos");
             entity.Property(e => e.HumanFriendlyId).HasColumnName("human_friendly_id");
+            entity.Property(e => e.IsBank).HasDefaultValue(false).HasColumnName("is_bank");
+            entity.Property(e => e.IsCash).HasDefaultValue(false).HasColumnName("is_cash");
+            entity
+                .Property(e => e.IsDefaultCashRegister)
+                .HasDefaultValue(false)
+                .HasColumnName("is_default_cash_register");
+            entity
+                .Property(e => e.IsInventoryTracked)
+                .HasDefaultValue(false)
+                .HasColumnName("is_inventory_tracked");
+            entity
+                .Property(e => e.IsReconcilable)
+                .HasDefaultValue(false)
+                .HasColumnName("is_reconcilable");
+            entity.Property(e => e.IsReserve).HasDefaultValue(false).HasColumnName("is_reserve");
         });
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
@@ -712,6 +739,73 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.NotificationTypeName).HasColumnName("notification_type_name");
         });
 
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("payments_pkey");
+
+            entity.ToTable("payments");
+
+            entity.HasIndex(e => e.PaymentDate, "ix_payments_date");
+
+            entity.HasIndex(
+                e => new
+                {
+                    e.CompanyId,
+                    e.BankAccountId,
+                    e.IsReconciled,
+                    e.IsExcluded,
+                },
+                "ix_payments_recon"
+            );
+
+            entity.HasIndex(e => e.ScheduledPaymentId, "ix_payments_scheduled");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.BankAccountId).HasColumnName("bank_account_id");
+            entity.Property(e => e.BeneficiaryAccountNo).HasColumnName("beneficiary_account_no");
+            entity.Property(e => e.BeneficiaryBankName).HasColumnName("beneficiary_bank_name");
+            entity.Property(e => e.BeneficiaryBranch).HasColumnName("beneficiary_branch");
+            entity.Property(e => e.BeneficiaryName).HasColumnName("beneficiary_name");
+            entity.Property(e => e.BeneficiaryRoutingNo).HasColumnName("beneficiary_routing_no");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreditAccountId).HasColumnName("credit_account_id");
+            entity.Property(e => e.Currency).HasColumnName("currency");
+            entity.Property(e => e.DebitAccountId).HasColumnName("debit_account_id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity
+                .Property(e => e.ExchangeRate)
+                .HasDefaultValueSql("1.0")
+                .HasColumnName("exchange_rate");
+            entity.Property(e => e.ExternalPaymentId).HasColumnName("external_payment_id");
+            entity.Property(e => e.FeeAmount).HasColumnName("fee_amount");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.IsExcluded).HasDefaultValue(false).HasColumnName("is_excluded");
+            entity
+                .Property(e => e.IsReconciled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_reconciled");
+            entity.Property(e => e.NetAmount).HasColumnName("net_amount");
+            entity.Property(e => e.PaymentDate).HasColumnName("payment_date");
+            entity.Property(e => e.PaymentMethod).HasColumnName("payment_method");
+            entity.Property(e => e.PaymentReference).HasColumnName("payment_reference");
+            entity.Property(e => e.ReconciliationDate).HasColumnName("reconciliation_date");
+            entity.Property(e => e.ReconciliationRef).HasColumnName("reconciliation_ref");
+            entity.Property(e => e.ScheduledPaymentId).HasColumnName("scheduled_payment_id");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.VendorId).HasColumnName("vendor_id");
+            entity
+                .Property(e => e.VersionNumber)
+                .HasDefaultValue(0L)
+                .HasColumnName("version_number");
+        });
+
         modelBuilder.Entity<PermissionsExtendedApiCall>(entity =>
         {
             entity
@@ -1017,6 +1111,104 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VatAsCharged).HasColumnName("vat_as_charged");
             entity.Property(e => e.VatCategory).HasColumnName("vat_category");
             entity.Property(e => e.VatRatePercentage).HasColumnName("vat_rate_percentage");
+        });
+
+        modelBuilder.Entity<ScheduledPayment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("scheduled_payments_pkey");
+
+            entity.ToTable("scheduled_payments");
+
+            entity.HasIndex(
+                e => new { e.NextRunDate, e.IsPending },
+                "ix_scheduled_payments_next_run"
+            );
+
+            entity.HasIndex(
+                e => new
+                {
+                    e.CompanyId,
+                    e.BankAccountId,
+                    e.IsReconciled,
+                    e.IsExcluded,
+                },
+                "ix_scheduled_payments_recon"
+            );
+
+            entity.HasIndex(
+                e => new
+                {
+                    e.IsProcessing,
+                    e.IsCompleted,
+                    e.IsFailed,
+                    e.IsCancelled,
+                },
+                "ix_scheduled_payments_status_flags"
+            );
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
+            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+            entity.Property(e => e.BankAccountId).HasColumnName("bank_account_id");
+            entity.Property(e => e.BatchId).HasColumnName("batch_id");
+            entity.Property(e => e.BeneficiaryAccountNo).HasColumnName("beneficiary_account_no");
+            entity.Property(e => e.BeneficiaryBankName).HasColumnName("beneficiary_bank_name");
+            entity.Property(e => e.BeneficiaryBranch).HasColumnName("beneficiary_branch");
+            entity.Property(e => e.BeneficiaryName).HasColumnName("beneficiary_name");
+            entity.Property(e => e.BeneficiaryRoutingNo).HasColumnName("beneficiary_routing_no");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreditAccountId).HasColumnName("credit_account_id");
+            entity.Property(e => e.Currency).HasColumnName("currency");
+            entity.Property(e => e.DebitAccountId).HasColumnName("debit_account_id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity
+                .Property(e => e.ExchangeRate)
+                .HasDefaultValueSql("1.0")
+                .HasColumnName("exchange_rate");
+            entity.Property(e => e.ExternalPaymentId).HasColumnName("external_payment_id");
+            entity.Property(e => e.FeeAmount).HasColumnName("fee_amount");
+            entity.Property(e => e.Frequency).HasColumnName("frequency");
+            entity.Property(e => e.IntervalValue).HasColumnName("interval_value");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.IsCancelled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_cancelled");
+            entity
+                .Property(e => e.IsCompleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_completed");
+            entity.Property(e => e.IsExcluded).HasDefaultValue(false).HasColumnName("is_excluded");
+            entity.Property(e => e.IsFailed).HasDefaultValue(false).HasColumnName("is_failed");
+            entity.Property(e => e.IsPending).HasDefaultValue(true).HasColumnName("is_pending");
+            entity
+                .Property(e => e.IsProcessing)
+                .HasDefaultValue(false)
+                .HasColumnName("is_processing");
+            entity
+                .Property(e => e.IsReconciled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_reconciled");
+            entity.Property(e => e.LastRunDate).HasColumnName("last_run_date");
+            entity.Property(e => e.NetAmount).HasColumnName("net_amount");
+            entity.Property(e => e.NextRunDate).HasColumnName("next_run_date");
+            entity.Property(e => e.PaymentMethod).HasColumnName("payment_method");
+            entity.Property(e => e.PaymentReference).HasColumnName("payment_reference");
+            entity.Property(e => e.ReconciliationDate).HasColumnName("reconciliation_date");
+            entity.Property(e => e.ReconciliationRef).HasColumnName("reconciliation_ref");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.VendorId).HasColumnName("vendor_id");
+            entity
+                .Property(e => e.VersionNumber)
+                .HasDefaultValue(0L)
+                .HasColumnName("version_number");
         });
 
         modelBuilder.Entity<Sih>(entity =>

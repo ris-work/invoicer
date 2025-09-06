@@ -58,7 +58,7 @@ namespace RV.InvNew.EtoFE
             { "adjustment", Eto.Drawing.Colors.LightGoldenrodYellow },
             { "deprecated", Eto.Drawing.Colors.LightGrey },
         };
-        const int PageSize = 20;
+        const int PageSize = 15;
 
         readonly List<ItemMovements> _items;
         int _currentItemIndex = 0;
@@ -139,9 +139,10 @@ namespace RV.InvNew.EtoFE
                 },
                 Debug: false,
                 LocalColors: null,
-                GWH: 150,
+                GWH: 120,
                 GWW: 300
-            );
+            )
+            { Height = 120};
             _itemSearch.OnSelectionMade = () =>
             {
                 var sel = _itemSearch.Selected;
