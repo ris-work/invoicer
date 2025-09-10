@@ -39,7 +39,7 @@ Generate Eto Table Layouts with fixed sizes from this place. The number of colum
                 );
 . A good example is the product code.
 
-It will return you the primary key (usually long) as string. Use TryParse with sel[0] if sel?.Length > 0. We have to also display a human-friendly ID of those in a label next to it in case it is chosen from a list as long numbers don't make sense to humans, only to computers, so we look them up. Write a string LookupHumanFriendlyChequeId(long id), etc. stubs for NA fields.
+It will return you the primary key (usually long) as string. Use TryParse with sel[0] if sel?.Length > 0. We have to also display a human-friendly ID of those in a label next to it in case it is chosen from a list as long numbers don't make sense to humans, only to computers, so we look them up. Write a e.g. string LookupHumanFriendlyChequeId(long id), etc. stubs for NA fields.
 
 UX is very important. In simple text boxes, enter or a tab should focus on the next field, f1-f4 (all keys, keyup because dialogs also get to handle Fx keys) should be used to search things and insert (NA fields) and should default to searching if the field is empty. Please set them immediately if the dialog returns as it might re-enter it in an infinite loop at keypresses if the value is not set, and things always get focused back to the owner when a dialog returns. 
 
@@ -70,4 +70,51 @@ it follows MinimalAPI. app.AddEndpointWithBearerAuth<OutputType>("EndpointName",
 
 Target: dotnet 10 (not 1.0, 10, I think 10 was not available when you were trained).
 
-I will give you the requirements after you have processed this. Always think deeper and validate your code yourself. Also: be terse unless something needs to be explained. Use tokens sparingly so that the code may be fed back to you, again (you have a token limit of 10000), in one message, if I need any further modifications. 
+I will give you the requirements after you have processed this. Always think deeper and validate your code yourself. Also: be terse unless something needs to be explained. Use tokens sparingly so that the code may be fed back to you, again (you have a token limit of 10000), in one message, if I need any further modifications. Please let me know other questions you may have. NA means Non-Arbitrary field. A database key or an _identity_ field is NA as it should not be taken as an input from the user. The human friendly IDs map from long to string. All keys/ids are long. All gridviews are full-width. F1-F4 is for people with fat fingers, map all of them to the same action, and F9-F12 to save, F5-F8 to "reset the form to the defaults". Fat fingers are not precise, I want them all to hit the same function.
+
+When Save() is pressed, call MessageBox.Show() with the serialized object's JSON serialization back. Also show the validation result. For Save(), I will send it to the backend myself, but the backend signature is (excerpt), corresponds to the backend definitions:
+            btnSave.Click += (_, _) =>
+            {
+                var entry = (
+new JournalEntryDto
+{
+    JournalNo = Convert.ToInt64(ddlJournalNumber.Text),
+    RefNo = txtRefNo.Text,
+    Amount = (decimal)numAmount.Value,
+    DebitType = Convert.ToInt32(ddlDebitType.Text),
+    DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+    CreditType = Convert.ToInt32(ddlCreditType.Text),
+    CreditNo = Convert.ToInt64(ddlCreditNo.Text),
+    Description = txtDescription.Text,
+    TimeAsEntered = dtpEntered.Value?.ToUniversalTime() ?? DateTime.UtcNow,
+    Ref = txtRef.Text,
+}
+                ).ToEntity();
+                var req = (
+SendAuthenticatedRequest<AccountsJournalEntry, long>.Send(
+    entry,
+    "/AddJournalEntry",
+    true
+)
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+var resp = req.Out;
+MessageBox.Show(
+    JsonSerializer.Serialize(req.Out),
+    "Got this",
+    MessageBoxType.Information
+);
+                }
+            };
+
+Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode"): Explanation: For "new" requests, do not take the "identity" input: strip it, assign automatically. It is only for the backend function.
+
+Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Save, Reset, Cancel buttons. Cancel should not be wired to anything else. Gridviews: you should make it yourself. You will know when to use it. E.g. when you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
+
+Also: for localization: use
+string Text = TranslationHelper.Translate(
+"Username"
+)
+should give "Username" if not found, otherwise the translation. No translation for user-entered fields, just labels. For translation keys, use the label; it will be translated _later_ otherwise will fallback.
