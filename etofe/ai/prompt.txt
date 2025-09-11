@@ -1,4 +1,4 @@
-I am creating a new Eto.Forms.Panel. It will be shown when a user selects a thing from the left side. I want you to write a panel that serializes and deserializes the following to native JSON types into a form. The DTO is usually the same as the database object. Do not use NumericUpDown or NumericStepper. Use only textboxes, checkboxes or buttons, datetimepickers for normal fields and GridView for lists. You will see if something is a list, as it will be mentioned either in the type or explicitly. Re-check your output for syntactic validity and for logic sanity.
+I am creating a new Eto.Forms.Panel. It will be shown when a user selects a thing from the left side. I want you to write a panel that serializes and deserializes the following to native JSON types into a form. The DTO is usually the same as the database object. Do not use NumericUpDown or NumericStepper. Use only textboxes, checkboxes or buttons, datetimepickers for normal fields and GridView for lists. You will see if something is a list, it will be mentioned either in the type or explicitly. Re-check your output for syntactic validity and for logic sanity.
 
 The program should never crash, so write a ValidateInputs() function that returns (bool IsValid, string ConsolidatedErrorList) and check against it whenever serialize is called. The theme definition:
 public static class ColorSettings
@@ -10,8 +10,8 @@ public static Color BackgroundColor { get; set; }
 public static Color SelectedColumnColor { get; set; }
 public static Color LesserBackgroundColor { get; set; }
 public static Color LesserForegroundColor { get; set; }
-public static FontFamily? UIFont = null; // = Eto.Drawing.FontFamilies.Sans;
-public static FontFamily? UIFontMono = null; // = Eto.Drawing.FontFamilies.Monospace;
+public static FontFamily? UIFont = null;
+public static FontFamily? UIFontMono = null;
 public static int? InnerLabelHeight = null;
 public static int? InnerLabelWidth = null;
 public static int? InnerControlHeight = null;
@@ -104,7 +104,6 @@ entry,
 true
 )
 );
-//req.ShowModal();
 if (req.Error == false)
 {
 var resp = req.Out;
@@ -118,7 +117,7 @@ MessageBoxType.Information
 
 Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode"): Explanation: For "new" requests, do not take the "identity" input: strip it, assign automatically. It is only for the backend function.
 
-Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Load, Edit, Save, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. when you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
+Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Load, Edit, Save, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
 
 Date range example: Searching accounting entries by date. They should have a [Start] and [End] date.
 
@@ -132,4 +131,4 @@ EF scaffolded DTO will be given to you later. Please let me know if you understa
 
 TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
 
-'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Use Concat over AddRange (it doesnt exist). Don't set the items, use the constructor that takes StackLayoutItem[] (dont put orientation there).
+'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Use Concat over AddRange (it doesnt exist). Don't set the items, use the constructor that takes StackLayoutItem[] (dont put orientation there). Columns count are not just for spacing, it decides whether 1, 2, or 3 of the inputs are shown in one line. Wire a parameterless constructor with defaults.
