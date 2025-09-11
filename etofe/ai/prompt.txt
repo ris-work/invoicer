@@ -82,41 +82,41 @@ Target: dotnet 10 (not 1.0, 10, I think 10 was not available when you were train
 I will give you the requirements after you have processed this. Always think deeper and validate your code yourself. Also: be terse unless something needs to be explained. Use tokens sparingly so that the code may be fed back to you, again (you have a token limit of 10000), in one message, if I need any further modifications. Please let me know other questions you may have. NA means Non-Arbitrary field. A database key or an _identity_ field is NA as it should not be taken as an input from the user. The human friendly IDs map from long to string. All keys/ids are long. All gridviews are full-width. F1-F4 is for people with fat fingers, map all of them to the same action, and F9-F12 to save, F5-F6 to "edit" and F7-F8 to "reset". Fat fingers are not precise, I want them all to hit the same function.
 
 When Save() is pressed, call MessageBox.Show() with the serialized object's JSON serialization back. Also show the validation result. For Save(), I will send it to the backend myself, but the backend signature is (excerpt), corresponds to the backend definitions:
-            btnSave.Click += (_, _) =>
-            {
-                var entry = (
+btnSave.Click += (_, _) =>
+{
+var entry = (
 new JournalEntryDto
 {
-    JournalNo = Convert.ToInt64(ddlJournalNumber.Text),
-    RefNo = txtRefNo.Text,
-    Amount = (decimal)numAmount.Value,
-    DebitType = Convert.ToInt32(ddlDebitType.Text),
-    DebitNo = Convert.ToInt64(ddlDebitNo.Text),
-    CreditType = Convert.ToInt32(ddlCreditType.Text),
-    CreditNo = Convert.ToInt64(ddlCreditNo.Text),
-    Description = txtDescription.Text,
-    TimeAsEntered = dtpEntered.Value?.ToUniversalTime() ?? DateTime.UtcNow,
-    Ref = txtRef.Text,
+JournalNo = Convert.ToInt64(ddlJournalNumber.Text),
+RefNo = txtRefNo.Text,
+Amount = (decimal)numAmount.Value,
+DebitType = Convert.ToInt32(ddlDebitType.Text),
+DebitNo = Convert.ToInt64(ddlDebitNo.Text),
+CreditType = Convert.ToInt32(ddlCreditType.Text),
+CreditNo = Convert.ToInt64(ddlCreditNo.Text),
+Description = txtDescription.Text,
+TimeAsEntered = dtpEntered.Value?.ToUniversalTime() ?? DateTime.UtcNow,
+Ref = txtRef.Text,
 }
-                ).ToEntity();
-                var req = (
+).ToEntity();
+var req = (
 SendAuthenticatedRequest<AccountsJournalEntry, long>.Send(
-    entry,
-    "/AddJournalEntry",
-    true
+entry,
+"/AddJournalEntry",
+true
 )
-                );
-                //req.ShowModal();
-                if (req.Error == false)
-                {
+);
+//req.ShowModal();
+if (req.Error == false)
+{
 var resp = req.Out;
 MessageBox.Show(
-    JsonSerializer.Serialize(req.Out),
-    "Got this",
-    MessageBoxType.Information
+JsonSerializer.Serialize(req.Out),
+"Got this",
+MessageBoxType.Information
 );
-                }
-            };
+}
+};
 
 Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode"): Explanation: For "new" requests, do not take the "identity" input: strip it, assign automatically. It is only for the backend function.
 
@@ -132,6 +132,6 @@ should give "Username" if not found, otherwise the translation. No translation f
 
 EF scaffolded DTO will be given to you later. Please let me know if you understand.
 
-TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [some sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
+TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
 
-'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events.
+'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Use Concat over AddRange (it doesnt exist).
