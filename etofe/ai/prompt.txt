@@ -133,3 +133,5 @@ should give "Username" if not found, otherwise the translation. No translation f
 EF scaffolded DTO will be given to you later. Please let me know if you understand.
 
 TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [some sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
+
+'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events.
