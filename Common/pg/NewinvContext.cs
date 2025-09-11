@@ -31,6 +31,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<CategoriesBitmask> CategoriesBitmasks { get; set; }
 
+    public virtual DbSet<ChequeBook> ChequeBooks { get; set; }
+
     public virtual DbSet<CodesBatch> CodesBatches { get; set; }
 
     public virtual DbSet<CodesCatalogue> CodesCatalogues { get; set; }
@@ -92,6 +94,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<Sale> Sales { get; set; }
 
     public virtual DbSet<ScheduledPayment> ScheduledPayments { get; set; }
+
+    public virtual DbSet<ScheduledReceipt> ScheduledReceipts { get; set; }
 
     public virtual DbSet<Sih> Sihs { get; set; }
 
@@ -369,6 +373,32 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Bitmask).ValueGeneratedNever().HasColumnName("bitmask");
             entity.Property(e => e.I18nLabel).HasColumnName("i18n_label");
             entity.Property(e => e.Name).HasColumnName("name");
+        });
+
+        modelBuilder.Entity<ChequeBook>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("cheque_books_pkey");
+
+            entity.ToTable("cheque_books");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.EndNumber).HasColumnName("end_number");
+            entity
+                .Property(e => e.IsCancelled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_cancelled");
+            entity.Property(e => e.IsOpen).HasDefaultValue(true).HasColumnName("is_open");
+            entity.Property(e => e.NextNumber).HasColumnName("next_number");
+            entity.Property(e => e.StartNumber).HasColumnName("start_number");
+            entity
+                .Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<CodesBatch>(entity =>
@@ -762,6 +792,7 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.AutoApply).HasDefaultValue(true).HasColumnName("auto_apply");
             entity.Property(e => e.BankAccountId).HasColumnName("bank_account_id");
             entity.Property(e => e.BeneficiaryAccountNo).HasColumnName("beneficiary_account_no");
             entity.Property(e => e.BeneficiaryBankName).HasColumnName("beneficiary_bank_name");
@@ -1211,6 +1242,104 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("version_number");
         });
 
+        modelBuilder.Entity<ScheduledReceipt>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("scheduled_receipts_pkey");
+
+            entity.ToTable("scheduled_receipts");
+
+            entity.HasIndex(
+                e => new { e.NextRunDate, e.IsPending },
+                "ix_scheduled_receipts_next_run"
+            );
+
+            entity.HasIndex(
+                e => new
+                {
+                    e.CompanyId,
+                    e.BankAccountId,
+                    e.IsReconciled,
+                    e.IsExcluded,
+                },
+                "ix_scheduled_receipts_recon"
+            );
+
+            entity.HasIndex(
+                e => new
+                {
+                    e.IsProcessing,
+                    e.IsCompleted,
+                    e.IsFailed,
+                    e.IsCancelled,
+                },
+                "ix_scheduled_receipts_status_flags"
+            );
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
+            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+            entity.Property(e => e.BankAccountId).HasColumnName("bank_account_id");
+            entity.Property(e => e.BatchId).HasColumnName("batch_id");
+            entity.Property(e => e.BeneficiaryAccountNo).HasColumnName("beneficiary_account_no");
+            entity.Property(e => e.BeneficiaryBankName).HasColumnName("beneficiary_bank_name");
+            entity.Property(e => e.BeneficiaryBranch).HasColumnName("beneficiary_branch");
+            entity.Property(e => e.BeneficiaryName).HasColumnName("beneficiary_name");
+            entity.Property(e => e.BeneficiaryRoutingNo).HasColumnName("beneficiary_routing_no");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity
+                .Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreditAccountId).HasColumnName("credit_account_id");
+            entity.Property(e => e.Currency).HasColumnName("currency");
+            entity.Property(e => e.DebitAccountId).HasColumnName("debit_account_id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity
+                .Property(e => e.ExchangeRate)
+                .HasDefaultValueSql("1.0")
+                .HasColumnName("exchange_rate");
+            entity.Property(e => e.ExternalPaymentId).HasColumnName("external_payment_id");
+            entity.Property(e => e.FeeAmount).HasColumnName("fee_amount");
+            entity.Property(e => e.Frequency).HasColumnName("frequency");
+            entity.Property(e => e.IntervalValue).HasColumnName("interval_value");
+            entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.IsCancelled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_cancelled");
+            entity
+                .Property(e => e.IsCompleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_completed");
+            entity.Property(e => e.IsExcluded).HasDefaultValue(false).HasColumnName("is_excluded");
+            entity.Property(e => e.IsFailed).HasDefaultValue(false).HasColumnName("is_failed");
+            entity.Property(e => e.IsPending).HasDefaultValue(true).HasColumnName("is_pending");
+            entity
+                .Property(e => e.IsProcessing)
+                .HasDefaultValue(false)
+                .HasColumnName("is_processing");
+            entity
+                .Property(e => e.IsReconciled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_reconciled");
+            entity.Property(e => e.LastRunDate).HasColumnName("last_run_date");
+            entity.Property(e => e.NetAmount).HasColumnName("net_amount");
+            entity.Property(e => e.NextRunDate).HasColumnName("next_run_date");
+            entity.Property(e => e.PaymentMethod).HasColumnName("payment_method");
+            entity.Property(e => e.PaymentReference).HasColumnName("payment_reference");
+            entity.Property(e => e.ReconciliationDate).HasColumnName("reconciliation_date");
+            entity.Property(e => e.ReconciliationRef).HasColumnName("reconciliation_ref");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.VendorId).HasColumnName("vendor_id");
+            entity
+                .Property(e => e.VersionNumber)
+                .HasDefaultValue(0L)
+                .HasColumnName("version_number");
+        });
+
         modelBuilder.Entity<Sih>(entity =>
         {
             entity.HasKey(e => e.Itemcode).HasName("sih_pkey");
@@ -1344,6 +1473,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.StartFrom).HasDefaultValue(1L).HasColumnName("start_from");
         });
+        modelBuilder.HasSequence("scheduled_receipts_id_seq");
 
         OnModelCreatingPartial(modelBuilder);
     }
