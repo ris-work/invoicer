@@ -84,12 +84,13 @@ namespace CommonUi
             List<T> items,
             Control owner,
             bool debug = false,
-            PanelSettings? localColors = null
+            PanelSettings? localColors = null,
+            string[]? order = null
         )
         {
             var generated = new Dialog<string[]>();
 
-            var searchPanel = GenerateSearchPanel(items, debug);
+            var searchPanel = GenerateSearchPanel(items, debug, localColors, order);
             generated.Content = searchPanel;
             searchPanel.OnSelectionMade += () =>
             {

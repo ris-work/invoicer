@@ -32,12 +32,21 @@ The program should never crash, so write a ValidateInputs() function that return
 Respect this regarding the styling, always refer to these global static class variables. They are guaranteed to be something reasonable.
 
 Generate Eto Table Layouts with fixed sizes from this place. The number of columns should be user-specifiable. For lists, gridview, etc., please refrain from putting them in the grid; make them occupy the whole width as specified by the theme above. For things that are arbitrarily non-inputable (but user choosable, I will refer them as non-arbitrary (NA fields)), launch a dialog: 
-                var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog<T>(
-                    List<T>,
-                    owner_control,
-                    debug: false
-                );
-. A good example is the product code.
+public static class SearchPanelUtility
+{
+public static string[] GenerateSearchDialog<T>(
+List<T> items,
+Control owner,
+bool debug = false,
+PanelSettings? localColors = null,
+string[]? order = null
+){...}}
+var sel = CommonUi.SearchPanelUtility.GenerateSearchDialog<T>(
+List<T>,
+owner_control,
+debug: false
+);
+. A good example is the product code. In order, put the "id" fieldname to show it first, then you can use it from the return value if the array isn't null by getting the first element ([0]). Don't use PanelSettings.
 
 It will return you the primary key (usually long) as string. Use TryParse with sel[0] if sel?.Length > 0. We have to also display a human-friendly ID of those in a label next to it in case it is chosen from a list as long numbers don't make sense to humans, only to computers, so we look them up. Write a e.g. string LookupHumanFriendlyChequeId(long id), etc. stubs for NA fields.
 
@@ -111,7 +120,7 @@ MessageBox.Show(
 
 Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode"): Explanation: For "new" requests, do not take the "identity" input: strip it, assign automatically. It is only for the backend function.
 
-Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Save, Edit, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. when you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
+Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Load, Edit, Save, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. when you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
 
 Date range example: Searching accounting entries by date. They should have a [Start] and [End] date.
 
@@ -119,6 +128,6 @@ Also: for localization: use
 string Text = TranslationHelper.Translate(
 "Username"
 )
-should give "Username" if not found, otherwise the translation. No translation for user-entered fields, just labels. For translation keys, use the label; it will be translated _later_ otherwise will fallback. New resets after a confirmation "Yes". Let the TableLayout column count be configurable, default to 2. The DTO is the EF type. EF type should have information redacted at backend, and clearly mark which fields need to be redacted (like e.g. ID when creating a new entry, ID should not be editable on edit, etc., so should remind me to redact them at the bottom in the backend). Double check against Eto.Forms docs to check for ExpandContentWidth/ExpandContentHeight settings and whether they apply to a container.
+should give "Username" if not found, otherwise the translation. No translation for user-entered fields, just labels. For translation keys, use the label; it will be translated _later_ otherwise will fallback. New resets after a confirmation "Yes". Let the TableLayout column count be configurable, default to 2. The DTO is the EF type. EF type should have information redacted at backend, and clearly mark which fields need to be redacted (like e.g. ID when creating a new entry, ID should not be editable on edit, etc., so should remind me to redact them at the bottom in the backend). Double check against Eto.Forms docs to check for ExpandContentWidth/ExpandContentHeight settings and whether they apply to a container. Localization always works well. Console.WriteLine is ok for Log.
 
 EF scaffolded DTO will be given to you later. Please let me know if you understand.
