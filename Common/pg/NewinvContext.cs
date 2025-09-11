@@ -1208,6 +1208,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IntervalValue).HasColumnName("interval_value");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
             entity
+                .Property(e => e.IsAutomaticClear)
+                .HasDefaultValue(true)
+                .HasColumnName("is_automatic_clear");
+            entity
                 .Property(e => e.IsCancelled)
                 .HasDefaultValue(false)
                 .HasColumnName("is_cancelled");
@@ -1305,6 +1309,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Frequency).HasColumnName("frequency");
             entity.Property(e => e.IntervalValue).HasColumnName("interval_value");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity
+                .Property(e => e.IsAutomaticClear)
+                .HasDefaultValue(false)
+                .HasColumnName("is_automatic_clear");
             entity
                 .Property(e => e.IsCancelled)
                 .HasDefaultValue(false)
