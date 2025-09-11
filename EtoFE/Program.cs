@@ -26,7 +26,9 @@ using Tomlyn.Model;
 //using Eto.WinUI;
 #endif
 
-public static class GlobalState { }
+public static class GlobalState {
+    public static common.BackOfficeAccountingDataTransfer BAT;
+}
 
 public static class Mock
 {
@@ -164,6 +166,8 @@ public class Program
         CommonUi.ColorSettings.ExpandContentWidth = ExpandContentWidth;
         CommonUi.ColorSettings.ControlWidth = ControlWidth;
         CommonUi.ColorSettings.ControlHeight = ControlHeight;
+        CommonUi.ColorSettings.InnerControlWidth = ControlWidth;
+        CommonUi.ColorSettings.InnerControlHeight = ControlHeight;
         CommonUi.ColorSettings.MaxControlWidth = MaxControlWidth;
         CommonUi.ColorSettings.DebugDontRenderLabels = DebugDontRenderLabels;
         CommonUi.ColorSettings.ForceNativeLabels = ForceNativeLabels;

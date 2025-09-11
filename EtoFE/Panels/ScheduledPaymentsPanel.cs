@@ -6,6 +6,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using RV.InvNew.Common;
 using CommonUi;
+using EtoFE;
 
 namespace RV.InvNew.UI
 {
@@ -82,31 +83,53 @@ namespace RV.InvNew.UI
 
         ScheduledPaymentPanel(int columns)
         {
+            while (true)
+            {
+                var req = (
+                    SendAuthenticatedRequest<string, common.BackOfficeAccountingDataTransfer>.Send(
+                        "Refresh",
+                        "/BackOfficeAccountingRefresh",
+                        true
+                    )
+                );
+                //req.ShowModal();
+                if (req.Error == false)
+                {
+                    GlobalState.BAT = req.Out;
+                    MessageBox.Show(
+                        JsonSerializer.Serialize(req.Out),
+                        "Got this",
+                        MessageBoxType.Information
+                    );
+                    break;
+                }
+            }
             // sizes from theme
-            var lw = ColorSettings.InnerLabelWidth ?? 120;
+            var lw = ColorSettings.InnerLabelWidth ?? 150;
             var lh = ColorSettings.InnerLabelHeight ?? 25;
-            var cw = ColorSettings.InnerControlWidth ?? 200;
+            var cw = ColorSettings.InnerControlWidth ?? 300;
             var ch = ColorSettings.InnerControlHeight ?? 25;
+            int hw = (int)Math.Floor(cw * 0.2);
 
             // NA‐fields
             txtId = new TextBox { Width = cw, Height = ch };
-            btnIdSearch = new Button { Text = "...", Height = ch };
+            btnIdSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblIdHuman = new Label { Width = cw, Height = ch };
 
             txtCompanyId = new TextBox { Width = cw, Height = ch };
-            btnCompanySearch = new Button { Text = "...", Height = ch };
+            btnCompanySearch = new Button { Text = "...", Height = ch, Width = hw };
             lblCompanyHuman = new Label { Width = cw, Height = ch };
 
             txtVendorId = new TextBox { Width = cw, Height = ch };
-            btnVendorSearch = new Button { Text = "...", Height = ch };
+            btnVendorSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblVendorHuman = new Label { Width = cw, Height = ch };
 
             txtInvoiceId = new TextBox { Width = cw, Height = ch };
-            btnInvoiceSearch = new Button { Text = "...", Height = ch };
+            btnInvoiceSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblInvoiceHuman = new Label { Width = cw, Height = ch };
 
             txtBatchId = new TextBox { Width = cw, Height = ch };
-            btnBatchSearch = new Button { Text = "...", Height = ch };
+            btnBatchSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblBatchHuman = new Label { Width = cw, Height = ch };
 
             // scalar inputs
@@ -203,10 +226,12 @@ namespace RV.InvNew.UI
             NewRecord();
         }
 
-        TableLayout BuildLayout(int columns)
+        StackLayout BuildLayout(int columns)
         {
-            var lw = ColorSettings.InnerLabelWidth ?? 120;
+            var lw = ColorSettings.InnerLabelWidth ?? 150;
             var lh = ColorSettings.InnerLabelHeight ?? 25;
+            var cw = ColorSettings.InnerControlWidth ?? 300;
+            var ch = ColorSettings.InnerControlHeight ?? 25;
 
             // create all fields as (key, control)
             var fields = new List<(string Key, Control Ctrl)>
@@ -277,7 +302,9 @@ namespace RV.InvNew.UI
                 ("IsAutomaticClear",  chkIsAutomaticClear)
             };
 
-            var layout = new TableLayout();
+            var outerButtons = new StackLayout() { Height = ColorSettings.InnerControlHeight ?? 30};
+            var outerLayout = new StackLayout() { Orientation = Orientation.Vertical, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4) };//, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 50) };
+            var layout = new TableLayout() { Spacing = new Size(10, 10), Padding = 10, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4) };
             // chunk into rows of 'columns' pairs
             for (int i = 0; i < fields.Count; i += columns)
             {
@@ -293,6 +320,8 @@ namespace RV.InvNew.UI
                         Height = lh,
                         TextAlignment = TextAlignment.Right
                     });
+                    ctrl.Width = (int)Math.Floor(1.5*cw);
+                    ctrl.Height = (int)Math.Floor(1.0*ch);
                     cells.Add(ctrl);
                 }
 
@@ -307,7 +336,7 @@ namespace RV.InvNew.UI
                     }
                 }
 
-                layout.Rows.Add(new TableRow(cells.ToArray()));
+                layout.Rows.Add(new TableRow(cells.ToArray().Select(a => new TableCell(a) { ScaleWidth = false })) {  ScaleHeight = false });
             }
 
             // action buttons row
@@ -332,9 +361,11 @@ namespace RV.InvNew.UI
                 actionCells.Add(new Label());
                 actionCells.Add(new Label());
             }
-            layout.Rows.Add(new TableRow(actionCells.ToArray()));
+            outerButtons.Items.Add(btns);
+            outerLayout.Items.Add(outerButtons);
+            outerLayout.Items.Add(layout);
 
-            return layout;
+            return outerLayout;
         }
 
         void OnKeyUp(object sender, KeyEventArgs e)
