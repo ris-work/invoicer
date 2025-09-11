@@ -1,32 +1,32 @@
 I am creating a new Eto.Forms.Panel. It will be shown when a user selects a thing from the left side. I want you to write a panel that serializes and deserializes the following to native JSON types into a form. The DTO is usually the same as the database object. Do not use NumericUpDown or NumericStepper. Use only textboxes, checkboxes or buttons, datetimepickers for normal fields and GridView for lists. You will see if something is a list, as it will be mentioned either in the type or explicitly. Re-check your output for syntactic validity and for logic sanity.
 
 The program should never crash, so write a ValidateInputs() function that returns (bool IsValid, string ConsolidatedErrorList) and check against it whenever serialize is called. The theme definition:
-    public static class ColorSettings
-    {
-    public static Color AlternatingColor1 { get; set; }
-    public static Color AlternatingColor2 { get; set; }
-    public static Color ForegroundColor { get; set; }
-    public static Color BackgroundColor { get; set; }
-    public static Color SelectedColumnColor { get; set; }
-    public static Color LesserBackgroundColor { get; set; }
-    public static Color LesserForegroundColor { get; set; }
-    public static FontFamily? UIFont = null; // = Eto.Drawing.FontFamilies.Sans;
-    public static FontFamily? UIFontMono = null; // = Eto.Drawing.FontFamilies.Monospace;
-    public static int? InnerLabelHeight = null;
-    public static int? InnerLabelWidth = null;
-    public static int? InnerControlHeight = null;
-    public static int? InnerControlWidth = null;
-    public static bool ExpandContentWidth = true;
-    public static bool ExpandContentHeight = false;
-    public static int? MaxControlWidth = null;
-    public static int? ControlWidth = null;
-    public static int? ControlHeight = null;
-    public static long dpiX = 7;
-    public static long dpiY = 15;
-    public static string Lang = "en";
-    public static bool NoEmojis = false;
-    public static bool DebugDontRenderLabels = true;
-    public static bool ForceNativeLabels = false;
+public static class ColorSettings
+{
+public static Color AlternatingColor1 { get; set; }
+public static Color AlternatingColor2 { get; set; }
+public static Color ForegroundColor { get; set; }
+public static Color BackgroundColor { get; set; }
+public static Color SelectedColumnColor { get; set; }
+public static Color LesserBackgroundColor { get; set; }
+public static Color LesserForegroundColor { get; set; }
+public static FontFamily? UIFont = null; // = Eto.Drawing.FontFamilies.Sans;
+public static FontFamily? UIFontMono = null; // = Eto.Drawing.FontFamilies.Monospace;
+public static int? InnerLabelHeight = null;
+public static int? InnerLabelWidth = null;
+public static int? InnerControlHeight = null;
+public static int? InnerControlWidth = null;
+public static bool ExpandContentWidth = true;
+public static bool ExpandContentHeight = false;
+public static int? MaxControlWidth = null;
+public static int? ControlWidth = null;
+public static int? ControlHeight = null;
+public static long dpiX = 7;
+public static long dpiY = 15;
+public static string Lang = "en";
+public static bool NoEmojis = false;
+public static bool DebugDontRenderLabels = true;
+public static bool ForceNativeLabels = false;
 ... }
 
 Respect this regarding the styling, always refer to these global static class variables. They are guaranteed to be something reasonable.
@@ -57,21 +57,21 @@ app.AddEndpointWithBearerAuth<Catalogue>(
 "CatalogueEdit",
 (R) =>
 {
-    Console.WriteLine($"==== REQUESTED EDIT CATALOGUE ID {R}");
-    Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode");
-    Catalogue A;
+Console.WriteLine($"==== REQUESTED EDIT CATALOGUE ID {R}");
+Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode");
+Catalogue A;
 
-    using (var ctx = new NewinvContext())
-    {
-        A = ctx.Catalogues.Where(a => a.Itemcode == SafeR.Itemcode).First();
-        A.ApplyChangesFromFiltered([], JsonSerializer.Serialize(SafeR));
-        ctx.SaveChanges();
-    }
-    Console.WriteLine(
-        $"CATALOGUE: Got: {A.Itemcode}, {A.Description}, {JsonSerializer.Serialize(A)}"
-    );
+using (var ctx = new NewinvContext())
+{
+A = ctx.Catalogues.Where(a => a.Itemcode == SafeR.Itemcode).First();
+A.ApplyChangesFromFiltered([], JsonSerializer.Serialize(SafeR));
+ctx.SaveChanges();
+}
+Console.WriteLine(
+$"CATALOGUE: Got: {A.Itemcode}, {A.Description}, {JsonSerializer.Serialize(A)}"
+);
 
-    return A;
+return A;
 },
 "Refresh"
 );
