@@ -16,6 +16,7 @@ using EtoFE.Panels;
 using MyExtensions;
 using RV.InvNew.Common;
 using RV.Invnew.EtoFE;
+using RV.InvNew.UI;
 
 namespace EtoFE
 {
@@ -195,6 +196,16 @@ namespace EtoFE
                                             "📋 All Account Balances",
                                             new LoadOncePanel<AllAccountsBalances>(),
                                             "AllAccountBalances"
+                                        ),
+                                        (
+                                            "⏰⬅ Scheduled Payments",
+                                            new LoadOncePanel<ScheduledPaymentPanel>(),
+                                            "ScheduledPayments"
+                                        ),
+                                        (
+                                            "⏰➡ Scheduled Receipts",
+                                            new LoadOncePanel<ScheduledPaymentPanel>(),
+                                            "ScheduledPayments"
                                         ),
                                     }
                                 )
