@@ -22,9 +22,6 @@ public static int? MaxControlWidth = null;
 public static int? ControlWidth = null;
 public static int? ControlHeight = null;
 public static string Lang = "en";
-public static bool NoEmojis = false;
-public static bool DebugDontRenderLabels = true;
-public static bool ForceNativeLabels = false;
 ... }
 
 Respect this regarding the styling, always refer to these global static class variables. They are guaranteed to be something reasonable.
@@ -55,7 +52,7 @@ app.AddEndpointWithBearerAuth<Catalogue>(
 "CatalogueEdit",
 (R) =>
 {
-Console.WriteLine($"==== REQUESTED EDIT CATALOGUE ID {R}");
+Console.WriteLine($"==== EDIT CATALOGUE ID {R}");
 Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode");
 Catalogue A;
 
@@ -109,7 +106,6 @@ if (req.Error == false)
 var resp = req.Out;
 MessageBox.Show(
 JsonSerializer.Serialize(req.Out),
-"Got this",
 MessageBoxType.Information
 );
 }
@@ -131,4 +127,4 @@ EF scaffolded DTO will be given to you later. Please let me know if you understa
 
 TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
 
-'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Use Concat over AddRange (it doesnt exist). Don't set the items, use the constructor that takes StackLayoutItem[] (dont put orientation there). Columns count are not just for spacing, it decides whether 1, 2, or 3 of the inputs are shown in one line. Wire a parameterless constructor with defaults.
+'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Use Concat over AddRange (it doesnt exist). Don't set the items, use the constructor that takes StackLayoutItem[] (dont put orientation there). Columns count are not just for spacing, it decides whether 1, 2, or 3 of the inputs are shown in one line. Wire a parameterless constructor with defaults. Group control declarations if you can. Panels don't have ForegroundColor, CheckBox.Checked is bool not bool?.
