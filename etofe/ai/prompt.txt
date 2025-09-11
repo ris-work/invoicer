@@ -45,7 +45,7 @@ debug: false
 
 It will return you the primary key (usually long) as string. Use TryParse with sel[0] if sel?.Length > 0. We have to also display a human-friendly ID of those in a label next to it in case it is chosen from a list as long numbers don't make sense to humans, only to computers, so we look them up. Write a e.g. string LookupHumanFriendlyChequeId(long id), etc. stubs for NA fields.
 
-UX is very important. In simple text boxes, enter or a tab should focus on the next field, f1-f4 (all keys, keyup because dialogs also get to handle Fx keys) should be used to search things and insert (NA fields) and should default to searching if the field is empty. Please set them immediately if the dialog returns as it might re-enter it in an infinite loop at keypresses if the value is not set, and things always get focused back to the owner when a dialog returns. 
+UX is very important. In simple text boxes, enter or a tab should focus on the next field, f1-f4 (all keys, keyup because dialogs also get to handle Fx keys) should be used to search things and insert (NA fields) and should default to searching if the field is empty. Set them immediately if the dialog returns as it might re-enter it in an infinite loop at keypresses if the value is not set, and things always get focused back to the owner when a dialog returns. 
 
 The things should be restoreable after being temporarily serialized, so make it so. The equivalent backend function sample for frontend actions:
 app.AddEndpointWithBearerAuth<Catalogue>(
@@ -74,7 +74,7 @@ it follows MinimalAPI. app.AddEndpointWithBearerAuth<OutputType>("EndpointName",
 
 Target: dotnet 10 (not 1.0, 10, I think 10 was not available when you were trained).
 
-I will give you the requirements after you have processed this. Always think deeper and validate your code yourself. Also: be terse unless something needs to be explained. Use tokens sparingly so that the code may be fed back to you, again (you have a token limit of 10000), in one message, if I need any further modifications. Please let me know other questions you may have. NA means Non-Arbitrary field. A database key or an _identity_ field is NA as it should not be taken as an input from the user. The human friendly IDs map from long to string. All keys/ids are long. All gridviews are full-width. F1-F4 is for people with fat fingers, map all of them to the same action, and F9-F12 to save, F5-F6 to "edit" and F7-F8 to "reset". Fat fingers are not precise, I want them all to hit the same function.
+I will give you the requirements after you have processed this. Always think deeper and validate your code yourself. Also: be terse unless something needs to be explained. Use tokens sparingly so that the code may be fed back to you, again (you have a token limit of 10000), in one message, if I need any further modifications. Let me know other questions you may have. NA means Non-Arbitrary field. A database key or an _identity_ field is NA as it should not be taken as an input from the user. The human friendly IDs map from long to string. All keys/ids are long. All gridviews are full-width. F1-F4 is for people with fat fingers, map all of them to the same action, and F9-F12 to save, F5-F6 to "edit" and F7-F8 to "reset". Fat fingers are not precise, I want them all to hit the same function.
 
 When Save() is pressed, call MessageBox.Show() with the serialized object's JSON serialization back. Also show the validation result. For Save(), I will send it to the backend myself, but the backend signature is (excerpt), corresponds to the backend definitions:
 btnSave.Click += (_, _) =>
@@ -89,9 +89,9 @@ DebitType = Convert.ToInt32(ddlDebitType.Text),
 DebitNo = Convert.ToInt64(ddlDebitNo.Text),
 CreditType = Convert.ToInt32(ddlCreditType.Text),
 CreditNo = Convert.ToInt64(ddlCreditNo.Text),
-Description = txtDescription.Text,
-TimeAsEntered = dtpEntered.Value?.ToUniversalTime() ?? DateTime.UtcNow,
-Ref = txtRef.Text,
+...
+...
+...
 }
 ).ToEntity();
 var req = (
@@ -104,16 +104,14 @@ true
 if (req.Error == false)
 {
 var resp = req.Out;
-MessageBox.Show(
-JsonSerializer.Serialize(req.Out),
-MessageBoxType.Information
+//output = req.Out
 );
 }
 };
 
 Catalogue SafeR = (Catalogue)R.RemoveField("Itemcode"): Explanation: For "new" requests, do not take the "identity" input: strip it, assign automatically. It is only for the backend function.
 
-Date fields: Use date controls. Also please use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Please make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So please add: New, Load, Edit, Save, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
+Date fields: Use date controls. Use Now as the default, and when a range is expected, use Now minus 180 days in the past for the "earlier" date. Make sure everything cleanly serializes to JSON native types. Use the public DB type as the reference, it is auto-generated from the DB (dotnet ef scaffold) and the target is Postgres; the provider is NPgSql. I think for new records it is better to hide the ID column until reset. So add: New, Load, Edit, Save, Cancel, Reset buttons, with stacklayout, center them and remember to set the height and width of the stacklayout from ColorSettings as it impacts performance in Core.System.Windows.Forms (the Mono-based port). Cancel should not be wired to anything else, just reset the current edit. Gridviews: you should make it yourself. You will know when to use it. E.g. you have an invoice and a list of items, etc. Place the buttons on top, inside the panel, and have well defined heights and widths as it is important for the performance of Eto.Forms in Core.System.Windows.Forms (the dotnet core version that uses libgdiplus for drawing, the native Linux port).
 
 Date range example: Searching accounting entries by date. They should have a [Start] and [End] date.
 
@@ -127,4 +125,4 @@ EF = DTO, will be given to you. Let me know if you understand.
 
 TableLayout does not contain any "ColumnSpacing", "ExpandContentWidth", "ExpandContentHeight". It does not support col/row spans. TableCell does not have "Expand". Use e.g. ColorSettings.InnerLabelWidth ?? [sensible width] instead of ColorSettings.InnerLabelWidth for assignment.
 
-'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Don't set the items (is read-only), use the constructor that takes StackLayoutItem[] (dont put orientation there, dont use bare controls). Columns count are not just for spacing, it decides whether 1, 2, or 3 of the inputs are shown in one line. Wire a parameterless constructor with defaults. Group control declarations if you can. Panels don't have ForegroundColor, CheckBox.Checked is bool not bool?. NA fields: stub with anonymous classes, wire search.
+'TextBox', or any control, do not contain a definition for 'Name'. EventHandler<System.EventArgs> over EventHandler for events. It is not CommonUi.SearchPanelUtility, just SearchPanelUtility. Explicitly convert things to StackLayoutItem if StackLayout using LINQ. Don't set the items (is read-only), use the constructor that takes StackLayoutItem[] (dont put orientation there, dont use bare controls, specify orientation outside). Columns count are not just for spacing, it decides whether 1, 2, or 3 of the inputs are shown in one line. Wire a parameterless constructor with defaults. Group control declarations if you can. Panels don't have ForegroundColor, CheckBox.Checked is bool not bool?. NA fields: stub with anonymous classes, wire search. No builtin columncount, write layout yourself. FocusNavigationDirection doesnt exist. dont assume List<Vendors> exists, use anonymous classes with dummy data.
