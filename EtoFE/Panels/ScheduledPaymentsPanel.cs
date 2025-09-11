@@ -76,19 +76,19 @@ namespace RV.InvNew.UI
         bool isNew;
         Control lastFocused;
 
-        // public ctors
-        public ScheduledPaymentPanel() : this(2) { }
-        public ScheduledPaymentPanel(long id) : this(2) { LoadData(id); }
+        // ctors
+        public ScheduledPaymentPanel() : this(columns: 2) { }
+        public ScheduledPaymentPanel(long id) : this(columns: 2) { LoadData(id); }
 
-        // core ctor
         ScheduledPaymentPanel(int columns)
         {
+            // sizes from theme
             var lw = ColorSettings.InnerLabelWidth ?? 120;
             var lh = ColorSettings.InnerLabelHeight ?? 25;
             var cw = ColorSettings.InnerControlWidth ?? 200;
             var ch = ColorSettings.InnerControlHeight ?? 25;
 
-            // identity lookups
+            // NA‐fields
             txtId = new TextBox { Width = cw, Height = ch };
             btnIdSearch = new Button { Text = "...", Height = ch };
             lblIdHuman = new Label { Width = cw, Height = ch };
@@ -109,7 +109,7 @@ namespace RV.InvNew.UI
             btnBatchSearch = new Button { Text = "...", Height = ch };
             lblBatchHuman = new Label { Width = cw, Height = ch };
 
-            // scalar fields
+            // scalar inputs
             txtPaymentReference = new TextBox { Width = cw, Height = ch };
             txtDescription = new TextBox { Width = cw, Height = ch };
             txtCurrency = new TextBox { Width = cw, Height = ch };
@@ -126,19 +126,19 @@ namespace RV.InvNew.UI
             txtFrequency = new TextBox { Width = cw, Height = ch };
             txtIntervalValue = new TextBox { Width = cw, Height = ch };
 
-            // date pickers
+            // dates
             dtpNextRunDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
             dtpLastRunDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
             dtpReconciliationDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
 
-            // status checkboxes
+            // statuses
             chkIsPending = new CheckBox { Text = TranslationHelper.Translate("IsPending") };
             chkIsProcessing = new CheckBox { Text = TranslationHelper.Translate("IsProcessing") };
             chkIsCompleted = new CheckBox { Text = TranslationHelper.Translate("IsCompleted") };
             chkIsFailed = new CheckBox { Text = TranslationHelper.Translate("IsFailed") };
             chkIsCancelled = new CheckBox { Text = TranslationHelper.Translate("IsCancelled") };
 
-            // reconciliation fields
+            // reconciliation
             txtExternalPaymentId = new TextBox { Width = cw, Height = ch };
             txtFeeAmount = new TextBox { Width = cw, Height = ch };
             txtNetAmount = new TextBox { Width = cw, Height = ch };
@@ -146,7 +146,7 @@ namespace RV.InvNew.UI
             chkIsExcluded = new CheckBox { Text = TranslationHelper.Translate("IsExcluded") };
             chkIsAutomaticClear = new CheckBox { Text = TranslationHelper.Translate("IsAutomaticClear") };
 
-            // action buttons
+            // actions
             btnNew = new Button { Text = TranslationHelper.Translate("New") };
             btnLoad = new Button { Text = TranslationHelper.Translate("Load") };
             btnEdit = new Button { Text = TranslationHelper.Translate("Edit") };
@@ -161,7 +161,7 @@ namespace RV.InvNew.UI
             btnInvoiceSearch.Click += (_, __) => DoLookup(txtInvoiceId, lblInvoiceHuman, LookupHumanFriendlyInvoiceId);
             btnBatchSearch.Click += (_, __) => DoLookup(txtBatchId, lblBatchHuman, LookupHumanFriendlyBatchId);
 
-            // mutually exclusive statuses
+            // mutually‐exclusive statuses
             var statuses = new[] { chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled };
             statuses.ToList().ForEach(cb =>
                 cb.CheckedChanged += (s, e) =>
@@ -181,8 +181,10 @@ namespace RV.InvNew.UI
             // track focus
             var focusable = new Control[]
             {
-                txtId, btnIdSearch, txtCompanyId, btnCompanySearch,
-                txtVendorId, btnVendorSearch, txtInvoiceId, btnInvoiceSearch,
+                txtId, btnIdSearch,
+                txtCompanyId, btnCompanySearch,
+                txtVendorId, btnVendorSearch,
+                txtInvoiceId, btnInvoiceSearch,
                 txtBatchId, btnBatchSearch,
                 txtPaymentReference, txtDescription, txtCurrency, txtAmount, txtExchangeRate,
                 txtBeneficiaryName, txtBeneficiaryBankName, txtBeneficiaryBranch,
@@ -197,86 +199,118 @@ namespace RV.InvNew.UI
             foreach (var c in focusable)
                 c.GotFocus += (s, e) => lastFocused = (Control)s;
 
-            KeyUp += OnKeyUp;
-            Content = BuildLayout();
+            Content = BuildLayout(columns);
             NewRecord();
         }
 
-        TableLayout BuildLayout()
+        TableLayout BuildLayout(int columns)
         {
             var lw = ColorSettings.InnerLabelWidth ?? 120;
             var lh = ColorSettings.InnerLabelHeight ?? 25;
 
-            TableRow na(string key, TextBox tb, Button btn, Label lbl) =>
-                new TableRow(
-                    new Label { Text = TranslationHelper.Translate(key), Width = lw, Height = lh, TextAlignment = TextAlignment.Right },
-                    new StackLayout(
-                        new StackLayoutItem(tb),
-                        new StackLayoutItem(btn),
-                        new StackLayoutItem(lbl)
-                    )
-                    {
-                        Spacing = 2,
-                        Orientation = Orientation.Horizontal
-                    }
-                );
-
-            var rows = new List<TableRow>
+            // create all fields as (key, control)
+            var fields = new List<(string Key, Control Ctrl)>
             {
-                na("Id", txtId, btnIdSearch, lblIdHuman),
-                na("CompanyId", txtCompanyId, btnCompanySearch, lblCompanyHuman),
-                na("VendorId", txtVendorId, btnVendorSearch, lblVendorHuman),
-                na("InvoiceId", txtInvoiceId, btnInvoiceSearch, lblInvoiceHuman),
-                na("BatchId", txtBatchId, btnBatchSearch, lblBatchHuman),
+                ("Id",        new StackLayout(
+                    new StackLayoutItem(txtId),
+                    new StackLayoutItem(btnIdSearch),
+                    new StackLayoutItem(lblIdHuman)
+                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
 
-                new TableRow(new Label { Text = TranslationHelper.Translate("PaymentReference"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtPaymentReference),
-                new TableRow(new Label { Text = TranslationHelper.Translate("Description"),       Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtDescription),
-                new TableRow(new Label { Text = TranslationHelper.Translate("Currency"),          Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtCurrency),
-                new TableRow(new Label { Text = TranslationHelper.Translate("Amount"),            Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtAmount),
-                new TableRow(new Label { Text = TranslationHelper.Translate("ExchangeRate"),      Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtExchangeRate),
+                ("CompanyId", new StackLayout(
+                    new StackLayoutItem(txtCompanyId),
+                    new StackLayoutItem(btnCompanySearch),
+                    new StackLayoutItem(lblCompanyHuman)
+                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
 
-                new TableRow(new Label { Text = TranslationHelper.Translate("BeneficiaryName"),      Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtBeneficiaryName),
-                new TableRow(new Label { Text = TranslationHelper.Translate("BeneficiaryBankName"),  Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtBeneficiaryBankName),
-                new TableRow(new Label { Text = TranslationHelper.Translate("BeneficiaryBranch"),    Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtBeneficiaryBranch),
-                new TableRow(new Label { Text = TranslationHelper.Translate("BeneficiaryAccountNo"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtBeneficiaryAccountNo),
-                new TableRow(new Label { Text = TranslationHelper.Translate("BeneficiaryRoutingNo"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtBeneficiaryRoutingNo),
+                ("VendorId",  new StackLayout(
+                    new StackLayoutItem(txtVendorId),
+                    new StackLayoutItem(btnVendorSearch),
+                    new StackLayoutItem(lblVendorHuman)
+                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
 
-                new TableRow(new Label { Text = TranslationHelper.Translate("PaymentMethod"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtPaymentMethod),
-                new TableRow(new Label { Text = TranslationHelper.Translate("Frequency"),     Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtFrequency),
-                new TableRow(new Label { Text = TranslationHelper.Translate("IntervalValue"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtIntervalValue),
+                ("InvoiceId", new StackLayout(
+                    new StackLayoutItem(txtInvoiceId),
+                    new StackLayoutItem(btnInvoiceSearch),
+                    new StackLayoutItem(lblInvoiceHuman)
+                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
 
-                new TableRow(new Label { Text = TranslationHelper.Translate("NextRunDate"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, dtpNextRunDate),
-                new TableRow(new Label { Text = TranslationHelper.Translate("LastRunDate"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, dtpLastRunDate),
+                ("BatchId",   new StackLayout(
+                    new StackLayoutItem(txtBatchId),
+                    new StackLayoutItem(btnBatchSearch),
+                    new StackLayoutItem(lblBatchHuman)
+                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
 
-                new TableRow(
-                    new Label { Text = TranslationHelper.Translate("Status"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right },
-                    new StackLayout(
-                        new StackLayoutItem(chkIsPending),
-                        new StackLayoutItem(chkIsProcessing),
-                        new StackLayoutItem(chkIsCompleted),
-                        new StackLayoutItem(chkIsFailed),
-                        new StackLayoutItem(chkIsCancelled)
-                    )
-                    {
-                        Spacing     = 5,
-                        Orientation = Orientation.Horizontal
-                    }
-                ),
+                ("PaymentReference", txtPaymentReference),
+                ("Description",      txtDescription),
+                ("Currency",         txtCurrency),
+                ("Amount",           txtAmount),
+                ("ExchangeRate",     txtExchangeRate),
 
-                new TableRow(new Label { Text = TranslationHelper.Translate("ExternalPaymentId"), Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtExternalPaymentId),
-                new TableRow(new Label { Text = TranslationHelper.Translate("FeeAmount"),           Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtFeeAmount),
-                new TableRow(new Label { Text = TranslationHelper.Translate("NetAmount"),           Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, txtNetAmount),
-                new TableRow(new Label { Text = TranslationHelper.Translate("IsReconciled"),        Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, chkIsReconciled),
-                new TableRow(new Label { Text = TranslationHelper.Translate("IsExcluded"),          Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, chkIsExcluded),
-                new TableRow(new Label { Text = TranslationHelper.Translate("ReconciliationDate"),  Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, dtpReconciliationDate),
-                new TableRow(new Label { Text = TranslationHelper.Translate("IsAutomaticClear"),    Width = lw, Height = lh, TextAlignment = TextAlignment.Right }, chkIsAutomaticClear)
+                ("BeneficiaryName",      txtBeneficiaryName),
+                ("BeneficiaryBankName",  txtBeneficiaryBankName),
+                ("BeneficiaryBranch",    txtBeneficiaryBranch),
+                ("BeneficiaryAccountNo", txtBeneficiaryAccountNo),
+                ("BeneficiaryRoutingNo", txtBeneficiaryRoutingNo),
+
+                ("PaymentMethod", txtPaymentMethod),
+                ("Frequency",     txtFrequency),
+                ("IntervalValue", txtIntervalValue),
+
+                ("NextRunDate", dtpNextRunDate),
+                ("LastRunDate", dtpLastRunDate),
+
+                ("Status", new StackLayout(
+                    new StackLayoutItem(chkIsPending),
+                    new StackLayoutItem(chkIsProcessing),
+                    new StackLayoutItem(chkIsCompleted),
+                    new StackLayoutItem(chkIsFailed),
+                    new StackLayoutItem(chkIsCancelled)
+                ){ Spacing = 5, Orientation = Orientation.Horizontal }),
+
+                ("ExternalPaymentId", txtExternalPaymentId),
+                ("FeeAmount",         txtFeeAmount),
+                ("NetAmount",         txtNetAmount),
+                ("IsReconciled",      chkIsReconciled),
+                ("IsExcluded",        chkIsExcluded),
+                ("ReconciliationDate",dtpReconciliationDate),
+                ("IsAutomaticClear",  chkIsAutomaticClear)
             };
 
             var layout = new TableLayout();
-            foreach (var row in rows)
-                layout.Rows.Add(row);
+            // chunk into rows of 'columns' pairs
+            for (int i = 0; i < fields.Count; i += columns)
+            {
+                var slice = fields.Skip(i).Take(columns).ToList();
+                var cells = new List<Control>();
 
-            // buttons row
+                foreach (var (key, ctrl) in slice)
+                {
+                    cells.Add(new Label
+                    {
+                        Text = TranslationHelper.Translate(key),
+                        Width = lw,
+                        Height = lh,
+                        TextAlignment = TextAlignment.Right
+                    });
+                    cells.Add(ctrl);
+                }
+
+                // fill remainder
+                if (slice.Count < columns)
+                {
+                    var missing = columns - slice.Count;
+                    for (int m = 0; m < missing; m++)
+                    {
+                        cells.Add(new Label()); // empty label
+                        cells.Add(new Label()); // empty cell
+                    }
+                }
+
+                layout.Rows.Add(new TableRow(cells.ToArray()));
+            }
+
+            // action buttons row
             var btns = new StackLayout(
                 new StackLayoutItem(btnNew),
                 new StackLayoutItem(btnLoad),
@@ -290,7 +324,16 @@ namespace RV.InvNew.UI
                 Orientation = Orientation.Horizontal,
                 HorizontalContentAlignment = HorizontalAlignment.Center
             };
-            layout.Rows.Add(new TableRow(new Label(), btns));
+
+            // first cell blank label, second cell the buttons, rest empty
+            var actionCells = new List<Control> { new Label(), btns };
+            for (int j = 1; j < columns; j++)
+            {
+                actionCells.Add(new Label());
+                actionCells.Add(new Label());
+            }
+            layout.Rows.Add(new TableRow(actionCells.ToArray()));
+
             return layout;
         }
 
@@ -304,20 +347,23 @@ namespace RV.InvNew.UI
                     { txtCompanyId, () => btnCompanySearch.PerformClick() },
                     { txtVendorId,  () => btnVendorSearch.PerformClick() },
                     { txtInvoiceId, () => btnInvoiceSearch.PerformClick() },
-                    { txtBatchId,   () => btnBatchSearch.PerformClick() }
+                    { txtBatchId,   () => btnBatchSearch.PerformClick() },
                 };
                 if (lastFocused != null && map.TryGetValue(lastFocused, out var act))
                     act();
             }
 
-            if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key)) Save();
-            if (new[] { Keys.F5, Keys.F6 }.Contains(e.Key)) Edit();
-            if (new[] { Keys.F7, Keys.F8 }.Contains(e.Key)) ResetForm();
+            if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key))
+                Save();
+            if (new[] { Keys.F5, Keys.F6 }.Contains(e.Key))
+                Edit();
+            if (new[] { Keys.F7, Keys.F8 }.Contains(e.Key))
+                ResetForm();
         }
 
         void DoLookup(TextBox tb, Label human, Func<long, string> lookup)
         {
-            var items = new List<object>(); // TODO: load real items
+            var items = new List<object>(); // TODO: fetch real items
             var sel = SearchPanelUtility.GenerateSearchDialog(items, this);
             if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
             {
@@ -337,7 +383,7 @@ namespace RV.InvNew.UI
 
         void LoadDialog()
         {
-            var items = new List<ScheduledPayment>(); // TODO: load real list
+            var items = new List<ScheduledPayment>(); // TODO: fetch real list
             var sel = SearchPanelUtility.GenerateSearchDialog(items, this);
             if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
                 LoadData(id);
@@ -350,13 +396,14 @@ namespace RV.InvNew.UI
             ToggleId(true);
             txtId.Text = id.ToString();
             lblIdHuman.Text = LookupHumanFriendlyScheduledPaymentId(id);
-            // TODO: fetch actual ScheduledPayment
+            // TODO: fetch actual ScheduledPayment from backend
             originalDto = new ScheduledPayment();
             PopulateFields(originalDto);
         }
 
         void PopulateFields(ScheduledPayment x)
         {
+            // NA
             txtCompanyId.Text = x.CompanyId.ToString();
             lblCompanyHuman.Text = LookupHumanFriendlyCompanyId(x.CompanyId);
 
@@ -375,6 +422,7 @@ namespace RV.InvNew.UI
                                    ? LookupHumanFriendlyBatchId(x.BatchId.Value)
                                    : "";
 
+            // scalars
             txtPaymentReference.Text = x.PaymentReference;
             txtDescription.Text = x.Description ?? "";
             txtCurrency.Text = x.Currency;
@@ -393,8 +441,8 @@ namespace RV.InvNew.UI
 
             dtpNextRunDate.Value = x.NextRunDate.ToDateTime(TimeOnly.MinValue);
             dtpLastRunDate.Value = x.LastRunDate.HasValue
-                                          ? x.LastRunDate.Value.ToDateTime(TimeOnly.MinValue)
-                                          : DateTime.Now;
+                                    ? x.LastRunDate.Value.ToDateTime(TimeOnly.MinValue)
+                                    : DateTime.Now;
 
             chkIsPending.Checked = x.IsPending;
             chkIsProcessing.Checked = x.IsProcessing;
@@ -444,9 +492,9 @@ namespace RV.InvNew.UI
                 PaymentMethod = txtPaymentMethod.Text,
                 Frequency = txtFrequency.Text,
                 IntervalValue = int.TryParse(txtIntervalValue.Text, out var iv) ? iv : null,
-                NextRunDate = DateOnly.FromDateTime(dtpNextRunDate.Value),
+                NextRunDate = DateOnly.FromDateTime(dtpNextRunDate.Value ?? DateTime.Now),
                 LastRunDate = dtpLastRunDate.Value != default
-                                       ? DateOnly.FromDateTime(dtpLastRunDate.Value)
+                                       ? DateOnly.FromDateTime(dtpLastRunDate.Value ?? DateTime.Now)
                                        : (DateOnly?)null,
                 IsPending = chkIsPending.Checked == true,
                 IsProcessing = chkIsProcessing.Checked == true,
@@ -459,7 +507,7 @@ namespace RV.InvNew.UI
                 IsReconciled = chkIsReconciled.Checked == true,
                 IsExcluded = chkIsExcluded.Checked == true,
                 ReconciliationDate = dtpReconciliationDate.Value != default
-                                      ? DateOnly.FromDateTime(dtpReconciliationDate.Value)
+                                      ? DateOnly.FromDateTime(dtpReconciliationDate.Value ?? DateTime.Now)
                                       : (DateOnly?)null,
                 IsAutomaticClear = chkIsAutomaticClear.Checked == true
             };
@@ -468,7 +516,6 @@ namespace RV.InvNew.UI
         (bool, string) ValidateInputs()
         {
             var errs = new List<string>();
-
             if (!isNew && !long.TryParse(txtId.Text, out _)) errs.Add("Id");
             if (!long.TryParse(txtCompanyId.Text, out _)) errs.Add("CompanyId");
             if (!string.IsNullOrWhiteSpace(txtVendorId.Text) && !long.TryParse(txtVendorId.Text, out _)) errs.Add("VendorId");
@@ -528,7 +575,7 @@ namespace RV.InvNew.UI
 
         void ClearFields()
         {
-            var boxes = new[]
+            foreach (var tb in new[]
             {
                 txtId, txtCompanyId, txtVendorId, txtInvoiceId, txtBatchId,
                 txtPaymentReference, txtDescription, txtCurrency, txtAmount, txtExchangeRate,
@@ -536,23 +583,22 @@ namespace RV.InvNew.UI
                 txtBeneficiaryAccountNo, txtBeneficiaryRoutingNo,
                 txtPaymentMethod, txtFrequency, txtIntervalValue,
                 txtExternalPaymentId, txtFeeAmount, txtNetAmount
-            };
-            foreach (var tb in boxes) tb.Text = string.Empty;
+            })
+                tb.Text = "";
 
-            var checks = new[]
+            foreach (var cb in new[]
             {
                 chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled,
                 chkIsReconciled, chkIsExcluded, chkIsAutomaticClear
-            };
-            foreach (var cb in checks) cb.Checked = false;
+            })
+                cb.Checked = false;
 
             dtpNextRunDate.Value = DateTime.Now;
             dtpLastRunDate.Value = DateTime.Now;
             dtpReconciliationDate.Value = DateTime.Now;
         }
 
-        // stubs
-        void Log(string msg) => Console.WriteLine($"[ScheduledPaymentPanel] {msg}");
+        void Log(string message) => Console.WriteLine($"[ScheduledPaymentPanel] {message}");
 
         string LookupHumanFriendlyScheduledPaymentId(long id) => $"SP#{id}";
         string LookupHumanFriendlyCompanyId(long id) => $"Company#{id}";
