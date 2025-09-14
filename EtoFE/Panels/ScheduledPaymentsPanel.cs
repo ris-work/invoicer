@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using Eto.Forms;
-using Eto.Drawing;
-using RV.InvNew.Common;
 using CommonUi;
+using Eto.Drawing;
+using Eto.Forms;
 using EtoFE;
+using RV.InvNew.Common;
 
 namespace RV.InvNew.UI
 {
@@ -78,8 +78,14 @@ namespace RV.InvNew.UI
         Control lastFocused;
 
         // ctors
-        public ScheduledPaymentPanel() : this(columns: 2) { }
-        public ScheduledPaymentPanel(long id) : this(columns: 2) { LoadData(id); }
+        public ScheduledPaymentPanel()
+            : this(columns: 2) { }
+
+        public ScheduledPaymentPanel(long id)
+            : this(columns: 2)
+        {
+            LoadData(id);
+        }
 
         ScheduledPaymentPanel(int columns)
         {
@@ -113,23 +119,48 @@ namespace RV.InvNew.UI
 
             // NA‐fields
             txtId = new TextBox { Width = cw, Height = ch };
-            btnIdSearch = new Button { Text = "...", Height = ch, Width = hw };
+            btnIdSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
             lblIdHuman = new Label { Width = cw, Height = ch };
 
             txtCompanyId = new TextBox { Width = cw, Height = ch };
-            btnCompanySearch = new Button { Text = "...", Height = ch, Width = hw };
+            btnCompanySearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
             lblCompanyHuman = new Label { Width = cw, Height = ch };
 
             txtVendorId = new TextBox { Width = cw, Height = ch };
-            btnVendorSearch = new Button { Text = "...", Height = ch, Width = hw };
+            btnVendorSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
             lblVendorHuman = new Label { Width = cw, Height = ch };
 
             txtInvoiceId = new TextBox { Width = cw, Height = ch };
-            btnInvoiceSearch = new Button { Text = "...", Height = ch, Width = hw };
+            btnInvoiceSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
             lblInvoiceHuman = new Label { Width = cw, Height = ch };
 
             txtBatchId = new TextBox { Width = cw, Height = ch };
-            btnBatchSearch = new Button { Text = "...", Height = ch, Width = hw };
+            btnBatchSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
             lblBatchHuman = new Label { Width = cw, Height = ch };
 
             // scalar inputs
@@ -150,9 +181,21 @@ namespace RV.InvNew.UI
             txtIntervalValue = new TextBox { Width = cw, Height = ch };
 
             // dates
-            dtpNextRunDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
-            dtpLastRunDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
-            dtpReconciliationDate = new DateTimePicker { Mode = DateTimePickerMode.Date, Value = DateTime.Now };
+            dtpNextRunDate = new DateTimePicker
+            {
+                Mode = DateTimePickerMode.Date,
+                Value = DateTime.Now,
+            };
+            dtpLastRunDate = new DateTimePicker
+            {
+                Mode = DateTimePickerMode.Date,
+                Value = DateTime.Now,
+            };
+            dtpReconciliationDate = new DateTimePicker
+            {
+                Mode = DateTimePickerMode.Date,
+                Value = DateTime.Now,
+            };
 
             // statuses
             chkIsPending = new CheckBox { Text = TranslationHelper.Translate("IsPending") };
@@ -167,7 +210,10 @@ namespace RV.InvNew.UI
             txtNetAmount = new TextBox { Width = cw, Height = ch };
             chkIsReconciled = new CheckBox { Text = TranslationHelper.Translate("IsReconciled") };
             chkIsExcluded = new CheckBox { Text = TranslationHelper.Translate("IsExcluded") };
-            chkIsAutomaticClear = new CheckBox { Text = TranslationHelper.Translate("IsAutomaticClear") };
+            chkIsAutomaticClear = new CheckBox
+            {
+                Text = TranslationHelper.Translate("IsAutomaticClear"),
+            };
 
             // actions
             btnNew = new Button { Text = TranslationHelper.Translate("New") };
@@ -178,20 +224,35 @@ namespace RV.InvNew.UI
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
 
             // wire lookups
-            btnIdSearch.Click += (_, __) => DoLookup(txtId, lblIdHuman, LookupHumanFriendlyScheduledPaymentId);
-            btnCompanySearch.Click += (_, __) => DoLookup(txtCompanyId, lblCompanyHuman, LookupHumanFriendlyCompanyId);
-            btnVendorSearch.Click += (_, __) => DoLookup(txtVendorId, lblVendorHuman, LookupHumanFriendlyVendorId);
-            btnInvoiceSearch.Click += (_, __) => DoLookup(txtInvoiceId, lblInvoiceHuman, LookupHumanFriendlyInvoiceId);
-            btnBatchSearch.Click += (_, __) => DoLookup(txtBatchId, lblBatchHuman, LookupHumanFriendlyBatchId);
+            btnIdSearch.Click += (_, __) =>
+                DoLookup(txtId, lblIdHuman, LookupHumanFriendlyScheduledPaymentId);
+            btnCompanySearch.Click += (_, __) =>
+                DoLookup(txtCompanyId, lblCompanyHuman, LookupHumanFriendlyCompanyId);
+            btnVendorSearch.Click += (_, __) =>
+                DoLookup(txtVendorId, lblVendorHuman, LookupHumanFriendlyVendorId);
+            btnInvoiceSearch.Click += (_, __) =>
+                DoLookup(txtInvoiceId, lblInvoiceHuman, LookupHumanFriendlyInvoiceId);
+            btnBatchSearch.Click += (_, __) =>
+                DoLookup(txtBatchId, lblBatchHuman, LookupHumanFriendlyBatchId);
 
             // mutually‐exclusive statuses
-            var statuses = new[] { chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled };
-            statuses.ToList().ForEach(cb =>
-                cb.CheckedChanged += (s, e) =>
-                {
-                    if (cb.Checked == true)
-                        statuses.Where(x => x != cb).ToList().ForEach(x => x.Checked = false);
-                });
+            var statuses = new[]
+            {
+                chkIsPending,
+                chkIsProcessing,
+                chkIsCompleted,
+                chkIsFailed,
+                chkIsCancelled,
+            };
+            statuses
+                .ToList()
+                .ForEach(cb =>
+                    cb.CheckedChanged += (s, e) =>
+                    {
+                        if (cb.Checked == true)
+                            statuses.Where(x => x != cb).ToList().ForEach(x => x.Checked = false);
+                    }
+                );
 
             // wire actions
             btnNew.Click += (_, __) => NewRecord();
@@ -204,20 +265,49 @@ namespace RV.InvNew.UI
             // track focus
             var focusable = new Control[]
             {
-                txtId, btnIdSearch,
-                txtCompanyId, btnCompanySearch,
-                txtVendorId, btnVendorSearch,
-                txtInvoiceId, btnInvoiceSearch,
-                txtBatchId, btnBatchSearch,
-                txtPaymentReference, txtDescription, txtCurrency, txtAmount, txtExchangeRate,
-                txtBeneficiaryName, txtBeneficiaryBankName, txtBeneficiaryBranch,
-                txtBeneficiaryAccountNo, txtBeneficiaryRoutingNo,
-                txtPaymentMethod, txtFrequency, txtIntervalValue,
-                dtpNextRunDate, dtpLastRunDate, dtpReconciliationDate,
-                chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled,
-                txtExternalPaymentId, txtFeeAmount, txtNetAmount,
-                chkIsReconciled, chkIsExcluded, chkIsAutomaticClear,
-                btnNew, btnLoad, btnEdit, btnSave, btnCancel, btnReset
+                txtId,
+                btnIdSearch,
+                txtCompanyId,
+                btnCompanySearch,
+                txtVendorId,
+                btnVendorSearch,
+                txtInvoiceId,
+                btnInvoiceSearch,
+                txtBatchId,
+                btnBatchSearch,
+                txtPaymentReference,
+                txtDescription,
+                txtCurrency,
+                txtAmount,
+                txtExchangeRate,
+                txtBeneficiaryName,
+                txtBeneficiaryBankName,
+                txtBeneficiaryBranch,
+                txtBeneficiaryAccountNo,
+                txtBeneficiaryRoutingNo,
+                txtPaymentMethod,
+                txtFrequency,
+                txtIntervalValue,
+                dtpNextRunDate,
+                dtpLastRunDate,
+                dtpReconciliationDate,
+                chkIsPending,
+                chkIsProcessing,
+                chkIsCompleted,
+                chkIsFailed,
+                chkIsCancelled,
+                txtExternalPaymentId,
+                txtFeeAmount,
+                txtNetAmount,
+                chkIsReconciled,
+                chkIsExcluded,
+                chkIsAutomaticClear,
+                btnNew,
+                btnLoad,
+                btnEdit,
+                btnSave,
+                btnCancel,
+                btnReset,
             };
             foreach (var c in focusable)
                 c.GotFocus += (s, e) => lastFocused = (Control)s;
@@ -236,75 +326,119 @@ namespace RV.InvNew.UI
             // create all fields as (key, control)
             var fields = new List<(string Key, Control Ctrl)>
             {
-                ("Id",        new StackLayout(
-                    new StackLayoutItem(txtId),
-                    new StackLayoutItem(btnIdSearch),
-                    new StackLayoutItem(lblIdHuman)
-                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
-
-                ("CompanyId", new StackLayout(
-                    new StackLayoutItem(txtCompanyId),
-                    new StackLayoutItem(btnCompanySearch),
-                    new StackLayoutItem(lblCompanyHuman)
-                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
-
-                ("VendorId",  new StackLayout(
-                    new StackLayoutItem(txtVendorId),
-                    new StackLayoutItem(btnVendorSearch),
-                    new StackLayoutItem(lblVendorHuman)
-                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
-
-                ("InvoiceId", new StackLayout(
-                    new StackLayoutItem(txtInvoiceId),
-                    new StackLayoutItem(btnInvoiceSearch),
-                    new StackLayoutItem(lblInvoiceHuman)
-                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
-
-                ("BatchId",   new StackLayout(
-                    new StackLayoutItem(txtBatchId),
-                    new StackLayoutItem(btnBatchSearch),
-                    new StackLayoutItem(lblBatchHuman)
-                ){ Spacing = 2, Orientation = Orientation.Horizontal }),
-
+                (
+                    "Id",
+                    new StackLayout(
+                        new StackLayoutItem(txtId),
+                        new StackLayoutItem(btnIdSearch),
+                        new StackLayoutItem(lblIdHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "CompanyId",
+                    new StackLayout(
+                        new StackLayoutItem(txtCompanyId),
+                        new StackLayoutItem(btnCompanySearch),
+                        new StackLayoutItem(lblCompanyHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "VendorId",
+                    new StackLayout(
+                        new StackLayoutItem(txtVendorId),
+                        new StackLayoutItem(btnVendorSearch),
+                        new StackLayoutItem(lblVendorHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "InvoiceId",
+                    new StackLayout(
+                        new StackLayoutItem(txtInvoiceId),
+                        new StackLayoutItem(btnInvoiceSearch),
+                        new StackLayoutItem(lblInvoiceHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "BatchId",
+                    new StackLayout(
+                        new StackLayoutItem(txtBatchId),
+                        new StackLayoutItem(btnBatchSearch),
+                        new StackLayoutItem(lblBatchHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
                 ("PaymentReference", txtPaymentReference),
-                ("Description",      txtDescription),
-                ("Currency",         txtCurrency),
-                ("Amount",           txtAmount),
-                ("ExchangeRate",     txtExchangeRate),
-
-                ("BeneficiaryName",      txtBeneficiaryName),
-                ("BeneficiaryBankName",  txtBeneficiaryBankName),
-                ("BeneficiaryBranch",    txtBeneficiaryBranch),
+                ("Description", txtDescription),
+                ("Currency", txtCurrency),
+                ("Amount", txtAmount),
+                ("ExchangeRate", txtExchangeRate),
+                ("BeneficiaryName", txtBeneficiaryName),
+                ("BeneficiaryBankName", txtBeneficiaryBankName),
+                ("BeneficiaryBranch", txtBeneficiaryBranch),
                 ("BeneficiaryAccountNo", txtBeneficiaryAccountNo),
                 ("BeneficiaryRoutingNo", txtBeneficiaryRoutingNo),
-
                 ("PaymentMethod", txtPaymentMethod),
-                ("Frequency",     txtFrequency),
+                ("Frequency", txtFrequency),
                 ("IntervalValue", txtIntervalValue),
-
                 ("NextRunDate", dtpNextRunDate),
                 ("LastRunDate", dtpLastRunDate),
-
-                ("Status", new StackLayout(
-                    new StackLayoutItem(chkIsPending),
-                    new StackLayoutItem(chkIsProcessing),
-                    new StackLayoutItem(chkIsCompleted),
-                    new StackLayoutItem(chkIsFailed),
-                    new StackLayoutItem(chkIsCancelled)
-                ){ Spacing = 5, Orientation = Orientation.Horizontal }),
-
+                (
+                    "Status",
+                    new StackLayout(
+                        new StackLayoutItem(chkIsPending),
+                        new StackLayoutItem(chkIsProcessing),
+                        new StackLayoutItem(chkIsCompleted),
+                        new StackLayoutItem(chkIsFailed),
+                        new StackLayoutItem(chkIsCancelled)
+                    )
+                    {
+                        Spacing = 5,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
                 ("ExternalPaymentId", txtExternalPaymentId),
-                ("FeeAmount",         txtFeeAmount),
-                ("NetAmount",         txtNetAmount),
-                ("IsReconciled",      chkIsReconciled),
-                ("IsExcluded",        chkIsExcluded),
-                ("ReconciliationDate",dtpReconciliationDate),
-                ("IsAutomaticClear",  chkIsAutomaticClear)
+                ("FeeAmount", txtFeeAmount),
+                ("NetAmount", txtNetAmount),
+                ("IsReconciled", chkIsReconciled),
+                ("IsExcluded", chkIsExcluded),
+                ("ReconciliationDate", dtpReconciliationDate),
+                ("IsAutomaticClear", chkIsAutomaticClear),
             };
 
-            var outerButtons = new StackLayout() { Height = ColorSettings.InnerControlHeight ?? 30};
-            var outerLayout = new StackLayout() { Orientation = Orientation.Vertical, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4) };//, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 50) };
-            var layout = new TableLayout() { Spacing = new Size(10, 10), Padding = 10, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4) };
+            var outerButtons = new StackLayout()
+            {
+                Height = ColorSettings.InnerControlHeight ?? 30,
+            };
+            var outerLayout = new StackLayout()
+            {
+                Orientation = Orientation.Vertical,
+                Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4),
+            }; //, Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 50) };
+            var layout = new TableLayout()
+            {
+                Spacing = new Size(10, 10),
+                Padding = 10,
+                Width = (ColorSettings.InnerControlWidth ?? 150) * (columns + 4),
+            };
             // chunk into rows of 'columns' pairs
             for (int i = 0; i < fields.Count; i += columns)
             {
@@ -313,15 +447,17 @@ namespace RV.InvNew.UI
 
                 foreach (var (key, ctrl) in slice)
                 {
-                    cells.Add(new Label
-                    {
-                        Text = TranslationHelper.Translate(key),
-                        Width = lw,
-                        Height = lh,
-                        TextAlignment = TextAlignment.Right
-                    });
-                    ctrl.Width = (int)Math.Floor(1.5*cw);
-                    ctrl.Height = (int)Math.Floor(1.0*ch);
+                    cells.Add(
+                        new Label
+                        {
+                            Text = TranslationHelper.Translate(key),
+                            Width = lw,
+                            Height = lh,
+                            TextAlignment = TextAlignment.Right,
+                        }
+                    );
+                    ctrl.Width = (int)Math.Floor(1.5 * cw);
+                    ctrl.Height = (int)Math.Floor(1.0 * ch);
                     cells.Add(ctrl);
                 }
 
@@ -336,7 +472,14 @@ namespace RV.InvNew.UI
                     }
                 }
 
-                layout.Rows.Add(new TableRow(cells.ToArray().Select(a => new TableCell(a) { ScaleWidth = false })) {  ScaleHeight = false });
+                layout.Rows.Add(
+                    new TableRow(
+                        cells.ToArray().Select(a => new TableCell(a) { ScaleWidth = false })
+                    )
+                    {
+                        ScaleHeight = false,
+                    }
+                );
             }
 
             // action buttons row
@@ -351,7 +494,7 @@ namespace RV.InvNew.UI
             {
                 Spacing = 5,
                 Orientation = Orientation.Horizontal,
-                HorizontalContentAlignment = HorizontalAlignment.Center
+                HorizontalContentAlignment = HorizontalAlignment.Center,
             };
 
             // first cell blank label, second cell the buttons, rest empty
@@ -374,11 +517,11 @@ namespace RV.InvNew.UI
             {
                 var map = new Dictionary<Control, Action>
                 {
-                    { txtId,        () => btnIdSearch.PerformClick() },
+                    { txtId, () => btnIdSearch.PerformClick() },
                     { txtCompanyId, () => btnCompanySearch.PerformClick() },
-                    { txtVendorId,  () => btnVendorSearch.PerformClick() },
+                    { txtVendorId, () => btnVendorSearch.PerformClick() },
                     { txtInvoiceId, () => btnInvoiceSearch.PerformClick() },
-                    { txtBatchId,   () => btnBatchSearch.PerformClick() },
+                    { txtBatchId, () => btnBatchSearch.PerformClick() },
                 };
                 if (lastFocused != null && map.TryGetValue(lastFocused, out var act))
                     act();
@@ -440,18 +583,18 @@ namespace RV.InvNew.UI
 
             txtVendorId.Text = x.VendorId?.ToString() ?? "";
             lblVendorHuman.Text = x.VendorId.HasValue
-                                   ? LookupHumanFriendlyVendorId(x.VendorId.Value)
-                                   : "";
+                ? LookupHumanFriendlyVendorId(x.VendorId.Value)
+                : "";
 
             txtInvoiceId.Text = x.InvoiceId?.ToString() ?? "";
             lblInvoiceHuman.Text = x.InvoiceId.HasValue
-                                   ? LookupHumanFriendlyInvoiceId(x.InvoiceId.Value)
-                                   : "";
+                ? LookupHumanFriendlyInvoiceId(x.InvoiceId.Value)
+                : "";
 
             txtBatchId.Text = x.BatchId?.ToString() ?? "";
             lblBatchHuman.Text = x.BatchId.HasValue
-                                   ? LookupHumanFriendlyBatchId(x.BatchId.Value)
-                                   : "";
+                ? LookupHumanFriendlyBatchId(x.BatchId.Value)
+                : "";
 
             // scalars
             txtPaymentReference.Text = x.PaymentReference;
@@ -472,8 +615,8 @@ namespace RV.InvNew.UI
 
             dtpNextRunDate.Value = x.NextRunDate.ToDateTime(TimeOnly.MinValue);
             dtpLastRunDate.Value = x.LastRunDate.HasValue
-                                    ? x.LastRunDate.Value.ToDateTime(TimeOnly.MinValue)
-                                    : DateTime.Now;
+                ? x.LastRunDate.Value.ToDateTime(TimeOnly.MinValue)
+                : DateTime.Now;
 
             chkIsPending.Checked = x.IsPending;
             chkIsProcessing.Checked = x.IsProcessing;
@@ -488,17 +631,15 @@ namespace RV.InvNew.UI
             chkIsExcluded.Checked = x.IsExcluded;
 
             dtpReconciliationDate.Value = x.ReconciliationDate.HasValue
-                                          ? x.ReconciliationDate.Value.ToDateTime(TimeOnly.MinValue)
-                                          : DateTime.Now;
+                ? x.ReconciliationDate.Value.ToDateTime(TimeOnly.MinValue)
+                : DateTime.Now;
 
             chkIsAutomaticClear.Checked = x.IsAutomaticClear;
         }
 
         void ToggleId(bool show)
         {
-            txtId.Visible =
-            btnIdSearch.Visible =
-            lblIdHuman.Visible = show;
+            txtId.Visible = btnIdSearch.Visible = lblIdHuman.Visible = show;
         }
 
         ScheduledPayment BuildDto()
@@ -507,9 +648,15 @@ namespace RV.InvNew.UI
             {
                 Id = isNew ? 0 : Convert.ToInt64(txtId.Text),
                 CompanyId = Convert.ToInt64(txtCompanyId.Text),
-                VendorId = string.IsNullOrWhiteSpace(txtVendorId.Text) ? null : Convert.ToInt64(txtVendorId.Text),
-                InvoiceId = string.IsNullOrWhiteSpace(txtInvoiceId.Text) ? null : Convert.ToInt64(txtInvoiceId.Text),
-                BatchId = string.IsNullOrWhiteSpace(txtBatchId.Text) ? null : Convert.ToInt64(txtBatchId.Text),
+                VendorId = string.IsNullOrWhiteSpace(txtVendorId.Text)
+                    ? null
+                    : Convert.ToInt64(txtVendorId.Text),
+                InvoiceId = string.IsNullOrWhiteSpace(txtInvoiceId.Text)
+                    ? null
+                    : Convert.ToInt64(txtInvoiceId.Text),
+                BatchId = string.IsNullOrWhiteSpace(txtBatchId.Text)
+                    ? null
+                    : Convert.ToInt64(txtBatchId.Text),
                 PaymentReference = txtPaymentReference.Text,
                 Description = txtDescription.Text,
                 Currency = txtCurrency.Text,
@@ -524,9 +671,10 @@ namespace RV.InvNew.UI
                 Frequency = txtFrequency.Text,
                 IntervalValue = int.TryParse(txtIntervalValue.Text, out var iv) ? iv : null,
                 NextRunDate = DateOnly.FromDateTime(dtpNextRunDate.Value ?? DateTime.Now),
-                LastRunDate = dtpLastRunDate.Value != default
-                                       ? DateOnly.FromDateTime(dtpLastRunDate.Value ?? DateTime.Now)
-                                       : (DateOnly?)null,
+                LastRunDate =
+                    dtpLastRunDate.Value != default
+                        ? DateOnly.FromDateTime(dtpLastRunDate.Value ?? DateTime.Now)
+                        : (DateOnly?)null,
                 IsPending = chkIsPending.Checked == true,
                 IsProcessing = chkIsProcessing.Checked == true,
                 IsCompleted = chkIsCompleted.Checked == true,
@@ -537,39 +685,72 @@ namespace RV.InvNew.UI
                 NetAmount = double.TryParse(txtNetAmount.Text, out var na) ? na : (double?)null,
                 IsReconciled = chkIsReconciled.Checked == true,
                 IsExcluded = chkIsExcluded.Checked == true,
-                ReconciliationDate = dtpReconciliationDate.Value != default
-                                      ? DateOnly.FromDateTime(dtpReconciliationDate.Value ?? DateTime.Now)
-                                      : (DateOnly?)null,
-                IsAutomaticClear = chkIsAutomaticClear.Checked == true
+                ReconciliationDate =
+                    dtpReconciliationDate.Value != default
+                        ? DateOnly.FromDateTime(dtpReconciliationDate.Value ?? DateTime.Now)
+                        : (DateOnly?)null,
+                IsAutomaticClear = chkIsAutomaticClear.Checked == true,
             };
         }
 
         (bool, string) ValidateInputs()
         {
             var errs = new List<string>();
-            if (!isNew && !long.TryParse(txtId.Text, out _)) errs.Add("Id");
-            if (!long.TryParse(txtCompanyId.Text, out _)) errs.Add("CompanyId");
-            if (!string.IsNullOrWhiteSpace(txtVendorId.Text) && !long.TryParse(txtVendorId.Text, out _)) errs.Add("VendorId");
-            if (!string.IsNullOrWhiteSpace(txtInvoiceId.Text) && !long.TryParse(txtInvoiceId.Text, out _)) errs.Add("InvoiceId");
-            if (!string.IsNullOrWhiteSpace(txtBatchId.Text) && !long.TryParse(txtBatchId.Text, out _)) errs.Add("BatchId");
+            if (!isNew && !long.TryParse(txtId.Text, out _))
+                errs.Add("Id");
+            if (!long.TryParse(txtCompanyId.Text, out _))
+                errs.Add("CompanyId");
+            if (
+                !string.IsNullOrWhiteSpace(txtVendorId.Text)
+                && !long.TryParse(txtVendorId.Text, out _)
+            )
+                errs.Add("VendorId");
+            if (
+                !string.IsNullOrWhiteSpace(txtInvoiceId.Text)
+                && !long.TryParse(txtInvoiceId.Text, out _)
+            )
+                errs.Add("InvoiceId");
+            if (
+                !string.IsNullOrWhiteSpace(txtBatchId.Text)
+                && !long.TryParse(txtBatchId.Text, out _)
+            )
+                errs.Add("BatchId");
 
-            if (string.IsNullOrWhiteSpace(txtPaymentReference.Text)) errs.Add("PaymentReference");
-            if (string.IsNullOrWhiteSpace(txtCurrency.Text)) errs.Add("Currency");
-            if (!double.TryParse(txtAmount.Text, out _)) errs.Add("Amount");
-            if (!double.TryParse(txtExchangeRate.Text, out _)) errs.Add("ExchangeRate");
+            if (string.IsNullOrWhiteSpace(txtPaymentReference.Text))
+                errs.Add("PaymentReference");
+            if (string.IsNullOrWhiteSpace(txtCurrency.Text))
+                errs.Add("Currency");
+            if (!double.TryParse(txtAmount.Text, out _))
+                errs.Add("Amount");
+            if (!double.TryParse(txtExchangeRate.Text, out _))
+                errs.Add("ExchangeRate");
 
-            if (!int.TryParse(txtIntervalValue.Text, out _) && !string.IsNullOrWhiteSpace(txtIntervalValue.Text))
+            if (
+                !int.TryParse(txtIntervalValue.Text, out _)
+                && !string.IsNullOrWhiteSpace(txtIntervalValue.Text)
+            )
                 errs.Add("IntervalValue");
-            if (!double.TryParse(txtFeeAmount.Text, out _) && !string.IsNullOrWhiteSpace(txtFeeAmount.Text))
+            if (
+                !double.TryParse(txtFeeAmount.Text, out _)
+                && !string.IsNullOrWhiteSpace(txtFeeAmount.Text)
+            )
                 errs.Add("FeeAmount");
-            if (!double.TryParse(txtNetAmount.Text, out _) && !string.IsNullOrWhiteSpace(txtNetAmount.Text))
+            if (
+                !double.TryParse(txtNetAmount.Text, out _)
+                && !string.IsNullOrWhiteSpace(txtNetAmount.Text)
+            )
                 errs.Add("NetAmount");
 
             var statusCount = new[]
             {
-                chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled
+                chkIsPending,
+                chkIsProcessing,
+                chkIsCompleted,
+                chkIsFailed,
+                chkIsCancelled,
             }.Count(c => c.Checked == true);
-            if (statusCount > 1) errs.Add("Multiple statuses");
+            if (statusCount > 1)
+                errs.Add("Multiple statuses");
 
             return (errs.Count == 0, string.Join(", ", errs));
         }
@@ -582,7 +763,10 @@ namespace RV.InvNew.UI
             if (ok)
             {
                 var dto = BuildDto();
-                var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(
+                    dto,
+                    new JsonSerializerOptions { WriteIndented = true }
+                );
                 var msg = $"Valid: {ok}\n{(ok ? "" : "Errors: " + errors)}\n\n{json}";
                 MessageBox.Show(this, msg);
             }
@@ -597,36 +781,68 @@ namespace RV.InvNew.UI
 
         void Cancel()
         {
-            if (isNew) NewRecord();
-            else PopulateFields(originalDto);
+            if (isNew)
+                NewRecord();
+            else
+                PopulateFields(originalDto);
             Log("Cancel triggered");
         }
 
         void ResetForm()
         {
-            if (MessageBox.Show(this, TranslationHelper.Translate("Are you sure?"), MessageBoxButtons.YesNo)
-                == DialogResult.Yes)
+            if (
+                MessageBox.Show(
+                    this,
+                    TranslationHelper.Translate("Are you sure?"),
+                    MessageBoxButtons.YesNo
+                ) == DialogResult.Yes
+            )
                 NewRecord();
         }
 
         void ClearFields()
         {
-            foreach (var tb in new[]
-            {
-                txtId, txtCompanyId, txtVendorId, txtInvoiceId, txtBatchId,
-                txtPaymentReference, txtDescription, txtCurrency, txtAmount, txtExchangeRate,
-                txtBeneficiaryName, txtBeneficiaryBankName, txtBeneficiaryBranch,
-                txtBeneficiaryAccountNo, txtBeneficiaryRoutingNo,
-                txtPaymentMethod, txtFrequency, txtIntervalValue,
-                txtExternalPaymentId, txtFeeAmount, txtNetAmount
-            })
+            foreach (
+                var tb in new[]
+                {
+                    txtId,
+                    txtCompanyId,
+                    txtVendorId,
+                    txtInvoiceId,
+                    txtBatchId,
+                    txtPaymentReference,
+                    txtDescription,
+                    txtCurrency,
+                    txtAmount,
+                    txtExchangeRate,
+                    txtBeneficiaryName,
+                    txtBeneficiaryBankName,
+                    txtBeneficiaryBranch,
+                    txtBeneficiaryAccountNo,
+                    txtBeneficiaryRoutingNo,
+                    txtPaymentMethod,
+                    txtFrequency,
+                    txtIntervalValue,
+                    txtExternalPaymentId,
+                    txtFeeAmount,
+                    txtNetAmount,
+                }
+            )
                 tb.Text = "";
 
-            foreach (var cb in new[]
-            {
-                chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled,
-                chkIsReconciled, chkIsExcluded, chkIsAutomaticClear
-            })
+            foreach (
+                var cb in new[]
+                {
+                    chkIsPending,
+                    chkIsProcessing,
+                    chkIsCompleted,
+                    chkIsFailed,
+                    chkIsCancelled,
+                    chkIsReconciled,
+                    chkIsExcluded,
+                    chkIsAutomaticClear,
+                }
+            )
                 cb.Checked = false;
 
             dtpNextRunDate.Value = DateTime.Now;
@@ -637,9 +853,13 @@ namespace RV.InvNew.UI
         void Log(string message) => Console.WriteLine($"[ScheduledPaymentPanel] {message}");
 
         string LookupHumanFriendlyScheduledPaymentId(long id) => $"SP#{id}";
+
         string LookupHumanFriendlyCompanyId(long id) => $"Company#{id}";
+
         string LookupHumanFriendlyVendorId(long id) => $"Vendor#{id}";
+
         string LookupHumanFriendlyInvoiceId(long id) => $"Invoice#{id}";
+
         string LookupHumanFriendlyBatchId(long id) => $"Batch#{id}";
     }
 }

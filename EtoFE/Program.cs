@@ -26,7 +26,8 @@ using Tomlyn.Model;
 //using Eto.WinUI;
 #endif
 
-public static class GlobalState {
+public static class GlobalState
+{
     public static common.BackOfficeAccountingDataTransfer BAT;
 }
 

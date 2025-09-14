@@ -199,7 +199,11 @@ namespace RV.Invnew.EtoFE
                     }
                 }
                 var F = new Form() { Content = new BinCardVisualizerPanel(Cards) };
+                F.Width = 800;
+                F.Height = 600;
+                F.Title = "Bin card";
                 F.Show();
+                Console.WriteLine("Bin card Show() was called.");
             };
 
             // entry UI
@@ -306,11 +310,16 @@ namespace RV.Invnew.EtoFE
                 if (req.Error == false)
                 {
                     PR = req.Out;
-                    MessageBox.Show(
-                        JsonSerializer.Serialize(req.Out),
-                        "Time",
-                        MessageBoxType.Information
-                    );
+                    var P = Eto.Platform.Instance.ToString();
+
+                    if (P != Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+                    {
+                        MessageBox.Show(
+                            JsonSerializer.Serialize(req.Out),
+                            "Time",
+                            MessageBoxType.Information
+                        );
+                    }
                     break;
                 }
             }

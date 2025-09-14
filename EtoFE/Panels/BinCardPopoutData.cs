@@ -1,24 +1,25 @@
-﻿using CommonUi;
-using Eto.Drawing;
-using Eto.Forms;
-using RV.InvNew.Common;
-using RV.InvNew.EtoFE;
-using ScottPlot.Eto;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonUi;
+using Eto.Drawing;
+using Eto.Forms;
+using RV.InvNew.Common;
+using RV.InvNew.EtoFE;
+using ScottPlot.Eto;
 
 namespace EtoFE.Panels
 {
-    public class BinCardPopoutData: Form
+    public class BinCardPopoutData : Form
     {
         public List<InventoryMovement> BinCard;
         public int PageSize;
         public long ItemCode;
         public string Description;
+
         // Map each action to its desired background color.
         // Sale and Purchase now have distinct hues.
         new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
@@ -57,8 +58,6 @@ namespace EtoFE.Panels
         readonly Dictionary<string, CheckBox> _checkMap = new();
         readonly Dictionary<string, List<ScottPlot.Plottables.BarPlot>> _seriesMap = new();
 
-
-
         readonly SearchPanelEto _itemSearch;
         readonly Button _btnBinPrev,
             _btnBinNext;
@@ -66,7 +65,13 @@ namespace EtoFE.Panels
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
 
-        public BinCardPopoutData(long ItemCode, string Description, List<InventoryMovement> BinCard, int PageSize) {
+        public BinCardPopoutData(
+            long ItemCode,
+            string Description,
+            List<InventoryMovement> BinCard,
+            int PageSize
+        )
+        {
             this.BinCard = BinCard;
             this.PageSize = PageSize;
             this.Description = Description;
@@ -75,7 +80,6 @@ namespace EtoFE.Panels
             _btnBinPrev = new Button { Text = "< Prev" };
             _btnBinNext = new Button { Text = "Next >" };
             _lblBinPage = new Eto.Forms.Label();
-
 
             _btnBinPrev.Click += (_, __) =>
             {
@@ -107,16 +111,9 @@ namespace EtoFE.Panels
             {
                 Padding = 10,
                 Spacing = new Size(10, 10),
-                Rows =
-                {
-                    new TableRow(binPager),
-                    new TableRow(_binCardContainer),
-                },
+                Rows = { new TableRow(binPager), new TableRow(_binCardContainer) },
             };
             RefreshBinCardPage();
-
-
-
         }
 
         void RefreshBinCardPage()

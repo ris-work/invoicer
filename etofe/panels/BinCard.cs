@@ -8,7 +8,6 @@ using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
 using EtoFE.Panels;
-
 //using ImageMagick;
 using RV.InvNew.Common;
 using ScottPlot;
@@ -96,7 +95,8 @@ namespace RV.InvNew.EtoFE
 
         readonly SearchPanelEto _itemSearch;
         readonly Button _btnBinPrev,
-            _btnBinNext, _btnBinPopup;
+            _btnBinNext,
+            _btnBinPopup;
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
@@ -144,7 +144,9 @@ namespace RV.InvNew.EtoFE
                 GWH: 120,
                 GWW: 300
             )
-            { Height = 120};
+            {
+                Height = 120,
+            };
             _itemSearch.OnSelectionMade = () =>
             {
                 var sel = _itemSearch.Selected;
@@ -183,7 +185,6 @@ namespace RV.InvNew.EtoFE
             };
             _btnBinPopup.Click += (_, __) =>
             {
-
                 var item = data[_currentItemIndex];
                 var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
                 frm.Show();

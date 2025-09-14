@@ -1,8 +1,8 @@
 BaseAddress = "http://127.0.0.1:5062"
 Terminal = "10"
 EnableFulLMode = true
-EtoBackend = "Wpf"
-#EtoBackend = "WinForms"
+#EtoBackend = "Wpf"
+EtoBackend = "WinForms"
 Language = "en"
 CustomFonts=false
 #InnerPanelWidth=200 #Use with WinForms Native Port only

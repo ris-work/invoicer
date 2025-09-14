@@ -109,6 +109,20 @@ namespace EtoFE
         public static (To Out, bool Error) Send(
             Ti Message,
             string Endpoint,
+            out To Output,
+            out bool ErrorOccured,
+            bool RetryInteractively = false
+        )
+        {
+            var Result = Send(Message, Endpoint, RetryInteractively);
+            Output = Result.Out;
+            ErrorOccured = Result.Error;
+            return Result;
+        }
+
+        public static (To Out, bool Error) Send(
+            Ti Message,
+            string Endpoint,
             bool RetryInteractively = false
         )
         {
