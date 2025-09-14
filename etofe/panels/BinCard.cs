@@ -7,6 +7,8 @@ using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
+using EtoFE.Panels;
+
 //using ImageMagick;
 using RV.InvNew.Common;
 using ScottPlot;
@@ -94,7 +96,7 @@ namespace RV.InvNew.EtoFE
 
         readonly SearchPanelEto _itemSearch;
         readonly Button _btnBinPrev,
-            _btnBinNext;
+            _btnBinNext, _btnBinPopup;
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
@@ -159,6 +161,7 @@ namespace RV.InvNew.EtoFE
             // 2) Pagination
             _btnBinPrev = new Button { Text = "< Prev" };
             _btnBinNext = new Button { Text = "Next >" };
+            _btnBinPopup = new Button { Text = "popup >" };
             _lblBinPage = new Eto.Forms.Label();
 
             _btnBinPrev.Click += (_, __) =>
@@ -178,12 +181,19 @@ namespace RV.InvNew.EtoFE
                     RefreshBinCardPage();
                 }
             };
+            _btnBinPopup.Click += (_, __) =>
+            {
+
+                var item = data[_currentItemIndex];
+                var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
+                frm.Show();
+            };
 
             var binPager = new StackLayout
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
-                Items = { _btnBinPrev, _lblBinPage, _btnBinNext },
+                Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup },
             };
             _binCardContainer = new Panel();
 

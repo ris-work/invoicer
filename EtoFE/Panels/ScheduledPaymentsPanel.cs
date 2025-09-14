@@ -577,10 +577,15 @@ namespace RV.InvNew.UI
         void Save()
         {
             var (ok, errors) = ValidateInputs();
-            var dto = BuildDto();
-            var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true });
-            var msg = $"Valid: {ok}\n{(ok ? "" : "Errors: " + errors)}\n\n{json}";
-            MessageBox.Show(this, msg);
+            var msgx = $"Valid: {ok}\n{(ok ? "" : "Errors: " + errors)}\n\n";
+            MessageBox.Show(this, msgx);
+            if (ok)
+            {
+                var dto = BuildDto();
+                var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true });
+                var msg = $"Valid: {ok}\n{(ok ? "" : "Errors: " + errors)}\n\n{json}";
+                MessageBox.Show(this, msg);
+            }
             Log("Save triggered");
         }
 
