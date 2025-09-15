@@ -174,7 +174,7 @@ namespace RV.Invnew.EtoFE
 
             // fetch button
             _btnFetch = new Button { Text = "Fetch Movements" };
-            _btnFetch.Click += async (s, e) =>
+            _btnFetch.Click +=  (s, e) =>
             {
                 List<(
                     long ItemCode,

@@ -363,6 +363,18 @@ namespace CommonUi
             }
 #endif
         }
+        public static void DisableAutoSizing(this Eto.Forms.GridView gw) {
+#if WINDOWS || WINFORMS
+            var platformStr = Eto.Platform.Instance.ToString();
+            if (platformStr == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                var winGrid = gw.ControlObject as System.Windows.Forms.DataGridView;
+                Console.WriteLine($"Successfully cast as DGW: gw");
+                winGrid.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.None;
+                winGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.None;
+            }
+#endif
+        }
 
         public static void ApplyDarkGridHeaders(this Eto.Forms.GridView gridView)
         {

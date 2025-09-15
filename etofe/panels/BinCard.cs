@@ -260,12 +260,64 @@ namespace RV.InvNew.EtoFE
         void RefreshBinCardPage()
         {
             var movs = _items[_currentItemIndex].BinCard;
+            Console.WriteLine($"currentItemIndex: {_currentItemIndex}, RowCount: {_items.Count}");
             int totalPages = GetTotalBinPages();
             _lblBinPage.Text = $"Page {_currentBinPage + 1} of {totalPages}";
 
             var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
-            var grid = new GridView { DataStore = page };
+            var grid = new GridView();
+            grid.DisableAutoSizing();
+
+            var platformName = Eto.Platform.Instance.ToString();
+            var winFormsName = Eto.Platform.Get(Eto.Platforms.WinForms).ToString();
+            bool isWinForms = platformName.Equals(winFormsName, StringComparison.Ordinal);
+            var osPlatform = Environment.OSVersion.Platform;
+            bool isUnixLike = osPlatform == PlatformID.Unix || osPlatform == PlatformID.MacOSX;
+
+            Console.WriteLine($"Eto backend: {platformName}");
+            Console.WriteLine($"WinForms target: {winFormsName}");
+            Console.WriteLine($"isWinForms={isWinForms}, OS={osPlatform}, isUnixLike={isUnixLike}");
+            Console.WriteLine($"Incoming page count: {(page == null ? "null" : page.Count.ToString())}");
+
+            if (isWinForms && isUnixLike)
+            {
+                Console.WriteLine("→ Clearing DataStore");
+                grid.DataStore = null;
+
+                if (page != null && page.Count > 0)
+                {
+                    try
+                    {
+                        Console.WriteLine("→ Assigning non-empty DataStore");
+                        grid.DataStore = page;
+                    }
+                    catch (Exception ex) {
+                        Console.WriteLine($"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("→ Page is null or empty; skipping assignment");
+                }
+
+                if (grid.ControlObject is System.Windows.Forms.DataGridView dg)
+                {
+                    Console.WriteLine("→ Disabling AutoSizeRowsMode");
+                    dg.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.None;
+                }
+                else
+                {
+                    Console.WriteLine($"→ ControlObject is {grid.ControlObject?.GetType().Name}; no autosize tweak");
+                }
+            }
+            else
+            {
+                Console.WriteLine("→ Standard DataStore assignment");
+                grid.DataStore = page;
+            }
+            Console.WriteLine("→ Done with DataStore assignment");
+
             grid.Columns.Add(
                 new GridColumn
                 {
@@ -378,6 +430,15 @@ namespace RV.InvNew.EtoFE
                 // G) Apply background
                 e.BackgroundColor = bg;
             };
+            Console.WriteLine("Second attempt at setting DataStore");
+            try
+            {
+                grid.DataStore = page;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}");
+            }
 
             _binCardContainer.Content = grid;
         }
