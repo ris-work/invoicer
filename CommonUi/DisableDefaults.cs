@@ -908,6 +908,26 @@ namespace CommonUi
 #endif
         }
 
+        public static void AlignCenter(this Eto.Forms.Button button)
+        {
+            var P = Eto.Platform.Instance.ToString();
+#if WINDOWS || WINFORMS
+            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                // Access the native System.Windows.Forms.Button control via ControlObject.
+                var winButton = button.ControlObject as System.Windows.Forms.Button;
+                Console.WriteLine($"{button.ControlObject.GetType()}, winButton: {winButton}");
+                if (winButton != null)
+                {
+                    winButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                    winButton.Image = null;
+                    winButton.ImageIndex = -1;
+                    winButton.TextImageRelation = TextImageRelation.Overlay;
+                }
+            }
+#endif
+        }
+
         /// <summary>
         /// Extension method for Eto.Forms.Button that disables its border on WinForms and GTK.
         /// Evaluates the provided variable P against the current Eto backend.

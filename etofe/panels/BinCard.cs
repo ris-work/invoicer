@@ -123,6 +123,63 @@ namespace RV.InvNew.EtoFE
                 })
                 .ToList();
 
+            var flat = _items
+    .Where(it => it.ItemCode >= 0)
+    .SelectMany(it => it.BinCard)
+    .OrderBy(m => m.EnteredTime)
+    .ToList();
+
+            var sum = new ItemMovements
+            {
+                ItemCode = -1,
+                Description = "Sum",
+                BinCard = flat
+                    .Select(m => new InventoryMovement
+                    {
+                        EnteredTime = m.EnteredTime,
+                        Reference = m.Reference,
+                        Units = m.Units,
+                        FromUnits = m.FromUnits,
+                        ToUnits = m.ToUnits
+                    })
+                    .ToList()
+            };
+
+            var avg = new ItemMovements
+            {
+                ItemCode = -2,
+                Description = "Average",
+                BinCard = flat
+                    .Select(m => new InventoryMovement
+                    {
+                        EnteredTime = m.EnteredTime,
+                        Reference = m.Reference,
+                        Units = m.Units,
+                        FromUnits = m.FromUnits,
+                        ToUnits = m.ToUnits
+                    })
+                    .ToList()
+            };
+
+            var gm = new ItemMovements
+            {
+                ItemCode = -3,
+                Description = "Geometric mean",
+                BinCard = flat
+                    .Select(m => new InventoryMovement
+                    {
+                        EnteredTime = m.EnteredTime,
+                        Reference = m.Reference,
+                        Units = m.Units,
+                        FromUnits = m.FromUnits,
+                        ToUnits = m.ToUnits
+                    })
+                    .ToList()
+            };
+
+            _items.AddRange(new[] { sum, avg, gm });
+
+
             // 1) Search dropdown
             _itemSearch = new SearchPanelEto(
                 _items
@@ -266,7 +323,7 @@ namespace RV.InvNew.EtoFE
 
             var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
-            var grid = new GridView();
+            var grid = new GridView() { Width = (ColorSettings.ControlWidth ?? 30) * 6, Height = (ColorSettings.ControlHeight ?? 30) * 11};
             grid.DisableAutoSizing();
 
             var platformName = Eto.Platform.Instance.ToString();
@@ -389,9 +446,9 @@ namespace RV.InvNew.EtoFE
                 // B) Ensure it’s an IList (string[] and List<string> both implement IList)
                 if (!(item is IList rowItems))
                 {
-                    Console.WriteLine(
+                    /*Console.WriteLine(
                         $"RowFormatting: e.Item is {item.GetType().Name}, not IList (remove this conditions later)"
-                    );
+                    );*/
                     //return;
                 }
 
@@ -482,6 +539,85 @@ namespace RV.InvNew.EtoFE
                     TotalTo = g.Sum(y => y.ToUnits),
                 })
                 .ToList();
+
+            if(_items[_currentItemIndex].ItemCode < 0)
+            {
+                var item = _items[_currentItemIndex];
+                var perItem = _items
+    .Where(it => it.ItemCode >= 0)
+    .SelectMany(it => it.BinCard.Select(im =>
+    {
+        var r = im.Reference ?? "";
+        var i = r.IndexOf(':');
+        var refType = i >= 0 ? r.Substring(0, i) : r;
+        var refNo = i >= 0 ? r.Substring(i + 1) : null;
+        return new { it.ItemCode, RefType = refType, RefNo = refNo, Date = im.EnteredTime.Date, im.Units, im.FromUnits, im.ToUnits };
+    }))
+    .Where(x => _refTypes.Contains(x.RefType))
+    .GroupBy(x => new { x.ItemCode, x.RefType, x.Date })
+    .Select(g => new
+    {
+        g.Key.ItemCode,
+        g.Key.RefType,
+        g.Key.Date,
+        Units = g.Sum(y => y.Units),
+        From = g.Sum(y => y.FromUnits),
+        To = g.Sum(y => y.ToUnits),
+    })
+    .ToList();
+
+                switch (item.ItemCode)
+                {
+                    case -2: // Average of per-item totals
+                        summary = perItem
+                            .GroupBy(x => new { x.RefType, x.Date })
+                            .Select(g => new InventoryMovementSummary
+                            {
+                                RefType = g.Key.RefType,
+                                Date = g.Key.Date,
+                                TotalUnits = g.Average(y => y.Units),
+                                TotalFrom = g.Average(y => y.From),
+                                TotalTo = g.Average(y => y.To),
+                            })
+                            .ToList();
+                        break;
+
+                    case -3: // Geometric mean of per-item totals
+                        summary = perItem
+                            .GroupBy(x => new { x.RefType, x.Date })
+                            .Select(g =>
+                            {
+                                var u = g.Where(y => y.Units > 0).Select(y => Math.Log(y.Units));
+                                var f = g.Where(y => y.From > 0).Select(y => Math.Log(y.From));
+                                var t = g.Where(y => y.To > 0).Select(y => Math.Log(y.To));
+                                return new InventoryMovementSummary
+                                {
+                                    RefType = g.Key.RefType,
+                                    Date = g.Key.Date,
+                                    TotalUnits = u.Any() ? Math.Exp(u.Average()) : 0d,
+                                    TotalFrom = f.Any() ? Math.Exp(f.Average()) : 0d,
+                                    TotalTo = t.Any() ? Math.Exp(t.Average()) : 0d,
+                                };
+                            })
+                            .ToList();
+                        break;
+
+                    case -1: // Sum of per-item totals
+                    default:
+                        summary = perItem
+                            .GroupBy(x => new { x.RefType, x.Date })
+                            .Select(g => new InventoryMovementSummary
+                            {
+                                RefType = g.Key.RefType,
+                                Date = g.Key.Date,
+                                TotalUnits = g.Sum(y => y.Units),
+                                TotalFrom = g.Sum(y => y.From),
+                                TotalTo = g.Sum(y => y.To),
+                            })
+                            .ToList();
+                        break;
+                }
+            }
 
             // X positions and labels
             double[] positions = Enumerable.Range(1, n).Select(i => (double)i).ToArray();
