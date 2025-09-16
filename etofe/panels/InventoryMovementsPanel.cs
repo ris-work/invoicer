@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
@@ -173,7 +174,7 @@ namespace RV.Invnew.EtoFE
             _grid.RowFormatting += (e, a) => { };
 
             // fetch button
-            _btnFetch = new Button { Text = "Fetch Movements" };
+            _btnFetch = new Button { Text = "Fetch Movements", Height = (ColorSettings.InnerControlHeight ?? 30) * 2 };
             _btnFetch.Click +=  (s, e) =>
             {
                 List<(
@@ -215,17 +216,18 @@ namespace RV.Invnew.EtoFE
                     new TableRow(new Label { Text = "Item Code:" }, _txtItemCode, _lblFriendly),
                     new TableRow(new Label { Text = "From:" }, _dpFrom),
                     new TableRow(new Label { Text = "To:" }, _dpTo),
-                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete),
+                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete){ ScaleHeight = false},
                 },
             };
             var group = new GroupBox { Text = "Entry", Content = entryLayout };
-
+            entryLayout.Height = (ColorSettings.ControlHeight ?? 30) * 10;
             // main layout
             Content = new TableLayout
             {
                 Padding = 10,
                 Spacing = new Size(10, 10),
                 Rows = { group, _grid, _btnFetch },
+                
             };
 
             ResetEntry();

@@ -177,7 +177,8 @@ namespace RV.InvNew.EtoFE
                     .ToList()
             };
 
-            _items.AddRange(new[] { sum, avg, gm });
+            //_items.AddRange(new[] { sum, avg, gm });
+            _items.AddRange(new[] { sum, avg });
 
 
             // 1) Search dropdown
@@ -220,7 +221,7 @@ namespace RV.InvNew.EtoFE
             // 2) Pagination
             _btnBinPrev = new Button { Text = "< Prev" };
             _btnBinNext = new Button { Text = "Next >" };
-            _btnBinPopup = new Button { Text = "popup >" };
+            _btnBinPopup = new Button { Text = "Pop Up 📰" };
             _lblBinPage = new Eto.Forms.Label();
 
             _btnBinPrev.Click += (_, __) =>
@@ -242,6 +243,9 @@ namespace RV.InvNew.EtoFE
             };
             _btnBinPopup.Click += (_, __) =>
             {
+                Console.WriteLine($"Popup Bin Card: {_currentItemIndex}");
+                if (_currentItemIndex < 0) { Console.WriteLine($"Popup Bin Card: {_currentItemIndex} <0, refusing to pop up"); return; }
+                if (_currentItemIndex >= data.Count) { Console.WriteLine($"Popup Bin Card: {_currentItemIndex} >={data.Count}, refusing to pop up"); return; }
                 var item = data[_currentItemIndex];
                 var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
                 frm.Show();
@@ -252,6 +256,7 @@ namespace RV.InvNew.EtoFE
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
                 Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup },
+                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom
             };
             _binCardContainer = new Panel();
 
@@ -412,6 +417,18 @@ namespace RV.InvNew.EtoFE
             grid.Columns.Add(
                 new GridColumn
                 {
+                    HeaderText = "FromQty",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Delegate<InventoryMovement, string>(x =>
+                            x.FromUnits.ToString("0.##")
+                        ),
+                    },
+                }
+            );
+            grid.Columns.Add(
+                new GridColumn
+                {
                     HeaderText = "Qty",
                     DataCell = new TextBoxCell
                     {
@@ -424,7 +441,7 @@ namespace RV.InvNew.EtoFE
             grid.Columns.Add(
                 new GridColumn
                 {
-                    HeaderText = "Balance",
+                    HeaderText = "Balance (ToQty)",
                     DataCell = new TextBoxCell
                     {
                         Binding = Binding.Delegate<InventoryMovement, string>(x =>
