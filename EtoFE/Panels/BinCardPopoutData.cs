@@ -124,7 +124,7 @@ namespace EtoFE.Panels
 
             var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
-            var grid = new GridView { DataStore = page };
+            var grid = new GridView {  };
             grid.Columns.Add(
                 new GridColumn
                 {
@@ -237,6 +237,7 @@ namespace EtoFE.Panels
                 // G) Apply background
                 e.BackgroundColor = bg;
             };
+            grid.DataStore = page;
 
             _binCardContainer.Content = grid;
         }

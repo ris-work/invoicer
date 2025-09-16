@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using CommonUi;
 using Eto.Drawing;
@@ -40,9 +41,14 @@ namespace RV.InvNew.EtoFE
     // Main UI: pick an item, page through its bin‐card, and show a stacked bar chart
     public class BinCardVisualizerPanel : Scrollable
     {
-        // Map each action to its desired background color.
-        // Sale and Purchase now have distinct hues.
-        new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
+
+
+        public List<InventoryMovement> _curMovs;
+
+
+            // Map each action to its desired background color.
+            // Sale and Purchase now have distinct hues.
+            new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
             string,
             Eto.Drawing.Color
         >(StringComparer.OrdinalIgnoreCase)
@@ -96,7 +102,7 @@ namespace RV.InvNew.EtoFE
         readonly SearchPanelEto _itemSearch;
         readonly Button _btnBinPrev,
             _btnBinNext,
-            _btnBinPopup;
+            _btnBinPopup, _btnBinExport, _btnBinExportPlot, _btnBinExportHtml;
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
@@ -218,6 +224,9 @@ namespace RV.InvNew.EtoFE
             _btnBinPrev = new Button { Text = "< Prev" };
             _btnBinNext = new Button { Text = "Next >" };
             _btnBinPopup = new Button { Text = "Pop Up 📰" };
+            _btnBinExport = new Button { Text = "Export" };
+            _btnBinExportPlot = new Button { Text = "Export Plot 📊" };
+            _btnBinExportHtml = new Button { Text = "Export Plot 📊" };
             _lblBinPage = new Eto.Forms.Label();
 
             _btnBinPrev.Click += (_, __) =>
@@ -263,7 +272,7 @@ namespace RV.InvNew.EtoFE
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
-                Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup },
+                Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup, _btnBinExport, _btnBinExportPlot, _btnBinExportHtml },
                 VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom,
             };
             _binCardContainer = new Panel();
@@ -330,6 +339,7 @@ namespace RV.InvNew.EtoFE
         void RefreshBinCardPage()
         {
             var movs = _items[_currentItemIndex].BinCard;
+            _curMovs = movs;
             Console.WriteLine($"currentItemIndex: {_currentItemIndex}, RowCount: {_items.Count}");
             int totalPages = GetTotalBinPages();
             _lblBinPage.Text = $"Page {_currentBinPage + 1} of {totalPages}";
@@ -343,61 +353,6 @@ namespace RV.InvNew.EtoFE
             };
             grid.DisableAutoSizing();
 
-            var platformName = Eto.Platform.Instance.ToString();
-            var winFormsName = Eto.Platform.Get(Eto.Platforms.WinForms).ToString();
-            bool isWinForms = platformName.Equals(winFormsName, StringComparison.Ordinal);
-            var osPlatform = Environment.OSVersion.Platform;
-            bool isUnixLike = osPlatform == PlatformID.Unix || osPlatform == PlatformID.MacOSX;
-
-            Console.WriteLine($"Eto backend: {platformName}");
-            Console.WriteLine($"WinForms target: {winFormsName}");
-            Console.WriteLine($"isWinForms={isWinForms}, OS={osPlatform}, isUnixLike={isUnixLike}");
-            Console.WriteLine(
-                $"Incoming page count: {(page == null ? "null" : page.Count.ToString())}"
-            );
-
-            if (isWinForms && isUnixLike)
-            {
-                Console.WriteLine("→ Clearing DataStore");
-                grid.DataStore = null;
-
-                if (page != null && page.Count > 0)
-                {
-                    try
-                    {
-                        Console.WriteLine("→ Assigning non-empty DataStore");
-                        grid.DataStore = page;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(
-                            $"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}"
-                        );
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("→ Page is null or empty; skipping assignment");
-                }
-
-                if (grid.ControlObject is System.Windows.Forms.DataGridView dg)
-                {
-                    Console.WriteLine("→ Disabling AutoSizeRowsMode");
-                    dg.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.None;
-                }
-                else
-                {
-                    Console.WriteLine(
-                        $"→ ControlObject is {grid.ControlObject?.GetType().Name}; no autosize tweak"
-                    );
-                }
-            }
-            else
-            {
-                Console.WriteLine("→ Standard DataStore assignment");
-                grid.DataStore = page;
-            }
-            Console.WriteLine("→ Done with DataStore assignment");
 
             grid.Columns.Add(
                 new GridColumn
@@ -523,6 +478,62 @@ namespace RV.InvNew.EtoFE
                 // G) Apply background
                 e.BackgroundColor = bg;
             };
+
+            var platformName = Eto.Platform.Instance.ToString();
+            var winFormsName = Eto.Platform.Get(Eto.Platforms.WinForms).ToString();
+            bool isWinForms = platformName.Equals(winFormsName, StringComparison.Ordinal);
+            var osPlatform = Environment.OSVersion.Platform;
+            bool isUnixLike = osPlatform == PlatformID.Unix || osPlatform == PlatformID.MacOSX;
+
+            Console.WriteLine($"Eto backend: {platformName}");
+            Console.WriteLine($"WinForms target: {winFormsName}");
+            Console.WriteLine($"isWinForms={isWinForms}, OS={osPlatform}, isUnixLike={isUnixLike}");
+            Console.WriteLine(
+                $"Incoming page count: {(page == null ? "null" : page.Count.ToString())}"
+            );
+
+            if (isWinForms && isUnixLike)
+            {
+                Console.WriteLine("→ Clearing DataStore");
+                grid.DataStore = null;
+
+                if (page != null && page.Count > 0)
+                {
+                    try
+                    {
+                        Console.WriteLine("→ Assigning non-empty DataStore");
+                        grid.DataStore = page;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(
+                            $"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}"
+                        );
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("→ Page is null or empty; skipping assignment");
+                }
+
+                if (grid.ControlObject is System.Windows.Forms.DataGridView dg)
+                {
+                    Console.WriteLine("→ Disabling AutoSizeRowsMode");
+                    dg.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.None;
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"→ ControlObject is {grid.ControlObject?.GetType().Name}; no autosize tweak"
+                    );
+                }
+            }
+            else
+            {
+                Console.WriteLine("→ Standard DataStore assignment");
+                grid.DataStore = page;
+            }
+            Console.WriteLine("→ Done with DataStore assignment");
             Console.WriteLine("Second attempt at setting DataStore");
             try
             {
@@ -753,6 +764,129 @@ namespace RV.InvNew.EtoFE
 
             var idx = reference.IndexOf(':');
             return idx >= 0 ? reference.Substring(0, idx) : reference;
+        }
+
+
+        // BtnBinExport_Click: CSV
+        private void BtnBinExport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var sfd = new SaveFileDialog { Title = "Export CSV" };
+                sfd.Filters.Add(new FileFilter("CSV Files", ".csv"));
+                var result = sfd.ShowDialog(this);
+                if (result != DialogResult.Ok) return;
+
+                var path = sfd.FileName;
+                using var writer = new StreamWriter(path);
+
+                // header
+                writer.WriteLine("Date,Type,Ref No.,FromQty,Qty,Balance (ToQty)");
+
+                // CSV-escape
+                static string EscapeCsv(string s)
+                {
+                    if (string.IsNullOrEmpty(s)) return "";
+                    var needsQuotes = s.Contains(',') || s.Contains('"') || s.Contains('\n');
+                    s = s.Replace("\"", "\"\"");
+                    return needsQuotes ? $"\"{s}\"" : s;
+                }
+
+                foreach (var m in _curMovs)
+                {
+                    var f = new[]
+                    {
+                EscapeCsv(m.EnteredTime.Date.ToShortDateString()),
+                EscapeCsv(m.Reference.Split(':')[0]),
+                EscapeCsv(m.Reference),
+                m.FromUnits.ToString("0.##"),
+                m.Units.ToString("0.##"),
+                m.ToUnits.ToString("0.##")
+            };
+                    writer.WriteLine(string.Join(",", f));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error exporting CSV: {ex}");
+            }
+        }
+
+        // BtnBinExportHtml_Click: HTML
+        private void BtnBinExportHtml_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var sfd = new SaveFileDialog { Title = "Export HTML" };
+                sfd.Filters.Add(new FileFilter("HTML Files", ".html"));
+                var result = sfd.ShowDialog(this);
+                if (result != DialogResult.Ok) return;
+
+                var path = sfd.FileName;
+                using var writer = new StreamWriter(path);
+
+                // basic HTML-escape
+                static string HtmlEscape(string s)
+                {
+                    if (string.IsNullOrEmpty(s)) return "";
+                    return s.Replace("&", "&amp;")
+                            .Replace("<", "&lt;")
+                            .Replace(">", "&gt;")
+                            .Replace("\"", "&quot;")
+                            .Replace("'", "&#39;");
+                }
+
+                writer.WriteLine("<!DOCTYPE html>");
+                writer.WriteLine("<html><head><meta charset=\"utf-8\"><title>Inventory Movements</title></head><body>");
+                writer.WriteLine("<table border=\"1\">");
+                writer.WriteLine("<thead><tr><th>Date</th><th>Type</th><th>Ref No.</th><th>FromQty</th><th>Qty</th><th>Balance (ToQty)</th></tr></thead>");
+                writer.WriteLine("<tbody>");
+                foreach (var m in _curMovs)
+                {
+                    writer.WriteLine("<tr>");
+                    writer.WriteLine($"<td>{HtmlEscape(m.EnteredTime.Date.ToShortDateString())}</td>");
+                    writer.WriteLine($"<td>{HtmlEscape(m.Reference.Split(':')[0])}</td>");
+                    writer.WriteLine($"<td>{HtmlEscape(m.Reference)}</td>");
+                    writer.WriteLine($"<td>{m.FromUnits:0.##}</td>");
+                    writer.WriteLine($"<td>{m.Units:0.##}</td>");
+                    writer.WriteLine($"<td>{m.ToUnits:0.##}</td>");
+                    writer.WriteLine("</tr>");
+                }
+                writer.WriteLine("</tbody>");
+                writer.WriteLine("</table>");
+                writer.WriteLine("</body></html>");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error exporting HTML: {ex}");
+            }
+        }
+
+        // BtnBinExportPlot_Click: SVG/PNG/JPEG
+        private void BtnBinExportPlot_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var sfd = new SaveFileDialog { Title = "Export Plot" };
+                sfd.Filters.Add(new FileFilter("SVG Files", ".svg"));
+                sfd.Filters.Add(new FileFilter("PNG Files", ".png"));
+                sfd.Filters.Add(new FileFilter("JPEG Files", ".jpg;.jpeg"));
+                var result = sfd.ShowDialog(this);
+                if (result != DialogResult.Ok) return;
+
+                var path = sfd.FileName;
+                var ext = Path.GetExtension(path).ToLowerInvariant();
+                var plt = plotView.Plot;
+
+                if (ext == ".svg")
+                    File.WriteAllText(path, plt.GetSvg());
+                else
+                    plt.SaveFig(path);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error exporting plot: {ex}");
+            }
         }
     }
 }
