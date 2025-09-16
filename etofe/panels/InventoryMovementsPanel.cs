@@ -174,8 +174,12 @@ namespace RV.Invnew.EtoFE
             _grid.RowFormatting += (e, a) => { };
 
             // fetch button
-            _btnFetch = new Button { Text = "Fetch Movements", Height = (ColorSettings.InnerControlHeight ?? 30) * 2 };
-            _btnFetch.Click +=  (s, e) =>
+            _btnFetch = new Button
+            {
+                Text = "Fetch Movements",
+                Height = (ColorSettings.InnerControlHeight ?? 30) * 2,
+            };
+            _btnFetch.Click += (s, e) =>
             {
                 List<(
                     long ItemCode,
@@ -216,7 +220,7 @@ namespace RV.Invnew.EtoFE
                     new TableRow(new Label { Text = "Item Code:" }, _txtItemCode, _lblFriendly),
                     new TableRow(new Label { Text = "From:" }, _dpFrom),
                     new TableRow(new Label { Text = "To:" }, _dpTo),
-                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete){ ScaleHeight = false},
+                    new TableRow(_btnNew, _btnSave, _btnCancel, _btnDelete) { ScaleHeight = false },
                 },
             };
             var group = new GroupBox { Text = "Entry", Content = entryLayout };
@@ -227,7 +231,6 @@ namespace RV.Invnew.EtoFE
                 Padding = 10,
                 Spacing = new Size(10, 10),
                 Rows = { group, _grid, _btnFetch },
-                
             };
 
             ResetEntry();

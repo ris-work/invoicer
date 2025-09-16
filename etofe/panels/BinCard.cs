@@ -124,62 +124,58 @@ namespace RV.InvNew.EtoFE
                 .ToList();
 
             var flat = _items
-    .Where(it => it.ItemCode >= 0)
-    .SelectMany(it => it.BinCard)
-    .OrderBy(m => m.EnteredTime)
-    .ToList();
+                .Where(it => it.ItemCode >= 0)
+                .SelectMany(it => it.BinCard)
+                .OrderBy(m => m.EnteredTime)
+                .ToList();
 
             var sum = new ItemMovements
             {
                 ItemCode = -1,
                 Description = "Sum",
-                BinCard = flat
-                    .Select(m => new InventoryMovement
+                BinCard = flat.Select(m => new InventoryMovement
                     {
                         EnteredTime = m.EnteredTime,
                         Reference = m.Reference,
                         Units = m.Units,
                         FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits
+                        ToUnits = m.ToUnits,
                     })
-                    .ToList()
+                    .ToList(),
             };
 
             var avg = new ItemMovements
             {
                 ItemCode = -2,
                 Description = "Average",
-                BinCard = flat
-                    .Select(m => new InventoryMovement
+                BinCard = flat.Select(m => new InventoryMovement
                     {
                         EnteredTime = m.EnteredTime,
                         Reference = m.Reference,
                         Units = m.Units,
                         FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits
+                        ToUnits = m.ToUnits,
                     })
-                    .ToList()
+                    .ToList(),
             };
 
             var gm = new ItemMovements
             {
                 ItemCode = -3,
                 Description = "Geometric mean",
-                BinCard = flat
-                    .Select(m => new InventoryMovement
+                BinCard = flat.Select(m => new InventoryMovement
                     {
                         EnteredTime = m.EnteredTime,
                         Reference = m.Reference,
                         Units = m.Units,
                         FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits
+                        ToUnits = m.ToUnits,
                     })
-                    .ToList()
+                    .ToList(),
             };
 
             //_items.AddRange(new[] { sum, avg, gm });
             _items.AddRange(new[] { sum, avg });
-
 
             // 1) Search dropdown
             _itemSearch = new SearchPanelEto(
@@ -244,8 +240,20 @@ namespace RV.InvNew.EtoFE
             _btnBinPopup.Click += (_, __) =>
             {
                 Console.WriteLine($"Popup Bin Card: {_currentItemIndex}");
-                if (_currentItemIndex < 0) { Console.WriteLine($"Popup Bin Card: {_currentItemIndex} <0, refusing to pop up"); return; }
-                if (_currentItemIndex >= data.Count) { Console.WriteLine($"Popup Bin Card: {_currentItemIndex} >={data.Count}, refusing to pop up"); return; }
+                if (_currentItemIndex < 0)
+                {
+                    Console.WriteLine(
+                        $"Popup Bin Card: {_currentItemIndex} <0, refusing to pop up"
+                    );
+                    return;
+                }
+                if (_currentItemIndex >= data.Count)
+                {
+                    Console.WriteLine(
+                        $"Popup Bin Card: {_currentItemIndex} >={data.Count}, refusing to pop up"
+                    );
+                    return;
+                }
                 var item = data[_currentItemIndex];
                 var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
                 frm.Show();
@@ -256,7 +264,7 @@ namespace RV.InvNew.EtoFE
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
                 Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup },
-                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom
+                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom,
             };
             _binCardContainer = new Panel();
 
@@ -328,7 +336,11 @@ namespace RV.InvNew.EtoFE
 
             var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
-            var grid = new GridView() { Width = (ColorSettings.ControlWidth ?? 30) * 6, Height = (ColorSettings.ControlHeight ?? 30) * 11};
+            var grid = new GridView()
+            {
+                Width = (ColorSettings.ControlWidth ?? 30) * 6,
+                Height = (ColorSettings.ControlHeight ?? 30) * 11,
+            };
             grid.DisableAutoSizing();
 
             var platformName = Eto.Platform.Instance.ToString();
@@ -340,7 +352,9 @@ namespace RV.InvNew.EtoFE
             Console.WriteLine($"Eto backend: {platformName}");
             Console.WriteLine($"WinForms target: {winFormsName}");
             Console.WriteLine($"isWinForms={isWinForms}, OS={osPlatform}, isUnixLike={isUnixLike}");
-            Console.WriteLine($"Incoming page count: {(page == null ? "null" : page.Count.ToString())}");
+            Console.WriteLine(
+                $"Incoming page count: {(page == null ? "null" : page.Count.ToString())}"
+            );
 
             if (isWinForms && isUnixLike)
             {
@@ -354,8 +368,11 @@ namespace RV.InvNew.EtoFE
                         Console.WriteLine("→ Assigning non-empty DataStore");
                         grid.DataStore = page;
                     }
-                    catch (Exception ex) {
-                        Console.WriteLine($"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}");
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(
+                            $"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}"
+                        );
                     }
                 }
                 else
@@ -370,7 +387,9 @@ namespace RV.InvNew.EtoFE
                 }
                 else
                 {
-                    Console.WriteLine($"→ ControlObject is {grid.ControlObject?.GetType().Name}; no autosize tweak");
+                    Console.WriteLine(
+                        $"→ ControlObject is {grid.ControlObject?.GetType().Name}; no autosize tweak"
+                    );
                 }
             }
             else
@@ -511,7 +530,9 @@ namespace RV.InvNew.EtoFE
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}");
+                Console.WriteLine(
+                    $"An exception has occured during the setting of DataContext: {ex.StackTrace}, {ex.ToString()}"
+                );
             }
 
             _binCardContainer.Content = grid;
@@ -557,31 +578,47 @@ namespace RV.InvNew.EtoFE
                 })
                 .ToList();
 
-            if(_items[_currentItemIndex].ItemCode < 0)
+            if (_items[_currentItemIndex].ItemCode < 0)
             {
                 var item = _items[_currentItemIndex];
                 var perItem = _items
-    .Where(it => it.ItemCode >= 0)
-    .SelectMany(it => it.BinCard.Select(im =>
-    {
-        var r = im.Reference ?? "";
-        var i = r.IndexOf(':');
-        var refType = i >= 0 ? r.Substring(0, i) : r;
-        var refNo = i >= 0 ? r.Substring(i + 1) : null;
-        return new { it.ItemCode, RefType = refType, RefNo = refNo, Date = im.EnteredTime.Date, im.Units, im.FromUnits, im.ToUnits };
-    }))
-    .Where(x => _refTypes.Contains(x.RefType))
-    .GroupBy(x => new { x.ItemCode, x.RefType, x.Date })
-    .Select(g => new
-    {
-        g.Key.ItemCode,
-        g.Key.RefType,
-        g.Key.Date,
-        Units = g.Sum(y => y.Units),
-        From = g.Sum(y => y.FromUnits),
-        To = g.Sum(y => y.ToUnits),
-    })
-    .ToList();
+                    .Where(it => it.ItemCode >= 0)
+                    .SelectMany(it =>
+                        it.BinCard.Select(im =>
+                        {
+                            var r = im.Reference ?? "";
+                            var i = r.IndexOf(':');
+                            var refType = i >= 0 ? r.Substring(0, i) : r;
+                            var refNo = i >= 0 ? r.Substring(i + 1) : null;
+                            return new
+                            {
+                                it.ItemCode,
+                                RefType = refType,
+                                RefNo = refNo,
+                                Date = im.EnteredTime.Date,
+                                im.Units,
+                                im.FromUnits,
+                                im.ToUnits,
+                            };
+                        })
+                    )
+                    .Where(x => _refTypes.Contains(x.RefType))
+                    .GroupBy(x => new
+                    {
+                        x.ItemCode,
+                        x.RefType,
+                        x.Date,
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.ItemCode,
+                        g.Key.RefType,
+                        g.Key.Date,
+                        Units = g.Sum(y => y.Units),
+                        From = g.Sum(y => y.FromUnits),
+                        To = g.Sum(y => y.ToUnits),
+                    })
+                    .ToList();
 
                 switch (item.ItemCode)
                 {
