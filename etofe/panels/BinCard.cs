@@ -106,6 +106,7 @@ namespace RV.InvNew.EtoFE
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
+        private ScottPlot.Plot SP;
 
         public class InventoryMovementSummary
         {
@@ -226,7 +227,7 @@ namespace RV.InvNew.EtoFE
             _btnBinPopup = new Button { Text = "Pop Up 📰" };
             _btnBinExport = new Button { Text = "Export" };
             _btnBinExportPlot = new Button { Text = "Export Plot 📊" };
-            _btnBinExportHtml = new Button { Text = "Export Plot 📊" };
+            _btnBinExportHtml = new Button { Text = "Export HTML" };
             _lblBinPage = new Eto.Forms.Label();
 
             _btnBinPrev.Click += (_, __) =>
@@ -267,13 +268,16 @@ namespace RV.InvNew.EtoFE
                 var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
                 frm.Show();
             };
+            _btnBinExport.Click += BtnBinExport_Click ;
+            _btnBinExportHtml.Click += BtnBinExportHtml_Click;
+            _btnBinExportPlot.Click += BtnBinExportPlot_Click;
 
             var binPager = new StackLayout
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
                 Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup, _btnBinExport, _btnBinExportPlot, _btnBinExportHtml },
-                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Bottom,
+                VerticalContentAlignment = Eto.Forms.VerticalAlignment.Center,
             };
             _binCardContainer = new Panel();
 
@@ -876,12 +880,24 @@ namespace RV.InvNew.EtoFE
 
                 var path = sfd.FileName;
                 var ext = Path.GetExtension(path).ToLowerInvariant();
-                var plt = plotView.Plot;
+                var plt = _plotView.Plot;
 
                 if (ext == ".svg")
-                    File.WriteAllText(path, plt.GetSvg());
-                else
-                    plt.SaveFig(path);
+                {
+                    //File.WriteAllText(path, plt.GetSvg());
+                    plt.SaveSvg(path, 1920, 1080);
+                }
+                else if (ext == ".jpg")
+                {
+                    plt.SaveJpeg(path, 1920, 1080);
+                }
+                else if (ext == ".bmp")
+                {
+                    plt.SaveBmp(path, 1920, 1080);
+                }
+                else {
+                    plt.SavePng(path, 1920, 1080);
+                }
             }
             catch (Exception ex)
             {
