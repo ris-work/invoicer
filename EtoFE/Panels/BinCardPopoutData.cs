@@ -124,7 +124,7 @@ namespace EtoFE.Panels
 
             var page = movs.Skip(_currentBinPage * PageSize).Take(PageSize).ToList();
 
-            var grid = new GridView {  };
+            var grid = new GridView { };
             grid.Columns.Add(
                 new GridColumn
                 {

@@ -41,14 +41,11 @@ namespace RV.InvNew.EtoFE
     // Main UI: pick an item, page through its bin‐card, and show a stacked bar chart
     public class BinCardVisualizerPanel : Scrollable
     {
-
-
         public List<InventoryMovement> _curMovs;
 
-
-            // Map each action to its desired background color.
-            // Sale and Purchase now have distinct hues.
-            new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
+        // Map each action to its desired background color.
+        // Sale and Purchase now have distinct hues.
+        new Dictionary<string, Eto.Drawing.Color> actionColors = new Dictionary<
             string,
             Eto.Drawing.Color
         >(StringComparer.OrdinalIgnoreCase)
@@ -102,7 +99,10 @@ namespace RV.InvNew.EtoFE
         readonly SearchPanelEto _itemSearch;
         readonly Button _btnBinPrev,
             _btnBinNext,
-            _btnBinPopup, _btnBinExport, _btnBinExportPlot, _btnBinExportHtml;
+            _btnBinPopup,
+            _btnBinExport,
+            _btnBinExportPlot,
+            _btnBinExportHtml;
         readonly Eto.Forms.Label _lblBinPage;
         readonly Panel _binCardContainer;
         readonly EtoPlot _plotView;
@@ -268,7 +268,7 @@ namespace RV.InvNew.EtoFE
                 var frm = new BinCardPopoutData(item.ItemCode, item.Description, item.BinCard, 50);
                 frm.Show();
             };
-            _btnBinExport.Click += BtnBinExport_Click ;
+            _btnBinExport.Click += BtnBinExport_Click;
             _btnBinExportHtml.Click += BtnBinExportHtml_Click;
             _btnBinExportPlot.Click += BtnBinExportPlot_Click;
 
@@ -276,7 +276,16 @@ namespace RV.InvNew.EtoFE
             {
                 Orientation = Eto.Forms.Orientation.Horizontal,
                 Spacing = 5,
-                Items = { _btnBinPrev, _lblBinPage, _btnBinNext, _btnBinPopup, _btnBinExport, _btnBinExportPlot, _btnBinExportHtml },
+                Items =
+                {
+                    _btnBinPrev,
+                    _lblBinPage,
+                    _btnBinNext,
+                    _btnBinPopup,
+                    _btnBinExport,
+                    _btnBinExportPlot,
+                    _btnBinExportHtml,
+                },
                 VerticalContentAlignment = Eto.Forms.VerticalAlignment.Center,
             };
             _binCardContainer = new Panel();
@@ -356,7 +365,6 @@ namespace RV.InvNew.EtoFE
                 Height = (ColorSettings.ControlHeight ?? 30) * 11,
             };
             grid.DisableAutoSizing();
-
 
             grid.Columns.Add(
                 new GridColumn
@@ -770,7 +778,6 @@ namespace RV.InvNew.EtoFE
             return idx >= 0 ? reference.Substring(0, idx) : reference;
         }
 
-
         // BtnBinExport_Click: CSV
         private void BtnBinExport_Click(object sender, EventArgs e)
         {
@@ -779,7 +786,8 @@ namespace RV.InvNew.EtoFE
                 var sfd = new SaveFileDialog { Title = "Export CSV" };
                 sfd.Filters.Add(new FileFilter("CSV Files", ".csv"));
                 var result = sfd.ShowDialog(this);
-                if (result != DialogResult.Ok) return;
+                if (result != DialogResult.Ok)
+                    return;
 
                 var path = sfd.FileName;
                 using var writer = new StreamWriter(path);
@@ -790,7 +798,8 @@ namespace RV.InvNew.EtoFE
                 // CSV-escape
                 static string EscapeCsv(string s)
                 {
-                    if (string.IsNullOrEmpty(s)) return "";
+                    if (string.IsNullOrEmpty(s))
+                        return "";
                     var needsQuotes = s.Contains(',') || s.Contains('"') || s.Contains('\n');
                     s = s.Replace("\"", "\"\"");
                     return needsQuotes ? $"\"{s}\"" : s;
@@ -800,13 +809,13 @@ namespace RV.InvNew.EtoFE
                 {
                     var f = new[]
                     {
-                EscapeCsv(m.EnteredTime.Date.ToShortDateString()),
-                EscapeCsv(m.Reference.Split(':')[0]),
-                EscapeCsv(m.Reference),
-                m.FromUnits.ToString("0.##"),
-                m.Units.ToString("0.##"),
-                m.ToUnits.ToString("0.##")
-            };
+                        EscapeCsv(m.EnteredTime.Date.ToShortDateString()),
+                        EscapeCsv(m.Reference.Split(':')[0]),
+                        EscapeCsv(m.Reference),
+                        m.FromUnits.ToString("0.##"),
+                        m.Units.ToString("0.##"),
+                        m.ToUnits.ToString("0.##"),
+                    };
                     writer.WriteLine(string.Join(",", f));
                 }
             }
@@ -824,7 +833,8 @@ namespace RV.InvNew.EtoFE
                 var sfd = new SaveFileDialog { Title = "Export HTML" };
                 sfd.Filters.Add(new FileFilter("HTML Files", ".html"));
                 var result = sfd.ShowDialog(this);
-                if (result != DialogResult.Ok) return;
+                if (result != DialogResult.Ok)
+                    return;
 
                 var path = sfd.FileName;
                 using var writer = new StreamWriter(path);
@@ -832,17 +842,17 @@ namespace RV.InvNew.EtoFE
                 // HTML‐escape helper
                 static string HtmlEscape(string s)
                 {
-                    if (string.IsNullOrEmpty(s)) return "";
+                    if (string.IsNullOrEmpty(s))
+                        return "";
                     return s.Replace("&", "&amp;")
-                            .Replace("<", "&lt;")
-                            .Replace(">", "&gt;")
-                            .Replace("\"", "&quot;")
-                            .Replace("'", "&#39;");
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;")
+                        .Replace("\"", "&quot;")
+                        .Replace("'", "&#39;");
                 }
 
                 // Convert Eto.Drawing.Color to #RRGGBB
-                static string ColorToHex(Eto.Drawing.Color c)
-                    => $"#{c.Rb:X2}{c.Gb:X2}{c.Bb:X2}";
+                static string ColorToHex(Eto.Drawing.Color c) => $"#{c.Rb:X2}{c.Gb:X2}{c.Bb:X2}";
 
                 // Write HTML + CSS for sticky headers
                 writer.WriteLine("<!DOCTYPE html>");
@@ -885,14 +895,19 @@ namespace RV.InvNew.EtoFE
                 {
                     // replicate your grid's color‐coding logic
                     var raw = m.Reference ?? "";
-                    var key = raw.Split(':', StringSplitOptions.RemoveEmptyEntries)
-                                 .FirstOrDefault()?.Trim().ToLowerInvariant() ?? "";
+                    var key =
+                        raw.Split(':', StringSplitOptions.RemoveEmptyEntries)
+                            .FirstOrDefault()
+                            ?.Trim()
+                            .ToLowerInvariant() ?? "";
                     var styleAttr = "";
                     if (actionColors.TryGetValue(key, out var bg))
                         styleAttr = $" style=\"background-color:{ColorToHex(bg)}\"";
 
                     writer.WriteLine($"      <tr{styleAttr}>");
-                    writer.WriteLine($"        <td>{HtmlEscape(m.EnteredTime.Date.ToShortDateString())}</td>");
+                    writer.WriteLine(
+                        $"        <td>{HtmlEscape(m.EnteredTime.Date.ToShortDateString())}</td>"
+                    );
                     writer.WriteLine($"        <td>{HtmlEscape(raw.Split(':')[0])}</td>");
                     writer.WriteLine($"        <td>{HtmlEscape(m.Reference)}</td>");
                     writer.WriteLine($"        <td>{m.FromUnits:0.##}</td>");
@@ -912,7 +927,6 @@ namespace RV.InvNew.EtoFE
             }
         }
 
-
         // BtnBinExportPlot_Click: SVG/PNG/JPEG
         private void BtnBinExportPlot_Click(object sender, EventArgs e)
         {
@@ -923,7 +937,8 @@ namespace RV.InvNew.EtoFE
                 sfd.Filters.Add(new FileFilter("PNG Files", ".png"));
                 sfd.Filters.Add(new FileFilter("JPEG Files", ".jpg;.jpeg"));
                 var result = sfd.ShowDialog(this);
-                if (result != DialogResult.Ok) return;
+                if (result != DialogResult.Ok)
+                    return;
 
                 var path = sfd.FileName;
                 var ext = Path.GetExtension(path).ToLowerInvariant();
@@ -942,7 +957,8 @@ namespace RV.InvNew.EtoFE
                 {
                     plt.SaveBmp(path, 1920, 1080);
                 }
-                else {
+                else
+                {
                     plt.SavePng(path, 1920, 1080);
                 }
             }
