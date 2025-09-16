@@ -829,7 +829,7 @@ namespace RV.InvNew.EtoFE
                 var path = sfd.FileName;
                 using var writer = new StreamWriter(path);
 
-                // basic HTML-escape
+                // HTML‐escape helper
                 static string HtmlEscape(string s)
                 {
                     if (string.IsNullOrEmpty(s)) return "";
@@ -840,31 +840,78 @@ namespace RV.InvNew.EtoFE
                             .Replace("'", "&#39;");
                 }
 
+                // Convert Eto.Drawing.Color to #RRGGBB
+                static string ColorToHex(Eto.Drawing.Color c)
+                    => $"#{c.Rb:X2}{c.Gb:X2}{c.Bb:X2}";
+
+                // Write HTML + CSS for sticky headers
                 writer.WriteLine("<!DOCTYPE html>");
-                writer.WriteLine("<html><head><meta charset=\"utf-8\"><title>Inventory Movements</title></head><body>");
-                writer.WriteLine("<table border=\"1\">");
-                writer.WriteLine("<thead><tr><th>Date</th><th>Type</th><th>Ref No.</th><th>FromQty</th><th>Qty</th><th>Balance (ToQty)</th></tr></thead>");
-                writer.WriteLine("<tbody>");
+                writer.WriteLine("<html>");
+                writer.WriteLine("<head>");
+                writer.WriteLine("  <meta charset=\"utf-8\">");
+                writer.WriteLine("  <title>Inventory Movements</title>");
+                writer.WriteLine("  <style>");
+                writer.WriteLine("    table { border-collapse: collapse; width: 100%; }");
+                writer.WriteLine("    th, td { padding: 4px; border: 1px solid #000; }");
+                writer.WriteLine("    thead th { position: sticky; top: 0; background: #fff; }");
+                writer.WriteLine("    tfoot th { position: sticky; bottom: 0; background: #fff; }");
+                writer.WriteLine("  </style>");
+                writer.WriteLine("</head>");
+                writer.WriteLine("<body>");
+                writer.WriteLine("  <table>");
+                writer.WriteLine("    <thead>");
+                writer.WriteLine("      <tr>");
+                writer.WriteLine("        <th>Date</th>");
+                writer.WriteLine("        <th>Type</th>");
+                writer.WriteLine("        <th>Ref No.</th>");
+                writer.WriteLine("        <th>FromQty</th>");
+                writer.WriteLine("        <th>Qty</th>");
+                writer.WriteLine("        <th>Balance (ToQty)</th>");
+                writer.WriteLine("      </tr>");
+                writer.WriteLine("    </thead>");
+                writer.WriteLine("    <tfoot>");
+                writer.WriteLine("      <tr>");
+                writer.WriteLine("        <th>Date</th>");
+                writer.WriteLine("        <th>Type</th>");
+                writer.WriteLine("        <th>Ref No.</th>");
+                writer.WriteLine("        <th>FromQty</th>");
+                writer.WriteLine("        <th>Qty</th>");
+                writer.WriteLine("        <th>Balance (ToQty)</th>");
+                writer.WriteLine("      </tr>");
+                writer.WriteLine("    </tfoot>");
+                writer.WriteLine("    <tbody>");
+
                 foreach (var m in _curMovs)
                 {
-                    writer.WriteLine("<tr>");
-                    writer.WriteLine($"<td>{HtmlEscape(m.EnteredTime.Date.ToShortDateString())}</td>");
-                    writer.WriteLine($"<td>{HtmlEscape(m.Reference.Split(':')[0])}</td>");
-                    writer.WriteLine($"<td>{HtmlEscape(m.Reference)}</td>");
-                    writer.WriteLine($"<td>{m.FromUnits:0.##}</td>");
-                    writer.WriteLine($"<td>{m.Units:0.##}</td>");
-                    writer.WriteLine($"<td>{m.ToUnits:0.##}</td>");
-                    writer.WriteLine("</tr>");
+                    // replicate your grid's color‐coding logic
+                    var raw = m.Reference ?? "";
+                    var key = raw.Split(':', StringSplitOptions.RemoveEmptyEntries)
+                                 .FirstOrDefault()?.Trim().ToLowerInvariant() ?? "";
+                    var styleAttr = "";
+                    if (actionColors.TryGetValue(key, out var bg))
+                        styleAttr = $" style=\"background-color:{ColorToHex(bg)}\"";
+
+                    writer.WriteLine($"      <tr{styleAttr}>");
+                    writer.WriteLine($"        <td>{HtmlEscape(m.EnteredTime.Date.ToShortDateString())}</td>");
+                    writer.WriteLine($"        <td>{HtmlEscape(raw.Split(':')[0])}</td>");
+                    writer.WriteLine($"        <td>{HtmlEscape(m.Reference)}</td>");
+                    writer.WriteLine($"        <td>{m.FromUnits:0.##}</td>");
+                    writer.WriteLine($"        <td>{m.Units:0.##}</td>");
+                    writer.WriteLine($"        <td>{m.ToUnits:0.##}</td>");
+                    writer.WriteLine("      </tr>");
                 }
-                writer.WriteLine("</tbody>");
-                writer.WriteLine("</table>");
-                writer.WriteLine("</body></html>");
+
+                writer.WriteLine("    </tbody>");
+                writer.WriteLine("  </table>");
+                writer.WriteLine("</body>");
+                writer.WriteLine("</html>");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error exporting HTML: {ex}");
             }
         }
+
 
         // BtnBinExportPlot_Click: SVG/PNG/JPEG
         private void BtnBinExportPlot_Click(object sender, EventArgs e)
