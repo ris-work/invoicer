@@ -7,8 +7,6 @@ public partial class AccountsInformation
 {
     public int AccountType { get; set; }
 
-    public long AccountNo { get; set; }
-
     public string AccountName { get; set; } = null!;
 
     public long? AccountPii { get; set; }
@@ -36,4 +34,6 @@ public partial class AccountsInformation
     public bool IsInventoryTracked { get; set; }
 
     public bool IsDefaultCashRegister { get; set; }
+
+    public long AccountNo { get; set; }
 }

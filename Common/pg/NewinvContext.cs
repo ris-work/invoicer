@@ -119,10 +119,8 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    {
-        optionsBuilder.UseNpgsql((String) Config.model["ConnString"]);
-        //optionsBuilder.LogTo(Console.WriteLine);
-    }
+        =>
+        optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=newinv;Username=rishi;Password=eeee");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -147,16 +145,16 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<AccountsInformation>(entity =>
         {
-            entity
-                .HasKey(e => new { e.AccountType, e.AccountNo })
-                .HasName("accounts_information_pkey");
+            entity.HasKey(e => e.AccountNo).HasName("accounts_information_2_pkey");
 
             entity.ToTable("accounts_information");
 
-            entity.HasIndex(e => e.HumanFriendlyId, "human_friendly_id").IsUnique();
+            entity.HasIndex(e => e.HumanFriendlyId, "human_friendly_id_2").IsUnique();
 
-            entity.Property(e => e.AccountType).HasColumnName("account_type");
-            entity.Property(e => e.AccountNo).HasColumnName("account_no");
+            entity
+                .Property(e => e.AccountNo)
+                .HasDefaultValueSql("nextval('accounts_information_2_account_no_seq'::regclass)")
+                .HasColumnName("account_no");
             entity.Property(e => e.AccountI18nLabel).HasColumnName("account_i18n_label");
             entity
                 .Property(e => e.AccountMax)
@@ -168,6 +166,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("account_min");
             entity.Property(e => e.AccountName).HasColumnName("account_name");
             entity.Property(e => e.AccountPii).HasColumnName("account_pii");
+            entity.Property(e => e.AccountType).HasColumnName("account_type");
             entity
                 .Property(e => e.AllowCreditOnPos)
                 .HasDefaultValue(false)
@@ -1195,8 +1194,16 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.CreditAccountId).HasColumnName("credit_account_id");
+            entity
+                .Property(e => e.CreditAccountType)
+                .HasDefaultValue(0L)
+                .HasColumnName("credit_account_type");
             entity.Property(e => e.Currency).HasColumnName("currency");
             entity.Property(e => e.DebitAccountId).HasColumnName("debit_account_id");
+            entity
+                .Property(e => e.DebitAccountType)
+                .HasDefaultValue(3L)
+                .HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
             entity
                 .Property(e => e.ExchangeRate)
@@ -1230,6 +1237,7 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.IsReconciled)
                 .HasDefaultValue(false)
                 .HasColumnName("is_reconciled");
+            entity.Property(e => e.JournalNo).HasColumnName("journal_no");
             entity.Property(e => e.LastRunDate).HasColumnName("last_run_date");
             entity.Property(e => e.NetAmount).HasColumnName("net_amount");
             entity.Property(e => e.NextRunDate).HasColumnName("next_run_date");
@@ -1297,8 +1305,16 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.CreditAccountId).HasColumnName("credit_account_id");
+            entity
+                .Property(e => e.CreditAccountType)
+                .HasDefaultValue(2L)
+                .HasColumnName("credit_account_type");
             entity.Property(e => e.Currency).HasColumnName("currency");
             entity.Property(e => e.DebitAccountId).HasColumnName("debit_account_id");
+            entity
+                .Property(e => e.DebitAccountType)
+                .HasDefaultValue(0L)
+                .HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
             entity
                 .Property(e => e.ExchangeRate)
@@ -1332,6 +1348,7 @@ public partial class NewinvContext : DbContext
                 .Property(e => e.IsReconciled)
                 .HasDefaultValue(false)
                 .HasColumnName("is_reconciled");
+            entity.Property(e => e.JournalNo).HasColumnName("journal_no");
             entity.Property(e => e.LastRunDate).HasColumnName("last_run_date");
             entity.Property(e => e.NetAmount).HasColumnName("net_amount");
             entity.Property(e => e.NextRunDate).HasColumnName("next_run_date");
