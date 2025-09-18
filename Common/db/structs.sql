@@ -5,7 +5,7 @@
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 17.2
 
--- Started on 2025-09-10 17:28:11
+-- Started on 2025-09-18 13:30:01
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -33,15 +33,6 @@ CREATE SCHEMA imported_dummy;
 --
 
 -- *not* creating schema, since initdb creates it
-
-
---
--- TOC entry 5337 (class 0 OID 0)
--- Dependencies: 5
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS '';
 
 
 --
@@ -100,8 +91,6 @@ END;
 $$;
 
 
-SET default_table_access_method = heap;
-
 --
 -- TOC entry 218 (class 1259 OID 16786)
 -- Name: sih; Type: TABLE; Schema: imported_dummy; Owner: -
@@ -143,15 +132,6 @@ CREATE TABLE public.accounts_balances (
     time_as_entered timestamp with time zone DEFAULT now() NOT NULL,
     done_with boolean DEFAULT false NOT NULL
 );
-
-
---
--- TOC entry 5338 (class 0 OID 0)
--- Dependencies: 220
--- Name: TABLE accounts_balances; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.accounts_balances IS 'Positive is debit';
 
 
 --
@@ -246,7 +226,7 @@ CREATE SEQUENCE public.accounts_journal_information_journal_id_seq
 
 
 --
--- TOC entry 5339 (class 0 OID 0)
+-- TOC entry 5343 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: accounts_journal_information_journal_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -264,15 +244,6 @@ CREATE TABLE public.accounts_types (
     account_type_name text NOT NULL,
     account_type_i18n_label bigint
 );
-
-
---
--- TOC entry 5340 (class 0 OID 0)
--- Dependencies: 225
--- Name: TABLE accounts_types; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.accounts_types IS 'Always these four _real_ accounts';
 
 
 --
@@ -312,7 +283,7 @@ CREATE SEQUENCE public.authorized_terminals_terminalid_seq
 
 
 --
--- TOC entry 5341 (class 0 OID 0)
+-- TOC entry 5344 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: authorized_terminals_terminalid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -334,7 +305,7 @@ CREATE SEQUENCE public.authorized_terminals_userid_seq
 
 
 --
--- TOC entry 5342 (class 0 OID 0)
+-- TOC entry 5345 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: authorized_terminals_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -368,7 +339,7 @@ CREATE SEQUENCE public.bundled_pricing_bundle_id_seq
 
 
 --
--- TOC entry 5343 (class 0 OID 0)
+-- TOC entry 5346 (class 0 OID 0)
 -- Dependencies: 275
 -- Name: bundled_pricing_bundle_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -425,7 +396,7 @@ CREATE SEQUENCE public.catalogue_itemcode_seq
 
 
 --
--- TOC entry 5344 (class 0 OID 0)
+-- TOC entry 5347 (class 0 OID 0)
 -- Dependencies: 231
 -- Name: catalogue_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -477,7 +448,7 @@ CREATE SEQUENCE public.cheque_books_id_seq
 
 
 --
--- TOC entry 5345 (class 0 OID 0)
+-- TOC entry 5348 (class 0 OID 0)
 -- Dependencies: 292
 -- Name: cheque_books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -543,7 +514,7 @@ CREATE SEQUENCE public.credentials_userid_seq
 
 
 --
--- TOC entry 5346 (class 0 OID 0)
+-- TOC entry 5349 (class 0 OID 0)
 -- Dependencies: 234
 -- Name: credentials_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -573,15 +544,6 @@ CREATE TABLE public.default_deny_fields (
     field text NOT NULL,
     created_at time with time zone DEFAULT now()
 );
-
-
---
--- TOC entry 5347 (class 0 OID 0)
--- Dependencies: 271
--- Name: TABLE default_deny_fields; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.default_deny_fields IS 'Of the form [object].[field] or [field]';
 
 
 --
@@ -648,15 +610,6 @@ CREATE TABLE public.inventory (
 
 
 --
--- TOC entry 5348 (class 0 OID 0)
--- Dependencies: 236
--- Name: TABLE inventory; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.inventory IS 'Internal inventory management functions';
-
-
---
 -- TOC entry 279 (class 1259 OID 41717)
 -- Name: inventory_images; Type: TABLE; Schema: public; Owner: -
 --
@@ -682,7 +635,7 @@ CREATE SEQUENCE public.inventory_itemcode_seq
 
 
 --
--- TOC entry 5349 (class 0 OID 0)
+-- TOC entry 5350 (class 0 OID 0)
 -- Dependencies: 237
 -- Name: inventory_itemcode_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -742,15 +695,6 @@ CREATE TABLE public.issued_invoices (
     sales_person_id bigint NOT NULL,
     currency_code text
 );
-
-
---
--- TOC entry 5350 (class 0 OID 0)
--- Dependencies: 263
--- Name: TABLE issued_invoices; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.issued_invoices IS 'Issued invoices only';
 
 
 --
@@ -1045,15 +989,6 @@ CREATE TABLE public.permissions_list (
 
 
 --
--- TOC entry 5358 (class 0 OID 0)
--- Dependencies: 238
--- Name: TABLE permissions_list; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.permissions_list IS 'Comma-separated, no spaces';
-
-
---
 -- TOC entry 239 (class 1259 OID 16891)
 -- Name: permissions_list_categories_names; Type: TABLE; Schema: public; Owner: -
 --
@@ -1111,7 +1046,7 @@ CREATE SEQUENCE public.pii_id_seq
 
 
 --
--- TOC entry 5359 (class 0 OID 0)
+-- TOC entry 5358 (class 0 OID 0)
 -- Dependencies: 277
 -- Name: pii_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1129,15 +1064,6 @@ CREATE TABLE public.pii_images (
     image_no bigint DEFAULT 0 NOT NULL,
     image text
 );
-
-
---
--- TOC entry 5360 (class 0 OID 0)
--- Dependencies: 280
--- Name: TABLE pii_images; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.pii_images IS 'Photos of people, companies - any person, including non-natural persons.';
 
 
 --
@@ -1209,7 +1135,7 @@ CREATE SEQUENCE public.receipts_receipt_id_seq
 
 
 --
--- TOC entry 5361 (class 0 OID 0)
+-- TOC entry 5359 (class 0 OID 0)
 -- Dependencies: 268
 -- Name: receipts_receipt_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1264,7 +1190,7 @@ CREATE SEQUENCE public.received_invoices_received_invoice_no_seq
 
 
 --
--- TOC entry 5362 (class 0 OID 0)
+-- TOC entry 5360 (class 0 OID 0)
 -- Dependencies: 281
 -- Name: received_invoices_received_invoice_no_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1338,15 +1264,6 @@ CREATE TABLE public.sales (
 
 
 --
--- TOC entry 5363 (class 0 OID 0)
--- Dependencies: 261
--- Name: TABLE sales; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.sales IS 'Sales data go here';
-
-
---
 -- TOC entry 260 (class 1259 OID 25212)
 -- Name: sales_sale_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
@@ -1360,7 +1277,7 @@ CREATE SEQUENCE public.sales_sale_id_seq
 
 
 --
--- TOC entry 5364 (class 0 OID 0)
+-- TOC entry 5361 (class 0 OID 0)
 -- Dependencies: 260
 -- Name: sales_sale_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1415,7 +1332,10 @@ CREATE TABLE public.scheduled_payments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by bigint,
     updated_at timestamp with time zone,
-    version_number bigint DEFAULT 0
+    version_number bigint DEFAULT 0,
+    is_automatic_clear boolean DEFAULT true NOT NULL,
+    debit_account_type bigint DEFAULT 3 NOT NULL,
+    credit_account_type bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -1433,7 +1353,7 @@ CREATE SEQUENCE public.scheduled_payments_id_seq
 
 
 --
--- TOC entry 5365 (class 0 OID 0)
+-- TOC entry 5362 (class 0 OID 0)
 -- Dependencies: 288
 -- Name: scheduled_payments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1501,7 +1421,10 @@ CREATE TABLE public.scheduled_receipts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by bigint,
     updated_at timestamp with time zone,
-    version_number bigint DEFAULT 0
+    version_number bigint DEFAULT 0,
+    is_automatic_clear boolean DEFAULT false NOT NULL,
+    debit_account_type bigint DEFAULT 0 NOT NULL,
+    credit_account_type bigint DEFAULT 2 NOT NULL
 );
 
 
@@ -1559,16 +1482,6 @@ CREATE TABLE public.user_authorization (
 
 
 --
--- TOC entry 5366 (class 0 OID 0)
--- Dependencies: 243
--- Name: TABLE user_authorization; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.user_authorization IS 'user_cap: Comma-separated
-user_default_cap: Comma-separated';
-
-
---
 -- TOC entry 244 (class 1259 OID 16921)
 -- Name: user_authorization_userid_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
@@ -1582,7 +1495,7 @@ CREATE SEQUENCE public.user_authorization_userid_seq
 
 
 --
--- TOC entry 5367 (class 0 OID 0)
+-- TOC entry 5363 (class 0 OID 0)
 -- Dependencies: 244
 -- Name: user_authorization_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1629,7 +1542,7 @@ CREATE SEQUENCE public.users_userid_seq
 
 
 --
--- TOC entry 5368 (class 0 OID 0)
+-- TOC entry 5364 (class 0 OID 0)
 -- Dependencies: 246
 -- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1664,7 +1577,7 @@ CREATE SEQUENCE public.vat_categories_vat_category_id_seq
 
 
 --
--- TOC entry 5369 (class 0 OID 0)
+-- TOC entry 5365 (class 0 OID 0)
 -- Dependencies: 248
 -- Name: vat_categories_vat_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -1717,7 +1630,7 @@ ALTER TABLE ONLY public.catalogue ALTER COLUMN itemcode SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 5070 (class 2604 OID 50145)
+-- TOC entry 5073 (class 2604 OID 50145)
 -- Name: cheque_books id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1789,7 +1702,7 @@ ALTER TABLE ONLY public.notifications ALTER COLUMN notif_id SET DEFAULT nextval(
 
 
 --
--- TOC entry 5063 (class 2604 OID 50127)
+-- TOC entry 5066 (class 2604 OID 50127)
 -- Name: payments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1861,7 +1774,7 @@ ALTER TABLE ONLY public.vat_categories ALTER COLUMN vat_category_id SET DEFAULT 
 
 
 --
--- TOC entry 5089 (class 2606 OID 16950)
+-- TOC entry 5095 (class 2606 OID 16950)
 -- Name: sih_current sih_current_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: -
 --
 
@@ -1870,7 +1783,7 @@ ALTER TABLE ONLY imported_dummy.sih_current
 
 
 --
--- TOC entry 5087 (class 2606 OID 16952)
+-- TOC entry 5093 (class 2606 OID 16952)
 -- Name: sih sih_pkey; Type: CONSTRAINT; Schema: imported_dummy; Owner: -
 --
 
@@ -1879,7 +1792,7 @@ ALTER TABLE ONLY imported_dummy.sih
 
 
 --
--- TOC entry 5091 (class 2606 OID 41874)
+-- TOC entry 5097 (class 2606 OID 41874)
 -- Name: accounts_balances accounts_balances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1888,7 +1801,7 @@ ALTER TABLE ONLY public.accounts_balances
 
 
 --
--- TOC entry 5093 (class 2606 OID 16954)
+-- TOC entry 5099 (class 2606 OID 16954)
 -- Name: accounts_information accounts_information_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1897,7 +1810,7 @@ ALTER TABLE ONLY public.accounts_information
 
 
 --
--- TOC entry 5097 (class 2606 OID 41872)
+-- TOC entry 5103 (class 2606 OID 41872)
 -- Name: accounts_journal_entries accounts_journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1906,7 +1819,7 @@ ALTER TABLE ONLY public.accounts_journal_entries
 
 
 --
--- TOC entry 5099 (class 2606 OID 16958)
+-- TOC entry 5105 (class 2606 OID 16958)
 -- Name: accounts_journal_information accounts_journal_information_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1915,7 +1828,7 @@ ALTER TABLE ONLY public.accounts_journal_information
 
 
 --
--- TOC entry 5101 (class 2606 OID 16960)
+-- TOC entry 5107 (class 2606 OID 16960)
 -- Name: accounts_types accounts_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1924,7 +1837,7 @@ ALTER TABLE ONLY public.accounts_types
 
 
 --
--- TOC entry 5103 (class 2606 OID 16962)
+-- TOC entry 5109 (class 2606 OID 16962)
 -- Name: api_authorization api_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1933,7 +1846,7 @@ ALTER TABLE ONLY public.api_authorization
 
 
 --
--- TOC entry 5157 (class 2606 OID 41705)
+-- TOC entry 5163 (class 2606 OID 41705)
 -- Name: bundled_pricing bundled_pricing_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1942,7 +1855,7 @@ ALTER TABLE ONLY public.bundled_pricing
 
 
 --
--- TOC entry 5105 (class 2606 OID 16964)
+-- TOC entry 5111 (class 2606 OID 16964)
 -- Name: catalogue catalogue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1951,7 +1864,7 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 5109 (class 2606 OID 16966)
+-- TOC entry 5115 (class 2606 OID 16966)
 -- Name: categories_bitmask categories_bitmask_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1960,7 +1873,7 @@ ALTER TABLE ONLY public.categories_bitmask
 
 
 --
--- TOC entry 5181 (class 2606 OID 50151)
+-- TOC entry 5187 (class 2606 OID 50151)
 -- Name: cheque_books cheque_books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1969,7 +1882,7 @@ ALTER TABLE ONLY public.cheque_books
 
 
 --
--- TOC entry 5169 (class 2606 OID 41823)
+-- TOC entry 5175 (class 2606 OID 41823)
 -- Name: codes_batches codes_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1978,7 +1891,7 @@ ALTER TABLE ONLY public.codes_batches
 
 
 --
--- TOC entry 5167 (class 2606 OID 41816)
+-- TOC entry 5173 (class 2606 OID 41816)
 -- Name: codes_catalogue codes_catalogue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1987,7 +1900,7 @@ ALTER TABLE ONLY public.codes_catalogue
 
 
 --
--- TOC entry 5111 (class 2606 OID 16968)
+-- TOC entry 5117 (class 2606 OID 16968)
 -- Name: credentials credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1996,7 +1909,7 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 5155 (class 2606 OID 41694)
+-- TOC entry 5161 (class 2606 OID 41694)
 -- Name: customer_discounts customer_discounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2005,7 +1918,7 @@ ALTER TABLE ONLY public.customer_discounts
 
 
 --
--- TOC entry 5151 (class 2606 OID 41674)
+-- TOC entry 5157 (class 2606 OID 41674)
 -- Name: default_deny_fields default_deny_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2014,7 +1927,7 @@ ALTER TABLE ONLY public.default_deny_fields
 
 
 --
--- TOC entry 5095 (class 2606 OID 16989)
+-- TOC entry 5101 (class 2606 OID 16989)
 -- Name: accounts_information human_friendly_id; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2023,7 +1936,7 @@ ALTER TABLE ONLY public.accounts_information
 
 
 --
--- TOC entry 5137 (class 2606 OID 25195)
+-- TOC entry 5143 (class 2606 OID 25195)
 -- Name: i18n_labels i18n_labels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2032,7 +1945,7 @@ ALTER TABLE ONLY public.i18n_labels
 
 
 --
--- TOC entry 5135 (class 2606 OID 25188)
+-- TOC entry 5141 (class 2606 OID 25188)
 -- Name: idempotency idempotency_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2041,7 +1954,7 @@ ALTER TABLE ONLY public.idempotency
 
 
 --
--- TOC entry 5161 (class 2606 OID 41724)
+-- TOC entry 5167 (class 2606 OID 41724)
 -- Name: inventory_images inventory_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2050,7 +1963,7 @@ ALTER TABLE ONLY public.inventory_images
 
 
 --
--- TOC entry 5115 (class 2606 OID 16970)
+-- TOC entry 5121 (class 2606 OID 16970)
 -- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2059,7 +1972,7 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 5143 (class 2606 OID 25233)
+-- TOC entry 5149 (class 2606 OID 25233)
 -- Name: issued_invoices issued_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2068,7 +1981,7 @@ ALTER TABLE ONLY public.issued_invoices
 
 
 --
--- TOC entry 5145 (class 2606 OID 25243)
+-- TOC entry 5151 (class 2606 OID 25243)
 -- Name: loyalty_points loyality_points_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2077,7 +1990,7 @@ ALTER TABLE ONLY public.loyalty_points
 
 
 --
--- TOC entry 5147 (class 2606 OID 25251)
+-- TOC entry 5153 (class 2606 OID 25251)
 -- Name: loyalty_points_redemption loyalty_points_redemption_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2086,7 +1999,7 @@ ALTER TABLE ONLY public.loyalty_points_redemption
 
 
 --
--- TOC entry 5133 (class 2606 OID 17020)
+-- TOC entry 5139 (class 2606 OID 17020)
 -- Name: notification_servicer_types notification_servicer_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2095,7 +2008,7 @@ ALTER TABLE ONLY public.notification_servicer_types
 
 
 --
--- TOC entry 5131 (class 2606 OID 17011)
+-- TOC entry 5137 (class 2606 OID 17011)
 -- Name: notification_types notification_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2104,7 +2017,7 @@ ALTER TABLE ONLY public.notification_types
 
 
 --
--- TOC entry 5129 (class 2606 OID 17000)
+-- TOC entry 5135 (class 2606 OID 17000)
 -- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2113,7 +2026,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- TOC entry 5179 (class 2606 OID 50136)
+-- TOC entry 5185 (class 2606 OID 50136)
 -- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2122,7 +2035,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- TOC entry 5139 (class 2606 OID 25202)
+-- TOC entry 5145 (class 2606 OID 25202)
 -- Name: permissions_extended_api_call permissions_extended_api_call_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2131,7 +2044,7 @@ ALTER TABLE ONLY public.permissions_extended_api_call
 
 
 --
--- TOC entry 5119 (class 2606 OID 16972)
+-- TOC entry 5125 (class 2606 OID 16972)
 -- Name: permissions_list_categories_names permissions_list_categories_names_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2140,7 +2053,7 @@ ALTER TABLE ONLY public.permissions_list_categories_names
 
 
 --
--- TOC entry 5117 (class 2606 OID 16974)
+-- TOC entry 5123 (class 2606 OID 16974)
 -- Name: permissions_list permissions_list_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2149,7 +2062,7 @@ ALTER TABLE ONLY public.permissions_list
 
 
 --
--- TOC entry 5121 (class 2606 OID 16976)
+-- TOC entry 5127 (class 2606 OID 16976)
 -- Name: permissions_list_users_categories permissions_list_users_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2158,7 +2071,7 @@ ALTER TABLE ONLY public.permissions_list_users_categories
 
 
 --
--- TOC entry 5163 (class 2606 OID 41732)
+-- TOC entry 5169 (class 2606 OID 41732)
 -- Name: pii_images pii_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2167,7 +2080,7 @@ ALTER TABLE ONLY public.pii_images
 
 
 --
--- TOC entry 5159 (class 2606 OID 41716)
+-- TOC entry 5165 (class 2606 OID 41716)
 -- Name: pii pii_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2176,7 +2089,7 @@ ALTER TABLE ONLY public.pii
 
 
 --
--- TOC entry 5149 (class 2606 OID 25259)
+-- TOC entry 5155 (class 2606 OID 25259)
 -- Name: receipts receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2185,7 +2098,7 @@ ALTER TABLE ONLY public.receipts
 
 
 --
--- TOC entry 5165 (class 2606 OID 41786)
+-- TOC entry 5171 (class 2606 OID 41786)
 -- Name: received_invoices received_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2194,7 +2107,7 @@ ALTER TABLE ONLY public.received_invoices
 
 
 --
--- TOC entry 5141 (class 2606 OID 25223)
+-- TOC entry 5147 (class 2606 OID 25223)
 -- Name: sales sales_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2203,7 +2116,7 @@ ALTER TABLE ONLY public.sales
 
 
 --
--- TOC entry 5174 (class 2606 OID 50119)
+-- TOC entry 5180 (class 2606 OID 50119)
 -- Name: scheduled_payments scheduled_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2212,7 +2125,7 @@ ALTER TABLE ONLY public.scheduled_payments
 
 
 --
--- TOC entry 5186 (class 2606 OID 58306)
+-- TOC entry 5192 (class 2606 OID 58306)
 -- Name: scheduled_receipts scheduled_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2221,7 +2134,7 @@ ALTER TABLE ONLY public.scheduled_receipts
 
 
 --
--- TOC entry 5153 (class 2606 OID 41682)
+-- TOC entry 5159 (class 2606 OID 41682)
 -- Name: suggested_prices suggested_prices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2230,7 +2143,7 @@ ALTER TABLE ONLY public.suggested_prices
 
 
 --
--- TOC entry 5123 (class 2606 OID 16978)
+-- TOC entry 5129 (class 2606 OID 16978)
 -- Name: tokens tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2239,7 +2152,7 @@ ALTER TABLE ONLY public.tokens
 
 
 --
--- TOC entry 5107 (class 2606 OID 16980)
+-- TOC entry 5113 (class 2606 OID 16980)
 -- Name: catalogue unique_desc; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2248,7 +2161,7 @@ ALTER TABLE ONLY public.catalogue
 
 
 --
--- TOC entry 5125 (class 2606 OID 16982)
+-- TOC entry 5131 (class 2606 OID 16982)
 -- Name: user_authorization user_authorization_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2257,7 +2170,7 @@ ALTER TABLE ONLY public.user_authorization
 
 
 --
--- TOC entry 5113 (class 2606 OID 16984)
+-- TOC entry 5119 (class 2606 OID 16984)
 -- Name: credentials username_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2266,7 +2179,7 @@ ALTER TABLE ONLY public.credentials
 
 
 --
--- TOC entry 5127 (class 2606 OID 16986)
+-- TOC entry 5133 (class 2606 OID 16986)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2275,7 +2188,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 5175 (class 1259 OID 50138)
+-- TOC entry 5181 (class 1259 OID 50138)
 -- Name: ix_payments_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2283,7 +2196,7 @@ CREATE INDEX ix_payments_date ON public.payments USING btree (payment_date);
 
 
 --
--- TOC entry 5176 (class 1259 OID 50139)
+-- TOC entry 5182 (class 1259 OID 50139)
 -- Name: ix_payments_recon; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2291,7 +2204,7 @@ CREATE INDEX ix_payments_recon ON public.payments USING btree (company_id, bank_
 
 
 --
--- TOC entry 5177 (class 1259 OID 50137)
+-- TOC entry 5183 (class 1259 OID 50137)
 -- Name: ix_payments_scheduled; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2299,7 +2212,7 @@ CREATE INDEX ix_payments_scheduled ON public.payments USING btree (scheduled_pay
 
 
 --
--- TOC entry 5170 (class 1259 OID 50120)
+-- TOC entry 5176 (class 1259 OID 50120)
 -- Name: ix_scheduled_payments_next_run; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2307,7 +2220,7 @@ CREATE INDEX ix_scheduled_payments_next_run ON public.scheduled_payments USING b
 
 
 --
--- TOC entry 5171 (class 1259 OID 50122)
+-- TOC entry 5177 (class 1259 OID 50122)
 -- Name: ix_scheduled_payments_recon; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2315,7 +2228,7 @@ CREATE INDEX ix_scheduled_payments_recon ON public.scheduled_payments USING btre
 
 
 --
--- TOC entry 5172 (class 1259 OID 50121)
+-- TOC entry 5178 (class 1259 OID 50121)
 -- Name: ix_scheduled_payments_status_flags; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2323,7 +2236,7 @@ CREATE INDEX ix_scheduled_payments_status_flags ON public.scheduled_payments USI
 
 
 --
--- TOC entry 5182 (class 1259 OID 58307)
+-- TOC entry 5188 (class 1259 OID 58307)
 -- Name: ix_scheduled_receipts_next_run; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2331,7 +2244,7 @@ CREATE INDEX ix_scheduled_receipts_next_run ON public.scheduled_receipts USING b
 
 
 --
--- TOC entry 5183 (class 1259 OID 58308)
+-- TOC entry 5189 (class 1259 OID 58308)
 -- Name: ix_scheduled_receipts_recon; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2339,14 +2252,14 @@ CREATE INDEX ix_scheduled_receipts_recon ON public.scheduled_receipts USING btre
 
 
 --
--- TOC entry 5184 (class 1259 OID 58309)
+-- TOC entry 5190 (class 1259 OID 58309)
 -- Name: ix_scheduled_receipts_status_flags; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_scheduled_receipts_status_flags ON public.scheduled_receipts USING btree (is_processing, is_completed, is_failed, is_cancelled);
 
 
--- Completed on 2025-09-10 17:28:12
+-- Completed on 2025-09-18 13:30:01
 
 --
 -- PostgreSQL database dump complete
