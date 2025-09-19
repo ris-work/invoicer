@@ -83,10 +83,11 @@ namespace InvoicerBackend
                     {
                         AccJEList = ctx
                             .AccountsJournalEntries.Where(e =>
-                                e.TimeTai >= TP.From && e.TimeTai <= TP.To
+                                e.TimeTai >= TP.From.Value.ToUniversalTime() && e.TimeTai <= TP.To.Value.ToUniversalTime()
                             )
                             .ToList();
                     }
+                    System.Console.WriteLine($"From, To: {TP.From}, {TP.To}");
                     return AccJEList;
                 },
                 "Refresh"

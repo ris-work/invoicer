@@ -361,11 +361,12 @@ namespace RV.InvNew.Common
                 };
     }
 
-    public readonly struct TimePeriod
+    public struct TimePeriod
     {
-        public DateTime? From { get; }
-        public DateTime? To { get; }
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
 
+        
         public TimePeriod(DateTime? from, DateTime? to)
         {
             if (from.HasValue && to.HasValue && from > to)
