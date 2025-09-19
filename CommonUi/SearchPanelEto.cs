@@ -113,7 +113,7 @@ namespace CommonUi
         public Action SortHasBeenRun = () => { };
         public bool AllowSortingByColumnHeader = true;
         private string[] _Selected = null;
-        private List<string[]> _OutputList = new List<string[]>() { };
+        private List<string[]?> _OutputList = new List<string[]>() { };
         public bool ShowExportOptions = false;
         public bool ShowSearchLocationInString = true;
         public bool ShowSearchLocation = true;

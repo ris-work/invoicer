@@ -80,7 +80,7 @@ namespace CommonUi
     //---------------------------------------------------------------------
     public static class SearchPanelUtility
     {
-        public static string[] GenerateSearchDialog<T>(
+        public static string[]? GenerateSearchDialog<T>(
             List<T> items,
             Control owner,
             bool debug = false,
@@ -88,7 +88,7 @@ namespace CommonUi
             string[]? order = null
         )
         {
-            var generated = new Dialog<string[]>();
+            var generated = new Dialog<string[]?>();
 
             var searchPanel = GenerateSearchPanel(items, debug, localColors, order);
             generated.Content = searchPanel;
