@@ -21,6 +21,15 @@ namespace RV.InvNew.UI
         readonly Button btnCompanySearch;
         readonly Label lblCompanyHuman;
 
+        readonly TextBox txtDebitAccount;
+        readonly Label lblDebitAccount;
+        readonly TextBox txtDebitAccountType;
+        readonly Label lblDebitAccountType;
+        readonly TextBox txtCreditAccount;
+        readonly Label lblCreditAccount;
+        readonly TextBox txtCreditAccountType;
+        readonly Label lblCreditAccountType;
+
         readonly TextBox txtVendorId;
         readonly Button btnVendorSearch;
         readonly Label lblVendorHuman;
@@ -43,6 +52,8 @@ namespace RV.InvNew.UI
         readonly TextBox txtBeneficiaryBankName;
         readonly TextBox txtBeneficiaryBranch;
         readonly TextBox txtBeneficiaryAccountNo;
+
+        readonly TextBox txtJournalNumber;
         readonly TextBox txtBeneficiaryRoutingNo;
 
         readonly TextBox txtPaymentMethod;
@@ -174,6 +185,11 @@ namespace RV.InvNew.UI
             txtBeneficiaryBankName = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryBranch = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryAccountNo = new TextBox { Width = cw, Height = ch };
+            txtCreditAccount = new TextBox { Width = cw, Height = ch };
+            txtCreditAccountType = new TextBox { Width = cw, Height = ch };
+            txtDebitAccount = new TextBox { Width = cw, Height = ch };
+            txtDebitAccountType = new TextBox { Width = cw, Height = ch };
+            txtJournalNumber = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryRoutingNo = new TextBox { Width = cw, Height = ch };
 
             txtPaymentMethod = new TextBox { Width = cw, Height = ch };
@@ -267,6 +283,7 @@ namespace RV.InvNew.UI
             {
                 txtId,
                 btnIdSearch,
+                txtJournalNumber,
                 txtCompanyId,
                 btnCompanySearch,
                 txtVendorId,
@@ -285,6 +302,10 @@ namespace RV.InvNew.UI
                 txtBeneficiaryBranch,
                 txtBeneficiaryAccountNo,
                 txtBeneficiaryRoutingNo,
+                txtDebitAccount,
+                txtDebitAccountType,
+                txtCreditAccount,
+                txtCreditAccountType,
                 txtPaymentMethod,
                 txtFrequency,
                 txtIntervalValue,
@@ -396,6 +417,58 @@ namespace RV.InvNew.UI
                 ("BeneficiaryBranch", txtBeneficiaryBranch),
                 ("BeneficiaryAccountNo", txtBeneficiaryAccountNo),
                 ("BeneficiaryRoutingNo", txtBeneficiaryRoutingNo),
+                ("CreditAccount", txtCreditAccount),
+                ("CreditAccountType", txtCreditAccountType),
+                ("DebitAccount", txtDebitAccount),
+                ("DebitAccountType", txtDebitAccountType),
+                                (
+                    "BatchId",
+                    new StackLayout(
+                        new StackLayoutItem(txtBatchId),
+                        new StackLayoutItem(btnBatchSearch),
+                        new StackLayoutItem(lblBatchHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                                                (
+                    "BatchId",
+                    new StackLayout(
+                        new StackLayoutItem(txtBatchId),
+                        new StackLayoutItem(btnBatchSearch),
+                        new StackLayoutItem(lblBatchHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                                                                (
+                    "BatchId",
+                    new StackLayout(
+                        new StackLayoutItem(txtBatchId),
+                        new StackLayoutItem(btnBatchSearch),
+                        new StackLayoutItem(lblBatchHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                                                                                (
+                    "BatchId",
+                    new StackLayout(
+                        new StackLayoutItem(txtBatchId),
+                        new StackLayoutItem(btnBatchSearch),
+                        new StackLayoutItem(lblBatchHuman)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
                 ("PaymentMethod", txtPaymentMethod),
                 ("Frequency", txtFrequency),
                 ("IntervalValue", txtIntervalValue),
@@ -647,6 +720,7 @@ namespace RV.InvNew.UI
             return new ScheduledPayment
             {
                 Id = isNew ? 0 : Convert.ToInt64(txtId.Text),
+                JournalNo = Convert.ToSByte(txtJournalNumber),
                 CompanyId = Convert.ToInt64(txtCompanyId.Text),
                 VendorId = string.IsNullOrWhiteSpace(txtVendorId.Text)
                     ? null
@@ -667,6 +741,10 @@ namespace RV.InvNew.UI
                 BeneficiaryBranch = txtBeneficiaryBranch.Text,
                 BeneficiaryAccountNo = txtBeneficiaryAccountNo.Text,
                 BeneficiaryRoutingNo = txtBeneficiaryRoutingNo.Text,
+                CreditAccountId = long.Parse(txtCreditAccount.Text),
+                CreditAccountType = long.Parse(txtCreditAccountType.Text),
+                DebitAccountId = long.Parse(txtDebitAccount.Text),
+                DebitAccountType = long.Parse(txtDebitAccountType.Text),
                 PaymentMethod = txtPaymentMethod.Text,
                 Frequency = txtFrequency.Text,
                 IntervalValue = int.TryParse(txtIntervalValue.Text, out var iv) ? iv : null,
@@ -715,6 +793,26 @@ namespace RV.InvNew.UI
                 && !long.TryParse(txtBatchId.Text, out _)
             )
                 errs.Add("BatchId");
+            if(
+                !string.IsNullOrWhiteSpace(txtCreditAccountType.Text)
+                && !long.TryParse(txtCreditAccountType.Text, out _)
+            )
+                errs.Add("CreditAccountType");
+            if (
+               !string.IsNullOrWhiteSpace(txtDebitAccountType.Text)
+               && !long.TryParse(txtDebitAccountType.Text, out _)
+           )
+                errs.Add("DebitAccountType");
+            if (
+                !string.IsNullOrWhiteSpace(txtCreditAccount.Text)
+                && !long.TryParse(txtCreditAccount.Text, out _)
+            )
+                errs.Add("CreditAccount");
+            if (
+               !string.IsNullOrWhiteSpace(txtDebitAccount.Text)
+               && !long.TryParse(txtDebitAccount.Text, out _)
+           )
+                errs.Add("DebitAccount");
 
             if (string.IsNullOrWhiteSpace(txtPaymentReference.Text))
                 errs.Add("PaymentReference");
