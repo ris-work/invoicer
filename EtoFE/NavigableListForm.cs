@@ -187,7 +187,7 @@ namespace EtoFE
                                             new LoadOncePanel<AllJournalEntries>(),
                                             "AllJournalEntries"
                                         ),
-                                                                                (
+                                        (
                                             "📋 All Journal Entries By Time",
                                             new LoadOncePanel<AllJournalEntriesInTimePeriod>(),
                                             "AllJournalEntries"

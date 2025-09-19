@@ -23,12 +23,16 @@ namespace RV.InvNew.UI
 
         readonly TextBox txtDebitAccount;
         readonly Label lblDebitAccount;
+        readonly Button btnDebitAccountSearch;
         readonly TextBox txtDebitAccountType;
         readonly Label lblDebitAccountType;
+        readonly Button btnDebitAccountTypeSearch;
         readonly TextBox txtCreditAccount;
         readonly Label lblCreditAccount;
+        readonly Button btnCreditAccountSearch;
         readonly TextBox txtCreditAccountType;
         readonly Label lblCreditAccountType;
+        readonly Button btnCreditAccountTypeSearch;
 
         readonly TextBox txtVendorId;
         readonly Button btnVendorSearch;
@@ -54,6 +58,8 @@ namespace RV.InvNew.UI
         readonly TextBox txtBeneficiaryAccountNo;
 
         readonly TextBox txtJournalNumber;
+        readonly Label lblJournalNumber;
+        readonly Button btnJournalNumberSearch;
         readonly TextBox txtBeneficiaryRoutingNo;
 
         readonly TextBox txtPaymentMethod;
@@ -185,16 +191,47 @@ namespace RV.InvNew.UI
             txtBeneficiaryBankName = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryBranch = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryAccountNo = new TextBox { Width = cw, Height = ch };
-            txtCreditAccount = new TextBox { Width = cw, Height = ch };
-            txtCreditAccountType = new TextBox { Width = cw, Height = ch };
-            txtDebitAccount = new TextBox { Width = cw, Height = ch };
-            txtDebitAccountType = new TextBox { Width = cw, Height = ch };
-            txtJournalNumber = new TextBox { Width = cw, Height = ch };
             txtBeneficiaryRoutingNo = new TextBox { Width = cw, Height = ch };
 
             txtPaymentMethod = new TextBox { Width = cw, Height = ch };
             txtFrequency = new TextBox { Width = cw, Height = ch };
             txtIntervalValue = new TextBox { Width = cw, Height = ch };
+
+            txtCreditAccount = new TextBox { Width = cw, Height = ch };
+            btnCreditAccountSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
+            txtCreditAccountType = new TextBox { Width = cw, Height = ch };
+            btnCreditAccountTypeSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
+            txtDebitAccount = new TextBox { Width = cw, Height = ch };
+            btnDebitAccountSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
+            txtDebitAccountType = new TextBox { Width = cw, Height = ch };
+            btnDebitAccountTypeSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
+            txtJournalNumber = new TextBox { Width = cw, Height = ch };
+            btnJournalNumberSearch = new Button
+            {
+                Text = "...",
+                Height = ch,
+                Width = hw,
+            };
 
             // dates
             dtpNextRunDate = new DateTimePicker
@@ -421,48 +458,60 @@ namespace RV.InvNew.UI
                 ("CreditAccountType", txtCreditAccountType),
                 ("DebitAccount", txtDebitAccount),
                 ("DebitAccountType", txtDebitAccountType),
+                (
+                    "CreditAccountType",
+                    new StackLayout(
+                        new StackLayoutItem(txtCreditAccountType),
+                        new StackLayoutItem(btnCreditAccountTypeSearch),
+                        new StackLayoutItem(lblCreditAccountType)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "CreditAccount",
+                    new StackLayout(
+                        new StackLayoutItem(txtCreditAccount),
+                        new StackLayoutItem(btnCreditAccountSearch),
+                        new StackLayoutItem(lblCreditAccount)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "DebitAccount",
+                    new StackLayout(
+                        new StackLayoutItem(txtDebitAccountType),
+                        new StackLayoutItem(btnDebitAccountTypeSearch),
+                        new StackLayoutItem(lblDebitAccountType)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
+                (
+                    "DebitAccountType",
+                    new StackLayout(
+                        new StackLayoutItem(txtDebitAccount),
+                        new StackLayoutItem(btnDebitAccountSearch),
+                        new StackLayoutItem(lblDebitAccount)
+                    )
+                    {
+                        Spacing = 2,
+                        Orientation = Orientation.Horizontal,
+                    }
+                ),
                                 (
-                    "BatchId",
+                    "JournalNo",
                     new StackLayout(
-                        new StackLayoutItem(txtBatchId),
-                        new StackLayoutItem(btnBatchSearch),
-                        new StackLayoutItem(lblBatchHuman)
-                    )
-                    {
-                        Spacing = 2,
-                        Orientation = Orientation.Horizontal,
-                    }
-                ),
-                                                (
-                    "BatchId",
-                    new StackLayout(
-                        new StackLayoutItem(txtBatchId),
-                        new StackLayoutItem(btnBatchSearch),
-                        new StackLayoutItem(lblBatchHuman)
-                    )
-                    {
-                        Spacing = 2,
-                        Orientation = Orientation.Horizontal,
-                    }
-                ),
-                                                                (
-                    "BatchId",
-                    new StackLayout(
-                        new StackLayoutItem(txtBatchId),
-                        new StackLayoutItem(btnBatchSearch),
-                        new StackLayoutItem(lblBatchHuman)
-                    )
-                    {
-                        Spacing = 2,
-                        Orientation = Orientation.Horizontal,
-                    }
-                ),
-                                                                                (
-                    "BatchId",
-                    new StackLayout(
-                        new StackLayoutItem(txtBatchId),
-                        new StackLayoutItem(btnBatchSearch),
-                        new StackLayoutItem(lblBatchHuman)
+                        new StackLayoutItem(txtJournalNumber),
+                        new StackLayoutItem(btnJournalNumberSearch),
+                        new StackLayoutItem(lblJournalNumber)
                     )
                     {
                         Spacing = 2,
@@ -793,15 +842,15 @@ namespace RV.InvNew.UI
                 && !long.TryParse(txtBatchId.Text, out _)
             )
                 errs.Add("BatchId");
-            if(
+            if (
                 !string.IsNullOrWhiteSpace(txtCreditAccountType.Text)
                 && !long.TryParse(txtCreditAccountType.Text, out _)
             )
                 errs.Add("CreditAccountType");
             if (
-               !string.IsNullOrWhiteSpace(txtDebitAccountType.Text)
-               && !long.TryParse(txtDebitAccountType.Text, out _)
-           )
+                !string.IsNullOrWhiteSpace(txtDebitAccountType.Text)
+                && !long.TryParse(txtDebitAccountType.Text, out _)
+            )
                 errs.Add("DebitAccountType");
             if (
                 !string.IsNullOrWhiteSpace(txtCreditAccount.Text)
@@ -809,10 +858,15 @@ namespace RV.InvNew.UI
             )
                 errs.Add("CreditAccount");
             if (
-               !string.IsNullOrWhiteSpace(txtDebitAccount.Text)
-               && !long.TryParse(txtDebitAccount.Text, out _)
-           )
+                !string.IsNullOrWhiteSpace(txtDebitAccount.Text)
+                && !long.TryParse(txtDebitAccount.Text, out _)
+            )
                 errs.Add("DebitAccount");
+            if (
+                !string.IsNullOrWhiteSpace(txtJournalNumber.Text)
+                && !long.TryParse(txtJournalNumber.Text, out _)
+            )
+                errs.Add("JournalNo");
 
             if (string.IsNullOrWhiteSpace(txtPaymentReference.Text))
                 errs.Add("PaymentReference");
