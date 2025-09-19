@@ -533,14 +533,13 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<Inventory>(entity =>
         {
-            entity.HasKey(e => new { e.Itemcode, e.Batchcode }).HasName("inventory_pkey");
+            entity.HasKey(e => e.Batchcode).HasName("inventory_pkey");
 
             entity.ToTable(
                 "inventory",
                 tb => tb.HasComment("Internal inventory management functions")
             );
 
-            entity.Property(e => e.Itemcode).ValueGeneratedOnAdd().HasColumnName("itemcode");
             entity.Property(e => e.Batchcode).HasColumnName("batchcode");
             entity
                 .Property(e => e.BatchEnabled)
@@ -548,6 +547,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("batch_enabled");
             entity.Property(e => e.CostPrice).HasColumnName("cost_price");
             entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity.Property(e => e.Itemcode).ValueGeneratedOnAdd().HasColumnName("itemcode");
             entity
                 .Property(e => e.LastCountedAt)
                 .HasDefaultValueSql("now()")
@@ -1061,6 +1061,10 @@ public partial class NewinvContext : DbContext
         {
             entity.HasNoKey().ToTable("requests");
 
+            entity
+                .Property(e => e.DatetimeTai)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("datetime_tai");
             entity.Property(e => e.Endpoint).HasColumnName("endpoint");
             entity.Property(e => e.Principal).HasColumnName("principal");
             entity
@@ -1498,6 +1502,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.StartFrom).HasDefaultValue(1L).HasColumnName("start_from");
         });
+        modelBuilder.HasSequence("inventory_batchcode_seq");
         modelBuilder.HasSequence("scheduled_receipts_id_seq");
 
         OnModelCreatingPartial(modelBuilder);

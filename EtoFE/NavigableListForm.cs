@@ -183,8 +183,13 @@ namespace EtoFE
                                             "AccountTypes"
                                         ),
                                         (
-                                            "📋 All Journal Entries",
+                                            "📋 All Journal Entries (Recent)",
                                             new LoadOncePanel<AllJournalEntries>(),
+                                            "AllJournalEntries"
+                                        ),
+                                                                                (
+                                            "📋 All Journal Entries By Time",
+                                            new LoadOncePanel<AllJournalEntriesInTimePeriod>(),
                                             "AllJournalEntries"
                                         ),
                                         (

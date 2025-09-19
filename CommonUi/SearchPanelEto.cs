@@ -109,7 +109,9 @@ namespace CommonUi
 
     public class SearchPanelEto : Panel, RV.InvNew.CommonUi.IButtonChooserInput
     {
-        public Action OnSelectionMade;
+        public Action OnSelectionMade = () => { };
+        public Action SortHasBeenRun = () => { };
+        public bool AllowSortingByColumnHeader = true;
         private string[] _Selected = null;
         private List<string[]> _OutputList = new List<string[]>() { };
         public bool ShowExportOptions = false;
@@ -407,8 +409,8 @@ namespace CommonUi
                 ),
                 Content = PrintOptions,
             };
-
-            int SelectedSearchIndex = SC[0].Item1.Length;
+            int SelectedSearchIndex = -1;
+            if (SC.Count > 0) SelectedSearchIndex = SC[0].Item1.Length;
             RBLSearchCriteria.SelectedIndexChanged += (e, a) =>
             {
                 SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
@@ -656,7 +658,7 @@ namespace CommonUi
 
             var Search = () =>
             {
-                if (SearchBox.Text.Length > -1 && searching != true)
+                if (SearchBox.Text.Length > -1 && SC.Count > 0 && searching != true)
                 {
                     var len = SearchBox.Text.Length;
                     var SelectedArrayIndex = SelectedSearchIndex;
@@ -793,10 +795,13 @@ namespace CommonUi
             Results.ColumnHeaderClick += (e, a) =>
             {
                 //MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
-                if (SortBy == a.Column.DisplayIndex)
-                    ReverseSort = !ReverseSort;
-                SortBy = a.Column.DisplayIndex;
-                Search();
+                if (AllowSortingByColumnHeader)
+                {
+                    if (SortBy == a.Column.DisplayIndex)
+                        ReverseSort = !ReverseSort;
+                    SortBy = a.Column.DisplayIndex;
+                    Search();
+                }
             };
             SearchBox.TextChanged += (_, _) => Search();
             SearchBox.KeyDown += (_, e) =>

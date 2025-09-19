@@ -22,4 +22,6 @@ public partial class Request
     public string? Endpoint { get; set; }
 
     public string? ProvidedPrivilegeLevels { get; set; }
+
+    public DateTime DatetimeTai { get; set; }
 }
