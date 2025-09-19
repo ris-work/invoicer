@@ -123,11 +123,11 @@ namespace RV.InvNew.EtoFE
         {
             // Wrap input tuples
             _items = data.Select(x => new ItemMovements
-                {
-                    ItemCode = x.ItemCode,
-                    Description = x.Description,
-                    BinCard = x.BinCard,
-                })
+            {
+                ItemCode = x.ItemCode,
+                Description = x.Description,
+                BinCard = x.BinCard,
+            })
                 .ToList();
 
             var flat = _items
@@ -141,13 +141,13 @@ namespace RV.InvNew.EtoFE
                 ItemCode = -1,
                 Description = "Sum",
                 BinCard = flat.Select(m => new InventoryMovement
-                    {
-                        EnteredTime = m.EnteredTime,
-                        Reference = m.Reference,
-                        Units = m.Units,
-                        FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits,
-                    })
+                {
+                    EnteredTime = m.EnteredTime,
+                    Reference = m.Reference,
+                    Units = m.Units,
+                    FromUnits = m.FromUnits,
+                    ToUnits = m.ToUnits,
+                })
                     .ToList(),
             };
 
@@ -156,13 +156,13 @@ namespace RV.InvNew.EtoFE
                 ItemCode = -2,
                 Description = "Average",
                 BinCard = flat.Select(m => new InventoryMovement
-                    {
-                        EnteredTime = m.EnteredTime,
-                        Reference = m.Reference,
-                        Units = m.Units,
-                        FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits,
-                    })
+                {
+                    EnteredTime = m.EnteredTime,
+                    Reference = m.Reference,
+                    Units = m.Units,
+                    FromUnits = m.FromUnits,
+                    ToUnits = m.ToUnits,
+                })
                     .ToList(),
             };
 
@@ -171,13 +171,13 @@ namespace RV.InvNew.EtoFE
                 ItemCode = -3,
                 Description = "Geometric mean",
                 BinCard = flat.Select(m => new InventoryMovement
-                    {
-                        EnteredTime = m.EnteredTime,
-                        Reference = m.Reference,
-                        Units = m.Units,
-                        FromUnits = m.FromUnits,
-                        ToUnits = m.ToUnits,
-                    })
+                {
+                    EnteredTime = m.EnteredTime,
+                    Reference = m.Reference,
+                    Units = m.Units,
+                    FromUnits = m.FromUnits,
+                    ToUnits = m.ToUnits,
+                })
                     .ToList(),
             };
 
@@ -577,15 +577,15 @@ namespace RV.InvNew.EtoFE
             var summary = movs
             // 1. Project out the refType and date
             .Select(im => new
-                {
-                    RefType = im.Reference != null && im.Reference.Contains(':')
+            {
+                RefType = im.Reference != null && im.Reference.Contains(':')
                         ? im.Reference.Substring(0, im.Reference.IndexOf(':'))
                         : im.Reference,
-                    Date = im.EnteredTime.Date,
-                    im.Units,
-                    im.FromUnits,
-                    im.ToUnits,
-                })
+                Date = im.EnteredTime.Date,
+                im.Units,
+                im.FromUnits,
+                im.ToUnits,
+            })
                 // 2. Filter only the refTypes you care about
                 .Where(x => _refTypes.Contains(x.RefType!))
                 // 3. Group by refType + date

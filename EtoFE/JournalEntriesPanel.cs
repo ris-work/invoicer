@@ -381,20 +381,23 @@ namespace EtoFE
                 case NumericUpDown nu:
                     nu.DecimalPlaces = 2;
                     break;
-                //case ComboBox cb: cb.DropDownStyle = DropDownStyle.DropDownList; break;
+                    //case ComboBox cb: cb.DropDownStyle = DropDownStyle.DropDownList; break;
             }
         }
 
         // stubs
         void SaveEntry(
             JournalEntryDto e
-        ) { /* persist */
+        )
+        { /* persist */
         }
 
-        void UpdateEntry() { /* ... */
+        void UpdateEntry()
+        { /* ... */
         }
 
-        void DeleteEntry() { /* ... */
+        void DeleteEntry()
+        { /* ... */
         }
 
         void ClearForm()

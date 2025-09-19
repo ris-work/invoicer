@@ -6,6 +6,7 @@ using CommonUi;
 using Eto.Drawing;
 using Eto.Forms;
 using EtoFE;
+using EtoFE.Search;
 using RV.InvNew.Common;
 
 namespace RV.InvNew.UI
@@ -287,6 +288,17 @@ namespace RV.InvNew.UI
                 DoLookup(txtInvoiceId, lblInvoiceHuman, LookupHumanFriendlyInvoiceId);
             btnBatchSearch.Click += (_, __) =>
                 DoLookup(txtBatchId, lblBatchHuman, LookupHumanFriendlyBatchId);
+            btnDebitAccountTypeSearch.Click += (_, __) =>
+                DoLookup(txtDebitAccountType, lblDebitAccountType, BackOfficeAccounting.LookupAccountType);
+            btnCreditAccountTypeSearch.Click += (_, __) =>
+               DoLookup(txtDebitAccountType, lblCreditAccountType, BackOfficeAccounting.LookupAccountType);
+            btnDebitAccountSearch.Click += (_, __) =>
+               DoLookup(txtDebitAccountType, lblDebitAccount, BackOfficeAccounting.LookupAccount);
+            btnCreditAccountSearch.Click += (_, __) =>
+               DoLookup(txtCreditAccountType, lblCreditAccount, BackOfficeAccounting.LookupAccount);
+            btnJournalNumberSearch.Click += (_, __) =>
+               DoLookup(txtJournalNumber, lblJournalNumber, BackOfficeAccounting.LookupJournalNo);
+
 
             // mutually‐exclusive statuses
             var statuses = new[]

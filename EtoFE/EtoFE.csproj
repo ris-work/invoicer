@@ -139,6 +139,10 @@
         <PackageReference Include="ScottPlot" Version="5.0.55" />
         <PackageReference Include="ScottPlot.Eto" Version="5.0.55" />
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
+        <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Tomlyn" Version="0.19.0" />
         <PackageReference Include="Wiry.Base32" Version="1.1.1" />
     </ItemGroup>
@@ -156,22 +160,10 @@
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
-    <ItemGroup
-        Condition="
-      '$(UseExperimentalCoreSWF)' == 'True'
-      Or
-      '$(IsWindowsTarget)' == 'False'
-    "
-    >
+    <ItemGroup Condition="&#xD;&#xA;      '$(UseExperimentalCoreSWF)' == 'True'&#xD;&#xA;      Or&#xD;&#xA;      '$(IsWindowsTarget)' == 'False'&#xD;&#xA;    ">
         <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
     </ItemGroup>
-    <PropertyGroup
-        Condition="
-      '$(UseExperimentalCoreSWF)' != 'True'
-      And
-      '$(IsWindowsTarget)' == 'True'
-    "
-    >
+    <PropertyGroup Condition="&#xD;&#xA;      '$(UseExperimentalCoreSWF)' != 'True'&#xD;&#xA;      And&#xD;&#xA;      '$(IsWindowsTarget)' == 'True'&#xD;&#xA;    ">
         <!-- tells the WindowsDesktop SDK to add WinForms references -->
         <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
@@ -204,11 +196,7 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target
-        Name="_RemoveWindowsDesktopTransitiveFrameworkReferences"
-        BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies"
-        Condition="'$(IsWindowsTarget)' != 'true'"
-    >
+    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />

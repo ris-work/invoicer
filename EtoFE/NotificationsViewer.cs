@@ -89,9 +89,9 @@ namespace EtoFE
             MarkAllAsRead.Click += (_, _) =>
             {
                 var NotificationsToMark = LN.Select(e => new NotificationTransfer()
-                    {
-                        NotifId = e.NotifId,
-                    })
+                {
+                    NotifId = e.NotifId,
+                })
                     .ToList();
                 //MessageBox.Show(NotificationsToMark.Count.ToString());
                 var NotificationsMarkAR = new AuthenticatedRequest<List<NotificationTransfer>>(
