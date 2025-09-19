@@ -17,5 +17,8 @@ namespace EtoFE.Search
         public static string[] SearchIssuedInvoices(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.IInv, Owner, false, null, ["InvoiceId"]);
         public static string[] SearchScheduledPayment(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.PSchd, Owner, false, null, ["Id"]);
         public static string[] SearchScheduledReceipt(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.RSchd, Owner, false, null, ["Id"]);
+        public static string LookupAccountType(long id) => GlobalState.BAT.AccTypes.Where(e => e.AccountType == id).Select(e => e.AccountTypeName).FirstOrDefault("Unknown Type");
+        public static string LookupAccount(long id) => GlobalState.BAT.AccInfo.Where(a => a.AccountNo == id).Select(a => a.AccountName).FirstOrDefault("Unknown Account");
+        public static string LookupJournalNo(long id) => GlobalState.BAT.AccJI.Where(j => j.JournalId == id).Select(j => j.JournalName).FirstOrDefault("Unknown Journal");
     }
 }
