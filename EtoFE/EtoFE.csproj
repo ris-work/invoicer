@@ -9,11 +9,15 @@
         <InvariantGlobalization>false</InvariantGlobalization>
         <ApplicationIcon>icons\pos_exe.ico</ApplicationIcon>
         <Platforms>AnyCPU;x64</Platforms>
+		<UseWindowsForms>false</UseWindowsForms>
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
-        <UseExperimentalCoreSWF>True</UseExperimentalCoreSWF>
         <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
+	<PropertyGroup>
+		<!-- stop implicitly referencing the Windows desktop shared framework -->
+		<!--<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>-->
+	</PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
         <UseWPF>true</UseWPF>
     </PropertyGroup>
@@ -124,8 +128,12 @@
 		Optionally define the platform minimum for clarity
 		<TargetPlatformMinVersion>7.0</TargetPlatformMinVersion>
 	</PropertyGroup>-->
+	<PropertyGroup>
+		<IsExperimentalWinFormsCairoNativeBuild>false</IsExperimentalWinFormsCairoNativeBuild>
+		<UseExperimentalCoreSWF>false</UseExperimentalCoreSWF>
+	</PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+        
         <PackageReference Include="CsvHelper" Version="33.0.1" />
         <PackageReference Include="Eto.Containers" Version="1.1.0" />
         <PackageReference Include="Eto.Forms" Version="2.9.0" />
@@ -146,43 +154,58 @@
         <PackageReference Include="Tomlyn" Version="0.19.0" />
         <PackageReference Include="Wiry.Base32" Version="1.1.1" />
     </ItemGroup>
+	<ItemGroup>
+		<!--<PackageReference Include="System.ValueTuple" Version="4.6.1"/>-->
+		<!--<PackageReference Include="System.Buffers" Version="4.6.1" />-->
+		<!--<PackageReference Include="System.Memory" Version="4.6.3" />-->
+		<!--<PackageReference Include="System.Text.Json" Version="9.0.9" />-->
+		<!--<PackageReference Include="System.Net.Http.Json" Version="9.0.9" />-->
+		<!--<PackageReference Include="System.Text.Encodings.Web" Version="9.0.9" />-->
+	</ItemGroup>
     <!-- On Windows, include Windows and WPF platforms -->
-    <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
+    <ItemGroup Condition="'$(IsWindowsTarget)' == 'true'">
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
-        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+        <!--<FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />-->
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0">
 			Suppress warnings (for example, NU1701 warns about unsupported target frameworks)
 			<NoWarn>$(NoWarn);NU1701</NoWarn>
 		</PackageReference>-->
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
-    <ItemGroup Condition="&#xD;&#xA;      '$(UseExperimentalCoreSWF)' == 'True'&#xD;&#xA;      Or&#xD;&#xA;      '$(IsWindowsTarget)' == 'False'&#xD;&#xA;    ">
-        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+    <ItemGroup Condition="('$(UseExperimentalCoreSWF)' == 'true') Or ('$(IsWindowsTarget)' == 'false')    ">
+        <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
+		
+		<ProjectReference Include="..\..\source\repos\Core.System.Windows.Forms\System.Windows.Forms\System.Windows.Forms.csproj" />
     </ItemGroup>
-    <PropertyGroup Condition="&#xD;&#xA;      '$(UseExperimentalCoreSWF)' != 'True'&#xD;&#xA;      And&#xD;&#xA;      '$(IsWindowsTarget)' == 'True'&#xD;&#xA;    ">
+    <PropertyGroup Condition="('$(UseExperimentalCoreSWF)' != 'true') And ('$(IsWindowsTarget)' == 'true')    ">
         <!-- tells the WindowsDesktop SDK to add WinForms references -->
         <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
+	<ItemGroup Condition="('$(UseExperimentalCoreSWF)' != 'true') And ('$(IsWindowsTarget)' == 'true')    ">
+		<!-- tells the WindowsDesktop SDK to add WinForms references -->
+		<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+	</ItemGroup>
     <PropertyGroup>
         <!-- Set to true/false or even override it via command-line -->
-        <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
+        <!--<IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>-->
     </PropertyGroup>
-	<ItemGroup Condition="'$(UseExperimentalCoreSWF)' != 'True' and '$(IsWindowsTarget)' == 'True'">
+	<ItemGroup Condition="'$(UseExperimentalCoreSWF)' != 'true' and '$(IsWindowsTarget)' == 'true'">
 		<PackageReference Include="Eto.Platform.Direct2D" Version="2.9.0" />
 	</ItemGroup>
     <!-- On non-Windows platforms, include only the GTK platform -->
-    <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
-        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
+    <ItemGroup Condition="'$(IsWindowsTarget)' != 'true'">
+        <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
+		<ProjectReference Include="..\..\source\repos\Core.System.Windows.Forms\System.Windows.Forms\System.Windows.Forms.csproj" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
         <!--<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
     </ItemGroup>
-    <PropertyGroup Condition="'$(IsWindowsTarget)' != 'True'">
+    <PropertyGroup Condition="'$(IsWindowsTarget)' != 'true'">
         <UseWpf>false</UseWpf>
         <UseWindowsForms>false</UseWindowsForms>
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
@@ -199,27 +222,26 @@
             <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
         </ProjectReference>
     </ItemGroup>
-    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies" Condition="'$(IsWindowsTarget)' != 'true'">
+    <Target Name="_RemoveWindowsDesktopTransitiveFrameworkReferences" BeforeTargets="CoreCompile" Condition="'$(IsWindowsTarget)' != 'true'">
         <ItemGroup>
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
             <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
         </ItemGroup>
     </Target>
-    <PropertyGroup>
-        <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
-    </PropertyGroup>
+    
     <!-- When true, include the experimental project reference -->
-    <ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' == 'true'">
+    <ItemGroup Condition="'$(UseExperimentalCoreSWF)' == 'true'">
         <ProjectReference Include="..\..\source\repos\eto\src\Eto.WinForms\Eto.WinForms.Csproj" />
+		<ProjectReference Include="..\..\source\repos\Core.System.Windows.Forms\System.Windows.Forms\System.Windows.Forms.csproj" />
     </ItemGroup>
     <!-- When false, include the Eto.Platform.Windows package reference -->
-    <ItemGroup Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' != 'true'">
+    <ItemGroup Condition="'$(UseExperimentalCoreSWF)' != 'true'">
         <!-- Replace the version below with the appropriate package version you wish to target -->
-        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+        
     </ItemGroup>
-	<Target Name="ShowIsExperimental" BeforeTargets="BeforeBuild">
-		<Message Importance="high" Text="IsExperimentalWinFormsCairoNativeBuild=$(IsExperimentalWinFormsCairoNativeBuild)" />
+	<Target Name="ShowIsExperimental" BeforeTargets="Compile">
+		<Message Importance="high" Text="IsExperimentalWinFormsCairoNativeBuild=$(IsExperimentalWinFormsCairoNativeBuild) UseExperimentalCoreSWF=$(UseExperimentalCoreSWF)" />
 	</Target>
     <PropertyGroup>
         <!-- Suppress “reference assemblies for WPF not found” error -->

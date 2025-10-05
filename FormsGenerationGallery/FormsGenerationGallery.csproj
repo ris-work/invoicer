@@ -20,7 +20,7 @@
     </ItemGroup>
     <!-- On Windows, include Windows and WPF platforms -->
     <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+        <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
