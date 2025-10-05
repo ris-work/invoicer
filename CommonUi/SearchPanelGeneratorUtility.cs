@@ -88,6 +88,7 @@ namespace CommonUi
             string[]? order = null
         )
         {
+            System.Console.WriteLine($"SearchDialog creation called, Type: {items.GetType().ToString()}, Count: {items.Count}, InnerType: {typeof(T)}");
             var generated = new Dialog<string[]?>();
 
             var searchPanel = GenerateSearchPanel(items, debug, localColors, order);
@@ -119,6 +120,7 @@ namespace CommonUi
             string[]? order = null
         )
         {
+            System.Console.WriteLine($"SearchPanel creation called, Type: {items.GetType().ToString()}, Count: {items.Count}, InnerType: {typeof(T)}");
             if (items == null || items.Count == 0)
             {
                 return new SearchPanelEto(

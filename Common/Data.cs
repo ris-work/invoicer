@@ -366,7 +366,7 @@ namespace RV.InvNew.Common
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
 
-        
+
         public TimePeriod(DateTime? from, DateTime? to)
         {
             if (from.HasValue && to.HasValue && from > to)

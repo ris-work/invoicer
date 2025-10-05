@@ -23,16 +23,16 @@ namespace RV.InvNew.UI
         readonly Label lblCompanyHuman;
 
         readonly TextBox txtDebitAccount;
-        readonly Label lblDebitAccount;
+        readonly Label lblDebitAccount = new Label();
         readonly Button btnDebitAccountSearch;
         readonly TextBox txtDebitAccountType;
-        readonly Label lblDebitAccountType;
+        readonly Label lblDebitAccountType = new Label();
         readonly Button btnDebitAccountTypeSearch;
         readonly TextBox txtCreditAccount;
-        readonly Label lblCreditAccount;
+        readonly Label lblCreditAccount = new Label();
         readonly Button btnCreditAccountSearch;
         readonly TextBox txtCreditAccountType;
-        readonly Label lblCreditAccountType;
+        readonly Label lblCreditAccountType = new Label();
         readonly Button btnCreditAccountTypeSearch;
 
         readonly TextBox txtVendorId;
@@ -59,7 +59,7 @@ namespace RV.InvNew.UI
         readonly TextBox txtBeneficiaryAccountNo;
 
         readonly TextBox txtJournalNumber;
-        readonly Label lblJournalNumber;
+        readonly Label lblJournalNumber = new();
         readonly Button btnJournalNumberSearch;
         readonly TextBox txtBeneficiaryRoutingNo;
 
@@ -289,15 +289,15 @@ namespace RV.InvNew.UI
             btnBatchSearch.Click += (_, __) =>
                 DoLookup(txtBatchId, lblBatchHuman, LookupHumanFriendlyBatchId);
             btnDebitAccountTypeSearch.Click += (_, __) =>
-                DoLookup(txtDebitAccountType, lblDebitAccountType, BackOfficeAccounting.LookupAccountType);
+                DoLookup(txtDebitAccountType, lblDebitAccountType, BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
             btnCreditAccountTypeSearch.Click += (_, __) =>
-               DoLookup(txtDebitAccountType, lblCreditAccountType, BackOfficeAccounting.LookupAccountType);
+               DoLookup(txtDebitAccountType, lblCreditAccountType, BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
             btnDebitAccountSearch.Click += (_, __) =>
-               DoLookup(txtDebitAccountType, lblDebitAccount, BackOfficeAccounting.LookupAccount);
+               DoLookup(txtDebitAccountType, lblDebitAccount, BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
             btnCreditAccountSearch.Click += (_, __) =>
-               DoLookup(txtCreditAccountType, lblCreditAccount, BackOfficeAccounting.LookupAccount);
+               DoLookup(txtCreditAccountType, lblCreditAccount, BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
             btnJournalNumberSearch.Click += (_, __) =>
-               DoLookup(txtJournalNumber, lblJournalNumber, BackOfficeAccounting.LookupJournalNo);
+               DoLookup(txtJournalNumber, lblJournalNumber, BackOfficeAccounting.SearchJournals, BackOfficeAccounting.LookupJournalNo);
 
 
             // mutually‐exclusive statuses
@@ -673,6 +673,16 @@ namespace RV.InvNew.UI
         {
             var items = new List<object>(); // TODO: fetch real items
             var sel = SearchPanelUtility.GenerateSearchDialog(items, this);
+            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
+            {
+                tb.Text = id.ToString();
+                human.Text = lookup(id);
+            }
+        }
+        void DoLookup(TextBox tb, Label human, Func<Control, string[]> search,  Func<long, string> lookup)
+        {
+            var items = new List<object>(); // TODO: fetch real items
+            var sel = search(this);
             if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
             {
                 tb.Text = id.ToString();
