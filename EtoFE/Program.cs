@@ -29,6 +29,7 @@ using Tomlyn.Model;
 public static class GlobalState
 {
     public static common.BackOfficeAccountingDataTransfer BAT;
+    public static PosRefresh PR;
 }
 
 public static class Mock

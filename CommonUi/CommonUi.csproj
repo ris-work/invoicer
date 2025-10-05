@@ -27,7 +27,7 @@
     </ItemGroup>
     <!-- On Windows, include Windows and WPF platforms -->
     <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
-        <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
+		<!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" Condition="'$(IsExperimentalWinFormsCairoNativeBuild)' != 'true'" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1938.49" />
     </ItemGroup>
@@ -44,6 +44,7 @@
             <CopyToOutputDirectory>Never</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+
     <PropertyGroup Condition="'$(IsWindowsTarget)' == 'true'">
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     </PropertyGroup>

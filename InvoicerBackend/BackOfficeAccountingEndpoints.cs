@@ -20,6 +20,7 @@ namespace InvoicerBackend
                     BAT.PSchd = ctx.ScheduledPayments.ToList();
                     BAT.RSchd = ctx.ScheduledReceipts.ToList();
                     BAT.AccJI = ctx.AccountsJournalInformations.ToList();
+                    BAT.UserAccounts = ctx.Users.ToList();
                 }
                 Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
                 return BAT;

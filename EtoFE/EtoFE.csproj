@@ -149,7 +149,7 @@
     <!-- On Windows, include Windows and WPF platforms -->
     <ItemGroup Condition="'$(IsWindowsTarget)' == 'True'">
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
-        <PackageReference Include="Eto.Platform.Direct2D" Version="2.9.0" />
+        
         <!--<PackageReference Include="Eto.Platform.WinUI" Version="2.9.0" />-->
         <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
@@ -171,6 +171,9 @@
         <!-- Set to true/false or even override it via command-line -->
         <IsExperimentalWinFormsCairoNativeBuild>true</IsExperimentalWinFormsCairoNativeBuild>
     </PropertyGroup>
+	<ItemGroup Condition="'$(UseExperimentalCoreSWF)' != 'True' and '$(IsWindowsTarget)' == 'True'">
+		<PackageReference Include="Eto.Platform.Direct2D" Version="2.9.0" />
+	</ItemGroup>
     <!-- On non-Windows platforms, include only the GTK platform -->
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'True'">
         <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha6" />
@@ -215,6 +218,9 @@
         <!-- Replace the version below with the appropriate package version you wish to target -->
         <PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />
     </ItemGroup>
+	<Target Name="ShowIsExperimental" BeforeTargets="BeforeBuild">
+		<Message Importance="high" Text="IsExperimentalWinFormsCairoNativeBuild=$(IsExperimentalWinFormsCairoNativeBuild)" />
+	</Target>
     <PropertyGroup>
         <!-- Suppress “reference assemblies for WPF not found” error -->
         <NoWarn>$(NoWarn);MSB3644</NoWarn>
