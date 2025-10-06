@@ -11,7 +11,7 @@ using RV.InvNew.Common;
 
 namespace RV.InvNew.UI
 {
-    public class ScheduledPaymentPanel : Panel
+    public class ScheduledReceiptPanel : Panel
     {
         // controls
         readonly TextBox txtId;
@@ -92,21 +92,21 @@ namespace RV.InvNew.UI
         readonly Button btnCancel;
         readonly Button btnReset;
 
-        ScheduledPayment originalDto;
+        ScheduledReceipt originalDto;
         bool isNew;
         Control lastFocused;
 
         // ctors
-        public ScheduledPaymentPanel()
+        public ScheduledReceiptPanel()
             : this(columns: 2) { }
 
-        public ScheduledPaymentPanel(long id)
+        public ScheduledReceiptPanel(long id)
             : this(columns: 2)
         {
             LoadData(id);
         }
 
-        ScheduledPaymentPanel(int columns)
+        ScheduledReceiptPanel(int columns)
         {
             GlobalState.RefreshBAT();
             GlobalState.RefreshPR();
@@ -196,10 +196,10 @@ namespace RV.InvNew.UI
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
 
             // wire lookups
-            btnIdSearch.Click += (_, __) => DoLookup(txtId, lblIdHuman, BackOfficeAccounting.SearchScheduledPayment, LookupHumanFriendlyScheduledPaymentId);
+            btnIdSearch.Click += (_, __) => DoLookup(txtId, lblIdHuman, BackOfficeAccounting.SearchScheduledReceipt, LookupHumanFriendlyScheduledReceiptId);
             btnCompanySearch.Click += (_, __) => DoLookup(txtCompanyId, lblCompanyHuman, LookupHumanFriendlyCompanyId); // Assuming no search function, using stub
             btnVendorSearch.Click += (_, __) => DoLookup(txtVendorId, lblVendorHuman, LookupHumanFriendlyVendorId); // Assuming no search function, using stub
-            btnInvoiceSearch.Click += (_, __) => DoLookup(txtInvoiceId, lblInvoiceHuman, BackOfficeAccounting.SearchIssuedInvoices, LookupHumanFriendlyInvoiceId);
+            btnInvoiceSearch.Click += (_, __) => DoLookup(txtInvoiceId, lblInvoiceHuman, BackOfficeAccounting.SearchReceivedInvoices, LookupHumanFriendlyInvoiceId);
             btnBatchSearch.Click += (_, __) => DoLookup(txtBatchId, lblBatchHuman, BackOfficeAccounting.SearchBatches, LookupHumanFriendlyBatchId);
 
             btnDebitAccountTypeSearch.Click += (_, __) => DoLookup(txtDebitAccountType, lblDebitAccountType, BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
@@ -390,7 +390,7 @@ namespace RV.InvNew.UI
         void NewRecord()
         {
             isNew = true;
-            originalDto = new ScheduledPayment();
+            originalDto = new ScheduledReceipt();
             ToggleId(false);
             ClearFields();
             dtpNextRunDate.Value = DateTime.Now;
@@ -400,7 +400,7 @@ namespace RV.InvNew.UI
 
         void LoadDialog()
         {
-            var sel = BackOfficeAccounting.SearchScheduledPayment(this);
+            var sel = BackOfficeAccounting.SearchScheduledReceipt(this);
             if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
                 LoadData(id);
         }
@@ -408,17 +408,17 @@ namespace RV.InvNew.UI
         void LoadData(long id)
         {
             Log($"LoadData {id}");
-            // TODO: fetch actual ScheduledPayment from backend
-            originalDto = new ScheduledPayment { Id = id, CompanyId = 1, Currency = "USD", Amount = 100, ExchangeRate = 1.0, PaymentReference = "REF123", NextRunDate = DateOnly.FromDateTime(DateTime.Now), IsPending = true };
+            // TODO: fetch actual ScheduledReceipt from backend
+            originalDto = new ScheduledReceipt { Id = id, CompanyId = 1, Currency = "USD", Amount = 100, ExchangeRate = 1.0, PaymentReference = "REF123", NextRunDate = DateOnly.FromDateTime(DateTime.Now), IsPending = true };
             PopulateFields(originalDto);
             isNew = false;
             ToggleId(true);
         }
 
-        void PopulateFields(ScheduledPayment x)
+        void PopulateFields(ScheduledReceipt x)
         {
             txtId.Text = x.Id.ToString();
-            lblIdHuman.Text = LookupHumanFriendlyScheduledPaymentId(x.Id);
+            lblIdHuman.Text = LookupHumanFriendlyScheduledReceiptId(x.Id);
             txtCompanyId.Text = x.CompanyId.ToString();
             lblCompanyHuman.Text = LookupHumanFriendlyCompanyId(x.CompanyId);
             txtVendorId.Text = x.VendorId?.ToString() ?? "";
@@ -477,9 +477,9 @@ namespace RV.InvNew.UI
             txtId.Parent.Visible = show;
         }
 
-        ScheduledPayment BuildDto()
+        ScheduledReceipt BuildDto()
         {
-            return new ScheduledPayment
+            return new ScheduledReceipt
             {
                 Id = isNew ? 0 : Convert.ToInt64(txtId.Text),
                 CompanyId = Convert.ToInt64(txtCompanyId.Text),
@@ -616,9 +616,9 @@ namespace RV.InvNew.UI
             dtpReconciliationDate.Value = null;
         }
 
-        void Log(string message) => Console.WriteLine($"[ScheduledPaymentPanel] {message}");
+        void Log(string message) => Console.WriteLine($"[ScheduledReceiptPanel] {message}");
 
-        string LookupHumanFriendlyScheduledPaymentId(long id) => BackOfficeAccounting.SearchScheduledPayment(this).FirstOrDefault(s => s.StartsWith(id.ToString())) ?? $"SP#{id}";
+        string LookupHumanFriendlyScheduledReceiptId(long id) => BackOfficeAccounting.SearchScheduledReceipt(this).FirstOrDefault(s => s.StartsWith(id.ToString())) ?? $"SR#{id}";
         string LookupHumanFriendlyCompanyId(long id) => $"Company#{id}"; // Stub
         string LookupHumanFriendlyVendorId(long id) => $"Vendor#{id}"; // Stub
         string LookupHumanFriendlyInvoiceId(long id) => $"Invoice#{id}"; // Stub

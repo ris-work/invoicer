@@ -26,10 +26,163 @@ using Tomlyn.Model;
 //using Eto.WinUI;
 #endif
 
+using System;
+using System.Threading;
+
 public static class GlobalState
 {
     public static common.BackOfficeAccountingDataTransfer BAT;
     public static PosRefresh PR;
+
+    // locks and init flags used only to ensure the first fetch is performed once under a lock
+    private static readonly object _prInitLock = new object();
+    private static bool _prInitialized;
+
+    private static readonly object _batInitLock = new object();
+    private static bool _batInitialized;
+
+    // Public API: refreshes once (thread-safe). First refresh for each variable acquires a lock;
+    // subsequent calls do an atomic swap without taking the lock.
+    public static void RefreshPR()
+    {
+        // Fast path: if already initialized, do non-blocking refresh with atomic swap
+        if (_prInitialized)
+        {
+            DoPRFetchAndSwap();
+            return;
+        }
+
+        // First-time path: only one thread performs the first successful initialization
+        lock (_prInitLock)
+        {
+            if (_prInitialized)
+            {
+                DoPRFetchAndSwap();
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] PR first-time fetch started.");
+                var req = SendAuthenticatedRequest<string, PosRefresh>.Send(
+                    "Refresh",
+                    "/PosRefreshBearerAuth",
+                    true
+                );
+
+                if (!req.Error && req.Out != null)
+                {
+                    Interlocked.Exchange(ref PR, req.Out);
+                    _prInitialized = true;
+                    Console.WriteLine($"[{DateTime.UtcNow:O}] PR first-time fetch succeeded.");
+                    return;
+                }
+
+                Console.WriteLine($"[{DateTime.UtcNow:O}] PR first-time fetch failed; no value set.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] PR first-time fetch exception: {ex}");
+            }
+        }
+    }
+
+    public static void RefreshBAT()
+    {
+        if (_batInitialized)
+        {
+            DoBATFetchAndSwap();
+            return;
+        }
+
+        lock (_batInitLock)
+        {
+            if (_batInitialized)
+            {
+                DoBATFetchAndSwap();
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch started.");
+                var req = SendAuthenticatedRequest<string, common.BackOfficeAccountingDataTransfer>.Send(
+                    "Refresh",
+                    "/BackOfficeAccountingRefresh",
+                    true
+                );
+
+                if (!req.Error && req.Out != null)
+                {
+                    Interlocked.Exchange(ref BAT, req.Out);
+                    _batInitialized = true;
+                    Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch succeeded. Payload: {System.Text.Json.JsonSerializer.Serialize(req.Out)}");
+                    return;
+                }
+
+                Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch failed; no value set.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch exception: {ex}");
+            }
+        }
+    }
+
+    // Internal helpers: single-attempt fetch and atomic swap; exceptions logged and discarded
+    private static void DoPRFetchAndSwap()
+    {
+        try
+        {
+            Console.WriteLine($"[{DateTime.UtcNow:O}] PR refresh attempt started.");
+            var req = SendAuthenticatedRequest<string, PosRefresh>.Send(
+                "Refresh",
+                "/PosRefreshBearerAuth",
+                true
+            );
+
+            if (!req.Error && req.Out != null)
+            {
+                Interlocked.Exchange(ref PR, req.Out);
+                Console.WriteLine($"[{DateTime.UtcNow:O}] PR refresh succeeded.");
+            }
+            else
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] PR refresh failed or returned null.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.UtcNow:O}] PR refresh exception: {ex}");
+        }
+    }
+
+    private static void DoBATFetchAndSwap()
+    {
+        try
+        {
+            Console.WriteLine($"[{DateTime.UtcNow:O}] BAT refresh attempt started.");
+            var req = SendAuthenticatedRequest<string, common.BackOfficeAccountingDataTransfer>.Send(
+                "Refresh",
+                "/BackOfficeAccountingRefresh",
+                true
+            );
+
+            if (!req.Error && req.Out != null)
+            {
+                Interlocked.Exchange(ref BAT, req.Out);
+                Console.WriteLine($"[{DateTime.UtcNow:O}] BAT refresh succeeded.");
+            }
+            else
+            {
+                Console.WriteLine($"[{DateTime.UtcNow:O}] BAT refresh failed or returned null.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.UtcNow:O}] BAT refresh exception: {ex}");
+        }
+    }
 }
 
 public static class Mock

@@ -20,6 +20,7 @@ namespace EtoFE.Search
         public static string[]? SearchScheduledReceipt(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.RSchd, Owner, false, null, ["Id"]);
         public static string[]? SearchItems(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.PR.Catalogue, Owner, false, null, ["Itemcode"]);
         public static string[]? SearchBatches(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.PR.Batches, Owner, false, null, ["Itemcode", "Batchcode"]); //First two elements of the array are always itemcode, batchcode of not null
+        public static string[]? SearchBatches(Control Owner, long Itemcode) => SearchPanelUtility.GenerateSearchDialog(GlobalState.PR.Batches.Where(e => e.itemcode == Itemcode).ToList(), Owner, false, null, ["Itemcode", "Batchcode"]); //First two elements of the array are always itemcode, batchcode of not null
 
         public static string[]? SearchVatCategories(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.PR.VatCategories, Owner, false, null, ["VatCategoryId"]);
         public static string? LookupAccountType(long id) => GlobalState.BAT.AccTypes.Where(e => e.AccountType == id).Select(e => e.AccountTypeName).FirstOrDefault("Unknown Type");

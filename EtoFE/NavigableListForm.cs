@@ -103,7 +103,7 @@ namespace EtoFE
                                         ),
                                         (
                                             "🔧 Adjustments",
-                                            new LoadOncePanel<Panel>(),
+                                            new LoadOncePanel<InventoryAdjustmentPanel>(),
                                             "Adjustments"
                                         ),
                                         ("📦 Items", new LoadOncePanel<Panel>(), "Items"),
@@ -209,7 +209,7 @@ namespace EtoFE
                                         ),
                                         (
                                             "⏰➡ Scheduled Receipts",
-                                            new LoadOncePanel<ScheduledPaymentPanel>(),
+                                            new LoadOncePanel<ScheduledReceiptPanel>(),
                                             "ScheduledPayments"
                                         ),
                                     }
