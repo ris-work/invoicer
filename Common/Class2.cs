@@ -19,6 +19,9 @@ namespace common
     [JsonSerializable(typeof(List<AccountsJournalEntry>))]
     [JsonSerializable(typeof(List<AccountsJournalInformation>))]
     [JsonSerializable(typeof(List<User>))]
+    [JsonSerializable(typeof(List<Inventory>))]
+    [JsonSerializable(typeof(List<Catalogue>))]
+    [JsonSerializable(typeof(List<VatCategory>))]
     [JsonSourceGenerationOptions(IncludeFields = true)]
     public class BackOfficeAccountingDataTransfer
     {
@@ -50,5 +53,11 @@ namespace common
         public List<AccountsJournalInformation> AccJI;
         [JsonInclude]
         public List<User> UserAccounts;
+        [JsonInclude]
+        public List<Catalogue> Cat;
+        [JsonInclude]
+        public List<Inventory> Inv;
+        [JsonInclude]
+        public List<VatCategory> VCat;
     }
 }

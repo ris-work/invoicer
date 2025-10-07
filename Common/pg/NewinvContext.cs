@@ -670,6 +670,9 @@ public partial class NewinvContext : DbContext
             entity.ToTable("issued_invoices", tb => tb.HasComment("Issued invoices only"));
 
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
             entity.Property(e => e.CurrencyCode).HasColumnName("currency_code");
             entity.Property(e => e.Customer).HasColumnName("customer");
             entity.Property(e => e.DiscountTotal).HasColumnName("discount_total");

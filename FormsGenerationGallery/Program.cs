@@ -779,6 +779,10 @@ AC.Run(
                 new JsonEditorExample.JsonEditorPanel(
                     SampleJsonNested,
                     Eto.Forms.Orientation.Vertical
+                ),
+                new JsonEditorExample.FullJsonEditorPanel(
+                    SampleJsonNested,
+                    Eto.Forms.Orientation.Vertical
                 )
             )
             {

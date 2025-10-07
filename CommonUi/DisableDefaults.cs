@@ -94,7 +94,7 @@ namespace CommonUi
 #if WINDOWS || WINFORMS
             var P = Eto.Platform.Instance.ToString();
 
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 System.Windows.Forms.Form WF = (System.Windows.Forms.Form)Frm.ControlObject;
                 WF.AutoScaleMode = AutoScaleMode.Dpi;
@@ -113,7 +113,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 System.Windows.Forms.TextBox WinFormsTB = (System.Windows.Forms.TextBox)
                     GW.ControlObject;
@@ -895,7 +895,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
                 var winButton = button.ControlObject as System.Windows.Forms.Button;
@@ -912,7 +912,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
                 var winButton = button.ControlObject as System.Windows.Forms.Button;
@@ -938,7 +938,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
                 var winButton = button.ControlObject as System.Windows.Forms.Button;
@@ -993,7 +993,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // Access the native System.Windows.Forms.Button control via ControlObject.
                 var winButton = button.ControlObject as System.Windows.Forms.Button;
@@ -1047,7 +1047,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 // For WinForms, the native control is often a System.Windows.Forms.Panel when using auto-scrolling.
                 // Standard OS-rendered scrollbars are not easily themed, so a custom owner-drawn implementation is typically needed.
@@ -1097,7 +1097,7 @@ namespace CommonUi
         {
             var P = Eto.Platform.Instance.ToString();
 #if WINDOWS || WINFORMS
-            if (P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            if (Eto.Platforms.WinForms != null && Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
             {
                 System.Windows.Forms.Button nativeB =
                     b.ControlObject as System.Windows.Forms.Button;
