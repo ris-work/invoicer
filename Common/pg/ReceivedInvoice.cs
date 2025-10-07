@@ -52,4 +52,6 @@ public partial class ReceivedInvoice
     public DateTime LastSavedAt { get; set; }
 
     public double TotalAmountDue { get; set; }
+
+    public DateTime InvoiceTime { get; set; }
 }

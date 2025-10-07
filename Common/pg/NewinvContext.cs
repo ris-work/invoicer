@@ -1026,6 +1026,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.EffectiveDiscountPercentageTotal).HasColumnName("effective_discount_percentage_total");
             entity.Property(e => e.EffectiveVatPercentage).HasColumnName("effective_vat_percentage");
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
+            entity.Property(e => e.InvoiceTime)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("invoice_time");
             entity.Property(e => e.IsPosted)
                 .HasDefaultValue(false)
                 .HasColumnName("is_posted");

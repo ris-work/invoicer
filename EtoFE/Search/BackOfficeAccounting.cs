@@ -38,19 +38,10 @@ namespace EtoFE.Search
             return SearchPanelUtility.GenerateSearchDialog(filteredAccounts, Owner, false, null, ["AccountNo"]);
         }
 
-        public static string[]? SearchItemsByCategory(Control Owner, long categoryBitmask)
-        {
-            var filteredItems = GlobalState.PR.Catalogue.Where(c =>
-                (c.CategoriesBitmask & categoryBitmask) == categoryBitmask).ToList();
-            return SearchPanelUtility.GenerateSearchDialog(filteredItems, Owner, false, null, ["Itemcode"]);
-        }
-
         public static string[]? SearchItemsByDescription(Control Owner, string descriptionPattern)
         {
             var filteredItems = GlobalState.PR.Catalogue.Where(c =>
-                c.Description.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase) ||
-                c.DescriptionPos.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase) ||
-                c.DescriptionWeb.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase)).ToList();
+                c.itemdesc.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase)).ToList();
             return SearchPanelUtility.GenerateSearchDialog(filteredItems, Owner, false, null, ["Itemcode"]);
         }
 
@@ -61,24 +52,18 @@ namespace EtoFE.Search
             return SearchPanelUtility.GenerateSearchDialog(filteredBatches, Owner, false, null, ["Itemcode", "Batchcode"]);
         }
 
-        public static string[]? SearchBatchesBySupplier(Control Owner, long supplierCode)
-        {
-            var filteredBatches = GlobalState.PR.Batches.Where(b => b.Suppliercode == supplierCode).ToList();
-            return SearchPanelUtility.GenerateSearchDialog(filteredBatches, Owner, false, null, ["Itemcode", "Batchcode"]);
-        }
-
         public static string[]? SearchInvoicesByDateRange(Control Owner, DateTime startDate, DateTime endDate, bool isReceived = true)
         {
             if (isReceived)
             {
                 var filteredInvoices = GlobalState.BAT.RInv.Where(i =>
-                    i.InvoiceDate >= startDate && i.InvoiceDate <= endDate).ToList();
+                    i.Date >= startDate && i.CreatedAt <= endDate).ToList();
                 return SearchPanelUtility.GenerateSearchDialog(filteredInvoices, Owner, false, null, ["ReceivedInvoiceNo"]);
             }
             else
             {
                 var filteredInvoices = GlobalState.BAT.IInv.Where(i =>
-                    i.InvoiceDate >= startDate && i.InvoiceDate <= endDate).ToList();
+                    i.Date >= startDate && i.Date <= endDate).ToList();
                 return SearchPanelUtility.GenerateSearchDialog(filteredInvoices, Owner, false, null, ["InvoiceId"]);
             }
         }
@@ -98,19 +83,13 @@ namespace EtoFE.Search
         }
 
         // Advanced search with multiple criteria
-        public static string[]? AdvancedSearchItems(Control Owner, long? categoryBitmask = null,
-            string? descriptionPattern = null, bool? active = null, bool? webActive = null)
+        public static string[]? AdvancedSearchItems(Control Owner, string? descriptionPattern = null, bool? active = null, bool? webActive = null)
         {
             var query = GlobalState.PR.Catalogue.AsQueryable();
 
-            if (categoryBitmask.HasValue)
-                query = query.Where(c => (c.CategoriesBitmask & categoryBitmask.Value) == categoryBitmask.Value);
-
             if (!string.IsNullOrEmpty(descriptionPattern))
                 query = query.Where(c =>
-                    c.Description.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase) ||
-                    c.DescriptionPos.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase) ||
-                    c.DescriptionWeb.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase));
+                    c.itemdesc.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase));
 
             if (active.HasValue)
                 query = query.Where(c => c.Active == active.Value);
@@ -123,16 +102,13 @@ namespace EtoFE.Search
         }
 
         public static string[]? AdvancedSearchBatches(Control Owner, long? itemcode = null,
-            long? supplierCode = null, DateTime? expiryBefore = null, DateTime? mfgAfter = null,
+            DateTime? expiryBefore = null, DateTime? mfgAfter = null,
             bool? batchEnabled = null)
         {
             var query = GlobalState.PR.Batches.AsQueryable();
 
             if (itemcode.HasValue)
                 query = query.Where(b => b.itemcode == itemcode.Value);
-
-            if (supplierCode.HasValue)
-                query = query.Where(b => b.Suppliercode == supplierCode.Value);
 
             if (expiryBefore.HasValue)
                 query = query.Where(b => b.expireson < DateOnly.FromDateTime(expiryBefore.Value));
@@ -155,14 +131,12 @@ namespace EtoFE.Search
         public static long LookupAccountByName(string CriticalAccountName) => GlobalState.BAT.AccInfo.Where(e => e.AccountName.ToLowerInvariant() == CriticalAccountName.ToLowerInvariant()).Select(i => i.AccountNo).First();
 
         // New lookup methods
-        public static string? LookupItem(long id) => GlobalState.PR.Catalogue.Where(c => c.Itemcode == id).Select(c => c.Description).FirstOrDefault("Unknown Item");
+        public static string? LookupItem(long id) => GlobalState.PR.Catalogue.Where(c => c.itemcode == id).Select(c => c.itemdesc).FirstOrDefault("Unknown Item");
         public static string? LookupBatch(long itemcode, long batchcode) =>
             GlobalState.PR.Batches.Where(b => b.itemcode == itemcode && b.batchcode == batchcode)
                 .Select(b => $"Batch {b.batchcode} - {b.SIH} units")
                 .FirstOrDefault("Unknown Batch");
         public static string? LookupVatCategory(long id) => GlobalState.PR.VatCategories.Where(v => v.VatCategoryId == id)
             .Select(v => v.VatName).FirstOrDefault("Unknown VAT Category");
-        public static string? LookupSupplier(long id) => GlobalState.PR.Suppliers.Where(s => s.Suppliercode == id)
-            .Select(s => s.SupplierName).FirstOrDefault("Unknown Supplier");
     }
 }
