@@ -106,6 +106,11 @@ namespace RV.InvNew.UI
         private bool enableUnknownCheck = true;
         private bool isProcessingKey = false; // Prevent re-entrancy
 
+        // Add this to the state variables section in both panels
+        private readonly List<TextBox> naFieldsInOrder;
+        private readonly Dictionary<TextBox, int> naFieldIndex;
+
+
         public ScheduledPaymentPanel() : this(2) { }
         public ScheduledPaymentPanel(long id) : this(2) { LoadData(id); }
 
@@ -179,6 +184,16 @@ namespace RV.InvNew.UI
             btnSave = new Button { Text = TranslationHelper.Translate("Save") };
             btnCancel = new Button { Text = TranslationHelper.Translate("Cancel") };
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
+
+            naFieldsInOrder = new List<TextBox>
+{
+    txtId, txtCompanyId, txtVendorId, txtInvoiceId, txtBatchId,
+    txtJournalNumber, txtDebitAccountType, txtDebitAccount,
+    txtCreditAccountType, txtCreditAccount
+};
+
+            naFieldIndex = naFieldsInOrder.Select((field, index) => new { field, index })
+                .ToDictionary(x => x.field, x => x.index);
 
             // Only include textboxes and the Save button in navigation
             essentialControls = new List<Control>
@@ -383,6 +398,13 @@ namespace RV.InvNew.UI
                     focusedButton.PerformClick();
                     e.Handled = true;
                 }
+                else if (lastFocused is TextBox && naFieldIndex.ContainsKey(lastFocused as TextBox))
+                {
+                    // If we're on an NA field textbox but not the one that triggered the button
+                    Console.WriteLine("OnKeyDown: Moving to next NA field");
+                    MoveToNextNAField(lastFocused as TextBox);
+                    e.Handled = true;
+                }
                 else
                 {
                     Console.WriteLine("OnKeyDown: Regular field navigation");
@@ -506,8 +528,8 @@ namespace RV.InvNew.UI
             // Decide focus based on the result
             if (lookupSuccess && isValidAfter)
             {
-                Console.WriteLine("HandleNAButtonAction: Lookup successful and valid - moving to next field");
-                MoveToNextEssentialControl();
+                Console.WriteLine("HandleNAButtonAction: Lookup successful and valid - moving to next NA field");
+                MoveToNextNAField(associatedTextBox);
             }
             else if (!lookupSuccess)
             {
@@ -523,6 +545,21 @@ namespace RV.InvNew.UI
             {
                 Console.WriteLine("HandleNAButtonAction: No action taken");
             }
+        }
+
+        private void MoveToNextNAField(TextBox currentField)
+        {
+            if (!naFieldIndex.TryGetValue(currentField, out int currentIndex))
+            {
+                Console.WriteLine($"MoveToNextNAField: Current field {currentField.ID} not found in NA fields list");
+                return;
+            }
+
+            int nextIndex = (currentIndex + 1) % naFieldsInOrder.Count;
+            var nextField = naFieldsInOrder[nextIndex];
+
+            Console.WriteLine($"MoveToNextNAField: Moving from {currentField.ID} to {nextField.ID}");
+            nextField.Focus();
         }
 
         private void MoveToNextEssentialControl()

@@ -100,10 +100,16 @@ namespace RV.InvNew.UI
         readonly List<Control> essentialControls;
         readonly Dictionary<Control, Color> originalButtonColors = new();
 
-        // Add these new fields for smart navigation
+        // Navigation mappings
         private readonly Dictionary<TextBox, Button> naFieldMap;
         private readonly Dictionary<Button, TextBox> naButtonToTextBoxMap;
-        private bool enableUnknownCheck = true; // Flag to enable/disable unknown value filtering
+        private bool enableUnknownCheck = true;
+        private bool isProcessingKey = false; // Prevent re-entrancy
+
+        // Add this to the state variables section in both panels
+        private readonly List<TextBox> naFieldsInOrder;
+        private readonly Dictionary<TextBox, int> naFieldIndex;
+
 
         public ScheduledReceiptPanel() : this(2) { }
         public ScheduledReceiptPanel(long id) : this(2) { LoadData(id); }
@@ -179,14 +185,25 @@ namespace RV.InvNew.UI
             btnCancel = new Button { Text = TranslationHelper.Translate("Cancel") };
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
 
+            naFieldsInOrder = new List<TextBox>
+{
+    txtId, txtCompanyId, txtVendorId, txtInvoiceId, txtBatchId,
+    txtJournalNumber, txtDebitAccountType, txtDebitAccount,
+    txtCreditAccountType, txtCreditAccount
+};
+
+            naFieldIndex = naFieldsInOrder.Select((field, index) => new { field, index })
+                .ToDictionary(x => x.field, x => x.index);
+
+            // Only include textboxes and the Save button in navigation
             essentialControls = new List<Control>
             {
-                txtPaymentReference, txtAmount, txtCurrency, txtExchangeRate, btnJournalNumberSearch,
-                btnDebitAccountTypeSearch, btnDebitAccountSearch, btnCreditAccountTypeSearch,
-                btnCreditAccountSearch, txtDescription, btnSave
+                txtPaymentReference, txtAmount, txtCurrency, txtExchangeRate,
+                txtJournalNumber, txtDebitAccountType, txtDebitAccount,
+                txtCreditAccountType, txtCreditAccount, txtDescription, btnSave
             };
 
-            // Initialize NA field mappings for smart navigation
+            // Initialize NA field mappings
             naFieldMap = new Dictionary<TextBox, Button>
             {
                 { txtId, btnIdSearch }, { txtCompanyId, btnCompanySearch }, { txtVendorId, btnVendorSearch },
@@ -211,7 +228,7 @@ namespace RV.InvNew.UI
                 btn.LostFocus += OnNAButtonLostFocus;
             }
 
-            // Wire Events using new HandleNAButtonAction pattern
+            // Wire Events
             btnIdSearch.Click += (_, __) => HandleNAButtonAction(btnIdSearch, txtId, lblIdHuman,
                 BackOfficeAccounting.SearchScheduledReceipt, LookupHumanFriendlyScheduledReceiptId);
             btnCompanySearch.Click += (_, __) => HandleNAButtonAction(btnCompanySearch, txtCompanyId, lblCompanyHuman,
@@ -267,7 +284,10 @@ namespace RV.InvNew.UI
             foreach (var c in focusableControls)
                 c.GotFocus += (s, e) => lastFocused = (Control)s;
 
+            // Use KeyDown instead of PreviewKeyDown (which doesn't exist in Eto.Forms)
+            this.KeyDown += OnKeyDown;
             this.KeyUp += OnKeyUp;
+
             Content = BuildLayout(columns);
             NewRecord();
         }
@@ -315,8 +335,8 @@ namespace RV.InvNew.UI
                 ("IsAutomaticClear", chkIsAutomaticClear),
             };
 
-            var outerLayout = new StackLayout { Orientation = Orientation.Vertical };
-            var layout = new TableLayout { Spacing = new Size(10, 10), Padding = 10 };
+            var outerLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 15 };
+            var layout = new TableLayout { Spacing = new Size(10, 10), Padding = 15 };
 
             for (int i = 0; i < fields.Count; i += columns)
             {
@@ -340,41 +360,67 @@ namespace RV.InvNew.UI
                 new StackLayoutItem(btnNew), new StackLayoutItem(btnLoad), new StackLayoutItem(btnEdit),
                 new StackLayoutItem(btnSave), new StackLayoutItem(btnCancel), new StackLayoutItem(btnReset))
             {
-                Spacing = 5,
+                Spacing = 15,
+                Padding = new Padding(10),
                 Orientation = Orientation.Horizontal,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
-                Height = ColorSettings.InnerControlHeight ?? 30
+                Height = (ColorSettings.InnerControlHeight ?? 30) + 10
             };
             outerLayout.Items.Add(btns);
             outerLayout.Items.Add(layout);
             return outerLayout;
         }
 
-        void OnKeyUp(object sender, KeyEventArgs e)
+        void OnKeyDown(object sender, KeyEventArgs e)
         {
+            if (isProcessingKey)
+            {
+                Console.WriteLine("OnKeyDown: Already processing key, skipping");
+                return;
+            }
+
             if (e.Key == Keys.Enter)
             {
+                Console.WriteLine($"OnKeyDown: Enter pressed, lastFocused = {lastFocused?.GetType().Name}");
+                isProcessingKey = true;
+
                 // Smart NA field navigation
                 if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                 {
-                    // For NA fields: TextBox -> Button
+                    Console.WriteLine($"OnKeyDown: TextBox -> Button focus: {focusedTextBox.ID} -> {associatedButton.Text}");
                     associatedButton.Focus();
                     e.Handled = true;
                 }
                 else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
                 {
-                    // For NA buttons: Simulate click to trigger lookup and validation
+                    Console.WriteLine($"OnKeyDown: Button click triggered: {focusedButton.Text} for {naTextBox.ID}");
+                    // Don't use AsyncInvoke here - trigger immediately
                     focusedButton.PerformClick();
+                    e.Handled = true;
+                }
+                else if (lastFocused is TextBox && naFieldIndex.ContainsKey(lastFocused as TextBox))
+                {
+                    // If we're on an NA field textbox but not the one that triggered the button
+                    Console.WriteLine("OnKeyDown: Moving to next NA field");
+                    MoveToNextNAField(lastFocused as TextBox);
                     e.Handled = true;
                 }
                 else
                 {
-                    // Regular field navigation
+                    Console.WriteLine("OnKeyDown: Regular field navigation");
                     MoveToNextEssentialControl();
                     e.Handled = true;
                 }
+
+                isProcessingKey = false;
             }
-            else if (new[] { Keys.F1, Keys.F2, Keys.F3, Keys.F4 }.Contains(e.Key))
+        }
+
+        void OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if (isProcessingKey) return;
+
+            if (new[] { Keys.F1, Keys.F2, Keys.F3, Keys.F4 }.Contains(e.Key))
             {
                 var map = new Dictionary<Control, Action>
                 {
@@ -395,13 +441,45 @@ namespace RV.InvNew.UI
 
                 if (keyControl != null && map.TryGetValue(keyControl, out var act))
                 {
-                    act();
+                    isProcessingKey = true;
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        act();
+                        isProcessingKey = false;
+                    });
                     e.Handled = true;
                 }
             }
-            else if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key)) { Save(); e.Handled = true; }
-            else if (new[] { Keys.F5, Keys.F6 }.Contains(e.Key)) { Edit(); e.Handled = true; }
-            else if (new[] { Keys.F7, Keys.F8 }.Contains(e.Key)) { ResetForm(); e.Handled = true; }
+            else if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key))
+            {
+                isProcessingKey = true;
+                Application.Instance.AsyncInvoke(() =>
+                {
+                    Save();
+                    isProcessingKey = false;
+                });
+                e.Handled = true;
+            }
+            else if (new[] { Keys.F5, Keys.F6 }.Contains(e.Key))
+            {
+                isProcessingKey = true;
+                Application.Instance.AsyncInvoke(() =>
+                {
+                    Edit();
+                    isProcessingKey = false;
+                });
+                e.Handled = true;
+            }
+            else if (new[] { Keys.F7, Keys.F8 }.Contains(e.Key))
+            {
+                isProcessingKey = true;
+                Application.Instance.AsyncInvoke(() =>
+                {
+                    ResetForm();
+                    isProcessingKey = false;
+                });
+                e.Handled = true;
+            }
         }
 
         void OnNAButtonGotFocus(object sender, EventArgs e)
@@ -411,7 +489,8 @@ namespace RV.InvNew.UI
 
         void OnNAButtonLostFocus(object sender, EventArgs e)
         {
-            if (sender is Button btn && originalButtonColors.TryGetValue(btn, out var color)) btn.BackgroundColor = color;
+            if (sender is Button btn && originalButtonColors.TryGetValue(btn, out var color))
+                btn.BackgroundColor = color;
         }
 
         bool DoLookup(TextBox tb, Label human, Func<Control, string[]> search, Func<long, string> lookup)
@@ -421,40 +500,87 @@ namespace RV.InvNew.UI
             {
                 tb.Text = id.ToString();
                 human.Text = lookup(id);
-                lastFocused?.Focus();
                 return true; // Lookup successful
             }
             return false; // Lookup failed or cancelled
         }
 
         private void HandleNAButtonAction(Button button, TextBox associatedTextBox, Label humanLabel,
-            Func<Control, string[]> search, Func<long, string> lookup)
+    Func<Control, string[]> search, Func<long, string> lookup)
         {
-            // Perform the lookup
-            bool lookupSuccess = DoLookup(associatedTextBox, humanLabel, search, lookup);
+            Console.WriteLine($"HandleNAButtonAction: Starting for {associatedTextBox.ID}");
 
-            // If lookup was successful and we have valid content, move to next field
-            if (lookupSuccess && IsNAFieldValid(associatedTextBox, humanLabel))
+            // Store state BEFORE search
+            string originalText = associatedTextBox.Text;
+            bool wasValidBefore = IsNAFieldValid(associatedTextBox, humanLabel);
+            Console.WriteLine($"HandleNAButtonAction: Before search - Text: '{originalText}', Valid: {wasValidBefore}");
+
+            // Perform the lookup (this opens modal dialog)
+            bool lookupSuccess = DoLookup(associatedTextBox, humanLabel, search, lookup);
+            Console.WriteLine($"HandleNAButtonAction: After search - Success: {lookupSuccess}, Text: '{associatedTextBox.Text}'");
+
+            // Check validity AFTER search
+            bool isValidAfter = IsNAFieldValid(associatedTextBox, humanLabel);
+            Console.WriteLine($"HandleNAButtonAction: After search - Valid: {isValidAfter}");
+
+            // Decide focus based on the result
+            if (lookupSuccess && isValidAfter)
             {
-                MoveToNextEssentialControl();
+                Console.WriteLine("HandleNAButtonAction: Lookup successful and valid - moving to next NA field");
+                MoveToNextNAField(associatedTextBox);
+            }
+            else if (!lookupSuccess)
+            {
+                Console.WriteLine("HandleNAButtonAction: Lookup failed - focusing textbox");
+                associatedTextBox.Focus();
+            }
+            else if (!isValidAfter)
+            {
+                Console.WriteLine("HandleNAButtonAction: Lookup successful but invalid - focusing textbox");
+                associatedTextBox.Focus();
             }
             else
             {
-                // If lookup failed or content is invalid, stay on the textbox
-                associatedTextBox.Focus();
+                Console.WriteLine("HandleNAButtonAction: No action taken");
             }
+        }
+
+        private void MoveToNextNAField(TextBox currentField)
+        {
+            if (!naFieldIndex.TryGetValue(currentField, out int currentIndex))
+            {
+                Console.WriteLine($"MoveToNextNAField: Current field {currentField.ID} not found in NA fields list");
+                return;
+            }
+
+            int nextIndex = (currentIndex + 1) % naFieldsInOrder.Count;
+            var nextField = naFieldsInOrder[nextIndex];
+
+            Console.WriteLine($"MoveToNextNAField: Moving from {currentField.ID} to {nextField.ID}");
+            nextField.Focus();
         }
 
         private void MoveToNextEssentialControl()
         {
             var currentIndex = essentialControls.IndexOf(lastFocused);
+            Console.WriteLine($"MoveToNextEssentialControl: currentIndex = {currentIndex}, lastFocused = {lastFocused?.GetType().Name}");
+
             if (currentIndex > -1 && currentIndex < essentialControls.Count - 1)
             {
-                essentialControls[currentIndex + 1].Focus();
+                var nextControl = essentialControls[currentIndex + 1];
+                Console.WriteLine($"MoveToNextEssentialControl: Next control = {nextControl?.GetType().Name}");
+                nextControl.Focus();
             }
-            else if (lastFocused == essentialControls.LastOrDefault(c => c != btnSave))
+            else if (currentIndex == essentialControls.Count - 1)
             {
-                btnSave.Focus();
+                Console.WriteLine("MoveToNextEssentialControl: Already at last control");
+                // Stay on Save button or wrap around to first
+                essentialControls[0].Focus();
+            }
+            else
+            {
+                Console.WriteLine("MoveToNextEssentialControl: Current control not in list, focusing first");
+                essentialControls[0].Focus();
             }
         }
 
@@ -464,20 +590,17 @@ namespace RV.InvNew.UI
                 return false;
 
             if (!enableUnknownCheck)
-                return true; // Skip validation if flag is disabled
+                return true;
 
-            // Use provided humanLabel or find it
             humanLabel = humanLabel ?? GetHumanLabelForTextBox(textBox);
-            if (humanLabel == null) return true; // If no label found, assume valid
+            if (humanLabel == null) return true;
 
-            // Check if human label indicates a valid resolved value (not unknown)
             string humanText = humanLabel.Text ?? "";
             return !humanText.ToLowerInvariant().Contains("unknown");
         }
 
         private Label GetHumanLabelForTextBox(TextBox textBox)
         {
-            // Map textboxes to their human labels
             var labelMap = new Dictionary<TextBox, Label>
             {
                 { txtId, lblIdHuman }, { txtCompanyId, lblCompanyHuman }, { txtVendorId, lblVendorHuman },
@@ -711,9 +834,9 @@ namespace RV.InvNew.UI
         void Log(string message) => Console.WriteLine($"[ScheduledReceiptPanel] {message}");
 
         string LookupHumanFriendlyScheduledReceiptId(long id) => BackOfficeAccounting.SearchScheduledReceipt(this).FirstOrDefault(s => s.StartsWith(id.ToString())) ?? $"SR#{id}";
-        string LookupHumanFriendlyCompanyId(long id) => $"Company#{id}"; // STUB
-        string LookupHumanFriendlyVendorId(long id) => $"Vendor#{id}";   // STUB
-        string LookupHumanFriendlyInvoiceId(long id) => $"Invoice#{id}"; // STUB
-        string LookupHumanFriendlyBatchId(long id) => $"Batch#{id}";     // STUB
+        string LookupHumanFriendlyCompanyId(long id) => $"Company#{id}";
+        string LookupHumanFriendlyVendorId(long id) => $"Vendor#{id}";
+        string LookupHumanFriendlyInvoiceId(long id) => $"Invoice#{id}";
+        string LookupHumanFriendlyBatchId(long id) => $"Batch#{id}";
     }
 }
