@@ -357,40 +357,43 @@ namespace RV.InvNew.UI
 
         void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (isProcessingKey) return;
+            if (isProcessingKey)
+            {
+                Console.WriteLine("OnKeyDown: Already processing key, skipping");
+                return;
+            }
 
             if (e.Key == Keys.Enter)
             {
+                Console.WriteLine($"OnKeyDown: Enter pressed, lastFocused = {lastFocused?.GetType().Name}");
                 isProcessingKey = true;
 
                 // Smart NA field navigation
                 if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                 {
-                    // For NA fields: TextBox -> Button (but don't trigger search yet)
+                    Console.WriteLine($"OnKeyDown: TextBox -> Button focus: {focusedTextBox.ID} -> {associatedButton.Text}");
                     associatedButton.Focus();
                     e.Handled = true;
                 }
                 else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
                 {
-                    // For NA buttons: Trigger search and then move to next field
-                    Application.Instance.AsyncInvoke(() =>
-                    {
-                        focusedButton.PerformClick();
-                        // After search dialog closes, move to next field
-                        MoveToNextEssentialControl();
-                    });
+                    Console.WriteLine($"OnKeyDown: Button click triggered: {focusedButton.Text} for {naTextBox.ID}");
+                    // Don't use AsyncInvoke here - trigger immediately
+                    focusedButton.PerformClick();
                     e.Handled = true;
                 }
                 else
                 {
-                    // Regular field navigation
-                    Application.Instance.AsyncInvoke(() => MoveToNextEssentialControl());
+                    Console.WriteLine("OnKeyDown: Regular field navigation");
+                    MoveToNextEssentialControl();
                     e.Handled = true;
                 }
 
-                Application.Instance.AsyncInvoke(() => isProcessingKey = false);
+                isProcessingKey = false;
             }
         }
+
+
 
         void OnKeyUp(object sender, KeyEventArgs e)
         {
@@ -482,20 +485,42 @@ namespace RV.InvNew.UI
         }
 
         private void HandleNAButtonAction(Button button, TextBox associatedTextBox, Label humanLabel,
-            Func<Control, string[]> search, Func<long, string> lookup)
+    Func<Control, string[]> search, Func<long, string> lookup)
         {
-            // Perform the lookup
-            bool lookupSuccess = DoLookup(associatedTextBox, humanLabel, search, lookup);
+            Console.WriteLine($"HandleNAButtonAction: Starting for {associatedTextBox.ID}");
 
-            // If lookup was successful and we have valid content, move to next field
-            if (lookupSuccess && IsNAFieldValid(associatedTextBox, humanLabel))
+            // Store state BEFORE search
+            string originalText = associatedTextBox.Text;
+            bool wasValidBefore = IsNAFieldValid(associatedTextBox, humanLabel);
+            Console.WriteLine($"HandleNAButtonAction: Before search - Text: '{originalText}', Valid: {wasValidBefore}");
+
+            // Perform the lookup (this opens modal dialog)
+            bool lookupSuccess = DoLookup(associatedTextBox, humanLabel, search, lookup);
+            Console.WriteLine($"HandleNAButtonAction: After search - Success: {lookupSuccess}, Text: '{associatedTextBox.Text}'");
+
+            // Check validity AFTER search
+            bool isValidAfter = IsNAFieldValid(associatedTextBox, humanLabel);
+            Console.WriteLine($"HandleNAButtonAction: After search - Valid: {isValidAfter}");
+
+            // Decide focus based on the result
+            if (lookupSuccess && isValidAfter)
             {
-                Application.Instance.AsyncInvoke(() => MoveToNextEssentialControl());
+                Console.WriteLine("HandleNAButtonAction: Lookup successful and valid - moving to next field");
+                MoveToNextEssentialControl();
+            }
+            else if (!lookupSuccess)
+            {
+                Console.WriteLine("HandleNAButtonAction: Lookup failed - focusing textbox");
+                associatedTextBox.Focus();
+            }
+            else if (!isValidAfter)
+            {
+                Console.WriteLine("HandleNAButtonAction: Lookup successful but invalid - focusing textbox");
+                associatedTextBox.Focus();
             }
             else
             {
-                // If lookup failed or content is invalid, stay on the textbox
-                Application.Instance.AsyncInvoke(() => associatedTextBox.Focus());
+                Console.WriteLine("HandleNAButtonAction: No action taken");
             }
         }
 
