@@ -180,12 +180,13 @@ namespace RV.InvNew.UI
             btnCancel = new Button { Text = TranslationHelper.Translate("Cancel") };
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
 
+            // Only include textboxes and the Save button in navigation
             essentialControls = new List<Control>
-            {
-                txtPaymentReference, txtAmount, txtCurrency, txtExchangeRate, btnJournalNumberSearch,
-                btnDebitAccountTypeSearch, btnDebitAccountSearch, btnCreditAccountTypeSearch,
-                btnCreditAccountSearch, txtDescription, btnSave
-            };
+{
+    txtPaymentReference, txtAmount, txtCurrency, txtExchangeRate,
+    txtJournalNumber, txtDebitAccountType, txtDebitAccount,
+    txtCreditAccountType, txtCreditAccount, txtDescription, btnSave
+};
 
             // Initialize NA field mappings
             naFieldMap = new Dictionary<TextBox, Button>
@@ -527,16 +528,26 @@ namespace RV.InvNew.UI
         private void MoveToNextEssentialControl()
         {
             var currentIndex = essentialControls.IndexOf(lastFocused);
+            Console.WriteLine($"MoveToNextEssentialControl: currentIndex = {currentIndex}, lastFocused = {lastFocused?.GetType().Name}");
+
             if (currentIndex > -1 && currentIndex < essentialControls.Count - 1)
             {
-                essentialControls[currentIndex + 1].Focus();
+                var nextControl = essentialControls[currentIndex + 1];
+                Console.WriteLine($"MoveToNextEssentialControl: Next control = {nextControl?.GetType().Name}");
+                nextControl.Focus();
             }
-            else if (lastFocused == essentialControls.LastOrDefault(c => c != btnSave))
+            else if (currentIndex == essentialControls.Count - 1)
             {
-                btnSave.Focus();
+                Console.WriteLine("MoveToNextEssentialControl: Already at last control");
+                // Stay on Save button or wrap around to first
+                essentialControls[0].Focus();
+            }
+            else
+            {
+                Console.WriteLine("MoveToNextEssentialControl: Current control not in list, focusing first");
+                essentialControls[0].Focus();
             }
         }
-
         private bool IsNAFieldValid(TextBox textBox, Label humanLabel = null)
         {
             if (string.IsNullOrWhiteSpace(textBox.Text))
