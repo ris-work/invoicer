@@ -100,6 +100,11 @@ namespace RV.InvNew.UI
         readonly List<Control> essentialControls;
         readonly Dictionary<Control, Color> originalButtonColors = new();
 
+        // Add these new fields for smart navigation
+        private readonly Dictionary<TextBox, Button> naFieldMap;
+        private readonly Dictionary<Button, TextBox> naButtonToTextBoxMap;
+        private bool enableUnknownCheck = true; // Flag to enable/disable unknown value filtering
+
         public ScheduledReceiptPanel() : this(2) { }
         public ScheduledReceiptPanel(long id) : this(2) { LoadData(id); }
 
@@ -181,6 +186,17 @@ namespace RV.InvNew.UI
                 btnCreditAccountSearch, txtDescription, btnSave
             };
 
+            // Initialize NA field mappings for smart navigation
+            naFieldMap = new Dictionary<TextBox, Button>
+            {
+                { txtId, btnIdSearch }, { txtCompanyId, btnCompanySearch }, { txtVendorId, btnVendorSearch },
+                { txtInvoiceId, btnInvoiceSearch }, { txtBatchId, btnBatchSearch }, { txtJournalNumber, btnJournalNumberSearch },
+                { txtDebitAccount, btnDebitAccountSearch }, { txtDebitAccountType, btnDebitAccountTypeSearch },
+                { txtCreditAccount, btnCreditAccountSearch }, { txtCreditAccountType, btnCreditAccountTypeSearch }
+            };
+
+            naButtonToTextBoxMap = naFieldMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+
             var naButtons = new[]
             {
                 btnIdSearch, btnCompanySearch, btnVendorSearch, btnInvoiceSearch, btnBatchSearch,
@@ -195,16 +211,27 @@ namespace RV.InvNew.UI
                 btn.LostFocus += OnNAButtonLostFocus;
             }
 
-            btnIdSearch.Click += (_, __) => DoLookup(txtId, lblIdHuman, BackOfficeAccounting.SearchScheduledReceipt, LookupHumanFriendlyScheduledReceiptId);
-            btnCompanySearch.Click += (_, __) => DoLookup(txtCompanyId, lblCompanyHuman, BackOfficeAccounting.SearchAccounts, LookupHumanFriendlyCompanyId);
-            btnVendorSearch.Click += (_, __) => DoLookup(txtVendorId, lblVendorHuman, BackOfficeAccounting.SearchAccounts, LookupHumanFriendlyVendorId);
-            btnInvoiceSearch.Click += (_, __) => DoLookup(txtInvoiceId, lblInvoiceHuman, BackOfficeAccounting.SearchReceivedInvoices, LookupHumanFriendlyInvoiceId);
-            btnBatchSearch.Click += (_, __) => DoLookup(txtBatchId, lblBatchHuman, BackOfficeAccounting.SearchBatches, LookupHumanFriendlyBatchId);
-            btnDebitAccountTypeSearch.Click += (_, __) => DoLookup(txtDebitAccountType, lblDebitAccountType, BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
-            btnCreditAccountTypeSearch.Click += (_, __) => DoLookup(txtCreditAccountType, lblCreditAccountType, BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
-            btnDebitAccountSearch.Click += (_, __) => DoLookup(txtDebitAccount, lblDebitAccount, BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
-            btnCreditAccountSearch.Click += (_, __) => DoLookup(txtCreditAccount, lblCreditAccount, BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
-            btnJournalNumberSearch.Click += (_, __) => DoLookup(txtJournalNumber, lblJournalNumber, BackOfficeAccounting.SearchJournals, BackOfficeAccounting.LookupJournalNo);
+            // Wire Events using new HandleNAButtonAction pattern
+            btnIdSearch.Click += (_, __) => HandleNAButtonAction(btnIdSearch, txtId, lblIdHuman,
+                BackOfficeAccounting.SearchScheduledReceipt, LookupHumanFriendlyScheduledReceiptId);
+            btnCompanySearch.Click += (_, __) => HandleNAButtonAction(btnCompanySearch, txtCompanyId, lblCompanyHuman,
+                BackOfficeAccounting.SearchAccounts, LookupHumanFriendlyCompanyId);
+            btnVendorSearch.Click += (_, __) => HandleNAButtonAction(btnVendorSearch, txtVendorId, lblVendorHuman,
+                BackOfficeAccounting.SearchAccounts, LookupHumanFriendlyVendorId);
+            btnInvoiceSearch.Click += (_, __) => HandleNAButtonAction(btnInvoiceSearch, txtInvoiceId, lblInvoiceHuman,
+                BackOfficeAccounting.SearchReceivedInvoices, LookupHumanFriendlyInvoiceId);
+            btnBatchSearch.Click += (_, __) => HandleNAButtonAction(btnBatchSearch, txtBatchId, lblBatchHuman,
+                BackOfficeAccounting.SearchBatches, LookupHumanFriendlyBatchId);
+            btnDebitAccountTypeSearch.Click += (_, __) => HandleNAButtonAction(btnDebitAccountTypeSearch, txtDebitAccountType, lblDebitAccountType,
+                BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
+            btnCreditAccountTypeSearch.Click += (_, __) => HandleNAButtonAction(btnCreditAccountTypeSearch, txtCreditAccountType, lblCreditAccountType,
+                BackOfficeAccounting.SearchAccountTypes, BackOfficeAccounting.LookupAccountType);
+            btnDebitAccountSearch.Click += (_, __) => HandleNAButtonAction(btnDebitAccountSearch, txtDebitAccount, lblDebitAccount,
+                BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
+            btnCreditAccountSearch.Click += (_, __) => HandleNAButtonAction(btnCreditAccountSearch, txtCreditAccount, lblCreditAccount,
+                BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
+            btnJournalNumberSearch.Click += (_, __) => HandleNAButtonAction(btnJournalNumberSearch, txtJournalNumber, lblJournalNumber,
+                BackOfficeAccounting.SearchJournals, BackOfficeAccounting.LookupJournalNo);
 
             var statuses = new[] { chkIsPending, chkIsProcessing, chkIsCompleted, chkIsFailed, chkIsCancelled };
             foreach (var cb in statuses)
@@ -327,15 +354,23 @@ namespace RV.InvNew.UI
         {
             if (e.Key == Keys.Enter)
             {
-                var currentIndex = essentialControls.IndexOf(lastFocused);
-                if (currentIndex > -1 && currentIndex < essentialControls.Count - 1)
+                // Smart NA field navigation
+                if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                 {
-                    essentialControls[currentIndex + 1].Focus();
+                    // For NA fields: TextBox -> Button
+                    associatedButton.Focus();
                     e.Handled = true;
                 }
-                else if (lastFocused == essentialControls.LastOrDefault(c => c != btnSave))
+                else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
                 {
-                    btnSave.Focus();
+                    // For NA buttons: Simulate click to trigger lookup and validation
+                    focusedButton.PerformClick();
+                    e.Handled = true;
+                }
+                else
+                {
+                    // Regular field navigation
+                    MoveToNextEssentialControl();
                     e.Handled = true;
                 }
             }
@@ -379,7 +414,7 @@ namespace RV.InvNew.UI
             if (sender is Button btn && originalButtonColors.TryGetValue(btn, out var color)) btn.BackgroundColor = color;
         }
 
-        void DoLookup(TextBox tb, Label human, Func<Control, string[]> search, Func<long, string> lookup)
+        bool DoLookup(TextBox tb, Label human, Func<Control, string[]> search, Func<long, string> lookup)
         {
             var sel = search(this);
             if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
@@ -387,7 +422,71 @@ namespace RV.InvNew.UI
                 tb.Text = id.ToString();
                 human.Text = lookup(id);
                 lastFocused?.Focus();
+                return true; // Lookup successful
             }
+            return false; // Lookup failed or cancelled
+        }
+
+        private void HandleNAButtonAction(Button button, TextBox associatedTextBox, Label humanLabel,
+            Func<Control, string[]> search, Func<long, string> lookup)
+        {
+            // Perform the lookup
+            bool lookupSuccess = DoLookup(associatedTextBox, humanLabel, search, lookup);
+
+            // If lookup was successful and we have valid content, move to next field
+            if (lookupSuccess && IsNAFieldValid(associatedTextBox, humanLabel))
+            {
+                MoveToNextEssentialControl();
+            }
+            else
+            {
+                // If lookup failed or content is invalid, stay on the textbox
+                associatedTextBox.Focus();
+            }
+        }
+
+        private void MoveToNextEssentialControl()
+        {
+            var currentIndex = essentialControls.IndexOf(lastFocused);
+            if (currentIndex > -1 && currentIndex < essentialControls.Count - 1)
+            {
+                essentialControls[currentIndex + 1].Focus();
+            }
+            else if (lastFocused == essentialControls.LastOrDefault(c => c != btnSave))
+            {
+                btnSave.Focus();
+            }
+        }
+
+        private bool IsNAFieldValid(TextBox textBox, Label humanLabel = null)
+        {
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+                return false;
+
+            if (!enableUnknownCheck)
+                return true; // Skip validation if flag is disabled
+
+            // Use provided humanLabel or find it
+            humanLabel = humanLabel ?? GetHumanLabelForTextBox(textBox);
+            if (humanLabel == null) return true; // If no label found, assume valid
+
+            // Check if human label indicates a valid resolved value (not unknown)
+            string humanText = humanLabel.Text ?? "";
+            return !humanText.ToLowerInvariant().Contains("unknown");
+        }
+
+        private Label GetHumanLabelForTextBox(TextBox textBox)
+        {
+            // Map textboxes to their human labels
+            var labelMap = new Dictionary<TextBox, Label>
+            {
+                { txtId, lblIdHuman }, { txtCompanyId, lblCompanyHuman }, { txtVendorId, lblVendorHuman },
+                { txtInvoiceId, lblInvoiceHuman }, { txtBatchId, lblBatchHuman }, { txtJournalNumber, lblJournalNumber },
+                { txtDebitAccount, lblDebitAccount }, { txtDebitAccountType, lblDebitAccountType },
+                { txtCreditAccount, lblCreditAccount }, { txtCreditAccountType, lblCreditAccountType }
+            };
+
+            return labelMap.TryGetValue(textBox, out var label) ? label : null;
         }
 
         IEnumerable<T> FindControls<T>(Control control) where T : Control
