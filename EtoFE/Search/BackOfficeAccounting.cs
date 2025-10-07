@@ -19,10 +19,10 @@ namespace EtoFE.Search
         public static string[]? SearchIssuedInvoices(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.IInv, Owner, false, null, ["InvoiceId"]);
         public static string[]? SearchScheduledPayment(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.PSchd, Owner, false, null, ["Id"]);
         public static string[]? SearchScheduledReceipt(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.RSchd, Owner, false, null, ["Id"]);
-        public static string[]? SearchItems(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Catalogue, Owner, false, null, ["Itemcode"]);
-        public static string[]? SearchBatches(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Batches, Owner, false, null, ["Itemcode", "Batchcode"]);
-        public static string[]? SearchBatches(Control Owner, long Itemcode) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Batches.Where(e => e.Itemcode == Itemcode).ToList(), Owner, false, null, ["Itemcode", "Batchcode"]);
-        public static string[]? SearchVatCategories(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.VatCategories, Owner, false, null, ["VatCategoryId"]);
+        public static string[]? SearchItems(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Cat, Owner, false, null, ["Itemcode"]);
+        public static string[]? SearchBatches(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Inv, Owner, false, null, ["Itemcode", "Batchcode"]);
+        public static string[]? SearchBatches(Control Owner, long Itemcode) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Inv.Where(e => e.Itemcode == Itemcode).ToList(), Owner, false, null, ["Itemcode", "Batchcode"]);
+        public static string[]? SearchVatCategories(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.VCat, Owner, false, null, ["VatCategoryId"]);
 
         // New search methods with enhanced filtering options
         public static string[]? SearchAccountsByType(Control Owner, long accountType)
@@ -40,15 +40,16 @@ namespace EtoFE.Search
 
         public static string[]? SearchItemsByDescription(Control Owner, string descriptionPattern)
         {
-            var filteredItems = GlobalState.BAT.Catalogue.Where(c =>
-                c.itemdesc.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase)).ToList();
+            var filteredItems = GlobalState.BAT.Cat.Where(c =>
+                c.Description.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase)).ToList();
             return SearchPanelUtility.GenerateSearchDialog(filteredItems, Owner, false, null, ["Itemcode"]);
         }
 
         public static string[]? SearchBatchesByExpiry(Control Owner, DateTime beforeDate)
         {
-            var filteredBatches = GlobalState.BAT.Batches.Where(b =>
-                b.Expireson < DateOnly.FromDateTime(beforeDate)).ToList();
+            var beforeDateOnly = DateOnly.FromDateTime(beforeDate);
+            var filteredBatches = GlobalState.BAT.Inv.Where(b =>
+                b.ExpDate.HasValue && DateOnly.FromDateTime(b.ExpDate.Value) < beforeDateOnly).ToList();
             return SearchPanelUtility.GenerateSearchDialog(filteredBatches, Owner, false, null, ["Itemcode", "Batchcode"]);
         }
 
@@ -57,13 +58,13 @@ namespace EtoFE.Search
             if (isReceived)
             {
                 var filteredInvoices = GlobalState.BAT.RInv.Where(i =>
-                    i.CreatedAt.Date >= startDate && i.CreatedAt.Date <= endDate).ToList();
+                    i.CreatedAt.Date >= startDate.Date && i.CreatedAt.Date <= endDate.Date).ToList();
                 return SearchPanelUtility.GenerateSearchDialog(filteredInvoices, Owner, false, null, ["ReceivedInvoiceNo"]);
             }
             else
             {
                 var filteredInvoices = GlobalState.BAT.IInv.Where(i =>
-                    i.CreatedAt.Date >= startDate && i.CreatedAt.Date <= endDate).ToList();
+                    i.CreatedAt.Date >= startDate.Date && i.CreatedAt.Date <= endDate.Date).ToList();
                 return SearchPanelUtility.GenerateSearchDialog(filteredInvoices, Owner, false, null, ["InvoiceId"]);
             }
         }
@@ -85,11 +86,11 @@ namespace EtoFE.Search
         // Advanced search with multiple criteria
         public static string[]? AdvancedSearchItems(Control Owner, string? descriptionPattern = null, bool? active = null, bool? webActive = null)
         {
-            var query = GlobalState.BAT.Catalogue.AsQueryable();
+            var query = GlobalState.BAT.Cat.AsQueryable();
 
             if (!string.IsNullOrEmpty(descriptionPattern))
                 query = query.Where(c =>
-                    c.itemdesc.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase));
+                    c.Description.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase));
 
             if (active.HasValue)
                 query = query.Where(c => c.Active == active.Value);
@@ -104,16 +105,16 @@ namespace EtoFE.Search
         public static string[]? AdvancedSearchBatches(Control Owner, long? itemcode = null,
             DateTime? expiryBefore = null, DateTime? mfgAfter = null)
         {
-            var query = GlobalState.BAT.Batches.AsQueryable();
+            var query = GlobalState.BAT.Inv.AsQueryable();
 
             if (itemcode.HasValue)
                 query = query.Where(b => b.Itemcode == itemcode.Value);
 
             if (expiryBefore.HasValue)
-                query = query.Where(b => b.Expireson < DateOnly.FromDateTime(expiryBefore.Value));
-
-            if (mfgAfter.HasValue)
-                query = query.Where(b => b.MfgDate.HasValue && b.MfgDate.Value >= mfgAfter.Value));
+            {
+                var beforeDateOnly = DateOnly.FromDateTime(expiryBefore.Value);
+                query = query.Where(b => b.ExpDate.HasValue && DateOnly.FromDateTime(b.ExpDate.Value) < beforeDateOnly);
+            }
 
             var filteredBatches = query.ToList();
             return SearchPanelUtility.GenerateSearchDialog(filteredBatches, Owner, false, null, ["Itemcode", "Batchcode"]);
@@ -127,12 +128,12 @@ namespace EtoFE.Search
         public static long LookupAccountByName(string CriticalAccountName) => GlobalState.BAT.AccInfo.Where(e => e.AccountName.ToLowerInvariant() == CriticalAccountName.ToLowerInvariant()).Select(i => i.AccountNo).First();
 
         // New lookup methods
-        public static string? LookupItem(long id) => GlobalState.BAT.Catalogue.Where(c => c.itemcode == id).Select(c => c.itemdesc).FirstOrDefault("Unknown Item");
+        public static string? LookupItem(long id) => GlobalState.BAT.Cat.Where(c => c.Itemcode == id).Select(c => c.Description).FirstOrDefault("Unknown Item");
         public static string? LookupBatch(long itemcode, long batchcode) =>
-            GlobalState.BAT.Batches.Where(b => b.Itemcode == itemcode && b.Batchcode == batchcode)
-                .Select(b => $"Batch {b.Batchcode} - {b.SIH} units")
+            GlobalState.BAT.Inv.Where(b => b.Itemcode == itemcode && b.Batchcode == batchcode)
+                .Select(b => $"Batch {b.Batchcode} - {b.Units} units")
                 .FirstOrDefault("Unknown Batch");
-        public static string? LookupVatCategory(long id) => GlobalState.BAT.VatCategories.Where(v => v.VatCategoryId == id)
+        public static string? LookupVatCategory(long id) => GlobalState.BAT.VCat.Where(v => v.VatCategoryId == id)
             .Select(v => v.VatName).FirstOrDefault("Unknown VAT Category");
     }
 }
