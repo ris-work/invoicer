@@ -362,19 +362,23 @@ namespace RV.InvNew.UI
             if (e.Key == Keys.Enter)
             {
                 isProcessingKey = true;
-                Application.Instance.AsyncInvoke(() => isProcessingKey = false);
 
                 // Smart NA field navigation
                 if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                 {
-                    // For NA fields: TextBox -> Button
+                    // For NA fields: TextBox -> Button (but don't trigger search yet)
                     associatedButton.Focus();
                     e.Handled = true;
                 }
                 else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
                 {
-                    // For NA buttons: Simulate click to trigger lookup and validation
-                    Application.Instance.AsyncInvoke(() => focusedButton.PerformClick());
+                    // For NA buttons: Trigger search and then move to next field
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        focusedButton.PerformClick();
+                        // After search dialog closes, move to next field
+                        MoveToNextEssentialControl();
+                    });
                     e.Handled = true;
                 }
                 else
@@ -383,6 +387,8 @@ namespace RV.InvNew.UI
                     Application.Instance.AsyncInvoke(() => MoveToNextEssentialControl());
                     e.Handled = true;
                 }
+
+                Application.Instance.AsyncInvoke(() => isProcessingKey = false);
             }
         }
 
