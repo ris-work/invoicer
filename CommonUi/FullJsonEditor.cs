@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Eto.Drawing;
@@ -25,6 +26,7 @@ namespace JsonEditorExample
         private StackLayout _rootLayout;
         private StackLayout _contentContainer;
         private Dictionary<string, Control> _controlCache = new Dictionary<string, Control>();
+        private bool _showUploadButton = true;
 
         // Add a logging delegate
         public static LogDelegate Log = Console.WriteLine;
@@ -76,31 +78,43 @@ namespace JsonEditorExample
         /// <summary>
         /// Constructs a FullJsonEditorPanel from a JSON object expressed as an IReadOnlyDictionary.
         /// </summary>
-        public FullJsonEditorPanel(IReadOnlyDictionary<string, JsonElement> data, Orientation orientation, bool showHeader = true)
-            : this(data, orientation, "", null, showHeader) { }
+        public FullJsonEditorPanel(IReadOnlyDictionary<string, JsonElement> data, Orientation orientation, bool showHeader = true, bool showUploadButton = true)
+            : this(data, orientation, "", null, showHeader, showUploadButton) { }
 
         /// <summary>
         /// Constructs a FullJsonEditorPanel from a JSON string.
         /// </summary>
-        public FullJsonEditorPanel(string json, Orientation orientation, bool showHeader = true)
+        /// <param name="jsonString">The JSON string to parse and display</param>
+        /// <param name="baseOrientation">The base orientation for the layout (Horizontal or Vertical)</param>
+        /// <param name="showHeader">Whether to show the header with Show/Load buttons</param>
+        /// <param name="showUploadButton">Whether to show upload buttons for potential images</param>
+        public FullJsonEditorPanel(
+            string jsonString,
+            Orientation baseOrientation,
+            bool showHeader = true,
+            bool showUploadButton = true
+        )
         {
+            Log($"[Init] String constructor called with orientation: {baseOrientation}, showHeader: {showHeader}, showUploadButton: {showUploadButton}");
+
             _showHeader = showHeader;
+            _showUploadButton = showUploadButton;
             _rootPanel = this; // This is root panel
             _panelPath = ""; // Root panel has empty path
 
             try
             {
                 // Validate and normalize JSON
-                if (string.IsNullOrWhiteSpace(json))
+                if (string.IsNullOrWhiteSpace(jsonString))
                 {
-                    Log("[Init] JSON is empty, using empty object");
-                    json = "{}";
+                    Log("[Init] JSON string is empty, using empty object");
+                    jsonString = "{}";
                 }
 
-                Log($"[Init] Original JSON: {json}");
+                Log($"[Init] Original JSON: {jsonString}");
 
                 // Parse and validate JSON
-                var document = JsonDocument.Parse(json);
+                var document = JsonDocument.Parse(jsonString);
                 _currentJson = JsonSerializer.Serialize(document, _jsonOptions);
 
                 Log($"[Init] Normalized JSON: {_currentJson}");
@@ -113,7 +127,71 @@ namespace JsonEditorExample
             }
 
             var data = ConvertJsonToDictionary(_currentJson);
-            Initialize(data, orientation, "", null, showHeader);
+            Initialize(data, baseOrientation, "", null, showHeader, showUploadButton);
+
+            Log("[Init] String constructor completed successfully");
+        }
+
+        /// <summary>
+        /// Constructs a FullJsonEditorPanel from a JSON string.
+        /// </summary>
+        /// <summary>
+        /// Private constructor that supports recursive calls.
+        /// </summary>
+        private FullJsonEditorPanel(
+            IReadOnlyDictionary<string, JsonElement> data,
+            Orientation orientation,
+            string path,
+            Dictionary<string, Type> originalTypes,
+            bool showHeader = true,
+            bool showUploadButton = true
+        )
+        {
+            _showHeader = showHeader;
+            _showUploadButton = showUploadButton;
+            _panelPath = path;
+
+
+            // For nested panels, we need to find root panel to access current JSON
+            // This is a bit of a hack, but it's necessary for nested panels to work correctly
+            if (string.IsNullOrEmpty(path))
+            {
+                _rootPanel = this; // This is root panel
+            }
+            else
+            {
+                // For nested panels, we need to traverse up to find the root panel
+                // This is a simplified approach - in a real implementation, you might want to pass a reference
+                _rootPanel = this;
+            }
+
+            if (originalTypes != null)
+                OriginalTypes = originalTypes;
+            else
+                OriginalTypes = new Dictionary<string, Type>();
+
+            Log($"[Init] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
+
+            // Create the root layout with header
+            _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Create header if needed
+            if (_showHeader && string.IsNullOrEmpty(path)) // Only show header for root panel
+            {
+                var header = CreateHeader();
+                _rootLayout.Items.Add(new StackLayoutItem(header, HorizontalAlignment.Stretch));
+            }
+
+            // Create a container for the content
+            _contentContainer = new StackLayout { Orientation = orientation, Spacing = 5 };
+            _rootLayout.Items.Add(new StackLayoutItem(_contentContainer, HorizontalAlignment.Stretch, true));
+
+            BuildFromDictionary(data, _contentContainer, orientation, path);
+
+            this.Content = _rootLayout;
+
+            // Set control states based on app mode
+            UpdateControlStates();
         }
 
         /// <summary>
@@ -174,24 +252,38 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Private constructor that supports recursive calls.
+        /// Private initialization method that supports recursive calls.
         /// </summary>
+        /// <param name="data">The JSON data dictionary to build from</param>
+        /// <param name="orientation">The orientation for the layout</param>
+        /// <param name="path">The path of this panel in the JSON structure</param>
+        /// <param name="originalTypes">Dictionary of original types for validation</param>
+        /// <param name="showHeader">Whether to show the header with Show/Load buttons</param>
+        /// <param name="showUploadButton">Whether to show upload buttons for potential images</param>
         private void Initialize(
             IReadOnlyDictionary<string, JsonElement> data,
             Orientation orientation,
             string path,
             Dictionary<string, Type> originalTypes,
-            bool showHeader = true
+            bool showHeader,
+            bool showUploadButton
         )
         {
+            Log($"[Initialize] Starting with path: '{path}', orientation: {orientation}, showHeader: {showHeader}, showUploadButton: {showUploadButton}");
+
             _showHeader = showHeader;
+            _showUploadButton = showUploadButton;
             _panelPath = path;
 
             // For nested panels, we need to find root panel to access current JSON
-            // This is a bit of a hack, but it's necessary for nested panels to work correctly
             if (string.IsNullOrEmpty(path))
             {
                 _rootPanel = this; // This is root panel
+            }
+            else
+            {
+                // For nested panels, we need to traverse up to find the root panel
+                _rootPanel = this;
             }
 
             if (originalTypes != null)
@@ -199,7 +291,7 @@ namespace JsonEditorExample
             else
                 OriginalTypes = new Dictionary<string, Type>();
 
-            Log($"[Init] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
+            Log($"[Initialize] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
 
             // Create the root layout with header
             _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
@@ -221,8 +313,9 @@ namespace JsonEditorExample
 
             // Set control states based on app mode
             UpdateControlStates();
-        }
 
+            Log($"[Initialize] Completed successfully for path: '{path}'");
+        }
         /// <summary>
         /// Gets root panel, which contains current JSON.
         /// </summary>
@@ -252,6 +345,7 @@ namespace JsonEditorExample
         {
             var rootPanel = GetRootPanel();
             rootPanel._currentJson = json;
+            Log($"[SetCurrentJson] Updated stored JSON: {json}");
         }
 
         /// <summary>
@@ -501,7 +595,8 @@ namespace JsonEditorExample
 
             try
             {
-                var json = GetCurrentJson();
+                // Always get the latest JSON from the UI
+                var json = ToJson();
                 Log($"[Show JSON] Current JSON: {json}");
 
                 // Create dialog and content separately
@@ -526,11 +621,11 @@ namespace JsonEditorExample
                     Padding = 10,
                     Spacing = 5,
                     Items =
-                    {
-                        new Label { Text = "Current JSON:" },
-                        new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
-                        new StackLayoutItem(closeButton, HorizontalAlignment.Right)
-                    }
+            {
+                new Label { Text = "Current JSON:" },
+                new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
+                new StackLayoutItem(closeButton, HorizontalAlignment.Right)
+            }
                 };
 
                 dialog.Content = layout;
@@ -943,7 +1038,7 @@ namespace JsonEditorExample
                 case JsonValueKind.Object:
                     Log($"[Build Control] Creating nested panel for object at path '{path}'");
                     var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(value.GetRawText());
-                    var nestedPanel = new FullJsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes, _showHeader);
+                    var nestedPanel = new FullJsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes, _showHeader, _showUploadButton);
                     // Set the root panel reference for the nested panel
                     nestedPanel._rootPanel = this._rootPanel;
                     return nestedPanel;
@@ -1057,44 +1152,117 @@ namespace JsonEditorExample
                         }
                     }
 
-                    // Check for base64 encoded image
-                    if (IsBase64Image(stringValue, out ImageType imageType))
+                    // Check for images (base64, URLs, or file extensions)
+                    if (IsBase64Image(stringValue, out ImageType imageType) ||
+                        IsImageUrl(stringValue) ||
+                        HasImageExtension(stringValue))
                     {
-                        try
-                        {
-                            Log($"[Build Control] Creating image view for {imageType} at path '{path}'");
-                            byte[] imageBytes = Convert.FromBase64String(stringValue);
-                            var image = new Bitmap(imageBytes);
-                            var imageView = new ImageView { Image = image, Tag = path };
+                        Log($"[Build Control] Detected potential image at path '{path}'");
 
-                            // In app mode, make the image clickable to log
-                            if (AppMode)
+                        // Create an upload/change button
+                        var uploadButton = new Button { Text = "Upload/Change Image", Tag = path };
+                        uploadButton.Click += (s, e) => UploadImageAsBase64(path);
+
+                        // For base64 images, show the existing image
+                        if (IsBase64Image(stringValue, out ImageType type) && type != ImageType.Unknown)
+                        {
+                            try
                             {
-                                imageView.Cursor = Cursors.Pointer;
-                                imageView.MouseDown += (sender, e) =>
+                                Log($"[Build Control] Creating image view for {type} at path '{path}'");
+                                byte[] imageBytes = Convert.FromBase64String(stringValue);
+                                var image = new Bitmap(imageBytes);
+                                var imageView = new ImageView
                                 {
-                                    Log($"[App Mode] Image clicked at path '{path}'");
+                                    Image = image,
+                                    Tag = path,
+                                    Width = 200,
+                                    Height = 150,
+                                    //ScaleMode = ScaleMode.Fit
+                                };
+
+                                // In app mode, make the image clickable to log
+                                if (AppMode)
+                                {
+                                    imageView.Cursor = Cursors.Pointer;
+                                    imageView.MouseDown += (sender, e) =>
+                                    {
+                                        Log($"[App Mode] Image clicked at path '{path}'");
+                                    };
+                                }
+
+                                // Create container with image and button
+                                var containerWithImage = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+                                containerWithImage.Items.Add(new StackLayoutItem(imageView, HorizontalAlignment.Center));
+                                containerWithImage.Items.Add(new StackLayoutItem(uploadButton, HorizontalAlignment.Center));
+
+                                return containerWithImage;
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"[Build Control] Error loading image at path '{path}': {ex.Message}");
+                                // Fall back to showing text box with upload button
+                            }
+                        }
+
+                        // Create container with text (for URLs) and upload button
+                        var containerWithUpload = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+                        // For URLs, show the URL as a clickable link
+                        if (IsImageUrl(stringValue))
+                        {
+                            var urlLabel = new Label
+                            {
+                                Text = $"URL: {stringValue}",
+                                Tag = path,
+                                TextColor = Colors.Blue,
+                                Font = Fonts.Monospace(fontSize),
+                                Cursor = Cursors.Pointer,
+                                Wrap = WrapMode.Word
+                            };
+
+                            urlLabel.MouseDoubleClick += (sender, e) => {
+                                try
+                                {
+                                    Process.Start(new Uri(stringValue).ToString());
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log($"[Build Control] Error opening URL '{stringValue}': {ex.Message}");
+                                }
+                            };
+
+                            containerWithUpload.Items.Add(new StackLayoutItem(urlLabel, HorizontalAlignment.Stretch, true));
+                        }
+                        else
+                        {
+                            // For base64 or files with extensions, show text box
+                            var textBox = new TextBox
+                            {
+                                Text = IsImageUrl(stringValue) ? stringValue : "[Base64 Image Data]",
+                                Tag = path,
+                                Width = cWidth,
+                                Font = Fonts.Monospace(fontSize),
+                                ReadOnly = IsImageUrl(stringValue)
+                            };
+
+                            // Don't allow editing of image URLs in the textbox
+                            if (!IsImageUrl(stringValue))
+                            {
+                                textBox.TextChanged += (sender, e) => {
+                                    Log($"[TextBox] Changed at path '{path}' to {textBox.Text}");
+                                    UpdateValueAtPath(path, textBox.Text);
                                 };
                             }
 
-                            // Add a button to change the image
-                            var changeImageButton = new Button { Text = "Change Image", Tag = path };
-                            changeImageButton.Click += (s, e) => ChangeImage(path);
-
-                            var container = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
-                            container.Items.Add(new StackLayoutItem(imageView));
-                            container.Items.Add(new StackLayoutItem(changeImageButton));
-
-                            return container;
+                            containerWithUpload.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
                         }
-                        catch (Exception ex)
-                        {
-                            Log($"[Build Control] Error loading image at path '{path}': {ex.Message}");
-                            // Fall back to a text box if image loading fails
-                        }
+
+                        containerWithUpload.Items.Add(new StackLayoutItem(uploadButton, HorizontalAlignment.Center));
+
+                        return containerWithUpload;
                     }
 
-                    // Default to a text box
+                    // Default to a text box with upload button (if enabled)
                     Log($"[Build Control] Creating default textbox for string value at path '{path}'");
                     var defaultTextBox = new TextBox
                     {
@@ -1104,21 +1272,35 @@ namespace JsonEditorExample
                         Font = Fonts.Monospace(fontSize),
                     };
 
-                    // Add an "Upload Image" button for potential base64 images
-                    var uploadButton = new Button { Text = "Upload Image", Tag = path };
-                    uploadButton.Click += (s, e) => UploadImageAsBase64(path);
-
                     // Handle text changes
                     defaultTextBox.TextChanged += (sender, e) => {
                         Log($"[TextBox] Changed at path '{path}' to {defaultTextBox.Text}");
                         UpdateValueAtPath(path, defaultTextBox.Text);
                     };
 
-                    var containerWithUpload = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
-                    containerWithUpload.Items.Add(new StackLayoutItem(defaultTextBox, HorizontalAlignment.Stretch, true));
-                    containerWithUpload.Items.Add(new StackLayoutItem(uploadButton));
+                    // Add upload button if it might be an image or if enabled
+                    if (_showUploadButton &&
+                        (stringValue.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                         stringValue.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                         stringValue.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                         stringValue.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                         stringValue.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                         IsBase64Image(stringValue, out _)))
+                    {
+                        var uploadButton = new Button { Text = "Upload Image", Tag = path };
+                        uploadButton.Click += (s, e) => UploadImageAsBase64(path);
 
-                    return containerWithUpload;
+                        var containerWithUpload = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+                        containerWithUpload.Items.Add(new StackLayoutItem(defaultTextBox, HorizontalAlignment.Stretch, true));
+                        containerWithUpload.Items.Add(new StackLayoutItem(uploadButton));
+
+                        return containerWithUpload;
+                    }
+                    else
+                    {
+                        // Just return the textbox without upload button
+                        return defaultTextBox;
+                    }
 
                 default:
                     Log($"[Build Control] Creating fallback textbox for value '{value}' at path '{path}'");
@@ -1243,59 +1425,22 @@ namespace JsonEditorExample
             return Regex.IsMatch(value, @"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$");
         }
 
-        /// <summary>
-        /// Checks if a string is a valid base64 encoded image.
-        /// </summary>
-        private bool IsBase64Image(string value, out ImageType imageType)
-        {
-            imageType = ImageType.Unknown;
-
-            // Check if it's a valid base64 string
-            if (value.Length % 4 != 0 || !Regex.IsMatch(value, @"^[a-zA-Z0-9\+/]*={0,3}$"))
-                return false;
-
-            try
-            {
-                byte[] bytes = Convert.FromBase64String(value);
-
-                // Check for image signatures
-                if (bytes.Length < 4)
-                    return false;
-
-                // JPEG signature: FF D8 FF
-                if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
-                {
-                    imageType = ImageType.Jpeg;
-                    return true;
-                }
-
-                // PNG signature: 89 50 4E 47
-                if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
-                {
-                    imageType = ImageType.Png;
-                    return true;
-                }
-
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        
 
         /// <summary>
         /// Opens a file dialog to select an image and converts it to base64.
         /// </summary>
         private void UploadImageAsBase64(string path)
         {
+            Log($"[Upload Image] Starting image upload for path '{path}'");
+
             var fileDialog = new OpenFileDialog
             {
                 Title = "Select an image",
                 Filters =
-                {
-                    new FileFilter("Image Files (*.png;*.jpg;*.jpeg)", ".png", ".jpg", ".jpeg")
-                }
+        {
+            new FileFilter("Image Files (*.png;*.jpg;*.jpeg;*.gif)", ".png", ".jpg", ".jpeg", ".gif")
+        }
             };
 
             if (fileDialog.ShowDialog(this) == DialogResult.Ok)
@@ -1305,15 +1450,30 @@ namespace JsonEditorExample
                     byte[] imageBytes = File.ReadAllBytes(fileDialog.FileName);
                     string base64 = Convert.ToBase64String(imageBytes);
 
+                    // Detect image type from file extension
+                    ImageType imageType = ImageType.Unknown;
+                    string extension = Path.GetExtension(fileDialog.FileName).ToLowerInvariant();
+                    if (extension == ".png")
+                        imageType = ImageType.Png;
+                    else if (extension == ".jpg" || extension == ".jpeg")
+                        imageType = ImageType.Jpeg;
+
+                    Log($"[Upload Image] Selected image: {fileDialog.FileName}, Type: {imageType}, Size: {imageBytes.Length} bytes");
                     Log($"[Upload Image] Updating image at path '{path}'");
+
                     // Update the JSON with the new image
                     UpdateValueAtPath(path, base64);
+                    Log($"[Upload Image] Successfully updated image at path '{path}'");
                 }
                 catch (Exception ex)
                 {
                     Log($"[Upload Image] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error loading image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
+            }
+            else
+            {
+                Log("[Upload Image] User cancelled image selection");
             }
         }
 
@@ -1542,6 +1702,152 @@ namespace JsonEditorExample
 
                 default:
                     return (false, $"Unknown type: {type}");
+            }
+        }
+
+        /// <summary>
+        /// Checks if a string is a valid image URL (for common image services)
+        /// </summary>
+        private bool IsImageUrl(string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length < 8)
+                return false;
+
+            // Must start with http:// or https://
+            if (!value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            try
+            {
+                var uri = new Uri(value);
+
+                // Must be HTTP or HTTPS
+                if (uri.Scheme != "http" && uri.Scheme != "https")
+                    return false;
+
+                // Remove protocol and any query parameters for pattern matching
+                string cleanedUrl = uri.AbsoluteUri.Substring(uri.Scheme.Length + 3); // Remove "://" or "://"
+
+                // Remove any query parameters or fragments
+                int queryIndex = cleanedUrl.IndexOf('?');
+                if (queryIndex >= 0)
+                    cleanedUrl = cleanedUrl.Substring(0, queryIndex);
+
+                int fragmentIndex = cleanedUrl.IndexOf('#');
+                if (fragmentIndex >= 0)
+                    cleanedUrl = cleanedUrl.Substring(0, fragmentIndex);
+
+                // Check for specific image URL patterns - much more strict now
+                return Regex.IsMatch(cleanedUrl,
+                    @"^(?:" +
+                    @"i\.imgur\.com/|" +                    // Imgur
+                    @"images\.(?:unsplash|pixabay|pexels)\.com/|" + // Unsplash, Pixabay, Pexels
+                    @"media\.giphy\.com/|" +                  // Giphy
+                    @"(?:img|image|photo)\." +                // Common image subdomains
+                    @")" +
+                    @"(?:" +
+                    @"/[^/]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:/)?$|" +  // Ends with image extension
+                    @"/[^/]+/[^/]+/\d+$|" +                // Imgur pattern (username/image/id)
+                    @"/media/[^/]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)$|" + // Media folder with extension
+                    @")",
+                    RegexOptions.IgnoreCase);
+            }
+            catch (UriFormatException)
+            {
+                // Not a valid URI
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log($"[IsImageUrl] Error checking URL '{value}': {ex.Message}");
+                return false;
+            }
+        }
+        /// <summary>
+        /// Checks if a string has a common image file extension
+        /// </summary>
+        private bool HasImageExtension(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            string lowerValue = value.ToLowerInvariant();
+            return lowerValue.EndsWith(".jpg") ||
+                   lowerValue.EndsWith(".jpeg") ||
+                   lowerValue.EndsWith(".png") ||
+                   lowerValue.EndsWith(".gif") ||
+                   lowerValue.EndsWith(".webp") ||
+                   lowerValue.EndsWith(".bmp") ||
+                   lowerValue.EndsWith(".svg");
+        }
+
+        /// <summary>
+        /// Checks if a string is a valid base64 encoded image.
+        /// </summary>
+        private bool IsBase64Image(string value, out ImageType imageType)
+        {
+            imageType = ImageType.Unknown;
+
+            if (string.IsNullOrEmpty(value) || value.Length < 100) // Base64 images are usually longer
+                return false;
+
+            // Check if it's a valid base64 string
+            if (value.Length % 4 != 0 || !Regex.IsMatch(value, @"^[a-zA-Z0-9\+/]*={0,3}$"))
+                return false;
+
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(value);
+
+                // Check for image signatures
+                if (bytes.Length < 8) // Need at least 8 bytes for reliable detection
+                    return false;
+
+                // JPEG signature: FF D8 FF
+                if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+                {
+                    imageType = ImageType.Jpeg;
+                    return true;
+                }
+
+                // PNG signature: 89 50 4E 47
+                if (bytes.Length >= 8 &&
+                    bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                {
+                    imageType = ImageType.Png;
+                    return true;
+                }
+
+                // GIF signature: GIF87a or GIF89a
+                if (bytes.Length >= 6 &&
+                    bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46)
+                {
+                    if ((bytes[3] == 0x38 && bytes[4] == 0x37 && bytes[5] == 0x61) || // GIF87a
+                        (bytes[3] == 0x38 && bytes[4] == 0x39 && bytes[5] == 0x61)) // GIF89a
+                    {
+                        return true;
+                    }
+                }
+
+                // BMP signature: BM
+                if (bytes.Length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D)
+                {
+                    return true;
+                }
+
+                // WebP signature
+                if (bytes.Length >= 12 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -1874,9 +2180,6 @@ namespace JsonEditorExample
         /// <summary>
         /// Deletes an element at the specified path.
         /// </summary>
-        /// <summary>
-        /// Deletes an element at the specified path.
-        /// </summary>
         private void DeleteElement(string path)
         {
             Log($"[Delete Element] Deleting element at path '{path}'");
@@ -1886,8 +2189,16 @@ namespace JsonEditorExample
             {
                 try
                 {
-                    var json = GetCurrentJson();
-                    Log($"[Delete Element] Current JSON: {json}");
+                    // Get the freshest JSON by building it from the UI controls
+                    var json = BuildJsonFromRoot();
+                    Log($"[Delete Element] Current JSON from UI: {json}");
+
+                    if (string.IsNullOrWhiteSpace(json) || json == "{}")
+                    {
+                        Log("[Delete Element] JSON is empty, cannot delete property");
+                        MessageBox.Show(this, "Cannot delete property from empty JSON.", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+                        return;
+                    }
 
                     // Check if this is an array path
                     if (path.Contains("[") && path.Contains("]"))
@@ -1932,8 +2243,29 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Deletes an array item at the specified path and index.
+        /// Builds JSON from the root panel controls.
         /// </summary>
+        private string BuildJsonFromRoot()
+        {
+            try
+            {
+                var rootJson = new Dictionary<string, object>();
+
+                // Build from the root content container
+                BuildJsonFromControls(_contentContainer, rootJson);
+
+                var json = JsonSerializer.Serialize(rootJson, _jsonOptions);
+                Log($"[BuildJsonFromRoot] Built JSON: {json}");
+                return json;
+            }
+            catch (Exception ex)
+            {
+                Log($"[BuildJsonFromRoot] Error: {ex.Message}");
+                // Fallback to stored JSON
+                return _currentJson ?? "{}";
+            }
+        }
+
         /// <summary>
         /// Deletes an array item at the specified path and index.
         /// </summary>
@@ -1941,21 +2273,37 @@ namespace JsonEditorExample
         {
             Log($"[Delete Array Item] Deleting item at index {index} in array at path '{arrayPath}'");
 
-            var result = MessageBox.Show(this, $"Are you sure you want to delete item at index {index} in '{arrayPath}'?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxType.Question);
+            // Parse the complex array path
+            var (basePath, indices) = ParseComplexArrayPath(arrayPath);
+            Log($"[Delete Array Item] Base path: '{basePath}', Indices: [{string.Join(", ", indices)}]");
+
+            var message = indices.Count > 1
+                ? $"Are you sure you want to delete item at index {index} in nested array at path '{arrayPath}'?"
+                : $"Are you sure you want to delete item at index {index} in array at path '{arrayPath}'?";
+
+            var result = MessageBox.Show(this, message, "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxType.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
                     var json = GetCurrentJson();
-                    Log($"[Delete Array Item] Current JSON: {json}");
-                    var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
-                    Log($"[Delete Array Item] Updated JSON: {updatedJson}");
+                    Log($"[Delete Array Item] Current JSON length: {json.Length}");
 
-                    // Update the current JSON in the root panel
+                    // For nested arrays, we need special handling
+                    if (indices.Count > 1)
+                    {
+                        Log("[Delete Array Item] Handling nested array deletion");
+                        // TODO: Implement nested array deletion for multiple levels
+                        MessageBox.Show(this, "Nested array deletion is not yet fully implemented.", "Not Implemented", MessageBoxButtons.OK, MessageBoxType.Information);
+                        return;
+                    }
+
+                    var updatedJson = DeleteItemFromArrayJson(json, basePath, index);
+                    Log($"[Delete Array Item] Updated JSON length: {updatedJson.Length}");
                     SetCurrentJson(updatedJson);
 
                     // Refresh the UI for the specific path
-                    RefreshPath(arrayPath);
+                    RefreshPath(basePath);
 
                     Log("[Delete Array Item] Item deleted successfully");
                 }
@@ -2156,18 +2504,49 @@ namespace JsonEditorExample
                 // Convert to a mutable representation
                 var list = JsonSerializer.Deserialize<List<object>>(arrayElement.GetRawText());
 
-                Log($"[Delete Item Array JSON] Array has {list.Count} items");
+                Log($"[Delete Item Array JSON] Array has {list.Count} items before deletion");
+                Log($"[Delete Item Array JSON] Item at index {index} is: {list[index]} (Type: {list[index]?.GetType().Name})");
 
-                // Remove the item at the specified index
-                if (index >= 0 && index < list.Count)
+                // Check if the item at the specified index is itself an array
+                if (index >= 0 && index < list.Count && list[index] is List<object> nestedArray)
                 {
-                    list.RemoveAt(index);
-                    Log($"[Delete Item Array JSON] Removed item at index {index}");
+                    Log($"[Delete Item Array JSON] Item at index {index} is a nested array with {nestedArray.Count} items");
+
+                    // This is a nested array - ask user for confirmation
+                    var nestedResult = MessageBox.Show(
+                        this,
+                        $"This is a nested array. Do you want to delete the entire nested array at index {index}?",
+                        "Confirm Delete Nested Array",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxType.Question
+                    );
+
+                    if (nestedResult == DialogResult.Yes)
+                    {
+                        list.RemoveAt(index);
+                        Log($"[Delete Item Array JSON] Removed nested array at index {index}");
+                    }
+                    else
+                    {
+                        Log("[Delete Item Array JSON] User cancelled deletion of nested array");
+                        return json; // Return original JSON unchanged
+                    }
                 }
                 else
                 {
-                    throw new ArgumentOutOfRangeException($"Index {index} is out of range for array with {list.Count} items.");
+                    // Regular array item deletion
+                    if (index >= 0 && index < list.Count)
+                    {
+                        list.RemoveAt(index);
+                        Log($"[Delete Item Array JSON] Removed regular item at index {index}");
+                    }
+                    else
+                    {
+                        throw new ArgumentOutOfRangeException($"Index {index} is out of range for array with {list.Count} items.");
+                    }
                 }
+
+                Log($"[Delete Item Array JSON] Array has {list.Count} items after deletion");
 
                 // Update the array in the document using a direct replacement approach
                 var resultJson = UpdateArrayInJson(json, arrayPath, list);
@@ -2186,6 +2565,31 @@ namespace JsonEditorExample
             }
         }
 
+        /// <summary>
+        /// Parses a complex array path that might contain nested array indices
+        /// </summary>
+        private (string arrayPath, List<int> indices) ParseComplexArrayPath(string path)
+        {
+            var indices = new List<int>();
+            string remainingPath = path;
+
+            // Extract all array indices from the path
+            while (remainingPath.Contains("[") && remainingPath.Contains("]"))
+            {
+                var match = Regex.Match(remainingPath, @"(.+)\[(\d+)\]$");
+                if (match.Success)
+                {
+                    indices.Insert(0, int.Parse(match.Groups[2].Value)); // Insert at beginning to maintain order
+                    remainingPath = match.Groups[1].Value;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return (remainingPath, indices);
+        }
 
         /// <summary>
         /// Navigates to a specific path in the JSON document.
@@ -2204,11 +2608,14 @@ namespace JsonEditorExample
             var current = element;
 
             Log($"[Navigate] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
+            Log($"[Navigate] Root element ValueKind: {current.ValueKind}");
+            Log($"[Navigate] Root element has {(current.ValueKind == JsonValueKind.Object ? current.EnumerateObject().Count() : 0)} properties");
 
             for (int i = 0; i < parts.Length; i++)
             {
                 var part = parts[i];
                 Log($"[Navigate] Processing part {i}: '{part}'");
+                Log($"[Navigate] Current element ValueKind before processing: {current.ValueKind}");
 
                 // Handle array indices
                 if (part.Contains("[") && part.Contains("]"))
@@ -2237,7 +2644,7 @@ namespace JsonEditorExample
                             if (arrayIndex >= 0 && arrayIndex < arrayItems.Count)
                             {
                                 current = arrayItems[arrayIndex];
-                                Log($"[Navigate] Moved to array item at index {arrayIndex}");
+                                Log($"[Navigate] Moved to array item at index {arrayIndex}, ValueKind: {current.ValueKind}");
                             }
                             else
                             {
@@ -2246,7 +2653,7 @@ namespace JsonEditorExample
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Cannot access array index {arrayIndex} because current element is not an array.");
+                            throw new InvalidOperationException($"Cannot access array index {arrayIndex} because current element is not an array (ValueKind: {current.ValueKind}).");
                         }
                     }
                     else
@@ -2265,7 +2672,16 @@ namespace JsonEditorExample
 
                     if (!current.TryGetProperty(part, out var next))
                     {
-                        Log($"[Navigate] Property '{part}' not found in current element");
+                        Log($"[Navigate] Property '{part}' not found in current object");
+
+                        // List available properties for debugging
+                        var availableProps = new List<string>();
+                        foreach (var prop in current.EnumerateObject())
+                        {
+                            availableProps.Add(prop.Name);
+                        }
+                        Log($"[Navigate] Available properties: [{string.Join(", ", availableProps)}]");
+
                         throw new InvalidOperationException($"Property '{part}' not found.");
                     }
 
@@ -2278,12 +2694,6 @@ namespace JsonEditorExample
             return current;
         }
 
-        /// <summary>
-        /// Updates a specific path in the JSON document with a new value.
-        /// </summary>
-        /// <summary>
-        /// Updates a specific path in the JSON document with a new value.
-        /// </summary>
         /// <summary>
         /// Updates a specific path in the JSON document with a new value.
         /// </summary>
@@ -2301,113 +2711,50 @@ namespace JsonEditorExample
                 }
 
                 var document = JsonDocument.Parse(json);
-                var root = document.RootElement;
+                using var stream = new MemoryStream();
+
+                // Write the document to a stream so we can modify it
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    document.WriteTo(writer);
+                }
+
+                stream.Position = 0;
+                using var updatedDocument = JsonDocument.Parse(stream);
+                var root = updatedDocument.RootElement;
 
                 if (string.IsNullOrEmpty(path))
                 {
                     // Update the root
-                    var result = JsonSerializer.Serialize(newValue, _jsonOptions);
-                    Log($"[Update Path] Updated root: {result}");
-                    return result;
+                    var _result = JsonSerializer.Serialize(newValue, _jsonOptions);
+                    Log($"[Update Path] Updated root: {_result}");
+                    return _result;
                 }
 
                 // Split the path into parts
                 var parts = path.Split('.');
 
                 Log($"[Update Path] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
-                Log($"[Update Path] Starting deserialization. JSON length: {json.Length}");
-
-                // Create a mutable representation of the entire JSON
-                var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-
-                Log($"[Update Path] Deserialized JSON to dictionary with {dict.Count} properties");
-                Log($"[Update Path] Dictionary keys: [{string.Join(", ", dict.Keys)}]");
 
                 // Navigate to the parent object
-                var current = dict;
+                JsonElement currentElement = root;
+                Stack<JsonElement> elementStack = new Stack<JsonElement>();
+                elementStack.Push(root);
 
                 for (int i = 0; i < parts.Length - 1; i++)
                 {
                     var part = parts[i];
                     Log($"[Update Path] Processing part {i}: '{part}'");
-                    Log($"[Update Path] Current type: {current?.GetType().Name ?? "null"}");
 
-                    // Handle array indices
-                    if (part.Contains("[") && part.Contains("]"))
+                    if (currentElement.ValueKind == JsonValueKind.Object && currentElement.TryGetProperty(part, out var nextElement))
                     {
-                        var match = Regex.Match(part, @"(.+)\[(\d+)\]");
-                        if (match.Success)
-                        {
-                            var arrayName = match.Groups[1].Value;
-                            var arrayIndex = int.Parse(match.Groups[2].Value);
-
-                            Log($"[Update Path] Array navigation - Name: '{arrayName}', Index: {arrayIndex}");
-
-                            // Check if the current element is an array
-                            if (current.TryGetValue(arrayName, out var arrayObj) && arrayObj is List<object> array)
-                            {
-                                Log($"[Update Path] Found array '{arrayName}' with {array.Count} items");
-
-                                // Check if the index is valid
-                                if (arrayIndex >= 0 && arrayIndex < array.Count)
-                                {
-                                    if (i < parts.Length - 1)
-                                    {
-                                        // Continue navigating through the array
-                                        if (array[arrayIndex] is Dictionary<string, object> arrayItemDict)
-                                        {
-                                            current = arrayItemDict;
-                                            Log($"[Update Path] Moved to array item at index {arrayIndex}");
-                                        }
-                                        else
-                                        {
-                                            throw new InvalidOperationException($"Array item at index {arrayIndex} is not an object.");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // This is the last part, update the array item
-                                        array[arrayIndex] = newValue;
-                                        Log($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
-                                        var result = JsonSerializer.Serialize(dict, _jsonOptions);
-                                        Log($"[Update Path] Final result length: {result.Length}");
-                                        return result;
-                                    }
-                                }
-                                else
-                                {
-                                    throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range.");
-                                }
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException($"Array '{arrayName}' not found or is not an array.");
-                            }
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Invalid array index format: {part}");
-                        }
+                        elementStack.Push(nextElement);
+                        currentElement = nextElement;
+                        Log($"[Update Path] Moved to property '{part}'");
                     }
                     else
                     {
-                        // Handle object properties
-                        if (current.TryGetValue(part, out var next))
-                        {
-                            if (next is Dictionary<string, object> nextDict)
-                            {
-                                current = nextDict;
-                                Log($"[Update Path] Moved to property '{part}'");
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException($"Cannot navigate to '{part}' because it is not an object.");
-                            }
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Property '{part}' not found in current object.");
-                        }
+                        throw new InvalidOperationException($"Property '{part}' not found or not an object.");
                     }
                 }
 
@@ -2415,28 +2762,76 @@ namespace JsonEditorExample
                 var finalProperty = parts[parts.Length - 1];
                 Log($"[Update Path] Updating final property '{finalProperty}' to '{newValue}'");
 
-                if (current is Dictionary<string, object> currentDict)
-                {
-                    currentDict[finalProperty] = newValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Cannot update property '{finalProperty}' because current element is not a dictionary.");
-                }
-
-                var finalResult = JsonSerializer.Serialize(dict, _jsonOptions);
-                Log($"[Update Path] Final result length: {finalResult.Length}");
-                return finalResult;
-            }
-            catch (JsonException ex)
-            {
-                Log($"[Update Path] JSON error: {ex.Message}");
-                throw new Exception($"Invalid JSON: {ex.Message}", ex);
+                // Recreate the JSON with the update
+                var result = UpdateJsonElement(updatedDocument.RootElement, parts, finalProperty, newValue);
+                Log($"[Update Path] Final result: {result}");
+                return result;
             }
             catch (Exception ex)
             {
-                Log($"[Update Path] General error: {ex.Message}");
+                Log($"[Update Path] Error: {ex.Message}");
                 throw new Exception($"Failed to update path '{path}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Recursively updates a JSON element at the specified path.
+        /// </summary>
+        private string UpdateJsonElement(JsonElement element, string[] pathParts, string propertyName, object newValue)
+        {
+            if (pathParts.Length == 0)
+            {
+                // This is the root element, update the property directly
+                if (element.ValueKind == JsonValueKind.Object)
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
+                    dict[propertyName] = newValue;
+                    return JsonSerializer.Serialize(dict, _jsonOptions);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Cannot update property on non-object root element.");
+                }
+            }
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(element.GetRawText());
+                var firstPart = pathParts[0];
+
+                if (dict.ContainsKey(firstPart))
+                {
+                    if (pathParts.Length == 1)
+                    {
+                        // This is the property we want to update
+                        dict[propertyName] = newValue;
+                        return JsonSerializer.Serialize(dict, _jsonOptions);
+                    }
+                    else
+                    {
+                        // Recurse into the nested object
+                        var nestedElement = JsonSerializer.Deserialize<JsonElement>(dict[firstPart].ToString());
+                        var remainingParts = pathParts.Skip(1).ToArray();
+                        var updatedNested = UpdateJsonElement(nestedElement, remainingParts, propertyName, newValue);
+                        dict[firstPart] = JsonSerializer.Deserialize<object>(updatedNested);
+                        return JsonSerializer.Serialize(dict, _jsonOptions);
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Property '{firstPart}' not found in object.");
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                // Handle array updates if needed
+                var list = JsonSerializer.Deserialize<List<object>>(element.GetRawText());
+                // Array handling would go here if needed
+                return JsonSerializer.Serialize(list, _jsonOptions);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Cannot update property in element of type {element.ValueKind}");
             }
         }
 
@@ -2628,16 +3023,219 @@ namespace JsonEditorExample
 
             try
             {
-                // Use the stored JSON directly instead of serializing from UI
-                Log($"[To JSON] Using stored JSON: {GetCurrentJson()}");
-                return GetCurrentJson();
+                // Build the JSON from the current UI state instead of using _currentJson
+                var jsonObject = new Dictionary<string, object>();
+
+                // Build from the current UI controls
+                BuildJsonFromControls(_contentContainer, jsonObject);
+
+                // Update the stored JSON
+                _currentJson = JsonSerializer.Serialize(jsonObject, _jsonOptions);
+
+                Log($"[To JSON] Built JSON from UI: {_currentJson}");
+                return _currentJson;
             }
             catch (Exception ex)
             {
                 Log($"[To JSON] Error: {ex.Message}");
-                return "{}"; // Return empty object if serialization fails
+                // Fallback to stored JSON if UI building fails
+                return _currentJson ?? "{}";
             }
         }
+
+        /// <summary>
+        /// Builds a JSON object from the current UI controls.
+        /// </summary>
+        private void BuildJsonFromControls(Control control, Dictionary<string, object> parent, string currentPath = "")
+        {
+            // Handle StackLayout
+            if (control is StackLayout layout)
+            {
+                Log($"[BuildJsonFromControls] Processing StackLayout at path '{currentPath}' with {layout.Items.Count} items");
+
+                foreach (var item in layout.Items)
+                {
+                    if (item != null && item.Control != null)
+                    {
+                        BuildJsonFromControls(item.Control, parent, currentPath);
+                    }
+                }
+                return;
+            }
+
+            // Handle Panel
+            if (control is Panel panel && panel.Content != null)
+            {
+                BuildJsonFromControls(panel.Content, parent, currentPath);
+                return;
+            }
+
+            // Handle FullJsonEditorPanel
+            if (control is FullJsonEditorPanel editorPanel)
+            {
+                // For nested panels, build their JSON and add to parent at the correct path
+                var panelPath = editorPanel._panelPath;
+                if (!string.IsNullOrEmpty(panelPath))
+                {
+                    // Extract the last part of the path to use as the key
+                    var lastDot = panelPath.LastIndexOf('.');
+                    var key = lastDot >= 0 ? panelPath.Substring(lastDot + 1) : panelPath;
+
+                    // Create nested structure if needed
+                    CreateNestedStructure(parent, panelPath, key);
+
+                    var targetDict = GetNestedDictionary(parent, panelPath);
+                    BuildJsonFromControls(editorPanel._contentContainer, targetDict, panelPath);
+                }
+                return;
+            }
+
+            // Handle individual interactive controls (TextBox, CheckBox, etc.)
+            string propertyName = null;
+            object propertyValue = null;
+
+            if (control is TextBox textBox)
+            {
+                var tag = textBox.Tag as string;
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    propertyName = tag;
+                    propertyValue = textBox.Text;
+                    Log($"[BuildJsonFromControls] TextBox tag: '{tag}', value: '{textBox.Text}'");
+                }
+            }
+            else if (control is CheckBox checkBox)
+            {
+                var tag = checkBox.Tag as string;
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    propertyName = tag;
+                    propertyValue = checkBox.Checked;
+                    Log($"[BuildJsonFromControls] CheckBox tag: '{tag}', value: '{checkBox.Checked}'");
+                }
+            }
+            else if (control is DateTimePicker datePicker)
+            {
+                var tag = datePicker.Tag as string;
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    propertyName = tag;
+                    propertyValue = datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    Log($"[BuildJsonFromControls] DateTimePicker tag: '{tag}', value: '{datePicker.Value}'");
+                }
+            }
+
+            // If we have a property name and value, add it to the correct nested location
+            if (!string.IsNullOrEmpty(propertyName) && propertyValue != null)
+            {
+                // Parse the property path to determine where it belongs
+                var pathParts = propertyName.Split('.');
+
+                if (pathParts.Length > 1)
+                {
+                    // This is a nested property
+                    var objectPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
+                    var key = pathParts.Last();
+
+                    CreateNestedStructure(parent, objectPath, key);
+                    var targetDict = GetNestedDictionary(parent, objectPath);
+                    targetDict[key] = propertyValue;
+
+                    Log($"[BuildJsonFromControls] Added nested property '{objectPath}.{key}': {propertyValue}");
+                }
+                else
+                {
+                    // This is a root-level property
+                    parent[propertyName] = propertyValue;
+                    Log($"[BuildJsonFromControls] Added root property '{propertyName}': {propertyValue}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates nested dictionary structure based on the path.
+        /// </summary>
+        private void CreateNestedStructure(Dictionary<string, object> root, string path, string key)
+        {
+            var pathParts = path.Split('.');
+            var current = root;
+
+            for (int i = 0; i < pathParts.Length; i++)
+            {
+                var part = pathParts[i];
+
+                if (!current.ContainsKey(part))
+                {
+                    current[part] = new Dictionary<string, object>();
+                    Log($"[CreateNestedStructure] Created nested object '{part}'");
+                }
+
+                if (current[part] is Dictionary<string, object> nestedDict)
+                {
+                    current = nestedDict;
+                }
+                else
+                {
+                    // This shouldn't happen, but just in case
+                    current[part] = new Dictionary<string, object>();
+                    current = (Dictionary<string, object>)current[part];
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the nested dictionary at the specified path.
+        /// </summary>
+        private Dictionary<string, object> GetNestedDictionary(Dictionary<string, object> root, string path)
+        {
+            var pathParts = path.Split('.');
+            var current = root;
+
+            for (int i = 0; i < pathParts.Length; i++)
+            {
+                var part = pathParts[i];
+
+                if (current.ContainsKey(part) && current[part] is Dictionary<string, object> nestedDict)
+                {
+                    current = nestedDict;
+                }
+                else
+                {
+                    // Create it if it doesn't exist
+                    current[part] = new Dictionary<string, object>();
+                    current = (Dictionary<string, object>)current[part];
+                }
+            }
+
+            return current;
+        }
+        /// <summary>
+        /// Gets the value from a control based on its type.
+        /// </summary>
+        private object GetControlValue(Control control)
+        {
+            if (control is TextBox textBox)
+            {
+                return textBox.Text;
+            }
+            else if (control is CheckBox checkBox)
+            {
+                return checkBox.Checked;
+            }
+            else if (control is FullJsonEditorPanel panel)
+            {
+                // For nested panels, recursively get their JSON
+                return panel.ToJson();
+            }
+            else if (control is DateTimePicker datePicker)
+            {
+                return datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            }
+
+            return null;
+        }
+
+
     }
 
     /// <summary>
