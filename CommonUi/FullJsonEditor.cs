@@ -223,11 +223,11 @@ namespace JsonEditorExample
                     Padding = 10,
                     Spacing = 5,
                     Items =
-                    {
-                        new Label { Text = "Current JSON:" },
-                        new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
-                        new StackLayoutItem(closeButton, HorizontalAlignment.Right)
-                    }
+            {
+                new Label { Text = "Current JSON:" },
+                new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
+                new StackLayoutItem(closeButton, HorizontalAlignment.Right)
+            }
                 };
 
                 dialog.Content = layout;
@@ -241,6 +241,7 @@ namespace JsonEditorExample
                 MessageBox.Show(this, $"Error showing JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
             }
         }
+
 
         /// <summary>
         /// Shows a dialog to load new JSON.
@@ -499,8 +500,16 @@ namespace JsonEditorExample
             {
                 // Get the JSON from the root node
                 var json = _rootNode.ToJson();
-                Log($"[To JSON] Built JSON: {json}");
-                return json;
+
+                // Parse and re-serialize with indentation
+                var document = JsonDocument.Parse(json);
+                var indentedJson = JsonSerializer.Serialize(document, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                Log($"[To JSON] Built JSON: {indentedJson}");
+                return indentedJson;
             }
             catch (Exception ex)
             {
@@ -622,10 +631,73 @@ namespace JsonEditorExample
                 case "Null":
                     return new JsonNullNode();
 
+                case "Date":
+                    if (DateTime.TryParse(value, out DateTime date))
+                        return new JsonStringNode { Value = date.ToString("yyyy-MM-ddTHH:mm:ssZ") };
+                    else
+                        return new JsonStringNode { Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ") };
+
+                case "Image":
+                    if (IsBase64Image(value, out ImageType imageType) && imageType != ImageType.Unknown)
+                        return new JsonStringNode { Value = value };
+                    else
+                        return new JsonStringNode { Value = "" };
+
                 default:
                     throw new ArgumentException($"Unknown node type: {type}");
             }
         }
+
+        // Add this helper method to JsonNodeFactory class:
+        private static bool IsBase64Image(string value, out ImageType imageType)
+        {
+            imageType = ImageType.Unknown;
+
+            if (string.IsNullOrEmpty(value) || value.Length < 100) // Base64 images are usually longer
+                return false;
+
+            // Check if it's a valid base64 string
+            if (value.Length % 4 != 0 || !Regex.IsMatch(value, @"^[a-zA-Z0-9\+/]*={0,3}$"))
+                return false;
+
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(value);
+
+                // Check for image signatures
+                if (bytes.Length < 8) // Need at least 8 bytes for reliable detection
+                    return false;
+
+                // JPEG signature: FF D8 FF
+                if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+                {
+                    imageType = ImageType.Jpeg;
+                    return true;
+                }
+
+                // PNG signature: 89 50 4E 47
+                if (bytes.Length >= 8 &&
+                    bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                {
+                    imageType = ImageType.Png;
+                    return true;
+                }
+
+                // WebP signature
+                if (bytes.Length >= 12 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 
     /// <summary>
@@ -681,11 +753,11 @@ namespace JsonEditorExample
             var dialog = new Dialog<string>
             {
                 Title = "Add New Property",
-                ClientSize = new Size(300, 200)
+                ClientSize = new Size(300, 250)
             };
 
             var propertyNameTextBox = new TextBox { ID = "propertyName" };
-            var propertyTypeDropDown = new DropDown { ID = "propertyType", Items = { "String", "Number", "Boolean", "Object", "Array", "Null" } };
+            var propertyTypeDropDown = new DropDown { ID = "propertyType", Items = { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" } };
             var propertyValueTextBox = new TextBox { ID = "propertyValue" };
             var validationLabel = new Label { Text = "", TextColor = Colors.Red };
 
@@ -698,15 +770,15 @@ namespace JsonEditorExample
                 Padding = 10,
                 Spacing = 5,
                 Items =
-                {
-                    new Label { Text = "Property Name:" },
-                    new StackLayoutItem(propertyNameTextBox, HorizontalAlignment.Stretch),
-                    new Label { Text = "Property Type:" },
-                    new StackLayoutItem(propertyTypeDropDown, HorizontalAlignment.Stretch),
-                    new Label { Text = "Property Value (optional):" },
-                    new StackLayoutItem(propertyValueTextBox, HorizontalAlignment.Stretch),
-                    new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
-                }
+        {
+            new Label { Text = "Property Name:" },
+            new StackLayoutItem(propertyNameTextBox, HorizontalAlignment.Stretch),
+            new Label { Text = "Property Type:" },
+            new StackLayoutItem(propertyTypeDropDown, HorizontalAlignment.Stretch),
+            new Label { Text = "Property Value (optional):" },
+            new StackLayoutItem(propertyValueTextBox, HorizontalAlignment.Stretch),
+            new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
+        }
             };
 
             var buttonPanel = new StackLayout
@@ -714,10 +786,10 @@ namespace JsonEditorExample
                 Orientation = Orientation.Horizontal,
                 Spacing = 5,
                 Items =
-                {
-                    new StackLayoutItem(okButton),
-                    new StackLayoutItem(cancelButton)
-                }
+        {
+            new StackLayoutItem(okButton),
+            new StackLayoutItem(cancelButton)
+        }
             };
 
             layout.Items.Add(new StackLayoutItem(buttonPanel, HorizontalAlignment.Right));
@@ -739,6 +811,14 @@ namespace JsonEditorExample
                         break;
                     case "Boolean":
                         propertyValueTextBox.PlaceholderText = "Enter 'true' or 'false'";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Date":
+                        propertyValueTextBox.PlaceholderText = "Enter a date (e.g., 2023-04-25T14:30:00Z)";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Image":
+                        propertyValueTextBox.PlaceholderText = "Enter a base64 encoded image or leave empty to upload";
                         propertyValueTextBox.Enabled = true;
                         break;
                     case "Null":
@@ -797,6 +877,13 @@ namespace JsonEditorExample
                 // Create the new node
                 var newNode = JsonNodeFactory.CreateNewNode(type, value);
 
+                // If it's an Image type with no value, open the image upload dialog
+                if (type == "Image" && string.IsNullOrEmpty(value))
+                {
+                    var stringNode = newNode as JsonStringNode;
+                    stringNode.UploadImageAsBase64(editorPanel, (newValue) => stringNode.Value = newValue);
+                }
+
                 // Add the property
                 Properties[name] = newNode;
 
@@ -804,6 +891,7 @@ namespace JsonEditorExample
                 RebuildContainer(editorPanel, container);
             }
         }
+
 
         private void DeleteProperty(FullJsonEditorPanel editorPanel, string key, StackLayout container)
         {
@@ -918,10 +1006,10 @@ namespace JsonEditorExample
             var dialog = new Dialog<string>
             {
                 Title = "Add New Array Item",
-                ClientSize = new Size(300, 200)
+                ClientSize = new Size(300, 250)
             };
 
-            var itemTypeDropDown = new DropDown { ID = "itemType", Items = { "String", "Number", "Boolean", "Object", "Array", "Null" } };
+            var itemTypeDropDown = new DropDown { ID = "itemType", Items = { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" } };
             var itemValueTextBox = new TextBox { ID = "itemValue" };
             var validationLabel = new Label { Text = "", TextColor = Colors.Red };
 
@@ -934,13 +1022,13 @@ namespace JsonEditorExample
                 Padding = 10,
                 Spacing = 5,
                 Items =
-                {
-                    new Label { Text = "Item Type:" },
-                    new StackLayoutItem(itemTypeDropDown, HorizontalAlignment.Stretch),
-                    new Label { Text = "Item Value (optional):" },
-                    new StackLayoutItem(itemValueTextBox, HorizontalAlignment.Stretch),
-                    new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
-                }
+        {
+            new Label { Text = "Item Type:" },
+            new StackLayoutItem(itemTypeDropDown, HorizontalAlignment.Stretch),
+            new Label { Text = "Item Value (optional):" },
+            new StackLayoutItem(itemValueTextBox, HorizontalAlignment.Stretch),
+            new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
+        }
             };
 
             var buttonPanel = new StackLayout
@@ -948,10 +1036,10 @@ namespace JsonEditorExample
                 Orientation = Orientation.Horizontal,
                 Spacing = 5,
                 Items =
-                {
-                    new StackLayoutItem(okButton),
-                    new StackLayoutItem(cancelButton)
-                }
+        {
+            new StackLayoutItem(okButton),
+            new StackLayoutItem(cancelButton)
+        }
             };
 
             layout.Items.Add(new StackLayoutItem(buttonPanel, HorizontalAlignment.Right));
@@ -973,6 +1061,14 @@ namespace JsonEditorExample
                         break;
                     case "Boolean":
                         itemValueTextBox.PlaceholderText = "Enter 'true' or 'false'";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Date":
+                        itemValueTextBox.PlaceholderText = "Enter a date (e.g., 2023-04-25T14:30:00Z)";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Image":
+                        itemValueTextBox.PlaceholderText = "Enter a base64 encoded image or leave empty to upload";
                         itemValueTextBox.Enabled = true;
                         break;
                     case "Null":
@@ -1018,6 +1114,13 @@ namespace JsonEditorExample
                 // Create the new node
                 var newNode = JsonNodeFactory.CreateNewNode(type, value);
 
+                // If it's an Image type with no value, open the image upload dialog
+                if (type == "Image" && string.IsNullOrEmpty(value))
+                {
+                    var stringNode = newNode as JsonStringNode;
+                    stringNode.UploadImageAsBase64(editorPanel, (newValue) => stringNode.Value = newValue);
+                }
+
                 // Add the item
                 Items.Add(newNode);
 
@@ -1025,6 +1128,7 @@ namespace JsonEditorExample
                 RebuildContainer(editorPanel, container);
             }
         }
+
 
         private void DeleteItem(FullJsonEditorPanel editorPanel, int index, StackLayout container)
         {
@@ -1139,15 +1243,36 @@ namespace JsonEditorExample
             }
 
             // Check for images (base64, URLs, or file extensions)
-            if (IsBase64Image(Value, out ImageType imageType) ||
-                IsImageUrl(Value) ||
-                HasImageExtension(Value))
-            {
-                // Create an upload/change button
-                var uploadButton = new Button { Text = "Upload/Change Image" };
-                uploadButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => Value = newValue);
+            bool isImage = IsBase64Image(Value, out ImageType imageType) || IsImageUrl(Value) || HasImageExtension(Value);
 
-                // For base64 images, show the existing image
+            // Create a container for the text field and buttons
+            var container = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Add text box
+            var textBox = new TextBox { Text = Value };
+            textBox.TextChanged += (sender, e) => {
+                Value = textBox.Text;
+            };
+            container.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
+
+            // Add buttons in a horizontal layout
+            var buttonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+            // Add Set/Edit Image button for all text fields
+            var imageButton = new Button { Text = "Set/Edit Image" };
+            imageButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => Value = newValue);
+            buttonContainer.Items.Add(new StackLayoutItem(imageButton));
+
+            // Add Set Date button for all text fields
+            var dateButton = new Button { Text = "Set Date" };
+            dateButton.Click += (s, e) => SetDate(editorPanel);
+            buttonContainer.Items.Add(new StackLayoutItem(dateButton));
+
+            container.Items.Add(new StackLayoutItem(buttonContainer, HorizontalAlignment.Left));
+
+            // If this is already an image, show the image preview
+            if (isImage)
+            {
                 if (IsBase64Image(Value, out ImageType type) && type != ImageType.Unknown)
                 {
                     try
@@ -1171,26 +1296,18 @@ namespace JsonEditorExample
                             };
                         }
 
-                        // Create container with image and button
-                        var containerWithImage = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
-                        containerWithImage.Items.Add(new StackLayoutItem(imageView, HorizontalAlignment.Center));
-                        containerWithImage.Items.Add(new StackLayoutItem(uploadButton, HorizontalAlignment.Center));
-
-                        return containerWithImage;
+                        // Insert the image view before the buttons
+                        container.Items.Insert(1, new StackLayoutItem(imageView, HorizontalAlignment.Center));
                     }
                     catch (Exception ex)
                     {
                         FullJsonEditorPanel.Log($"[JsonStringNode] Error loading image: {ex.Message}");
-                        // Fall back to showing text box with upload button
+                        // Fall back to showing just the text box and buttons
                     }
                 }
-
-                // Create container with text (for URLs) and upload button
-                var containerWithUpload = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
-
-                // For URLs, show the URL as a clickable link
-                if (IsImageUrl(Value))
+                else if (IsImageUrl(Value))
                 {
+                    // For URLs, show the URL as a clickable link
                     var urlLabel = new Label
                     {
                         Text = $"URL: {Value}",
@@ -1210,41 +1327,70 @@ namespace JsonEditorExample
                         }
                     };
 
-                    containerWithUpload.Items.Add(new StackLayoutItem(urlLabel, HorizontalAlignment.Stretch, true));
+                    // Insert the URL label before the buttons
+                    container.Items.Insert(1, new StackLayoutItem(urlLabel, HorizontalAlignment.Stretch, true));
                 }
-                else
-                {
-                    // For base64 or files with extensions, show text box
-                    var textBox = new TextBox
-                    {
-                        Text = IsImageUrl(Value) ? Value : "[Base64 Image Data]",
-                        ReadOnly = IsImageUrl(Value)
-                    };
-
-                    // Don't allow editing of image URLs in the textbox
-                    if (!IsImageUrl(Value))
-                    {
-                        textBox.TextChanged += (sender, e) => {
-                            Value = textBox.Text;
-                        };
-                    }
-
-                    containerWithUpload.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
-                }
-
-                containerWithUpload.Items.Add(new StackLayoutItem(uploadButton, HorizontalAlignment.Center));
-
-                return containerWithUpload;
             }
 
-            // Default to a text box
-            var defaultTextBox = new TextBox { Text = Value };
-            defaultTextBox.TextChanged += (sender, e) => {
-                Value = defaultTextBox.Text;
+            return container;
+        }
+        // Add this method to JsonStringNode class to handle date setting:
+
+        private void SetDate(FullJsonEditorPanel editorPanel)
+        {
+            // Create a dialog to set a date
+            var dialog = new Dialog
+            {
+                Title = "Set Date",
+                ClientSize = new Size(300, 200)
             };
 
-            return defaultTextBox;
+            var datePicker = new DateTimePicker { Mode = DateTimePickerMode.DateTime };
+            var okButton = new Button { Text = "OK" };
+            var cancelButton = new Button { Text = "Cancel" };
+
+            // Create the layout
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+        {
+            new Label { Text = "Select a date:" },
+            new StackLayoutItem(datePicker, HorizontalAlignment.Stretch),
+            new StackLayoutItem(new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Items =
+                {
+                    new StackLayoutItem(okButton),
+                    new StackLayoutItem(cancelButton)
+                }
+            }, HorizontalAlignment.Right)
         }
+            };
+
+            dialog.Content = layout;
+
+            // Set up event handlers
+            okButton.Click += (sender, e) => {
+                if (datePicker.Value.HasValue)
+                {
+                    Value = datePicker.Value.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    dialog.Close();
+                }
+            };
+
+            cancelButton.Click += (sender, e) => {
+                dialog.Close();
+            };
+
+            // Show the dialog
+            dialog.ShowModal(editorPanel);
+        }
+
+
 
         public string ToJson()
         {
@@ -1400,7 +1546,7 @@ namespace JsonEditorExample
             }
         }
 
-        private void UploadImageAsBase64(FullJsonEditorPanel editorPanel, Action<string> onImageUploaded)
+        public void UploadImageAsBase64(FullJsonEditorPanel editorPanel, Action<string> onImageUploaded)
         {
             var fileDialog = new OpenFileDialog
             {
