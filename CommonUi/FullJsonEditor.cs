@@ -147,18 +147,70 @@ namespace JsonEditorExample
                     var nestedDict = new Dictionary<string, object>();
                     var flatDict = JsonSerializer.Deserialize<Dictionary<string, object>>(flatJson);
 
+                    // Group flattened properties by their full path
+                    var groupedProperties = new Dictionary<string, List<KeyValuePair<string, object>>>();
+                    var regularProperties = new List<KeyValuePair<string, object>>();
+
                     foreach (var kvp in flatDict)
                     {
-                        if (kvp.Key.Contains("["))
+                        if (IsFlattenedArrayProperty(kvp.Key))
                         {
                             // This is a flattened array property
-                            ProcessFlattenedProperty(kvp.Key, kvp.Value, nestedDict);
+                            // Extract the full path to the array (including parent objects)
+                            var match = Regex.Match(kvp.Key, @"^(.+?)(\[[0-9]+(?:\[[0-9]+\])*\])$");
+                            if (match.Success)
+                            {
+                                var arrayPath = match.Groups[1].Value;
+
+                                // Use the full path as the key for grouping
+                                if (!groupedProperties.ContainsKey(arrayPath))
+                                {
+                                    groupedProperties[arrayPath] = new List<KeyValuePair<string, object>>();
+                                }
+                                groupedProperties[arrayPath].Add(kvp);
+                            }
                         }
                         else
                         {
-                            // Regular property, just copy it
+                            // Regular property, save for later
+                            regularProperties.Add(kvp);
+                        }
+                    }
+
+                    // First, add all regular properties
+                    foreach (var kvp in regularProperties)
+                    {
+                        // Check if this is a nested property (contains dots)
+                        if (kvp.Key.Contains("."))
+                        {
+                            // This is a nested property, add it to the correct nested location
+                            var pathParts = kvp.Key.Split('.');
+                            var current = nestedDict;
+
+                            for (int i = 0; i < pathParts.Length - 1; i++)
+                            {
+                                var part = pathParts[i];
+                                if (!current.ContainsKey(part))
+                                {
+                                    current[part] = new Dictionary<string, object>();
+                                }
+                                current = (Dictionary<string, object>)current[part];
+                            }
+
+                            // Add the final property
+                            current[pathParts.Last()] = kvp.Value;
+                        }
+                        else
+                        {
+                            // This is a root-level property
                             nestedDict[kvp.Key] = kvp.Value;
                         }
+                    }
+
+                    // Then, process each group of flattened properties
+                    foreach (var group in groupedProperties)
+                    {
+                        ProcessFlattenedPropertyGroup(group.Key, group.Value, nestedDict);
                     }
 
                     return JsonSerializer.Serialize(nestedDict, _jsonOptions);
@@ -173,12 +225,223 @@ namespace JsonEditorExample
             }
         }
 
+
+        /// <summary>
+        /// Determines if a key represents a flattened array property.
+        /// </summary>
+        private bool IsFlattenedArrayProperty(string key)
+        {
+            // A flattened array property ends with [number] and may have multiple levels [0][1][2]
+            // The key may contain dots, but they should be part of the path to the array, not part of the array name
+            return Regex.IsMatch(key, @"^.+?\[[0-9]+(?:\[[0-9]+\])*\]$");
+        }
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// Processes a group of flattened properties with the same array path.
+        /// </summary>
+        private void ProcessFlattenedPropertyGroup(string arrayPath, List<KeyValuePair<string, object>> properties, Dictionary<string, object> target)
+        {
+            // Split the path to get the parent path and array name
+            var lastDot = arrayPath.LastIndexOf('.');
+            string parentPath = "";
+            string arrayName = arrayPath;
+
+            if (lastDot >= 0)
+            {
+                parentPath = arrayPath.Substring(0, lastDot);
+                arrayName = arrayPath.Substring(lastDot + 1);
+            }
+
+            // Determine the maximum depth of nesting
+            int maxDepth = 0;
+            var allPaths = new List<List<int>>();
+
+            foreach (var kvp in properties)
+            {
+                var indices = ExtractIndices(kvp.Key);
+                allPaths.Add(indices);
+                maxDepth = Math.Max(maxDepth, indices.Count);
+            }
+
+            // Create the nested structure based on the paths
+            var array = CreateNestedArrayFromPaths(allPaths, properties);
+
+            // Find or create the parent object
+            Dictionary<string, object> parentDict = target;
+            if (!string.IsNullOrEmpty(parentPath))
+            {
+                parentDict = GetOrCreateNestedDictionary(target, parentPath);
+            }
+
+            // Set the array in the parent
+            parentDict[arrayName] = array;
+        }
+
+
+
+
+        /// <summary>
+        /// Gets or creates a nested dictionary at the specified path.
+        /// </summary>
+        private Dictionary<string, object> GetOrCreateNestedDictionary(Dictionary<string, object> root, string path)
+        {
+            var pathParts = path.Split('.');
+            var current = root;
+
+            for (int i = 0; i < pathParts.Length; i++)
+            {
+                var part = pathParts[i];
+
+                if (!current.ContainsKey(part))
+                {
+                    current[part] = new Dictionary<string, object>();
+                }
+
+                if (current[part] is Dictionary<string, object> nestedDict)
+                {
+                    current = nestedDict;
+                }
+                else
+                {
+                    // This shouldn't happen, but just in case
+                    current[part] = new Dictionary<string, object>();
+                    current = (Dictionary<string, object>)current[part];
+                }
+            }
+
+            return current;
+        }
+
+
+
+
+
+        /// <summary>
+        /// Extracts indices from a flattened property key.
+        /// </summary>
+        private List<int> ExtractIndices(string key)
+        {
+            var indices = new List<int>();
+            foreach (Match indexMatch in Regex.Matches(key, @"\[(\d+)\]"))
+            {
+                indices.Add(int.Parse(indexMatch.Groups[1].Value));
+            }
+            return indices;
+        }
+
+        /// <summary>
+        /// Creates a nested array structure from paths and values.
+        /// </summary>
+        private object CreateNestedArrayFromPaths(List<List<int>> allPaths, List<KeyValuePair<string, object>> properties)
+        {
+            if (allPaths.Count == 0)
+                return null;
+
+            // Determine the maximum index at each level
+            var maxIndices = new List<int>();
+            for (int i = 0; i < allPaths[0].Count; i++)
+            {
+                int maxIndex = -1;
+                foreach (var path in allPaths)
+                {
+                    if (i < path.Count)
+                    {
+                        maxIndex = Math.Max(maxIndex, path[i]);
+                    }
+                }
+                maxIndices.Add(maxIndex);
+            }
+
+            // Create the nested arrays
+            return CreateNestedArrayRecursive(allPaths, properties, 0, maxIndices);
+        }
+
+        /// <summary>
+        /// Recursively creates nested arrays.
+        /// </summary>
+        private object CreateNestedArrayRecursive(List<List<int>> allPaths, List<KeyValuePair<string, object>> properties, int level, List<int> maxIndices)
+        {
+            if (level >= maxIndices.Count)
+                return null;
+
+            var array = new List<object>();
+
+            // Create a dictionary to map paths to values for quick lookup
+            var pathToValue = new Dictionary<string, object>();
+            foreach (var kvp in properties)
+            {
+                var path = string.Join(".", ExtractIndices(kvp.Key));
+                pathToValue[path] = kvp.Value;
+            }
+
+            for (int i = 0; i <= maxIndices[level]; i++)
+            {
+                // Find all paths that start with this index at this level
+                var matchingPaths = allPaths.Where(p => level < p.Count && p[level] == i).ToList();
+
+                if (matchingPaths.Count == 0)
+                {
+                    // No matching paths, check if this index should be included
+                    // Only include if there's a direct value at this path
+                    var path = i.ToString();
+                    if (level == 0 && pathToValue.ContainsKey(path))
+                    {
+                        array.Add(pathToValue[path]);
+                    }
+                    // Otherwise, skip this index to avoid adding null values
+                }
+                else
+                {
+                    // Check if there's a direct value at this path
+                    var path = i.ToString();
+                    if (pathToValue.ContainsKey(path))
+                    {
+                        array.Add(pathToValue[path]);
+                    }
+                    else
+                    {
+                        // Create nested arrays for the matching paths
+                        var nextLevelPaths = matchingPaths.Select(p => p.Skip(level + 1).ToList()).Where(p => p.Count > 0).ToList();
+                        if (nextLevelPaths.Count > 0)
+                        {
+                            var nextMaxIndices = new List<int>();
+                            for (int j = 0; j < nextLevelPaths[0].Count; j++)
+                            {
+                                int maxIndex = -1;
+                                foreach (var _path in nextLevelPaths)
+                                {
+                                    if (j < _path.Count)
+                                    {
+                                        maxIndex = Math.Max(maxIndex, _path[j]);
+                                    }
+                                }
+                                nextMaxIndices.Add(maxIndex);
+                            }
+
+                            array.Add(CreateNestedArrayRecursive(nextLevelPaths, properties, level + 1, nextMaxIndices));
+                        }
+                    }
+                }
+            }
+
+            return array;
+        }
+
+
         /// <summary>
         /// Processes a flattened property key and value, adding it to the nested dictionary.
         /// </summary>
         private void ProcessFlattenedProperty(string key, object value, Dictionary<string, object> target)
         {
-            // Match patterns like "key[0]", "key[1][0]", "key[1][1][0]", etc.
+            // This method is replaced by ProcessFlattenedPropertyGroup and related methods
+            // Keeping it for compatibility but it won't be used
             var match = Regex.Match(key, @"^([^\[]+)((?:\[\d+\])*)$");
 
             if (match.Success)
@@ -236,6 +499,8 @@ namespace JsonEditorExample
             }
         }
 
+
+
         /// <summary>
         /// Ensures the array has enough elements to accommodate the specified index.
         /// </summary>
@@ -246,6 +511,7 @@ namespace JsonEditorExample
                 array.Add(null);
             }
         }
+
 
         /// <summary>
         /// Constructs a FullJsonEditorPanel from a JSON string.
@@ -1610,14 +1876,30 @@ namespace JsonEditorExample
             {
                 Log($"[Update Value] Updating value at path '{path}' to '{value}'");
                 var json = GetCurrentJson();
-                var updatedJson = UpdateValueInJson(json, path, value);
-                Log($"[Update Value] Updated JSON: {updatedJson}");
 
-                // Update the current JSON in the root panel
-                SetCurrentJson(updatedJson);
+                // Check if this is a flattened array path
+                if (path.Contains("[") && path.Contains("]"))
+                {
+                    // Handle flattened array updates directly
+                    var updatedJson = UpdateFlattenedArrayValue(json, path, value);
+                    Log($"[Update Value] Updated flattened array JSON: {updatedJson}");
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+                }
+                else
+                {
+                    // Handle regular path updates
+                    var updatedJson = UpdateValueInJson(json, path, value);
+                    Log($"[Update Value] Updated JSON: {updatedJson}");
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+                }
 
                 // Refresh the UI for the specific path
-                RefreshPath(path);
+                var parentPath = GetParentPathForFlattenedArray(path);
+                RefreshPath(string.IsNullOrEmpty(parentPath) ? path : parentPath);
 
                 Log("[Update Value] UI updated successfully");
             }
@@ -1627,6 +1909,68 @@ namespace JsonEditorExample
                 MessageBox.Show(this, $"Error updating value: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
             }
         }
+
+        /// <summary>
+        /// Updates a value in a flattened array representation.
+        /// </summary>
+        private string UpdateFlattenedArrayValue(string json, string flattenedPath, string newValue)
+        {
+            try
+            {
+                Log($"[Update Flattened Array Value] Updating value at path '{flattenedPath}' to '{newValue}'");
+
+                var document = JsonDocument.Parse(json);
+                var root = document.RootElement;
+
+                // Convert to a mutable representation
+                var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+                // Update the flattened array property
+                dict[flattenedPath] = newValue;
+
+                // Serialize back to JSON
+                var resultJson = JsonSerializer.Serialize(dict, _jsonOptions);
+                Log($"[Update Flattened Array Value] Result: {resultJson}");
+                return resultJson;
+            }
+            catch (Exception ex)
+            {
+                Log($"[Update Flattened Array Value] Error: {ex.Message}");
+                throw new Exception($"Failed to update flattened array value: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the parent path for a flattened array property.
+        /// </summary>
+        private string GetParentPathForFlattenedArray(string flattenedPath)
+        {
+            // Match patterns like "key[0]", "key[1][0]", "key[1][1][0]", etc.
+            var match = Regex.Match(flattenedPath, @"^([^\[]+)((?:\[\d+\])*)$");
+
+            if (match.Success)
+            {
+                var baseKey = match.Groups[1].Value;
+                var indicesStr = match.Groups[2].Value;
+
+                // If there are multiple indices, we need to find the parent path
+                if (indicesStr.Contains("]["))
+                {
+                    // For nested arrays, the parent is the same as the base key
+                    return baseKey;
+                }
+                else
+                {
+                    // For simple arrays, the parent is the same as the base key
+                    return baseKey;
+                }
+            }
+
+            // If it's not a flattened array, return the regular parent path
+            var lastDot = flattenedPath.LastIndexOf('.');
+            return lastDot >= 0 ? flattenedPath.Substring(0, lastDot) : "";
+        }
+
 
         /// <summary>
         /// Updates a value in the JSON string at the specified path.
@@ -3327,7 +3671,11 @@ namespace JsonEditorExample
                 _currentJson = JsonSerializer.Serialize(jsonObject, _jsonOptions);
 
                 Log($"[To JSON] Built JSON from UI: {_currentJson}");
-                return _currentJson;
+
+                // Convert flattened arrays to nested format before returning
+                var nestedJson = ConvertFlattenedArraysToNestedJson(_currentJson);
+                Log($"[To JSON] Converted to nested JSON: {nestedJson}");
+                return nestedJson;
             }
             catch (Exception ex)
             {
@@ -3336,6 +3684,9 @@ namespace JsonEditorExample
                 return _currentJson ?? "{}";
             }
         }
+
+
+
 
         /// <summary>
         /// Builds a JSON object from the current UI controls.
@@ -3394,8 +3745,8 @@ namespace JsonEditorExample
                 if (!string.IsNullOrEmpty(tag))
                 {
                     propertyName = tag;
-                    propertyValue = textBox.Text;
-                    Log($"[BuildJsonFromControls] TextBox tag: '{tag}', value: '{textBox.Text}'");
+                    propertyValue = GetControlValue(textBox, tag);
+                    Log($"[BuildJsonFromControls] TextBox tag: '{tag}', value: '{propertyValue}' (Type: {propertyValue?.GetType().Name})");
                 }
             }
             else if (control is CheckBox checkBox)
@@ -3422,29 +3773,153 @@ namespace JsonEditorExample
             // If we have a property name and value, add it to the correct nested location
             if (!string.IsNullOrEmpty(propertyName) && propertyValue != null)
             {
-                // Parse the property path to determine where it belongs
-                var pathParts = propertyName.Split('.');
-
-                if (pathParts.Length > 1)
+                // Check if this is a flattened array property
+                if (IsFlattenedArrayProperty(propertyName))
                 {
-                    // This is a nested property
-                    var objectPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
-                    var key = pathParts.Last();
+                    // This is a flattened array property, extract the array name and indices
+                    var match = Regex.Match(propertyName, @"^(.+?)(\[[0-9]+(?:\[[0-9]+\])*\])$");
+                    if (match.Success)
+                    {
+                        var arrayName = match.Groups[1].Value;
+                        var indicesStr = match.Groups[2].Value;
 
-                    CreateNestedStructure(parent, objectPath, key);
-                    var targetDict = GetNestedDictionary(parent, objectPath);
-                    targetDict[key] = propertyValue;
+                        // Add the flattened property with the correct array name
+                        parent[arrayName + indicesStr] = propertyValue;
 
-                    Log($"[BuildJsonFromControls] Added nested property '{objectPath}.{key}': {propertyValue}");
+                        Log($"[BuildJsonFromControls] Added flattened array property '{arrayName}{indicesStr}': {propertyValue} (Type: {propertyValue?.GetType().Name})");
+                    }
+                    else
+                    {
+                        // Fallback to adding directly to parent
+                        parent[propertyName] = propertyValue;
+                        Log($"[BuildJsonFromControls] Added flattened array property '{propertyName}': {propertyValue} (Type: {propertyValue?.GetType().Name})");
+                    }
                 }
                 else
                 {
-                    // This is a root-level property
-                    parent[propertyName] = propertyValue;
-                    Log($"[BuildJsonFromControls] Added root property '{propertyName}': {propertyValue}");
+                    // Parse the property path to determine where it belongs
+                    var pathParts = propertyName.Split('.');
+
+                    if (pathParts.Length > 1)
+                    {
+                        // This is a nested property
+                        var objectPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
+                        var key = pathParts.Last();
+
+                        CreateNestedStructure(parent, objectPath, key);
+                        var targetDict = GetNestedDictionary(parent, objectPath);
+                        targetDict[key] = propertyValue;
+
+                        Log($"[BuildJsonFromControls] Added nested property '{objectPath}.{key}': {propertyValue} (Type: {propertyValue?.GetType().Name})");
+                    }
+                    else
+                    {
+                        // This is a root-level property
+                        parent[propertyName] = propertyValue;
+                        Log($"[BuildJsonFromControls] Added root property '{propertyName}': {propertyValue} (Type: {propertyValue?.GetType().Name})");
+                    }
                 }
             }
         }
+
+
+        /// <summary>
+        /// Creates a typed value based on type and string value, preserving the original type if possible.
+        /// </summary>
+        private object CreateTypedValue(string type, string value, string originalPath = "")
+        {
+            Log($"[Create Typed Value] Creating value of type '{type}' from string '{value}' at path '{originalPath}'");
+
+            try
+            {
+                object result;
+                switch (type)
+                {
+                    case "String":
+                        result = value;
+                        break;
+
+                    case "Number":
+                        // Check if we have an original type for this path
+                        Type originalType = null;
+                        if (!string.IsNullOrEmpty(originalPath) && OriginalTypes.TryGetValue(originalPath, out originalType))
+                        {
+                            if (originalType == typeof(long))
+                            {
+                                if (long.TryParse(value, out long _longValue))
+                                {
+                                    result = _longValue;
+                                    break;
+                                }
+                            }
+                            else if (originalType == typeof(double))
+                            {
+                                if (double.TryParse(value, out double doubleValue))
+                                {
+                                    result = doubleValue;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Default to trying long first, then double
+                        if (long.TryParse(value, out long longValue))
+                            result = longValue;
+                        else if (double.TryParse(value, out double doubleValue))
+                            result = doubleValue;
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid number.");
+                        break;
+
+                    case "Boolean":
+                        if (bool.TryParse(value, out bool boolValue))
+                            result = boolValue;
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid boolean. Use 'true' or 'false'.");
+                        break;
+
+                    case "Date":
+                        if (IsISO8601Date(value))
+                            result = value; // Store dates as strings
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid ISO8601 date format.");
+                        break;
+
+                    case "Image":
+                        if (IsBase64Image(value, out _))
+                            result = value; // Store images as base64 strings
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid base64 encoded image.");
+                        break;
+
+                    case "Object":
+                        result = new Dictionary<string, object>();
+                        break;
+
+                    case "Array":
+                        result = new List<object>();
+                        break;
+
+                    default:
+                        throw new ArgumentException($"Unknown type: {type}");
+                }
+
+                // Store the original type for this path if we have one
+                if (!string.IsNullOrEmpty(originalPath) && result != null)
+                {
+                    OriginalTypes[originalPath] = result.GetType();
+                }
+
+                Log($"[Create Typed Value] Created value: {result} of type {result?.GetType()}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log($"[Create Typed Value] Error: {ex.Message}");
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// Creates nested dictionary structure based on the path.
@@ -3504,12 +3979,45 @@ namespace JsonEditorExample
             return current;
         }
         /// <summary>
-        /// Gets the value from a control based on its type.
+        /// Gets the value from a control based on its type, preserving the original JSON type if possible.
         /// </summary>
-        private object GetControlValue(Control control)
+        private object GetControlValue(Control control, string path)
         {
             if (control is TextBox textBox)
             {
+                // Check if we have an original type for this path
+                if (OriginalTypes.TryGetValue(path, out var originalType))
+                {
+                    string textValue = textBox.Text;
+
+                    // Try to convert to the original type
+                    try
+                    {
+                        if (originalType == typeof(long))
+                        {
+                            if (long.TryParse(textValue, out long longValue))
+                                return longValue;
+                        }
+                        else if (originalType == typeof(double))
+                        {
+                            if (double.TryParse(textValue, out double doubleValue))
+                                return doubleValue;
+                        }
+                        else if (originalType == typeof(bool))
+                        {
+                            if (bool.TryParse(textValue, out bool boolValue))
+                                return boolValue;
+                        }
+                        // For other types, just return the string
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"[GetControlValue] Error converting to {originalType.Name}: {ex.Message}");
+                        // Fall back to string if conversion fails
+                    }
+                }
+
+                // Default to string
                 return textBox.Text;
             }
             else if (control is CheckBox checkBox)
@@ -3528,6 +4036,7 @@ namespace JsonEditorExample
 
             return null;
         }
+
 
 
     }
