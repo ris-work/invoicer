@@ -28,6 +28,9 @@ namespace JsonEditorExample
         // Add a logging delegate
         public static LogDelegate Log = Console.WriteLine;
 
+        // Add a reference to the root panel for nested panels
+        private FullJsonEditorPanel _rootPanel;
+
         /// <summary>
         /// Gets or sets whether the panel is in app mode, which limits interactions to buttons and date fields.
         /// </summary>
@@ -71,6 +74,7 @@ namespace JsonEditorExample
         public FullJsonEditorPanel(string json, Orientation orientation, bool showHeader = true)
         {
             _showHeader = showHeader;
+            _rootPanel = this; // This is the root panel
 
             try
             {
@@ -112,6 +116,14 @@ namespace JsonEditorExample
         )
         {
             _showHeader = showHeader;
+
+            // For nested panels, we need to find the root panel to access the current JSON
+            // This is a bit of a hack, but it's necessary for nested panels to work correctly
+            if (string.IsNullOrEmpty(path))
+            {
+                _rootPanel = this; // This is the root panel
+            }
+
             Initialize(data, orientation, path, originalTypes, showHeader);
         }
 
@@ -153,6 +165,63 @@ namespace JsonEditorExample
 
             // Set control states based on app mode
             UpdateControlStates();
+        }
+
+        /// <summary>
+        /// Gets the root panel, which contains the current JSON.
+        /// </summary>
+        private FullJsonEditorPanel GetRootPanel()
+        {
+            // If this is the root panel, return itself
+            if (_rootPanel == this)
+                return this;
+
+            // Otherwise, find the root panel by traversing up the UI hierarchy
+            var current = this;
+            while (current.Parent != null)
+            {
+                if (current.Parent is FullJsonEditorPanel parentPanel)
+                {
+                    current = parentPanel;
+                    if (current._rootPanel != null)
+                        return current._rootPanel;
+                }
+                else if (current.Parent is Panel parent)
+                {
+                    // Try to find a FullJsonEditorPanel in the parent's children
+                    foreach (var child in parent.Children.OfType<FullJsonEditorPanel>())
+                    {
+                        if (child._rootPanel != null)
+                            return child._rootPanel;
+                    }
+                    break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // If we can't find the root panel, return this panel as a fallback
+            return this;
+        }
+
+        /// <summary>
+        /// Gets the current JSON from the root panel.
+        /// </summary>
+        private string GetCurrentJson()
+        {
+            var rootPanel = GetRootPanel();
+            return rootPanel._currentJson;
+        }
+
+        /// <summary>
+        /// Sets the current JSON in the root panel.
+        /// </summary>
+        private void SetCurrentJson(string json)
+        {
+            var rootPanel = GetRootPanel();
+            rootPanel._currentJson = json;
         }
 
         /// <summary>
@@ -218,7 +287,7 @@ namespace JsonEditorExample
 
             try
             {
-                var json = _currentJson; // Use the stored JSON directly instead of serializing
+                var json = GetCurrentJson(); // Use the stored JSON directly instead of serializing
                 Log($"[Show JSON] Current JSON: {json}");
 
                 // Create dialog and content separately
@@ -276,7 +345,7 @@ namespace JsonEditorExample
 
             var jsonTextArea = new TextArea
             {
-                Text = _currentJson,
+                Text = GetCurrentJson(),
                 Font = Fonts.Monospace(10)
             };
 
@@ -411,11 +480,14 @@ namespace JsonEditorExample
 
                 // Validate and normalize JSON
                 var document = JsonDocument.Parse(json);
-                _currentJson = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+                json = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
 
-                Log($"[Update JSON] Normalized JSON: {_currentJson}");
+                Log($"[Update JSON] Normalized JSON: {json}");
 
-                var data = ConvertJsonToDictionary(_currentJson);
+                // Update the current JSON in the root panel
+                SetCurrentJson(json);
+
+                var data = ConvertJsonToDictionary(json);
 
                 // Clear the current content
                 _contentContainer.Items.Clear();
@@ -638,7 +710,10 @@ namespace JsonEditorExample
                 case JsonValueKind.Object:
                     Log($"[Build Control] Creating nested panel for object at path '{path}'");
                     var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(value.GetRawText());
-                    return new FullJsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes, _showHeader);
+                    var nestedPanel = new FullJsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes, _showHeader);
+                    // Set the root panel reference for the nested panel
+                    nestedPanel._rootPanel = this._rootPanel;
+                    return nestedPanel;
 
                 case JsonValueKind.Array:
                     Log($"[Build Control] Creating list for array at path '{path}'");
@@ -995,7 +1070,7 @@ namespace JsonEditorExample
             try
             {
                 Log($"[Update Value] Updating value at path '{path}' to '{value}'");
-                var json = _currentJson;
+                var json = GetCurrentJson();
                 var updatedJson = UpdateValueInJson(json, path, value);
                 Log($"[Update Value] Updated JSON: {updatedJson}");
                 UpdateJson(updatedJson);
@@ -1350,7 +1425,7 @@ namespace JsonEditorExample
                 try
                 {
                     // Use the current JSON directly
-                    var json = _currentJson;
+                    var json = GetCurrentJson();
                     Log($"[Add Property] Current JSON: {json}");
                     var updatedJson = AddPropertyToJson(json, parentPath, name, type, value);
                     Log($"[Add Property] Updated JSON: {updatedJson}");
@@ -1496,7 +1571,7 @@ namespace JsonEditorExample
                 try
                 {
                     // Use the current JSON directly
-                    var json = _currentJson;
+                    var json = GetCurrentJson();
                     Log($"[Add Array Item] Current JSON: {json}");
                     var updatedJson = AddItemToArrayJson(json, arrayPath, type, value);
                     Log($"[Add Array Item] Updated JSON: {updatedJson}");
@@ -1524,7 +1599,7 @@ namespace JsonEditorExample
                 try
                 {
                     // Use the current JSON directly
-                    var json = _currentJson;
+                    var json = GetCurrentJson();
                     Log($"[Delete Element] Current JSON: {json}");
                     var updatedJson = DeletePropertyFromJson(json, path);
                     Log($"[Delete Element] Updated JSON: {updatedJson}");
@@ -1552,7 +1627,7 @@ namespace JsonEditorExample
                 try
                 {
                     // Use the current JSON directly
-                    var json = _currentJson;
+                    var json = GetCurrentJson();
                     Log($"[Delete Array Item] Current JSON: {json}");
                     var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
                     Log($"[Delete Array Item] Updated JSON: {updatedJson}");
@@ -2177,7 +2252,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Recursively reconstructs and returns the JSON string representation of the current UI state.
+        /// Recursively reconstructs and returns the JSON string representation of current UI state.
         /// </summary>
         public string ToJson()
         {
@@ -2192,8 +2267,8 @@ namespace JsonEditorExample
             try
             {
                 // Use the stored JSON directly instead of serializing from the UI
-                Log($"[To JSON] Using stored JSON: {_currentJson}");
-                return _currentJson;
+                Log($"[To JSON] Using stored JSON: {GetCurrentJson()}");
+                return GetCurrentJson();
             }
             catch (Exception ex)
             {
