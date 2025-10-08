@@ -28,11 +28,14 @@ namespace JsonEditorExample
         // Add a logging delegate
         public static LogDelegate Log = Console.WriteLine;
 
-        // Add a reference to the root panel for nested panels
+        // Add a reference to root panel for nested panels
         private FullJsonEditorPanel _rootPanel;
 
+        // Track the path of this panel
+        private string _panelPath;
+
         /// <summary>
-        /// Gets or sets whether the panel is in app mode, which limits interactions to buttons and date fields.
+        /// Gets or sets whether panel is in app mode, which limits interactions to buttons and date fields.
         /// </summary>
         public bool AppMode
         {
@@ -45,7 +48,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Gets or sets whether the header with Show/Load buttons is visible.
+        /// Gets or sets whether header with Show/Load buttons is visible.
         /// </summary>
         public bool ShowHeader
         {
@@ -58,7 +61,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// For each node path (e.g. "Parent.Child" or "array[0]"), the original JSON type is stored.
+        /// For each node path (e.g. "Parent.Child" or "array[0]"), original JSON type is stored.
         /// </summary>
         public Dictionary<string, Type> OriginalTypes { get; private set; } = new Dictionary<string, Type>();
 
@@ -74,7 +77,8 @@ namespace JsonEditorExample
         public FullJsonEditorPanel(string json, Orientation orientation, bool showHeader = true)
         {
             _showHeader = showHeader;
-            _rootPanel = this; // This is the root panel
+            _rootPanel = this; // This is root panel
+            _panelPath = ""; // Root panel has empty path
 
             try
             {
@@ -116,12 +120,13 @@ namespace JsonEditorExample
         )
         {
             _showHeader = showHeader;
+            _panelPath = path;
 
-            // For nested panels, we need to find the root panel to access the current JSON
+            // For nested panels, we need to find root panel to access current JSON
             // This is a bit of a hack, but it's necessary for nested panels to work correctly
             if (string.IsNullOrEmpty(path))
             {
-                _rootPanel = this; // This is the root panel
+                _rootPanel = this; // This is root panel
             }
 
             Initialize(data, orientation, path, originalTypes, showHeader);
@@ -168,15 +173,15 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Gets the root panel, which contains the current JSON.
+        /// Gets root panel, which contains current JSON.
         /// </summary>
         private FullJsonEditorPanel GetRootPanel()
         {
-            // If this is the root panel, return itself
+            // If this is root panel, return itself
             if (_rootPanel == this)
                 return this;
 
-            // Otherwise, find the root panel by traversing up the UI hierarchy
+            // Otherwise, find root panel by traversing up the UI hierarchy
             var current = this;
             while (current.Parent != null)
             {
@@ -188,7 +193,7 @@ namespace JsonEditorExample
                 }
                 else if (current.Parent is Panel parent)
                 {
-                    // Try to find a FullJsonEditorPanel in the parent's children
+                    // Try to find a FullJsonEditorPanel in parent's children
                     foreach (var child in parent.Children.OfType<FullJsonEditorPanel>())
                     {
                         if (child._rootPanel != null)
@@ -222,6 +227,74 @@ namespace JsonEditorExample
         {
             var rootPanel = GetRootPanel();
             rootPanel._currentJson = json;
+        }
+
+        /// <summary>
+        /// Refreshes the UI for a specific path without rebuilding the entire tree.
+        /// </summary>
+        private void RefreshPath(string path)
+        {
+            Log($"[Refresh Path] Refreshing path: {path}");
+
+            // If path is empty, refresh the entire root
+            if (string.IsNullOrEmpty(path))
+            {
+                var json = GetCurrentJson();
+                UpdateJson(json);
+                return;
+            }
+
+            // Find the panel that owns this path
+            var panel = FindPanelForPath(path);
+            if (panel != null)
+            {
+                // Get the updated JSON for this path
+                var json = GetCurrentJson();
+                var document = JsonDocument.Parse(json);
+                var element = NavigateToPath(document.RootElement, path);
+
+                // If this is an object, rebuild the panel
+                if (element.ValueKind == JsonValueKind.Object)
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(element.GetRawText());
+                    panel._contentContainer.Items.Clear();
+                    panel.BuildFromDictionary(dict, panel._contentContainer, panel._contentContainer.Orientation, path);
+                }
+                // If this is an array, rebuild the list
+                else if (element.ValueKind == JsonValueKind.Array)
+                {
+                    var list = element.EnumerateArray().ToList();
+                    var parentControl = panel._contentContainer.Parent;
+                    var parentLayout = parentControl as StackLayout;
+                    var itemIndex = parentLayout.Items.IndexOf(new StackLayoutItem(panel._contentContainer));
+
+                    // Create a new list control
+                    var newContainer = panel.BuildFromList(list, panel._contentContainer.Orientation, path);
+
+                    // Replace the old container with the new one
+                    parentLayout.Items[itemIndex] = new StackLayoutItem(newContainer, HorizontalAlignment.Stretch, true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Finds the panel that owns a specific path.
+        /// </summary>
+        private FullJsonEditorPanel FindPanelForPath(string path)
+        {
+            // If this panel owns the path, return it
+            if (path.StartsWith(_panelPath) || _panelPath == "")
+                return this;
+
+            // Otherwise, search child panels
+            foreach (var control in _contentContainer.Controls.OfType<FullJsonEditorPanel>())
+            {
+                var foundPanel = control.FindPanelForPath(path);
+                if (foundPanel != null)
+                    return foundPanel;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -487,19 +560,28 @@ namespace JsonEditorExample
                 // Update the current JSON in the root panel
                 SetCurrentJson(json);
 
-                var data = ConvertJsonToDictionary(json);
+                // Only rebuild the entire UI if this is the root panel
+                if (string.IsNullOrEmpty(_panelPath))
+                {
+                    var data = ConvertJsonToDictionary(json);
 
-                // Clear the current content
-                _contentContainer.Items.Clear();
+                    // Clear the current content
+                    _contentContainer.Items.Clear();
 
-                // Clear the control cache
-                _controlCache.Clear();
+                    // Clear the control cache
+                    _controlCache.Clear();
 
-                // Clear the original types
-                OriginalTypes.Clear();
+                    // Clear the original types
+                    OriginalTypes.Clear();
 
-                // Rebuild the UI with the new data
-                BuildFromDictionary(data, _contentContainer, _contentContainer.Orientation, "");
+                    // Rebuild the UI with the new data
+                    BuildFromDictionary(data, _contentContainer, _contentContainer.Orientation, "");
+                }
+                else
+                {
+                    // For nested panels, just refresh the relevant path
+                    RefreshPath(_panelPath);
+                }
 
                 // Update control states based on app mode
                 UpdateControlStates();
@@ -1073,7 +1155,14 @@ namespace JsonEditorExample
                 var json = GetCurrentJson();
                 var updatedJson = UpdateValueInJson(json, path, value);
                 Log($"[Update Value] Updated JSON: {updatedJson}");
-                UpdateJson(updatedJson);
+
+                // Update the current JSON in the root panel
+                SetCurrentJson(updatedJson);
+
+                // Refresh the UI for the specific path
+                RefreshPath(path);
+
+                Log("[Update Value] UI updated successfully");
             }
             catch (Exception ex)
             {
@@ -1424,12 +1513,17 @@ namespace JsonEditorExample
                 // Update the JSON with the new property
                 try
                 {
-                    // Use the current JSON directly
                     var json = GetCurrentJson();
                     Log($"[Add Property] Current JSON: {json}");
                     var updatedJson = AddPropertyToJson(json, parentPath, name, type, value);
                     Log($"[Add Property] Updated JSON: {updatedJson}");
-                    UpdateJson(updatedJson);
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+
+                    // Refresh the UI for the specific path
+                    RefreshPath(parentPath);
+
                     Log("[Add Property] Property added successfully");
                 }
                 catch (Exception ex)
@@ -1570,12 +1664,17 @@ namespace JsonEditorExample
                 // Update the JSON with the new array item
                 try
                 {
-                    // Use the current JSON directly
                     var json = GetCurrentJson();
                     Log($"[Add Array Item] Current JSON: {json}");
                     var updatedJson = AddItemToArrayJson(json, arrayPath, type, value);
                     Log($"[Add Array Item] Updated JSON: {updatedJson}");
-                    UpdateJson(updatedJson);
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+
+                    // Refresh the UI for the specific path
+                    RefreshPath(arrayPath);
+
                     Log("[Add Array Item] Item added successfully");
                 }
                 catch (Exception ex)
@@ -1598,12 +1697,17 @@ namespace JsonEditorExample
             {
                 try
                 {
-                    // Use the current JSON directly
                     var json = GetCurrentJson();
                     Log($"[Delete Element] Current JSON: {json}");
                     var updatedJson = DeletePropertyFromJson(json, path);
                     Log($"[Delete Element] Updated JSON: {updatedJson}");
-                    UpdateJson(updatedJson);
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+
+                    // Refresh the UI for the specific path
+                    RefreshPath(path);
+
                     Log("[Delete Element] Element deleted successfully");
                 }
                 catch (Exception ex)
@@ -1626,12 +1730,17 @@ namespace JsonEditorExample
             {
                 try
                 {
-                    // Use the current JSON directly
                     var json = GetCurrentJson();
                     Log($"[Delete Array Item] Current JSON: {json}");
                     var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
                     Log($"[Delete Array Item] Updated JSON: {updatedJson}");
-                    UpdateJson(updatedJson);
+
+                    // Update the current JSON in the root panel
+                    SetCurrentJson(updatedJson);
+
+                    // Refresh the UI for the specific path
+                    RefreshPath(arrayPath);
+
                     Log("[Delete Array Item] Item deleted successfully");
                 }
                 catch (Exception ex)
@@ -2252,7 +2361,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Recursively reconstructs and returns the JSON string representation of current UI state.
+        /// Recursively reconstructs and returns the JSON string representation of the current UI state.
         /// </summary>
         public string ToJson()
         {
