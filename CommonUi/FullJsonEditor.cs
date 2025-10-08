@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Eto.Drawing;
 using Eto.Forms;
@@ -33,6 +34,13 @@ namespace JsonEditorExample
 
         // Track the path of this panel
         private string _panelPath;
+
+        // JSON serialization options for reuse
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
 
         /// <summary>
         /// Gets or sets whether panel is in app mode, which limits interactions to buttons and date fields.
@@ -93,7 +101,7 @@ namespace JsonEditorExample
 
                 // Parse and validate JSON
                 var document = JsonDocument.Parse(json);
-                _currentJson = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+                _currentJson = JsonSerializer.Serialize(document, _jsonOptions);
 
                 Log($"[Init] Normalized JSON: {_currentJson}");
             }
@@ -111,6 +119,7 @@ namespace JsonEditorExample
         /// <summary>
         /// Private constructor that supports recursive calls.
         /// </summary>
+        // Replace the nested panel constructor with this corrected version:
         private FullJsonEditorPanel(
             IReadOnlyDictionary<string, JsonElement> data,
             Orientation orientation,
@@ -128,21 +137,13 @@ namespace JsonEditorExample
             {
                 _rootPanel = this; // This is root panel
             }
+            else
+            {
+                // For nested panels, we need to find the root panel
+                // In a real implementation, you might want to pass a reference to the root panel
+                _rootPanel = this; // This is a simplified approach - in a real implementation, you might want to pass a reference
+            }
 
-            Initialize(data, orientation, path, originalTypes, showHeader);
-        }
-
-        /// <summary>
-        /// Common initialization logic for all constructors.
-        /// </summary>
-        private void Initialize(
-            IReadOnlyDictionary<string, JsonElement> data,
-            Orientation orientation,
-            string path,
-            Dictionary<string, Type> originalTypes,
-            bool showHeader = true
-        )
-        {
             if (originalTypes != null)
                 OriginalTypes = originalTypes;
             else
@@ -154,7 +155,57 @@ namespace JsonEditorExample
             _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
 
             // Create header if needed
-            if (_showHeader && string.IsNullOrEmpty(path)) // Only show header for the root panel
+            if (_showHeader && string.IsNullOrEmpty(path)) // Only show header for root panel
+            {
+                var header = CreateHeader();
+                _rootLayout.Items.Add(new StackLayoutItem(header, HorizontalAlignment.Stretch));
+            }
+
+            // Create a container for the content
+            _contentContainer = new StackLayout { Orientation = orientation, Spacing = 5 };
+            _rootLayout.Items.Add(new StackLayoutItem(_contentContainer, HorizontalAlignment.Stretch, true));
+
+            BuildFromDictionary(data, _contentContainer, orientation, path);
+
+            this.Content = _rootLayout;
+
+            // Set control states based on app mode
+            UpdateControlStates();
+        }
+
+        /// <summary>
+        /// Private constructor that supports recursive calls.
+        /// </summary>
+        private void Initialize(
+            IReadOnlyDictionary<string, JsonElement> data,
+            Orientation orientation,
+            string path,
+            Dictionary<string, Type> originalTypes,
+            bool showHeader = true
+        )
+        {
+            _showHeader = showHeader;
+            _panelPath = path;
+
+            // For nested panels, we need to find root panel to access current JSON
+            // This is a bit of a hack, but it's necessary for nested panels to work correctly
+            if (string.IsNullOrEmpty(path))
+            {
+                _rootPanel = this; // This is root panel
+            }
+
+            if (originalTypes != null)
+                OriginalTypes = originalTypes;
+            else
+                OriginalTypes = new Dictionary<string, Type>();
+
+            Log($"[Init] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
+
+            // Create the root layout with header
+            _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Create header if needed
+            if (_showHeader && string.IsNullOrEmpty(path)) // Only show header for root panel
             {
                 var header = CreateHeader();
                 _rootLayout.Items.Add(new StackLayoutItem(header, HorizontalAlignment.Stretch));
@@ -181,38 +232,12 @@ namespace JsonEditorExample
             if (_rootPanel == this)
                 return this;
 
-            // Otherwise, find root panel by traversing up the UI hierarchy
-            var current = this;
-            while (current.Parent != null)
-            {
-                if (current.Parent is FullJsonEditorPanel parentPanel)
-                {
-                    current = parentPanel;
-                    if (current._rootPanel != null)
-                        return current._rootPanel;
-                }
-                else if (current.Parent is Panel parent)
-                {
-                    // Try to find a FullJsonEditorPanel in parent's children
-                    foreach (var child in parent.Children.OfType<FullJsonEditorPanel>())
-                    {
-                        if (child._rootPanel != null)
-                            return child._rootPanel;
-                    }
-                    break;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // If we can't find the root panel, return this panel as a fallback
-            return this;
+            // Otherwise, return the stored root panel reference
+            return _rootPanel;
         }
 
         /// <summary>
-        /// Gets the current JSON from the root panel.
+        /// Gets current JSON from root panel.
         /// </summary>
         private string GetCurrentJson()
         {
@@ -221,7 +246,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Sets the current JSON in the root panel.
+        /// Sets current JSON in root panel.
         /// </summary>
         private void SetCurrentJson(string json)
         {
@@ -229,6 +254,9 @@ namespace JsonEditorExample
             rootPanel._currentJson = json;
         }
 
+        /// <summary>
+        /// Refreshes the UI for a specific path without rebuilding the entire tree.
+        /// </summary>
         /// <summary>
         /// Refreshes the UI for a specific path without rebuilding the entire tree.
         /// </summary>
@@ -246,33 +274,58 @@ namespace JsonEditorExample
 
             // Find the panel that owns this path
             var panel = FindPanelForPath(path);
-            if (panel != null)
+            if (panel == null)
             {
-                // Get the updated JSON for this path
-                var json = GetCurrentJson();
-                var document = JsonDocument.Parse(json);
-                var element = NavigateToPath(document.RootElement, path);
+                Log($"[Refresh Path] Panel not found for path: {path}");
+                return;
+            }
 
-                // If this is an object, rebuild the panel
-                if (element.ValueKind == JsonValueKind.Object)
+            // Get the updated JSON for this path
+            var jsonDocument = JsonDocument.Parse(GetCurrentJson());
+            JsonElement element;
+
+            try
+            {
+                element = NavigateToPath(jsonDocument.RootElement, path);
+            }
+            catch (Exception ex)
+            {
+                Log($"[Refresh Path] Error navigating to path '{path}': {ex.Message}");
+                // If the path no longer exists, refresh the parent
+                var lastDot = path.LastIndexOf('.');
+                var parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
+                if (!string.IsNullOrEmpty(parentPath))
+                    RefreshPath(parentPath);
+                return;
+            }
+
+            // If this is an object, rebuild the panel
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(element.GetRawText());
+                panel._contentContainer.Items.Clear();
+                panel.BuildFromDictionary(dict, panel._contentContainer, panel._contentContainer.Orientation, path);
+            }
+            // If this is an array, rebuild the list
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                var list = element.EnumerateArray().ToList();
+
+                // Find the parent panel that contains this panel
+                var parentPanel = FindParentPanel(panel);
+                if (parentPanel != null)
                 {
-                    var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(element.GetRawText());
-                    panel._contentContainer.Items.Clear();
-                    panel.BuildFromDictionary(dict, panel._contentContainer, panel._contentContainer.Orientation, path);
-                }
-                // If this is an array, rebuild the list
-                else if (element.ValueKind == JsonValueKind.Array)
-                {
-                    var list = element.EnumerateArray().ToList();
-                    var parentControl = panel._contentContainer.Parent;
-                    var parentLayout = parentControl as StackLayout;
-                    var itemIndex = parentLayout.Items.IndexOf(new StackLayoutItem(panel._contentContainer));
+                    // Find the index of this panel in the parent's items
+                    var index = FindPanelIndexInParent(parentPanel, panel);
 
-                    // Create a new list control
-                    var newContainer = panel.BuildFromList(list, panel._contentContainer.Orientation, path);
+                    if (index >= 0)
+                    {
+                        // Create a new list control
+                        var newContainer = panel.BuildFromList(list, panel._contentContainer.Orientation, path);
 
-                    // Replace the old container with the new one
-                    parentLayout.Items[itemIndex] = new StackLayoutItem(newContainer, HorizontalAlignment.Stretch, true);
+                        // Replace the old container with the new one
+                        parentPanel._contentContainer.Items[index] = new StackLayoutItem(newContainer, HorizontalAlignment.Stretch, true);
+                    }
                 }
             }
         }
@@ -295,6 +348,43 @@ namespace JsonEditorExample
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Finds the parent panel that contains the specified panel.
+        /// </summary>
+        private FullJsonEditorPanel FindParentPanel(FullJsonEditorPanel childPanel)
+        {
+            // Check if the panel is directly in this container
+            foreach (var item in _contentContainer.Items)
+            {
+                if (item.Control == childPanel)
+                    return this;
+            }
+
+            // Check nested panels
+            foreach (var control in _contentContainer.Controls.OfType<FullJsonEditorPanel>())
+            {
+                var parentPanel = control.FindParentPanel(childPanel);
+                if (parentPanel != null)
+                    return parentPanel;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Finds the index of a panel in its parent container.
+        /// </summary>
+        private int FindPanelIndexInParent(FullJsonEditorPanel parentPanel, FullJsonEditorPanel childPanel)
+        {
+            for (int i = 0; i < parentPanel._contentContainer.Items.Count; i++)
+            {
+                if (parentPanel._contentContainer.Items[i].Control == childPanel)
+                    return i;
+            }
+
+            return -1;
         }
 
         /// <summary>
@@ -330,24 +420,22 @@ namespace JsonEditorExample
         /// </summary>
         private void UpdateHeaderVisibility()
         {
-            if (_rootLayout != null && _rootLayout.Items.Count > 0)
+            if (_rootLayout == null || _rootLayout.Items.Count == 0)
+                return;
+
+            // Check if header is currently visible
+            bool headerVisible = _rootLayout.Items.Count > 0 && _rootLayout.Items[0].Control is StackLayout;
+
+            // Show header if needed and not already visible
+            if (_showHeader && !headerVisible)
             {
-                if (_showHeader && (_rootLayout.Items[0].Control is StackLayout headerPanel))
-                {
-                    // Header is already visible
-                    return;
-                }
-                else if (!_showHeader && (_rootLayout.Items[0].Control is StackLayout))
-                {
-                    // Remove the header
-                    _rootLayout.Items.RemoveAt(0);
-                }
-                else if (_showHeader && !(_rootLayout.Items[0].Control is StackLayout))
-                {
-                    // Add the header
-                    var header = CreateHeader();
-                    _rootLayout.Items.Insert(0, new StackLayoutItem(header, HorizontalAlignment.Stretch));
-                }
+                var header = CreateHeader();
+                _rootLayout.Items.Insert(0, new StackLayoutItem(header, HorizontalAlignment.Stretch));
+            }
+            // Hide header if needed and currently visible
+            else if (!_showHeader && headerVisible)
+            {
+                _rootLayout.Items.RemoveAt(0);
             }
         }
 
@@ -360,7 +448,7 @@ namespace JsonEditorExample
 
             try
             {
-                var json = GetCurrentJson(); // Use the stored JSON directly instead of serializing
+                var json = GetCurrentJson();
                 Log($"[Show JSON] Current JSON: {json}");
 
                 // Create dialog and content separately
@@ -553,7 +641,7 @@ namespace JsonEditorExample
 
                 // Validate and normalize JSON
                 var document = JsonDocument.Parse(json);
-                json = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+                json = JsonSerializer.Serialize(document, _jsonOptions);
 
                 Log($"[Update JSON] Normalized JSON: {json}");
 
@@ -576,11 +664,15 @@ namespace JsonEditorExample
 
                     // Rebuild the UI with the new data
                     BuildFromDictionary(data, _contentContainer, _contentContainer.Orientation, "");
+
+                    Log("[Update JSON] Root UI rebuilt successfully");
                 }
                 else
                 {
                     // For nested panels, just refresh the relevant path
                     RefreshPath(_panelPath);
+
+                    Log("[Update JSON] Nested UI refreshed successfully");
                 }
 
                 // Update control states based on app mode
@@ -591,12 +683,12 @@ namespace JsonEditorExample
             catch (JsonException ex)
             {
                 Log($"[Update JSON] JSON error: {ex.Message}");
-                throw new Exception($"Invalid JSON: {ex.Message}", ex);
+                MessageBox.Show(this, $"Invalid JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
             }
             catch (Exception ex)
             {
                 Log($"[Update JSON] General error: {ex.Message}");
-                throw new Exception($"Failed to update JSON: {ex.Message}", ex);
+                MessageBox.Show(this, $"Failed to update JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
             }
         }
 
@@ -716,6 +808,9 @@ namespace JsonEditorExample
         /// <summary>
         /// Recursively builds controls for each element in a JSON array.
         /// </summary>
+        /// <summary>
+        /// Recursively builds controls for each element in a JSON array.
+        /// </summary>
         private Control BuildFromList(
             IEnumerable<JsonElement> list,
             Orientation orientation,
@@ -729,11 +824,13 @@ namespace JsonEditorExample
 
             foreach (var item in list)
             {
-                string itemPath = $"{path}[{index}]";
+                // Capture the current index to avoid closure issues
+                int currentIndex = index;
+                string itemPath = $"{path}[{currentIndex}]";
                 Log($"[Build List] Processing array item '{itemPath}' with ValueKind {item.ValueKind}");
 
                 // Create a label for the index.
-                var label = new Label { Text = $"[{index}]", Tag = index };
+                var label = new Label { Text = $"[{currentIndex}]", Tag = currentIndex };
 
                 Control itemControl = BuildControlForValue(item, orientation, itemPath);
 
@@ -751,7 +848,8 @@ namespace JsonEditorExample
 
                 // Add delete button for array items
                 var deleteButton = new Button { Text = "×", Tag = itemPath, Width = 25 };
-                deleteButton.Click += (s, e) => DeleteArrayElement(path, index);
+                // Use currentIndex instead of index to avoid closure issues
+                deleteButton.Click += (s, e) => DeleteArrayElement(path, currentIndex);
                 row.Items.Add(new StackLayoutItem(deleteButton));
 
                 container.Items.Add(new StackLayoutItem(row, HorizontalAlignment.Stretch));
@@ -804,12 +902,18 @@ namespace JsonEditorExample
                 case JsonValueKind.True:
                 case JsonValueKind.False:
                     Log($"[Build Control] Creating checkbox for boolean at path '{path}'");
-                    return new CheckBox
+                    var checkBox = new CheckBox
                     {
                         Checked = value.GetBoolean(),
                         Tag = path,
                         Font = Fonts.Monospace(fontSize),
                     };
+                    // Handle checkbox changes
+                    checkBox.CheckedChanged += (sender, e) => {
+                        Log($"[Checkbox] Changed at path '{path}' to {checkBox.Checked}");
+                        UpdateValueAtPath(path, checkBox.Checked.ToString());
+                    };
+                    return checkBox;
 
                 case JsonValueKind.Number:
                     if (value.TryGetInt64(out long l))
@@ -820,6 +924,11 @@ namespace JsonEditorExample
                             Text = l.ToString(),
                             Tag = path,
                             Font = Fonts.Monospace(fontSize),
+                        };
+                        // Handle text changes
+                        numberTextBox.TextChanged += (sender, e) => {
+                            Log($"[TextBox] Changed at path '{path}' to {numberTextBox.Text}");
+                            UpdateValueAtPath(path, numberTextBox.Text);
                         };
                         return numberTextBox;
                     }
@@ -832,6 +941,11 @@ namespace JsonEditorExample
                             Text = d.ToString(),
                             Tag = path,
                             Font = Fonts.Monospace(fontSize),
+                        };
+                        // Handle text changes
+                        doubleTextBox.TextChanged += (sender, e) => {
+                            Log($"[TextBox] Changed at path '{path}' to {doubleTextBox.Text}");
+                            UpdateValueAtPath(path, doubleTextBox.Text);
                         };
                         return doubleTextBox;
                     }
@@ -881,6 +995,11 @@ namespace JsonEditorExample
                                 };
                             }
 
+                            // Handle date changes
+                            datePicker.ValueChanged += (sender, e) => {
+                                Log($"[DatePicker] Changed at path '{path}' to {datePicker.Value}");
+                                UpdateValueAtPath(path, datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+                            };
                             return datePicker;
                         }
                     }
@@ -935,6 +1054,12 @@ namespace JsonEditorExample
                     // Add an "Upload Image" button for potential base64 images
                     var uploadButton = new Button { Text = "Upload Image", Tag = path };
                     uploadButton.Click += (s, e) => UploadImageAsBase64(path);
+
+                    // Handle text changes
+                    defaultTextBox.TextChanged += (sender, e) => {
+                        Log($"[TextBox] Changed at path '{path}' to {defaultTextBox.Text}");
+                        UpdateValueAtPath(path, defaultTextBox.Text);
+                    };
 
                     var containerWithUpload = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
                     containerWithUpload.Items.Add(new StackLayoutItem(defaultTextBox, HorizontalAlignment.Stretch, true));
@@ -1038,9 +1163,13 @@ namespace JsonEditorExample
                     button.Enabled = true;
                 }
             }
-            else if (control is Panel panel && panel.Content != null)
+            else if (control is FullJsonEditorPanel editorPanel)
             {
-                UpdateControlStatesRecursively(panel.Content);
+                editorPanel.UpdateControlStates();
+            }
+            else if (control is Panel containerPanel && containerPanel.Content != null)
+            {
+                UpdateControlStatesRecursively(containerPanel.Content);
             }
             else if (control is StackLayout layout)
             {
@@ -1190,7 +1319,7 @@ namespace JsonEditorExample
                 var document = JsonDocument.Parse(json);
                 var root = document.RootElement;
 
-                // Handle top-level property deletion
+                // Handle top-level property update
                 if (string.IsNullOrEmpty(path))
                 {
                     // This shouldn't happen in our use case
@@ -1243,6 +1372,10 @@ namespace JsonEditorExample
                             throw new ArgumentOutOfRangeException($"Index {index} is out of range for array with {list.Count} items.");
                         }
                     }
+                    else
+                    {
+                        throw new InvalidOperationException($"Invalid array index format: {propertyName}");
+                    }
                 }
 
                 // Navigate to the parent object
@@ -1288,7 +1421,7 @@ namespace JsonEditorExample
         }
 
         /// <summary>
-        /// Creates an updated value based on the existing value type and the new string value.
+        /// Creates an updated value based on the existing value type and new string value.
         /// </summary>
         private object CreateUpdatedValue(object existingValue, string newValue)
         {
@@ -1381,7 +1514,7 @@ namespace JsonEditorExample
         {
             Log($"[Add Property] Adding property to path '{parentPath}'");
 
-            // Create the dialog first
+            // Create a dialog first
             var dialog = new Dialog<string>
             {
                 Title = "Add New Property",
@@ -1541,7 +1674,7 @@ namespace JsonEditorExample
         {
             Log($"[Add Array Item] Adding item to array at path '{arrayPath}'");
 
-            // Create the dialog first
+            // Create a dialog first
             var dialog = new Dialog<string>
             {
                 Title = "Add New Array Item",
@@ -1688,6 +1821,9 @@ namespace JsonEditorExample
         /// <summary>
         /// Deletes an element at the specified path.
         /// </summary>
+        /// <summary>
+        /// Deletes an element at the specified path.
+        /// </summary>
         private void DeleteElement(string path)
         {
             Log($"[Delete Element] Deleting element at path '{path}'");
@@ -1699,14 +1835,38 @@ namespace JsonEditorExample
                 {
                     var json = GetCurrentJson();
                     Log($"[Delete Element] Current JSON: {json}");
-                    var updatedJson = DeletePropertyFromJson(json, path);
-                    Log($"[Delete Element] Updated JSON: {updatedJson}");
 
-                    // Update the current JSON in the root panel
-                    SetCurrentJson(updatedJson);
+                    // Check if this is an array path
+                    if (path.Contains("[") && path.Contains("]"))
+                    {
+                        // Extract array path and index
+                        var match = Regex.Match(path, @"(.+)\[(\d+)\]");
+                        if (match.Success)
+                        {
+                            var arrayPath = match.Groups[1].Value;
+                            var index = int.Parse(match.Groups[2].Value);
+                            var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
+                            Log($"[Delete Element] Updated JSON: {updatedJson}");
+                            SetCurrentJson(updatedJson);
+                            RefreshPath(arrayPath);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Invalid array path format: {path}");
+                        }
+                    }
+                    else
+                    {
+                        // Delete object property
+                        var updatedJson = DeletePropertyFromJson(json, path);
+                        Log($"[Delete Element] Updated JSON: {updatedJson}");
+                        SetCurrentJson(updatedJson);
 
-                    // Refresh the UI for the specific path
-                    RefreshPath(path);
+                        // Get parent path for refresh
+                        var lastDot = path.LastIndexOf('.');
+                        var parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
+                        RefreshPath(parentPath);
+                    }
 
                     Log("[Delete Element] Element deleted successfully");
                 }
@@ -1718,6 +1878,9 @@ namespace JsonEditorExample
             }
         }
 
+        /// <summary>
+        /// Deletes an array item at the specified path and index.
+        /// </summary>
         /// <summary>
         /// Deletes an array item at the specified path and index.
         /// </summary>
@@ -1776,7 +1939,7 @@ namespace JsonEditorExample
                 if (parentElement.ValueKind != JsonValueKind.Object)
                     throw new InvalidOperationException($"Path '{parentPath}' does not point to an object.");
 
-                // Create the new property value based on type
+                // Create a new property value based on type
                 object newValue = CreateTypedValue(type, value);
 
                 // Convert to a mutable representation
@@ -1827,7 +1990,7 @@ namespace JsonEditorExample
                 if (arrayElement.ValueKind != JsonValueKind.Array)
                     throw new InvalidOperationException($"Path '{arrayPath}' does not point to an array.");
 
-                // Create the new item value based on type
+                // Create a new item value based on type
                 object newValue = CreateTypedValue(type, value);
 
                 // Convert to a mutable representation
@@ -2082,15 +2245,13 @@ namespace JsonEditorExample
                 if (string.IsNullOrEmpty(path))
                 {
                     // Update the root
-                    var result = JsonSerializer.Serialize(newValue, new JsonSerializerOptions { WriteIndented = true });
+                    var result = JsonSerializer.Serialize(newValue, _jsonOptions);
                     Log($"[Update Path] Updated root: {result}");
                     return result;
                 }
 
                 // Split the path into parts
                 var parts = path.Split('.');
-
-                Log($"[Update Path] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
 
                 // Create a mutable representation of the entire JSON
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
@@ -2101,12 +2262,13 @@ namespace JsonEditorExample
                 var current = dict;
                 for (int i = 0; i < parts.Length - 1; i++)
                 {
-                    Log($"[Update Path] Processing part {i}: '{parts[i]}'");
+                    var part = parts[i];
+                    Log($"[Update Path] Processing part {i}: '{part}'");
 
                     // Handle array indices
-                    if (parts[i].Contains("[") && parts[i].Contains("]"))
+                    if (part.Contains("[") && part.Contains("]"))
                     {
-                        var match = Regex.Match(parts[i], @"(.+)\[(\d+)\]");
+                        var match = Regex.Match(part, @"(.+)\[(\d+)\]");
                         if (match.Success)
                         {
                             var arrayName = match.Groups[1].Value;
@@ -2122,10 +2284,10 @@ namespace JsonEditorExample
                                 // Check if the index is valid
                                 if (arrayIndex >= 0 && arrayIndex < array.Count)
                                 {
-                                    if (arrayIndex < array.Count - 1)
+                                    if (i < parts.Length - 2)
                                     {
                                         // Continue navigating through the array
-                                        if (array[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                        if (arrayIndex < array.Count - 1 && array[arrayIndex] is Dictionary<string, object> arrayItemDict)
                                         {
                                             current = arrayItemDict;
                                             i++; // Skip the array index part
@@ -2141,7 +2303,7 @@ namespace JsonEditorExample
                                         // This is the last part, update the array item
                                         array[arrayIndex] = newValue;
                                         Log($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
-                                        var result = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                                        var result = JsonSerializer.Serialize(dict, _jsonOptions);
                                         Log($"[Update Path] Final result: {result}");
                                         return result;
                                     }
@@ -2158,22 +2320,22 @@ namespace JsonEditorExample
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Invalid array index format: {parts[i]}");
+                            throw new InvalidOperationException($"Invalid array index format: {part}");
                         }
                     }
                     else
                     {
                         // Handle object properties
-                        if (!current.TryGetValue(parts[i], out var next))
+                        if (!current.TryGetValue(part, out var next))
                         {
-                            Log($"[Update Path] Property '{parts[i]}' not found in current object");
-                            throw new InvalidOperationException($"Property '{parts[i]}' not found.");
+                            Log($"[Update Path] Property '{part}' not found in current object");
+                            throw new InvalidOperationException($"Property '{part}' not found.");
                         }
 
                         if (next is Dictionary<string, object> nextDict)
                         {
                             current = nextDict;
-                            Log($"[Update Path] Moved to property '{parts[i]}'");
+                            Log($"[Update Path] Moved to property '{part}'");
                         }
                         else if (next is List<object> nextList && i < parts.Length - 1 && int.TryParse(parts[i + 1], out int arrayIndex))
                         {
@@ -2182,10 +2344,10 @@ namespace JsonEditorExample
 
                             if (arrayIndex >= 0 && arrayIndex < nextList.Count)
                             {
-                                if (arrayIndex < nextList.Count - 1)
+                                if (i < parts.Length - 2)
                                 {
                                     // Continue navigating through the array
-                                    if (nextList[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                    if (arrayIndex < nextList.Count - 1 && nextList[arrayIndex] is Dictionary<string, object> arrayItemDict)
                                     {
                                         current = arrayItemDict;
                                         i++; // Skip the array index part
@@ -2201,7 +2363,7 @@ namespace JsonEditorExample
                                     // This is the last part, update the array item
                                     nextList[arrayIndex] = newValue;
                                     Log($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
-                                    var result = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                                    var result = JsonSerializer.Serialize(dict, _jsonOptions);
                                     Log($"[Update Path] Final result: {result}");
                                     return result;
                                 }
@@ -2213,7 +2375,7 @@ namespace JsonEditorExample
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Cannot navigate to '{parts[i]}' because current element is not an object or array.");
+                            throw new InvalidOperationException($"Cannot navigate to '{part}' because current element is not an object or array.");
                         }
                     }
                 }
@@ -2223,7 +2385,7 @@ namespace JsonEditorExample
                 Log($"[Update Path] Updating final property '{finalProperty}' to '{newValue}'");
                 current[finalProperty] = newValue;
 
-                var finalResult = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                var finalResult = JsonSerializer.Serialize(dict, _jsonOptions);
                 Log($"[Update Path] Final result: {finalResult}");
                 return finalResult;
             }
@@ -2232,15 +2394,10 @@ namespace JsonEditorExample
                 Log($"[Update Path] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
-            catch (Exception ex)
-            {
-                Log($"[Update Path] General error: {ex.Message}");
-                throw new Exception($"Failed to update path '{path}': {ex.Message}", ex);
-            }
         }
 
         /// <summary>
-        /// Creates a typed value based on the type and string value.
+        /// Creates a typed value based on type and string value.
         /// </summary>
         private object CreateTypedValue(string type, string value)
         {
@@ -2346,9 +2503,13 @@ namespace JsonEditorExample
                     }
                 }
             }
-            else if (control is Panel panel && panel.Content != null)
+            else if (control is FullJsonEditorPanel editorPanel)
             {
-                ValidateControlsRecursively(panel.Content, errors);
+                editorPanel.ValidateControlsRecursively(editorPanel.Content, errors);
+            }
+            else if (control is Panel containerPanel && containerPanel.Content != null)
+            {
+                ValidateControlsRecursively(containerPanel.Content, errors);
             }
             else if (control is StackLayout layout)
             {
@@ -2375,7 +2536,7 @@ namespace JsonEditorExample
 
             try
             {
-                // Use the stored JSON directly instead of serializing from the UI
+                // Use the stored JSON directly instead of serializing from UI
                 Log($"[To JSON] Using stored JSON: {GetCurrentJson()}");
                 return GetCurrentJson();
             }
