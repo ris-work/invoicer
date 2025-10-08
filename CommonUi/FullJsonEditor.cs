@@ -133,6 +133,121 @@ namespace JsonEditorExample
         }
 
         /// <summary>
+        /// Detects if the JSON uses flattened array notation (e.g., "key[0][1]") and converts it to proper nested JSON.
+        /// </summary>
+        private string ConvertFlattenedArraysToNestedJson(string flatJson)
+        {
+            try
+            {
+                var document = JsonDocument.Parse(flatJson);
+                var root = document.RootElement;
+
+                if (root.ValueKind == JsonValueKind.Object)
+                {
+                    var nestedDict = new Dictionary<string, object>();
+                    var flatDict = JsonSerializer.Deserialize<Dictionary<string, object>>(flatJson);
+
+                    foreach (var kvp in flatDict)
+                    {
+                        if (kvp.Key.Contains("["))
+                        {
+                            // This is a flattened array property
+                            ProcessFlattenedProperty(kvp.Key, kvp.Value, nestedDict);
+                        }
+                        else
+                        {
+                            // Regular property, just copy it
+                            nestedDict[kvp.Key] = kvp.Value;
+                        }
+                    }
+
+                    return JsonSerializer.Serialize(nestedDict, _jsonOptions);
+                }
+
+                return flatJson;
+            }
+            catch (Exception ex)
+            {
+                Log($"[ConvertFlattenedArraysToNestedJson] Error: {ex.Message}");
+                return flatJson; // Return original if conversion fails
+            }
+        }
+
+        /// <summary>
+        /// Processes a flattened property key and value, adding it to the nested dictionary.
+        /// </summary>
+        private void ProcessFlattenedProperty(string key, object value, Dictionary<string, object> target)
+        {
+            // Match patterns like "key[0]", "key[1][0]", "key[1][1][0]", etc.
+            var match = Regex.Match(key, @"^([^\[]+)((?:\[\d+\])*)$");
+
+            if (match.Success)
+            {
+                var baseKey = match.Groups[1].Value;
+                var indicesStr = match.Groups[2].Value;
+
+                // Extract all indices
+                var indices = new List<int>();
+                foreach (Match indexMatch in Regex.Matches(indicesStr, @"\[(\d+)\]"))
+                {
+                    indices.Add(int.Parse(indexMatch.Groups[1].Value));
+                }
+
+                // Create or get the nested structure
+                var current = target;
+                if (!current.ContainsKey(baseKey))
+                {
+                    current[baseKey] = new List<object>();
+                }
+
+                var currentArray = current[baseKey] as List<object>;
+                EnsureArraySize(currentArray, indices.Count);
+
+                // Navigate to the correct nested position
+                for (int i = 0; i < indices.Count - 1; i++)
+                {
+                    int index = indices[i];
+                    if (index >= currentArray.Count)
+                        EnsureArraySize(currentArray, index + 1);
+
+                    if (currentArray[index] is List<object> nestedList)
+                    {
+                        currentArray = nestedList;
+                    }
+                    else
+                    {
+                        // Create nested list at this position
+                        currentArray[index] = new List<object>();
+                        currentArray = currentArray[index] as List<object>;
+                    }
+                }
+
+                // Set the final value
+                int finalIndex = indices.Last();
+                if (finalIndex >= currentArray.Count)
+                    EnsureArraySize(currentArray, finalIndex + 1);
+
+                currentArray[finalIndex] = value;
+            }
+            else
+            {
+                // Regular property
+                target[key] = value;
+            }
+        }
+
+        /// <summary>
+        /// Ensures the array has enough elements to accommodate the specified index.
+        /// </summary>
+        private void EnsureArraySize(List<object> array, int requiredSize)
+        {
+            while (array.Count <= requiredSize)
+            {
+                array.Add(null);
+            }
+        }
+
+        /// <summary>
         /// Constructs a FullJsonEditorPanel from a JSON string.
         /// </summary>
         /// <summary>
@@ -2193,6 +2308,14 @@ namespace JsonEditorExample
                     var json = BuildJsonFromRoot();
                     Log($"[Delete Element] Current JSON from UI: {json}");
 
+                    // Convert flattened arrays to nested if needed
+                    var convertedJson = ConvertFlattenedArraysToNestedJson(json);
+                    if (convertedJson != json)
+                    {
+                        Log($"[Delete Element] Converted flattened JSON to nested JSON: {convertedJson}");
+                        json = convertedJson;
+                    }
+
                     if (string.IsNullOrWhiteSpace(json) || json == "{}")
                     {
                         Log("[Delete Element] JSON is empty, cannot delete property");
@@ -2204,15 +2327,28 @@ namespace JsonEditorExample
                     if (path.Contains("[") && path.Contains("]"))
                     {
                         // Extract array path and index
-                        var match = Regex.Match(path, @"(.+)\[(\d+)\]");
+                        var match = Regex.Match(path, @"(.+)\[(\d+)\]$");
                         if (match.Success)
                         {
                             var arrayPath = match.Groups[1].Value;
                             var index = int.Parse(match.Groups[2].Value);
-                            var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
-                            Log($"[Delete Element] Updated JSON: {updatedJson}");
-                            SetCurrentJson(updatedJson);
-                            RefreshPath(arrayPath);
+
+                            // Handle flattened array paths
+                            var flatMatch = Regex.Match(path, @"^(.+)\[(\d+)\]$");
+                            if (flatMatch.Success)
+                            {
+                                var updatedJson = DeleteFlattenedArrayItem(json, path, index);
+                                Log($"[Delete Element] Updated flattened array JSON: {updatedJson}");
+                                SetCurrentJson(updatedJson);
+                                RefreshPath(arrayPath);
+                            }
+                            else
+                            {
+                                var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
+                                Log($"[Delete Element] Updated nested array JSON: {updatedJson}");
+                                SetCurrentJson(updatedJson);
+                                RefreshPath(arrayPath);
+                            }
                         }
                         else
                         {
@@ -2238,6 +2374,164 @@ namespace JsonEditorExample
                 {
                     Log($"[Delete Element] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error deleting property: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Deletes an item from a flattened array representation.
+        /// </summary>
+        private string DeleteFlattenedArrayItem(string json, string flattenedPath, int index)
+        {
+            try
+            {
+                Log($"[Delete Flattened Array Item] Deleting item at index {index} in flattened array '{flattenedPath}'");
+
+                var document = JsonDocument.Parse(json);
+                var root = document.RootElement;
+
+                // Parse the flattened path
+                var match = Regex.Match(flattenedPath, @"^([^\[]+)((?:\[\d+\])*)$");
+                if (!match.Success)
+                {
+                    throw new InvalidOperationException($"Invalid flattened array path: {flattenedPath}");
+                }
+
+                var baseKey = match.Groups[1].Value;
+                var indicesStr = match.Groups[2].Value;
+                var indices = new List<int>();
+
+                foreach (Match indexMatch in Regex.Matches(indicesStr, @"\[(\d+)\]"))
+                {
+                    indices.Add(int.Parse(indexMatch.Groups[1].Value));
+                }
+
+                // Check if this is the item we want to delete
+                if (indices.Count == 1 && indices[0] == index)
+                {
+                    // This is a top-level array item, just remove the entire flattened property
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    dict.Remove(flattenedPath);
+                    return JsonSerializer.Serialize(dict, _jsonOptions);
+                }
+                else
+                {
+                    // This is a nested array item, we need to reconstruct the entire structure
+                    var convertedJson = ConvertFlattenedArraysToNestedJson(json);
+                    var nestedArrayPath = baseKey;
+
+                    if (indices.Count > 0)
+                    {
+                        var nestedDocument = JsonDocument.Parse(convertedJson);
+                        var nestedElement = NavigateToPath(nestedDocument.RootElement, nestedArrayPath);
+
+                        if (nestedElement.ValueKind == JsonValueKind.Array)
+                        {
+                            var array = JsonSerializer.Deserialize<List<object>>(nestedElement.GetRawText());
+
+                            // Navigate to the nested item
+                            var currentArray = array;
+                            for (int i = 0; i < indices.Count - 1; i++)
+                            {
+                                var idx = indices[i];
+                                if (idx < currentArray.Count && currentArray[idx] is List<object> nestedList)
+                                {
+                                    currentArray = nestedList;
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException($"Invalid nested array structure at index {idx}");
+                                }
+                            }
+
+                            // Remove the item
+                            var finalIndex = indices.Last();
+                            if (finalIndex < currentArray.Count)
+                            {
+                                currentArray.RemoveAt(finalIndex);
+
+                                // Update the nested structure
+                                var nestedDict = new Dictionary<string, object>();
+                                nestedDict[baseKey] = currentArray;
+
+                                // Merge with the rest of the JSON
+                                var rootDict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                                foreach (var kvp in rootDict)
+                                {
+                                    if (!kvp.Key.StartsWith(baseKey + "["))
+                                    {
+                                        nestedDict[kvp.Key] = kvp.Value;
+                                    }
+                                }
+
+                                // Convert back to flattened format
+                                var resultJson = ConvertNestedToFlattenedArrays(nestedDict);
+                                return resultJson;
+                            }
+                            else
+                            {
+                                throw new ArgumentOutOfRangeException($"Index {finalIndex} is out of range.");
+                            }
+                        }
+                    }
+                }
+
+                return json;
+            }
+            catch (Exception ex)
+            {
+                Log($"[Delete Flattened Array Item] Error: {ex.Message}");
+                throw new Exception($"Failed to delete flattened array item: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Converts nested JSON structures back to flattened array notation.
+        /// </summary>
+        private string ConvertNestedToFlattenedArrays(Dictionary<string, object> nested)
+        {
+            var flattened = new Dictionary<string, object>();
+            ConvertToFlattenedRecursive(nested, flattened, "");
+            return JsonSerializer.Serialize(flattened, _jsonOptions);
+        }
+
+        /// <summary>
+        /// Recursively converts nested structures to flattened array notation.
+        /// </summary>
+        private void ConvertToFlattenedRecursive(Dictionary<string, object> nested, Dictionary<string, object> flattened, string prefix)
+        {
+            foreach (var kvp in nested)
+            {
+                var currentKey = string.IsNullOrEmpty(prefix) ? kvp.Key : $"{prefix}.{kvp.Key}";
+
+                if (kvp.Value is List<object> array)
+                {
+                    // Convert array to flattened notation
+                    for (int i = 0; i < array.Count; i++)
+                    {
+                        var item = array[i];
+                        if (item is List<object> nestedArray)
+                        {
+                            // Handle nested arrays recursively
+                            ConvertToFlattenedRecursive(new Dictionary<string, object> { [i.ToString()] = nestedArray }, flattened, currentKey);
+                        }
+                        else
+                        {
+                            // Regular array item
+                            flattened[$"{currentKey}[{i}]"] = item;
+                        }
+                    }
+                }
+                else if (kvp.Value is Dictionary<string, object> dict)
+                {
+                    // Handle nested objects
+                    ConvertToFlattenedRecursive(dict, flattened, currentKey);
+                }
+                else
+                {
+                    // Regular property
+                    flattened[currentKey] = kvp.Value;
                 }
             }
         }
