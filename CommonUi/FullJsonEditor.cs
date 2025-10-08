@@ -257,36 +257,42 @@ namespace JsonEditorExample
         /// <summary>
         /// Refreshes the UI for a specific path without rebuilding the entire tree.
         /// </summary>
-        /// <summary>
-        /// Refreshes the UI for a specific path without rebuilding the entire tree.
-        /// </summary>
         private void RefreshPath(string path)
         {
-            Log($"[Refresh Path] Refreshing path: {path}");
+            Log($"[Refresh Path] Starting - Refreshing path: {path}");
 
             // If path is empty, refresh the entire root
             if (string.IsNullOrEmpty(path))
             {
+                Log("[Refresh Path] Path is empty, refreshing entire root");
                 var json = GetCurrentJson();
                 UpdateJson(json);
                 return;
             }
 
-            // Find the panel that owns this path
-            var panel = FindPanelForPath(path);
-            if (panel == null)
-            {
-                Log($"[Refresh Path] Panel not found for path: {path}");
-                return;
-            }
-
             // Get the updated JSON for this path
             var jsonDocument = JsonDocument.Parse(GetCurrentJson());
+
+            // Check if this is an array path
+            if (path.Contains("[") && path.Contains("]"))
+            {
+                // Extract the array path (parent of the array)
+                var match = Regex.Match(path, @"(.+)\[(\d+)\]");
+                if (match.Success)
+                {
+                    var arrayPath = match.Groups[1].Value;
+                    Log($"[Refresh Path] Detected array path, refreshing parent: '{arrayPath}'");
+                    RefreshPath(arrayPath);
+                    return;
+                }
+            }
+
             JsonElement element;
 
             try
             {
                 element = NavigateToPath(jsonDocument.RootElement, path);
+                Log($"[Refresh Path] Successfully navigated to path '{path}', ValueKind: {element.ValueKind}");
             }
             catch (Exception ex)
             {
@@ -294,14 +300,45 @@ namespace JsonEditorExample
                 // If the path no longer exists, refresh the parent
                 var lastDot = path.LastIndexOf('.');
                 var parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
+                Log($"[Refresh Path] Path no longer exists, refreshing parent: '{parentPath}'");
                 if (!string.IsNullOrEmpty(parentPath))
                     RefreshPath(parentPath);
                 return;
             }
 
+            // Find the panel that owns this path
+            var panel = FindPanelForPath(path);
+            if (panel == null)
+            {
+                Log($"[Refresh Path] Panel not found for path: {path}, searching for parent panel");
+
+                // Try to find parent panel
+                var lastDot = path.LastIndexOf('.');
+                var parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
+                if (!string.IsNullOrEmpty(parentPath))
+                {
+                    panel = FindPanelForPath(parentPath);
+                    if (panel != null)
+                    {
+                        Log($"[Refresh Path] Found parent panel for path '{parentPath}'");
+                        path = parentPath;
+                        element = NavigateToPath(jsonDocument.RootElement, path);
+                    }
+                }
+
+                if (panel == null)
+                {
+                    Log($"[Refresh Path] Could not find any panel for path or parent paths");
+                    return;
+                }
+            }
+
+            Log($"[Refresh Path] Found panel at path '{path}', ValueKind: {element.ValueKind}");
+
             // If this is an object, rebuild the panel
             if (element.ValueKind == JsonValueKind.Object)
             {
+                Log($"[Refresh Path] Rebuilding object panel for path '{path}'");
                 var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(element.GetRawText());
                 panel._contentContainer.Items.Clear();
                 panel.BuildFromDictionary(dict, panel._contentContainer, panel._contentContainer.Orientation, path);
@@ -309,25 +346,41 @@ namespace JsonEditorExample
             // If this is an array, rebuild the list
             else if (element.ValueKind == JsonValueKind.Array)
             {
-                var list = element.EnumerateArray().ToList();
+                Log($"[Refresh Path] Detected array path '{path}', rebuilding parent panel");
 
-                // Find the parent panel that contains this panel
-                var parentPanel = FindParentPanel(panel);
-                if (parentPanel != null)
+                // Get the parent panel that owns this array
+                var lastDot = path.LastIndexOf('.');
+                var parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
+
+                if (!string.IsNullOrEmpty(parentPath))
                 {
-                    // Find the index of this panel in the parent's items
-                    var index = FindPanelIndexInParent(parentPanel, panel);
-
-                    if (index >= 0)
+                    var parentPanel = FindPanelForPath(parentPath);
+                    if (parentPanel != null)
                     {
-                        // Create a new list control
-                        var newContainer = panel.BuildFromList(list, panel._contentContainer.Orientation, path);
+                        Log($"[Refresh Path] Rebuilding parent panel '{parentPath}' that contains the array");
+                        var parentElement = NavigateToPath(jsonDocument.RootElement, parentPath);
+                        var parentDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(parentElement.GetRawText());
 
-                        // Replace the old container with the new one
-                        parentPanel._contentContainer.Items[index] = new StackLayoutItem(newContainer, HorizontalAlignment.Stretch, true);
+                        // Clear and rebuild the entire parent panel
+                        parentPanel._contentContainer.Items.Clear();
+                        parentPanel.BuildFromDictionary(parentDict, parentPanel._contentContainer, parentPanel._contentContainer.Orientation, parentPath);
+                        return;
                     }
                 }
+
+                // If we can't find the parent panel, try to rebuild the array directly
+                Log($"[Refresh Path] Could not find parent panel for array, rebuilding array directly");
+                var list = element.EnumerateArray().ToList();
+                panel._contentContainer.Items.Clear();
+                var newContainer = panel.BuildFromList(list, panel._contentContainer.Orientation, path);
+                panel._contentContainer.Items.Add(new StackLayoutItem(newContainer, HorizontalAlignment.Stretch, true));
             }
+            else
+            {
+                Log($"[Refresh Path] Unknown ValueKind {element.ValueKind} for path '{path}'");
+            }
+
+            Log("[Refresh Path] Refresh completed");
         }
 
         /// <summary>
