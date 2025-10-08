@@ -1972,7 +1972,7 @@ namespace JsonEditorExample
         {
             try
             {
-                Log($"[Add Item Array JSON] Adding item of type '{type}' with value '{value}' to array at path '{arrayPath}' in JSON: {json}");
+                Log($"[Add Item Array JSON] Starting - Adding item of type '{type}' with value '{value}' to array at path '{arrayPath}'");
 
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
@@ -1984,7 +1984,7 @@ namespace JsonEditorExample
                 var document = JsonDocument.Parse(json);
                 var root = document.RootElement;
 
-                // Navigate to the parent array
+                // Navigate to the array
                 var arrayElement = NavigateToPath(root, arrayPath);
 
                 if (arrayElement.ValueKind != JsonValueKind.Array)
@@ -1999,8 +1999,8 @@ namespace JsonEditorExample
                 // Add the new item
                 list.Add(newValue);
 
-                // Update the array in the document
-                var resultJson = UpdatePathInJson(json, arrayPath, list);
+                // Update the array in the document using a direct replacement approach
+                var resultJson = UpdateArrayInJson(json, arrayPath, list);
                 Log($"[Add Item Array JSON] Result: {resultJson}");
                 return resultJson;
             }
@@ -2015,6 +2015,7 @@ namespace JsonEditorExample
                 throw new Exception($"Failed to add array item: {ex.Message}", ex);
             }
         }
+
 
         /// <summary>
         /// Deletes a property from the JSON string.
@@ -2081,7 +2082,7 @@ namespace JsonEditorExample
         {
             try
             {
-                Log($"[Delete Item Array JSON] Deleting item at index {index} in array at path '{arrayPath}' in JSON: {json}");
+                Log($"[Delete Item Array JSON] Starting - Deleting item at index {index} in array at path '{arrayPath}'");
 
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
@@ -2115,8 +2116,8 @@ namespace JsonEditorExample
                     throw new ArgumentOutOfRangeException($"Index {index} is out of range for array with {list.Count} items.");
                 }
 
-                // Update the array in the document
-                var resultJson = UpdatePathInJson(json, arrayPath, list);
+                // Update the array in the document using a direct replacement approach
+                var resultJson = UpdateArrayInJson(json, arrayPath, list);
                 Log($"[Delete Item Array JSON] Result: {resultJson}");
                 return resultJson;
             }
@@ -2131,6 +2132,7 @@ namespace JsonEditorExample
                 throw new Exception($"Failed to delete array item: {ex.Message}", ex);
             }
         }
+
 
         /// <summary>
         /// Navigates to a specific path in the JSON document.
@@ -2226,11 +2228,17 @@ namespace JsonEditorExample
         /// <summary>
         /// Updates a specific path in the JSON document with a new value.
         /// </summary>
+        /// <summary>
+        /// Updates a specific path in the JSON document with a new value.
+        /// </summary>
+        /// <summary>
+        /// Updates a specific path in the JSON document with a new value.
+        /// </summary>
         private string UpdatePathInJson(string json, string path, object newValue)
         {
             try
             {
-                Log($"[Update Path] Updating path '{path}' with value '{newValue}' in JSON: {json}");
+                Log($"[Update Path] Starting - Updating path '{path}' with value '{newValue}'");
 
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
@@ -2253,17 +2261,23 @@ namespace JsonEditorExample
                 // Split the path into parts
                 var parts = path.Split('.');
 
+                Log($"[Update Path] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
+                Log($"[Update Path] Starting deserialization. JSON length: {json.Length}");
+
                 // Create a mutable representation of the entire JSON
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
                 Log($"[Update Path] Deserialized JSON to dictionary with {dict.Count} properties");
+                Log($"[Update Path] Dictionary keys: [{string.Join(", ", dict.Keys)}]");
 
                 // Navigate to the parent object
                 var current = dict;
+
                 for (int i = 0; i < parts.Length - 1; i++)
                 {
                     var part = parts[i];
                     Log($"[Update Path] Processing part {i}: '{part}'");
+                    Log($"[Update Path] Current type: {current?.GetType().Name ?? "null"}");
 
                     // Handle array indices
                     if (part.Contains("[") && part.Contains("]"))
@@ -2284,13 +2298,12 @@ namespace JsonEditorExample
                                 // Check if the index is valid
                                 if (arrayIndex >= 0 && arrayIndex < array.Count)
                                 {
-                                    if (i < parts.Length - 2)
+                                    if (i < parts.Length - 1)
                                     {
                                         // Continue navigating through the array
-                                        if (arrayIndex < array.Count - 1 && array[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                        if (array[arrayIndex] is Dictionary<string, object> arrayItemDict)
                                         {
                                             current = arrayItemDict;
-                                            i++; // Skip the array index part
                                             Log($"[Update Path] Moved to array item at index {arrayIndex}");
                                         }
                                         else
@@ -2304,7 +2317,7 @@ namespace JsonEditorExample
                                         array[arrayIndex] = newValue;
                                         Log($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
                                         var result = JsonSerializer.Serialize(dict, _jsonOptions);
-                                        Log($"[Update Path] Final result: {result}");
+                                        Log($"[Update Path] Final result length: {result.Length}");
                                         return result;
                                     }
                                 }
@@ -2326,56 +2339,21 @@ namespace JsonEditorExample
                     else
                     {
                         // Handle object properties
-                        if (!current.TryGetValue(part, out var next))
+                        if (current.TryGetValue(part, out var next))
                         {
-                            Log($"[Update Path] Property '{part}' not found in current object");
-                            throw new InvalidOperationException($"Property '{part}' not found.");
-                        }
-
-                        if (next is Dictionary<string, object> nextDict)
-                        {
-                            current = nextDict;
-                            Log($"[Update Path] Moved to property '{part}'");
-                        }
-                        else if (next is List<object> nextList && i < parts.Length - 1 && int.TryParse(parts[i + 1], out int arrayIndex))
-                        {
-                            // Handle array navigation
-                            Log($"[Update Path] Found array with {nextList.Count} items");
-
-                            if (arrayIndex >= 0 && arrayIndex < nextList.Count)
+                            if (next is Dictionary<string, object> nextDict)
                             {
-                                if (i < parts.Length - 2)
-                                {
-                                    // Continue navigating through the array
-                                    if (arrayIndex < nextList.Count - 1 && nextList[arrayIndex] is Dictionary<string, object> arrayItemDict)
-                                    {
-                                        current = arrayItemDict;
-                                        i++; // Skip the array index part
-                                        Log($"[Update Path] Moved to array item at index {arrayIndex}");
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidOperationException($"Array item at index {arrayIndex} is not an object.");
-                                    }
-                                }
-                                else
-                                {
-                                    // This is the last part, update the array item
-                                    nextList[arrayIndex] = newValue;
-                                    Log($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
-                                    var result = JsonSerializer.Serialize(dict, _jsonOptions);
-                                    Log($"[Update Path] Final result: {result}");
-                                    return result;
-                                }
+                                current = nextDict;
+                                Log($"[Update Path] Moved to property '{part}'");
                             }
                             else
                             {
-                                throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range.");
+                                throw new InvalidOperationException($"Cannot navigate to '{part}' because it is not an object.");
                             }
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Cannot navigate to '{part}' because current element is not an object or array.");
+                            throw new InvalidOperationException($"Property '{part}' not found in current object.");
                         }
                     }
                 }
@@ -2383,10 +2361,18 @@ namespace JsonEditorExample
                 // Update the final property
                 var finalProperty = parts[parts.Length - 1];
                 Log($"[Update Path] Updating final property '{finalProperty}' to '{newValue}'");
-                current[finalProperty] = newValue;
+
+                if (current is Dictionary<string, object> currentDict)
+                {
+                    currentDict[finalProperty] = newValue;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot update property '{finalProperty}' because current element is not a dictionary.");
+                }
 
                 var finalResult = JsonSerializer.Serialize(dict, _jsonOptions);
-                Log($"[Update Path] Final result: {finalResult}");
+                Log($"[Update Path] Final result length: {finalResult.Length}");
                 return finalResult;
             }
             catch (JsonException ex)
@@ -2394,7 +2380,60 @@ namespace JsonEditorExample
                 Log($"[Update Path] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
+            catch (Exception ex)
+            {
+                Log($"[Update Path] General error: {ex.Message}");
+                throw new Exception($"Failed to update path '{path}': {ex.Message}", ex);
+            }
         }
+
+        /// <summary>
+        /// Updates an array at a specific path in the JSON document.
+        /// </summary>
+        private string UpdateArrayInJson(string json, string arrayPath, List<object> newArray)
+        {
+            try
+            {
+                Log($"[Update Array] Starting - Updating array at path '{arrayPath}' with {newArray.Count} items");
+
+                var parts = arrayPath.Split('.');
+
+                if (parts.Length == 1)
+                {
+                    // This is a top-level array in the root object
+                    var rootDict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    rootDict[parts[0]] = newArray;
+                    return JsonSerializer.Serialize(rootDict, _jsonOptions);
+                }
+                else
+                {
+                    // This is a nested array
+                    var parentPath = string.Join(".", parts.Take(parts.Length - 1));
+                    var arrayName = parts.Last();
+
+                    var parentElement = NavigateToPath(JsonDocument.Parse(json).RootElement, parentPath);
+                    var parentDict = JsonSerializer.Deserialize<Dictionary<string, object>>(parentElement.GetRawText());
+
+                    if (parentDict.ContainsKey(arrayName))
+                    {
+                        parentDict[arrayName] = newArray;
+
+                        // Update the parent in the document
+                        return UpdatePathInJson(json, parentPath, parentDict);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Array property '{arrayName}' not found in parent '{parentPath}'.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"[Update Array] Error: {ex.Message}");
+                throw new Exception($"Failed to update array: {ex.Message}", ex);
+            }
+        }
+
 
         /// <summary>
         /// Creates a typed value based on type and string value.
