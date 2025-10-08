@@ -17,9 +17,10 @@ namespace JsonEditorExample
         private int cWidth = 200;
         private bool _appMode = false;
         private bool _showHeader = true;
-        private string _currentJson = "{}"; // Initialize with empty object instead of empty string
+        private string _currentJson = "{}"; // Initialize with empty object
         private StackLayout _rootLayout;
         private StackLayout _contentContainer;
+        private Dictionary<string, Control> _controlCache = new Dictionary<string, Control>();
 
         /// <summary>
         /// Gets or sets whether the panel is in app mode, which limits interactions to buttons and date fields.
@@ -65,21 +66,27 @@ namespace JsonEditorExample
         {
             _showHeader = showHeader;
 
-            // Ensure we have valid JSON
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                json = "{}";
-            }
-
             try
             {
-                // Validate the JSON
+                // Validate and normalize JSON
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Console.WriteLine("[Init] JSON is empty, using empty object");
+                    json = "{}";
+                }
+
+                Console.WriteLine($"[Init] Original JSON: {json}");
+
+                // Parse and validate JSON
                 var document = JsonDocument.Parse(json);
                 _currentJson = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+
+                Console.WriteLine($"[Init] Normalized JSON: {_currentJson}");
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                // If the JSON is invalid, start with an empty object
+                // If JSON is invalid, start with an empty object
+                Console.WriteLine($"[Init] Invalid JSON: {ex.Message}");
                 _currentJson = "{}";
             }
 
@@ -118,7 +125,7 @@ namespace JsonEditorExample
             else
                 OriginalTypes = new Dictionary<string, Type>();
 
-            Debug.WriteLine($"[Panel Build] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
+            Console.WriteLine($"[Init] Creating FullJsonEditorPanel at path \"{path}\" with orientation {orientation}");
 
             // Create the root layout with header
             _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
@@ -201,39 +208,52 @@ namespace JsonEditorExample
         /// </summary>
         private void ShowJsonDialog(object sender, EventArgs e)
         {
-            var json = ToJson();
+            Console.WriteLine("[Show JSON] Starting to show JSON dialog");
 
-            // Create dialog and content separately
-            var dialog = new Dialog
+            try
             {
-                Title = "Current JSON",
-                ClientSize = new Size(600, 400)
-            };
+                var json = _currentJson; // Use the stored JSON directly instead of serializing
+                Console.WriteLine($"[Show JSON] Current JSON: {json}");
 
-            var textArea = new TextArea
-            {
-                Text = json,
-                ReadOnly = true,
-                Font = Fonts.Monospace(10)
-            };
-
-            var closeButton = new Button { Text = "Close" };
-            closeButton.Click += (s, args) => dialog.Close();
-
-            var layout = new StackLayout
-            {
-                Padding = 10,
-                Spacing = 5,
-                Items =
+                // Create dialog and content separately
+                var dialog = new Dialog
                 {
-                    new Label { Text = "Current JSON:" },
-                    new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
-                    new StackLayoutItem(closeButton, HorizontalAlignment.Right)
-                }
-            };
+                    Title = "Current JSON",
+                    ClientSize = new Size(600, 400)
+                };
 
-            dialog.Content = layout;
-            dialog.ShowModal(this);
+                var textArea = new TextArea
+                {
+                    Text = json,
+                    ReadOnly = true,
+                    Font = Fonts.Monospace(10)
+                };
+
+                var closeButton = new Button { Text = "Close" };
+                closeButton.Click += (s, args) => dialog.Close();
+
+                var layout = new StackLayout
+                {
+                    Padding = 10,
+                    Spacing = 5,
+                    Items =
+                    {
+                        new Label { Text = "Current JSON:" },
+                        new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
+                        new StackLayoutItem(closeButton, HorizontalAlignment.Right)
+                    }
+                };
+
+                dialog.Content = layout;
+                dialog.ShowModal(this);
+
+                Console.WriteLine("[Show JSON] Dialog shown successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Show JSON] Error: {ex.Message}");
+                MessageBox.Show(this, $"Error showing JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
         }
 
         /// <summary>
@@ -291,10 +311,13 @@ namespace JsonEditorExample
             {
                 try
                 {
+                    Console.WriteLine($"[Load JSON] New JSON to load: {result}");
                     UpdateJson(result);
+                    Console.WriteLine("[Load JSON] JSON loaded successfully");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Load JSON] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error loading JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -371,20 +394,28 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Update JSON] Starting with JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Update JSON] JSON is empty, using empty object");
                     json = "{}";
                 }
 
-                // Validate and normalize the JSON
+                // Validate and normalize JSON
                 var document = JsonDocument.Parse(json);
                 _currentJson = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+
+                Console.WriteLine($"[Update JSON] Normalized JSON: {_currentJson}");
 
                 var data = ConvertJsonToDictionary(_currentJson);
 
                 // Clear the current content
                 _contentContainer.Items.Clear();
+
+                // Clear the control cache
+                _controlCache.Clear();
 
                 // Clear the original types
                 OriginalTypes.Clear();
@@ -394,13 +425,17 @@ namespace JsonEditorExample
 
                 // Update control states based on app mode
                 UpdateControlStates();
+
+                Console.WriteLine("[Update JSON] UI updated successfully");
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Update JSON] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Update JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to update JSON: {ex.Message}", ex);
             }
         }
@@ -412,27 +447,33 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Convert] Converting JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Convert] JSON is empty, using empty object");
                     json = "{}";
                 }
 
-                // Parse and validate the JSON
+                // Parse and validate JSON
                 var document = JsonDocument.Parse(json);
 
                 // If the root is not an object, wrap it in an object
                 if (document.RootElement.ValueKind != JsonValueKind.Object)
                 {
+                    Console.WriteLine("[Convert] Root is not an object, wrapping it");
                     json = $"{{\"value\": {json}}}";
                     document = JsonDocument.Parse(json);
                 }
 
-                return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+                var result = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+                Console.WriteLine($"[Convert] Converted successfully to dictionary with {result.Count} items");
+                return result;
             }
             catch (JsonException ex)
             {
-                Debug.WriteLine($"[ConvertJsonToDictionary] Error parsing JSON: {ex.Message}");
+                Console.WriteLine($"[Convert] JSON error: {ex.Message}");
                 // Return an empty dictionary if parsing fails
                 return new Dictionary<string, JsonElement>();
             }
@@ -448,10 +489,12 @@ namespace JsonEditorExample
             string path
         )
         {
+            Console.WriteLine($"[Build] Building from dictionary with {dict.Count} items at path '{path}'");
+
             foreach (var kvp in dict)
             {
                 string currentPath = string.IsNullOrEmpty(path) ? kvp.Key : $"{path}.{kvp.Key}";
-                Debug.WriteLine($"[Build Dictionary] Node \"{currentPath}\" with ValueKind {kvp.Value.ValueKind}");
+                Console.WriteLine($"[Build] Processing property '{currentPath}' with ValueKind {kvp.Value.ValueKind}");
 
                 // Create a label whose text is the translated key.
                 var label = new Label
@@ -463,6 +506,9 @@ namespace JsonEditorExample
 
                 // Create the control for the value.
                 Control valueControl = BuildControlForValue(kvp.Value, orientation, currentPath);
+
+                // Cache the control for later access
+                _controlCache[currentPath] = valueControl;
 
                 // For interactive controls, store its node path in the Tag.
                 if (valueControl is TextBox || valueControl is CheckBox || valueControl is DateTimePicker)
@@ -503,6 +549,8 @@ namespace JsonEditorExample
                 addPropertyButton.Click += (s, e) => AddNewProperty(path);
                 container.Items.Add(new StackLayoutItem(addPropertyButton));
             }
+
+            Console.WriteLine($"[Build] Built {container.Items.Count} items for path '{path}'");
         }
 
         /// <summary>
@@ -516,15 +564,21 @@ namespace JsonEditorExample
         {
             var container = new StackLayout { Orientation = orientation, Spacing = 5 };
             int index = 0;
+
+            Console.WriteLine($"[Build List] Building list with {list.Count()} items at path '{path}'");
+
             foreach (var item in list)
             {
                 string itemPath = $"{path}[{index}]";
-                Debug.WriteLine($"[Build List] Array node \"{itemPath}\" with ValueKind {item.ValueKind}");
+                Console.WriteLine($"[Build List] Processing array item '{itemPath}' with ValueKind {item.ValueKind}");
 
                 // Create a label for the index.
                 var label = new Label { Text = $"[{index}]", Tag = index };
 
                 Control itemControl = BuildControlForValue(item, orientation, itemPath);
+
+                // Cache the control for later access
+                _controlCache[itemPath] = itemControl;
 
                 if (itemControl is TextBox || itemControl is CheckBox || itemControl is DateTimePicker)
                     itemControl.Tag = itemPath;
@@ -562,9 +616,12 @@ namespace JsonEditorExample
             string path
         )
         {
+            Console.WriteLine($"[Build Control] Building control for path '{path}' with ValueKind {value.ValueKind}");
+
             switch (value.ValueKind)
             {
                 case JsonValueKind.Null:
+                    Console.WriteLine($"[Build Control] Creating null label for path '{path}'");
                     return new Label
                     {
                         Text = "null",
@@ -573,14 +630,17 @@ namespace JsonEditorExample
                     };
 
                 case JsonValueKind.Object:
+                    Console.WriteLine($"[Build Control] Creating nested panel for object at path '{path}'");
                     var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(value.GetRawText());
                     return new FullJsonEditorPanel(dict, Invert(orientation), path, this.OriginalTypes, _showHeader);
 
                 case JsonValueKind.Array:
+                    Console.WriteLine($"[Build Control] Creating list for array at path '{path}'");
                     return BuildFromList(value.EnumerateArray(), Invert(orientation), path);
 
                 case JsonValueKind.True:
                 case JsonValueKind.False:
+                    Console.WriteLine($"[Build Control] Creating checkbox for boolean at path '{path}'");
                     return new CheckBox
                     {
                         Checked = value.GetBoolean(),
@@ -591,6 +651,7 @@ namespace JsonEditorExample
                 case JsonValueKind.Number:
                     if (value.TryGetInt64(out long l))
                     {
+                        Console.WriteLine($"[Build Control] Creating textbox for long value {l} at path '{path}'");
                         var numberTextBox = new TextBox
                         {
                             Text = l.ToString(),
@@ -602,6 +663,7 @@ namespace JsonEditorExample
                     else
                     {
                         double d = value.GetDouble();
+                        Console.WriteLine($"[Build Control] Creating textbox for double value {d} at path '{path}'");
                         var doubleTextBox = new TextBox
                         {
                             Text = d.ToString(),
@@ -613,17 +675,19 @@ namespace JsonEditorExample
 
                 case JsonValueKind.String:
                     string stringValue = value.GetString();
+                    Console.WriteLine($"[Build Control] Processing string value '{stringValue}' at path '{path}'");
 
                     // Check for button syntax
                     if (stringValue.StartsWith("button:"))
                     {
                         var buttonText = stringValue.Substring(7); // Remove "button:" prefix
+                        Console.WriteLine($"[Build Control] Creating button with text '{buttonText}' at path '{path}'");
                         var button = new Button { Text = buttonText, Tag = path };
                         button.Click += (sender, e) =>
                         {
                             if (AppMode)
                             {
-                                Debug.WriteLine($"[App Mode] Button '{buttonText}' clicked at path '{path}'");
+                                Console.WriteLine($"[App Mode] Button '{buttonText}' clicked at path '{path}'");
                             }
                         };
                         return button;
@@ -635,6 +699,7 @@ namespace JsonEditorExample
                         string dateValue = stringValue.StartsWith("date:") ? stringValue.Substring(5) : stringValue;
                         if (DateTime.TryParse(dateValue, out DateTime dateTime))
                         {
+                            Console.WriteLine($"[Build Control] Creating date picker for date '{dateValue}' at path '{path}'");
                             var datePicker = new DateTimePicker
                             {
                                 Value = dateTime,
@@ -649,7 +714,7 @@ namespace JsonEditorExample
                                 datePicker.Enabled = false;
                                 datePicker.MouseDoubleClick += (sender, e) =>
                                 {
-                                    Debug.WriteLine($"[App Mode] Date '{dateValue}' clicked at path '{path}'");
+                                    Console.WriteLine($"[App Mode] Date '{dateValue}' clicked at path '{path}'");
                                 };
                             }
 
@@ -662,6 +727,7 @@ namespace JsonEditorExample
                     {
                         try
                         {
+                            Console.WriteLine($"[Build Control] Creating image view for {imageType} at path '{path}'");
                             byte[] imageBytes = Convert.FromBase64String(stringValue);
                             var image = new Bitmap(imageBytes);
                             var imageView = new ImageView { Image = image, Tag = path };
@@ -672,7 +738,7 @@ namespace JsonEditorExample
                                 imageView.Cursor = Cursors.Pointer;
                                 imageView.MouseDown += (sender, e) =>
                                 {
-                                    Debug.WriteLine($"[App Mode] Image clicked at path '{path}'");
+                                    Console.WriteLine($"[App Mode] Image clicked at path '{path}'");
                                 };
                             }
 
@@ -688,12 +754,13 @@ namespace JsonEditorExample
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"[Image Error] Failed to load image at path '{path}': {ex.Message}");
+                            Console.WriteLine($"[Build Control] Error loading image at path '{path}': {ex.Message}");
                             // Fall back to a text box if image loading fails
                         }
                     }
 
                     // Default to a text box
+                    Console.WriteLine($"[Build Control] Creating default textbox for string value at path '{path}'");
                     var defaultTextBox = new TextBox
                     {
                         Text = stringValue,
@@ -713,6 +780,7 @@ namespace JsonEditorExample
                     return containerWithUpload;
 
                 default:
+                    Console.WriteLine($"[Build Control] Creating fallback textbox for value '{value}' at path '{path}'");
                     var fallbackTextBox = new TextBox
                     {
                         Text = value.ToString(),
@@ -892,11 +960,13 @@ namespace JsonEditorExample
                     byte[] imageBytes = File.ReadAllBytes(fileDialog.FileName);
                     string base64 = Convert.ToBase64String(imageBytes);
 
+                    Console.WriteLine($"[Upload Image] Updating image at path '{path}'");
                     // Update the JSON with the new image
                     UpdateValueAtPath(path, base64);
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Upload Image] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error loading image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -907,22 +977,26 @@ namespace JsonEditorExample
         /// </summary>
         private void ChangeImage(string path)
         {
+            Console.WriteLine($"[Change Image] Changing image at path '{path}'");
             UploadImageAsBase64(path);
         }
 
         /// <summary>
-        /// Updates the value at a specific path in the JSON.
+        /// Updates a value at a specific path in the JSON.
         /// </summary>
         private void UpdateValueAtPath(string path, string value)
         {
             try
             {
+                Console.WriteLine($"[Update Value] Updating value at path '{path}' to '{value}'");
                 var json = _currentJson;
                 var updatedJson = UpdateValueInJson(json, path, value);
+                Console.WriteLine($"[Update Value] Updated JSON: {updatedJson}");
                 UpdateJson(updatedJson);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Update Value] Error: {ex.Message}");
                 MessageBox.Show(this, $"Error updating value: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
             }
         }
@@ -934,13 +1008,33 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Update Value JSON] Updating value at path '{path}' to '{newValue}' in JSON: {json}");
+
+                // Ensure we have valid JSON
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Console.WriteLine("[Update Value JSON] JSON is empty, using empty object");
+                    json = "{}";
+                }
+
                 var document = JsonDocument.Parse(json);
                 var root = document.RootElement;
 
-                // Navigate to the parent of the target
+                // Handle top-level property deletion
+                if (string.IsNullOrEmpty(path))
+                {
+                    // This shouldn't happen in our use case
+                    throw new ArgumentException("Cannot update root property without a name.");
+                }
+
+                // Split the path into parts
                 var parts = path.Split('.');
+
+                // Navigate to the parent of the target
                 var parentPath = string.Join(".", parts.Take(parts.Length - 1));
                 var propertyName = parts.Last();
+
+                Console.WriteLine($"[Update Value JSON] Parent path: '{parentPath}', Property name: '{propertyName}'");
 
                 // Handle array indices
                 if (propertyName.Contains("[") && propertyName.Contains("]"))
@@ -950,6 +1044,8 @@ namespace JsonEditorExample
                     {
                         propertyName = match.Groups[1].Value;
                         var index = int.Parse(match.Groups[2].Value);
+
+                        Console.WriteLine($"[Update Value JSON] Array update - Property: '{propertyName}', Index: {index}");
 
                         // Navigate to the array
                         var arrayElement = NavigateToPath(root, parentPath);
@@ -965,11 +1061,12 @@ namespace JsonEditorExample
                             // Determine the type of the existing item
                             var existingItem = list[index];
                             var updatedItem = CreateUpdatedValue(existingItem, newValue);
-
                             list[index] = updatedItem;
 
                             // Update the array in the document
-                            return UpdatePathInJson(json, parentPath, list);
+                            var result = UpdatePathInJson(json, parentPath, list);
+                            Console.WriteLine($"[Update Value JSON] Array update result: {result}");
+                            return result;
                         }
                         else
                         {
@@ -987,12 +1084,16 @@ namespace JsonEditorExample
                 // Convert to a mutable representation
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(parentElement.GetRawText());
 
+                Console.WriteLine($"[Update Value JSON] Parent object has {dict.Count} properties");
+
                 // Update the property
                 if (dict.ContainsKey(propertyName))
                 {
                     var existingValue = dict[propertyName];
                     var updatedValue = CreateUpdatedValue(existingValue, newValue);
                     dict[propertyName] = updatedValue;
+
+                    Console.WriteLine($"[Update Value JSON] Updated property '{propertyName}' from '{existingValue}' to '{updatedValue}'");
                 }
                 else
                 {
@@ -1000,10 +1101,18 @@ namespace JsonEditorExample
                 }
 
                 // Update the parent in the document
-                return UpdatePathInJson(json, parentPath, dict);
+                var resultJson = UpdatePathInJson(json, parentPath, dict);
+                Console.WriteLine($"[Update Value JSON] Final result: {resultJson}");
+                return resultJson;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"[Update Value JSON] JSON error: {ex.Message}");
+                throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Update Value JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to update value at path '{path}': {ex.Message}", ex);
             }
         }
@@ -1100,6 +1209,8 @@ namespace JsonEditorExample
         /// </summary>
         private void AddNewProperty(string parentPath)
         {
+            Console.WriteLine($"[Add Property] Adding property to path '{parentPath}'");
+
             // Create the dialog first
             var dialog = new Dialog<string>
             {
@@ -1192,6 +1303,8 @@ namespace JsonEditorExample
                 var type = propertyTypeDropDown.SelectedKey;
                 var value = propertyValueTextBox.Text;
 
+                Console.WriteLine($"[Add Property] Dialog result - Name: '{name}', Type: '{type}', Value: '{value}'");
+
                 // Validate input
                 var (isValid, errorMessage) = ValidateValueByType(value, type);
 
@@ -1225,15 +1338,21 @@ namespace JsonEditorExample
                 var type = parts[1];
                 var value = parts[2];
 
+                Console.WriteLine($"[Add Property] Adding property '{name}' of type '{type}' with value '{value}' to path '{parentPath}'");
+
                 // Update the JSON with the new property
                 try
                 {
                     var json = _currentJson;
+                    Console.WriteLine($"[Add Property] Current JSON: {json}");
                     var updatedJson = AddPropertyToJson(json, parentPath, name, type, value);
+                    Console.WriteLine($"[Add Property] Updated JSON: {updatedJson}");
                     UpdateJson(updatedJson);
+                    Console.WriteLine("[Add Property] Property added successfully");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Add Property] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error adding property: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -1244,6 +1363,8 @@ namespace JsonEditorExample
         /// </summary>
         private void AddArrayItem(string arrayPath)
         {
+            Console.WriteLine($"[Add Array Item] Adding item to array at path '{arrayPath}'");
+
             // Create the dialog first
             var dialog = new Dialog<string>
             {
@@ -1332,6 +1453,8 @@ namespace JsonEditorExample
                 var type = itemTypeDropDown.SelectedKey;
                 var value = itemValueTextBox.Text;
 
+                Console.WriteLine($"[Add Array Item] Dialog result - Type: '{type}', Value: '{value}'");
+
                 // Validate input
                 var (isValid, errorMessage) = ValidateValueByType(value, type);
 
@@ -1360,15 +1483,21 @@ namespace JsonEditorExample
                 var type = parts[0];
                 var value = parts[1];
 
+                Console.WriteLine($"[Add Array Item] Adding item of type '{type}' with value '{value}' to array at path '{arrayPath}'");
+
                 // Update the JSON with the new array item
                 try
                 {
                     var json = _currentJson;
+                    Console.WriteLine($"[Add Array Item] Current JSON: {json}");
                     var updatedJson = AddItemToArrayJson(json, arrayPath, type, value);
+                    Console.WriteLine($"[Add Array Item] Updated JSON: {updatedJson}");
                     UpdateJson(updatedJson);
+                    Console.WriteLine("[Add Array Item] Item added successfully");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Add Array Item] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error adding array item: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -1379,17 +1508,23 @@ namespace JsonEditorExample
         /// </summary>
         private void DeleteElement(string path)
         {
+            Console.WriteLine($"[Delete Element] Deleting element at path '{path}'");
+
             var result = MessageBox.Show(this, $"Are you sure you want to delete '{path}'?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxType.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
                     var json = _currentJson;
+                    Console.WriteLine($"[Delete Element] Current JSON: {json}");
                     var updatedJson = DeletePropertyFromJson(json, path);
+                    Console.WriteLine($"[Delete Element] Updated JSON: {updatedJson}");
                     UpdateJson(updatedJson);
+                    Console.WriteLine("[Delete Element] Element deleted successfully");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Delete Element] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error deleting property: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -1400,17 +1535,23 @@ namespace JsonEditorExample
         /// </summary>
         private void DeleteArrayElement(string arrayPath, int index)
         {
+            Console.WriteLine($"[Delete Array Item] Deleting item at index {index} in array at path '{arrayPath}'");
+
             var result = MessageBox.Show(this, $"Are you sure you want to delete item at index {index} in '{arrayPath}'?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxType.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
                     var json = _currentJson;
+                    Console.WriteLine($"[Delete Array Item] Current JSON: {json}");
                     var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
+                    Console.WriteLine($"[Delete Array Item] Updated JSON: {updatedJson}");
                     UpdateJson(updatedJson);
+                    Console.WriteLine("[Delete Array Item] Item deleted successfully");
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[Delete Array Item] Error: {ex.Message}");
                     MessageBox.Show(this, $"Error deleting array item: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
                 }
             }
@@ -1423,9 +1564,12 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Add Property JSON] Adding property '{name}' of type '{type}' with value '{value}' to path '{parentPath}' in JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Add Property JSON] JSON is empty, using empty object");
                     json = "{}";
                 }
 
@@ -1448,14 +1592,18 @@ namespace JsonEditorExample
                 dict[name] = newValue;
 
                 // Update the parent in the document
-                return UpdatePathInJson(json, parentPath, dict);
+                var resultJson = UpdatePathInJson(json, parentPath, dict);
+                Console.WriteLine($"[Add Property JSON] Result: {resultJson}");
+                return resultJson;
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Add Property JSON] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Add Property JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to add property: {ex.Message}", ex);
             }
         }
@@ -1467,9 +1615,12 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Add Item Array JSON] Adding item of type '{type}' with value '{value}' to array at path '{arrayPath}' in JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Add Item Array JSON] JSON is empty, using empty object");
                     json = "{}";
                 }
 
@@ -1492,14 +1643,18 @@ namespace JsonEditorExample
                 list.Add(newValue);
 
                 // Update the array in the document
-                return UpdatePathInJson(json, arrayPath, list);
+                var resultJson = UpdatePathInJson(json, arrayPath, list);
+                Console.WriteLine($"[Add Item Array JSON] Result: {resultJson}");
+                return resultJson;
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Add Item Array JSON] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Add Item Array JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to add array item: {ex.Message}", ex);
             }
         }
@@ -1511,9 +1666,12 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Delete Property JSON] Deleting property at path '{path}' in JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Delete Property JSON] JSON is empty, using empty object");
                     json = "{}";
                 }
 
@@ -1525,6 +1683,8 @@ namespace JsonEditorExample
                 string parentPath = lastDot >= 0 ? path.Substring(0, lastDot) : "";
                 string propertyName = lastDot >= 0 ? path.Substring(lastDot + 1) : path;
 
+                Console.WriteLine($"[Delete Property JSON] Parent path: '{parentPath}', Property name: '{propertyName}'");
+
                 // Navigate to the parent object
                 var parentElement = string.IsNullOrEmpty(parentPath) ? root : NavigateToPath(root, parentPath);
 
@@ -1534,18 +1694,25 @@ namespace JsonEditorExample
                 // Convert to a mutable representation
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(parentElement.GetRawText());
 
+                Console.WriteLine($"[Delete Property JSON] Parent object has {dict.Count} properties");
+
                 // Remove the property
-                dict.Remove(propertyName);
+                bool removed = dict.Remove(propertyName);
+                Console.WriteLine($"[Delete Property JSON] Property '{propertyName}' removal {(removed ? "successful" : "failed")}");
 
                 // Update the parent in the document
-                return UpdatePathInJson(json, parentPath, dict);
+                var resultJson = UpdatePathInJson(json, parentPath, dict);
+                Console.WriteLine($"[Delete Property JSON] Result: {resultJson}");
+                return resultJson;
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Delete Property JSON] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Delete Property JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to delete property: {ex.Message}", ex);
             }
         }
@@ -1557,9 +1724,12 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Delete Item Array JSON] Deleting item at index {index} in array at path '{arrayPath}' in JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Delete Item Array JSON] JSON is empty, using empty object");
                     json = "{}";
                 }
 
@@ -1575,10 +1745,13 @@ namespace JsonEditorExample
                 // Convert to a mutable representation
                 var list = JsonSerializer.Deserialize<List<object>>(arrayElement.GetRawText());
 
+                Console.WriteLine($"[Delete Item Array JSON] Array has {list.Count} items");
+
                 // Remove the item at the specified index
                 if (index >= 0 && index < list.Count)
                 {
                     list.RemoveAt(index);
+                    Console.WriteLine($"[Delete Item Array JSON] Removed item at index {index}");
                 }
                 else
                 {
@@ -1586,14 +1759,18 @@ namespace JsonEditorExample
                 }
 
                 // Update the array in the document
-                return UpdatePathInJson(json, arrayPath, list);
+                var resultJson = UpdatePathInJson(json, arrayPath, list);
+                Console.WriteLine($"[Delete Item Array JSON] Result: {resultJson}");
+                return resultJson;
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Delete Item Array JSON] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Delete Item Array JSON] General error: {ex.Message}");
                 throw new Exception($"Failed to delete array item: {ex.Message}", ex);
             }
         }
@@ -1603,23 +1780,89 @@ namespace JsonEditorExample
         /// </summary>
         private JsonElement NavigateToPath(JsonElement element, string path)
         {
+            Console.WriteLine($"[Navigate] Navigating to path '{path}' in element with ValueKind {element.ValueKind}");
+
             if (string.IsNullOrEmpty(path))
+            {
+                Console.WriteLine("[Navigate] Path is empty, returning root element");
                 return element;
+            }
 
             var parts = path.Split('.');
             var current = element;
 
-            foreach (var part in parts)
+            Console.WriteLine($"[Navigate] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
+
+            for (int i = 0; i < parts.Length; i++)
             {
-                if (current.ValueKind != JsonValueKind.Object)
-                    throw new InvalidOperationException($"Cannot navigate to '{part}' because current element is not an object.");
+                var part = parts[i];
+                Console.WriteLine($"[Navigate] Processing part {i}: '{part}'");
 
-                if (!current.TryGetProperty(part, out var next))
-                    throw new InvalidOperationException($"Property '{part}' not found.");
+                // Handle array indices
+                if (part.Contains("[") && part.Contains("]"))
+                {
+                    var match = Regex.Match(part, @"(.+)\[(\d+)\]");
+                    if (match.Success)
+                    {
+                        var arrayName = match.Groups[1].Value;
+                        var arrayIndex = int.Parse(match.Groups[2].Value);
 
-                current = next;
+                        Console.WriteLine($"[Navigate] Array navigation - Name: '{arrayName}', Index: {arrayIndex}");
+
+                        // Check if the current element is an array
+                        if (current.ValueKind == JsonValueKind.Array)
+                        {
+                            // Get the array items
+                            var arrayItems = new List<JsonElement>();
+                            foreach (var item in current.EnumerateArray())
+                            {
+                                arrayItems.Add(item);
+                            }
+
+                            Console.WriteLine($"[Navigate] Array has {arrayItems.Count} items");
+
+                            // Check if the index is valid
+                            if (arrayIndex >= 0 && arrayIndex < arrayItems.Count)
+                            {
+                                current = arrayItems[arrayIndex];
+                                Console.WriteLine($"[Navigate] Moved to array item at index {arrayIndex}");
+                            }
+                            else
+                            {
+                                throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range for array with {arrayItems.Count} items.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Cannot access array index {arrayIndex} because current element is not an array.");
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Invalid array index format: {part}");
+                    }
+                }
+                else
+                {
+                    // Handle object properties
+                    if (current.ValueKind != JsonValueKind.Object)
+                    {
+                        Console.WriteLine($"[Navigate] Cannot navigate to '{part}' because current element is not an object (ValueKind: {current.ValueKind})");
+                        throw new InvalidOperationException($"Cannot navigate to '{part}' because current element is not an object.");
+                    }
+
+                    if (!current.TryGetProperty(part, out var next))
+                    {
+                        Console.WriteLine($"[Navigate] Property '{part}' not found in current element");
+                        throw new InvalidOperationException($"Property '{part}' not found.");
+                    }
+
+                    current = next;
+                    Console.WriteLine($"[Navigate] Moved to property '{part}' with ValueKind {current.ValueKind}");
+                }
             }
 
+            Console.WriteLine($"[Navigate] Navigation successful, final element ValueKind: {current.ValueKind}");
             return current;
         }
 
@@ -1630,9 +1873,12 @@ namespace JsonEditorExample
         {
             try
             {
+                Console.WriteLine($"[Update Path] Updating path '{path}' with value '{newValue}' in JSON: {json}");
+
                 // Ensure we have valid JSON
                 if (string.IsNullOrWhiteSpace(json))
                 {
+                    Console.WriteLine("[Update Path] JSON is empty, using empty object");
                     json = "{}";
                 }
 
@@ -1642,121 +1888,228 @@ namespace JsonEditorExample
                 if (string.IsNullOrEmpty(path))
                 {
                     // Update the root
-                    return JsonSerializer.Serialize(newValue, new JsonSerializerOptions { WriteIndented = true });
+                    var result = JsonSerializer.Serialize(newValue, new JsonSerializerOptions { WriteIndented = true });
+                    Console.WriteLine($"[Update Path] Updated root: {result}");
+                    return result;
                 }
 
                 // Split the path into parts
                 var parts = path.Split('.');
 
+                Console.WriteLine($"[Update Path] Path has {parts.Length} parts: [{string.Join(", ", parts)}]");
+
                 // Create a mutable representation of the entire JSON
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+                Console.WriteLine($"[Update Path] Deserialized JSON to dictionary with {dict.Count} properties");
 
                 // Navigate to the parent object
                 var current = dict;
                 for (int i = 0; i < parts.Length - 1; i++)
                 {
-                    if (!current.TryGetValue(parts[i], out var next))
-                        throw new InvalidOperationException($"Property '{parts[i]}' not found.");
+                    Console.WriteLine($"[Update Path] Processing part {i}: '{parts[i]}'");
 
-                    if (next is Dictionary<string, object> nextDict)
+                    // Handle array indices
+                    if (parts[i].Contains("[") && parts[i].Contains("]"))
                     {
-                        current = nextDict;
-                    }
-                    else if (next is List<object> nextList && i < parts.Length - 1 && int.TryParse(parts[i + 1], out int arrayIndex))
-                    {
-                        // Handle array navigation
-                        if (arrayIndex >= 0 && arrayIndex < nextList.Count)
+                        var match = Regex.Match(parts[i], @"(.+)\[(\d+)\]");
+                        if (match.Success)
                         {
-                            if (arrayIndex < nextList.Count - 1)
+                            var arrayName = match.Groups[1].Value;
+                            var arrayIndex = int.Parse(match.Groups[2].Value);
+
+                            Console.WriteLine($"[Update Path] Array navigation - Name: '{arrayName}', Index: {arrayIndex}");
+
+                            // Check if the current element is an array
+                            if (current.TryGetValue(arrayName, out var arrayObj) && arrayObj is List<object> array)
                             {
-                                // Continue navigating through the array
-                                if (nextList[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                Console.WriteLine($"[Update Path] Found array '{arrayName}' with {array.Count} items");
+
+                                // Check if the index is valid
+                                if (arrayIndex >= 0 && arrayIndex < array.Count)
                                 {
-                                    current = arrayItemDict;
-                                    i++; // Skip the array index part
+                                    if (arrayIndex < array.Count - 1)
+                                    {
+                                        // Continue navigating through the array
+                                        if (array[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                        {
+                                            current = arrayItemDict;
+                                            i++; // Skip the array index part
+                                            Console.WriteLine($"[Update Path] Moved to array item at index {arrayIndex}");
+                                        }
+                                        else
+                                        {
+                                            throw new InvalidOperationException($"Array item at index {arrayIndex} is not an object.");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // This is the last part, update the array item
+                                        array[arrayIndex] = newValue;
+                                        Console.WriteLine($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
+                                        var result = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                                        Console.WriteLine($"[Update Path] Final result: {result}");
+                                        return result;
+                                    }
                                 }
                                 else
                                 {
-                                    throw new InvalidOperationException($"Array item at index {arrayIndex} is not an object.");
+                                    throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range.");
                                 }
                             }
                             else
                             {
-                                // This is the last part, update the array item
-                                nextList[arrayIndex] = newValue;
-                                return JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                                throw new InvalidOperationException($"Array '{arrayName}' not found or is not an array.");
                             }
                         }
                         else
                         {
-                            throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range.");
+                            throw new InvalidOperationException($"Invalid array index format: {parts[i]}");
                         }
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Cannot navigate to '{parts[i]}' because current element is not an object or array.");
+                        // Handle object properties
+                        if (!current.TryGetValue(parts[i], out var next))
+                        {
+                            Console.WriteLine($"[Update Path] Property '{parts[i]}' not found in current object");
+                            throw new InvalidOperationException($"Property '{parts[i]}' not found.");
+                        }
+
+                        if (next is Dictionary<string, object> nextDict)
+                        {
+                            current = nextDict;
+                            Console.WriteLine($"[Update Path] Moved to property '{parts[i]}'");
+                        }
+                        else if (next is List<object> nextList && i < parts.Length - 1 && int.TryParse(parts[i + 1], out int arrayIndex))
+                        {
+                            // Handle array navigation
+                            Console.WriteLine($"[Update Path] Found array with {nextList.Count} items");
+
+                            if (arrayIndex >= 0 && arrayIndex < nextList.Count)
+                            {
+                                if (arrayIndex < nextList.Count - 1)
+                                {
+                                    // Continue navigating through the array
+                                    if (nextList[arrayIndex] is Dictionary<string, object> arrayItemDict)
+                                    {
+                                        current = arrayItemDict;
+                                        i++; // Skip the array index part
+                                        Console.WriteLine($"[Update Path] Moved to array item at index {arrayIndex}");
+                                    }
+                                    else
+                                    {
+                                        throw new InvalidOperationException($"Array item at index {arrayIndex} is not an object.");
+                                    }
+                                }
+                                else
+                                {
+                                    // This is the last part, update the array item
+                                    nextList[arrayIndex] = newValue;
+                                    Console.WriteLine($"[Update Path] Updated array item at index {arrayIndex} to '{newValue}'");
+                                    var result = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                                    Console.WriteLine($"[Update Path] Final result: {result}");
+                                    return result;
+                                }
+                            }
+                            else
+                            {
+                                throw new ArgumentOutOfRangeException($"Array index {arrayIndex} is out of range.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Cannot navigate to '{parts[i]}' because current element is not an object or array.");
+                        }
                     }
                 }
 
                 // Update the final property
-                current[parts[parts.Length - 1]] = newValue;
+                var finalProperty = parts[parts.Length - 1];
+                Console.WriteLine($"[Update Path] Updating final property '{finalProperty}' to '{newValue}'");
+                current[finalProperty] = newValue;
 
-                return JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                var finalResult = JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true });
+                Console.WriteLine($"[Update Path] Final result: {finalResult}");
+                return finalResult;
             }
             catch (JsonException ex)
             {
+                Console.WriteLine($"[Update Path] JSON error: {ex.Message}");
                 throw new Exception($"Invalid JSON: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Update Path] General error: {ex.Message}");
                 throw new Exception($"Failed to update path '{path}': {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Creates a typed value based on type and string value.
+        /// Creates a typed value based on the type and string value.
         /// </summary>
         private object CreateTypedValue(string type, string value)
         {
-            switch (type)
+            Console.WriteLine($"[Create Typed Value] Creating value of type '{type}' from string '{value}'");
+
+            try
             {
-                case "String":
-                    return value;
+                object result;
+                switch (type)
+                {
+                    case "String":
+                        result = value;
+                        break;
 
-                case "Number":
-                    if (long.TryParse(value, out long longValue))
-                        return longValue;
-                    else if (double.TryParse(value, out double doubleValue))
-                        return doubleValue;
-                    else
-                        throw new ArgumentException($"'{value}' is not a valid number.");
+                    case "Number":
+                        if (long.TryParse(value, out long longValue))
+                            result = longValue;
+                        else if (double.TryParse(value, out double doubleValue))
+                            result = doubleValue;
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid number.");
+                        break;
 
-                case "Boolean":
-                    if (bool.TryParse(value, out bool boolValue))
-                        return boolValue;
-                    else
-                        throw new ArgumentException($"'{value}' is not a valid boolean. Use 'true' or 'false'.");
+                    case "Boolean":
+                        if (bool.TryParse(value, out bool boolValue))
+                            result = boolValue;
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid boolean. Use 'true' or 'false'.");
+                        break;
 
-                case "Date":
-                    if (IsISO8601Date(value))
-                        return value; // Store dates as strings
-                    else
-                        throw new ArgumentException($"'{value}' is not a valid ISO8601 date format.");
+                    case "Date":
+                        if (IsISO8601Date(value))
+                            result = value; // Store dates as strings
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid ISO8601 date format.");
+                        break;
 
-                case "Image":
-                    if (IsBase64Image(value, out _))
-                        return value; // Store images as base64 strings
-                    else
-                        throw new ArgumentException($"'{value}' is not a valid base64 encoded image.");
+                    case "Image":
+                        if (IsBase64Image(value, out _))
+                            result = value; // Store images as base64 strings
+                        else
+                            throw new ArgumentException($"'{value}' is not a valid base64 encoded image.");
+                        break;
 
-                case "Object":
-                    return new Dictionary<string, object>();
+                    case "Object":
+                        result = new Dictionary<string, object>();
+                        break;
 
-                case "Array":
-                    return new List<object>();
+                    case "Array":
+                        result = new List<object>();
+                        break;
 
-                default:
-                    throw new ArgumentException($"Unknown type: {type}");
+                    default:
+                        throw new ArgumentException($"Unknown type: {type}");
+                }
+
+                Console.WriteLine($"[Create Typed Value] Created value: {result} of type {result?.GetType()}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Create Typed Value] Error: {ex.Message}");
+                throw;
             }
         }
 
@@ -1775,7 +2128,7 @@ namespace JsonEditorExample
             if (control is TextBox textBox)
             {
                 string path = textBox.Tag as string ?? "Unknown";
-                Debug.WriteLine($"[Validate] Validating TextBox at \"{path}\" with text: \"{textBox.Text}\"");
+                Console.WriteLine($"[Validate] Validating TextBox at \"{path}\" with text: \"{textBox.Text}\"");
 
                 if (string.IsNullOrWhiteSpace(textBox.Text))
                 {
@@ -1818,160 +2171,25 @@ namespace JsonEditorExample
         /// </summary>
         public string ToJson()
         {
+            Console.WriteLine("[To JSON] Starting JSON serialization");
+
             var errors = ValidateFields();
             if (errors.Any())
             {
-                Debug.WriteLine("[ToJson] Validation errors: " + string.Join(", ", errors));
+                Console.WriteLine("[To JSON] Validation errors: " + string.Join(", ", errors));
             }
-
-            object result = SerializeValue(_contentContainer as Control, "");
-            var options = new JsonSerializerOptions { WriteIndented = true };
 
             try
             {
-                return JsonSerializer.Serialize(result, options);
+                // Use the stored JSON directly instead of serializing from the UI
+                Console.WriteLine($"[To JSON] Using stored JSON: {_currentJson}");
+                return _currentJson;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ToJson] Error serializing JSON: {ex.Message}");
+                Console.WriteLine($"[To JSON] Error: {ex.Message}");
                 return "{}"; // Return empty object if serialization fails
             }
-        }
-
-        /// <summary>
-        /// Converts a control's current state to its corresponding JSON value.
-        /// </summary>
-        private object SerializeValue(Control control, string path)
-        {
-            if (control is TextBox textBox)
-            {
-                if (OriginalTypes.TryGetValue(path, out Type originalType))
-                {
-                    if (originalType == typeof(long))
-                    {
-                        if (long.TryParse(textBox.Text, out long l))
-                            return l;
-                        else
-                            return textBox.Text;
-                    }
-                    else if (originalType == typeof(double))
-                    {
-                        if (double.TryParse(textBox.Text, out double d))
-                            return d;
-                        else
-                            return textBox.Text;
-                    }
-                    else
-                    {
-                        return textBox.Text;
-                    }
-                }
-                return textBox.Text;
-            }
-            else if (control is CheckBox checkBox)
-            {
-                return checkBox.Checked ?? false;
-            }
-            else if (control is DateTimePicker datePicker)
-            {
-                return datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ss");
-            }
-            else if (control is Button button)
-            {
-                if (button.Text.StartsWith("button:"))
-                    return button.Text;
-                return null; // Buttons are not serialized unless they have special syntax
-            }
-            else if (control is ImageView)
-            {
-                // For images, we need to find the associated text box with the base64 data
-                // This is a simplified approach
-                return null;
-            }
-            else if (control is Panel panel && panel.Content is Control inner)
-            {
-                return SerializeValue(inner, path);
-            }
-            else if (control is StackLayout layout)
-            {
-                return SerializeContainer(layout, path);
-            }
-            else if (control is Label label)
-            {
-                // Handle null values properly
-                if (label.Text == "null")
-                    return null;
-                return label.Text;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Depending on whether the container represents an array or an object, serializes its children accordingly.
-        /// </summary>
-        private object SerializeContainer(StackLayout container, string basePath)
-        {
-            if (IsArrayContainer(container))
-            {
-                List<object> list = new List<object>();
-                int index = 0;
-                foreach (var item in container.Items)
-                {
-                    // Each item should be a row (StackLayout wrapped in a StackLayoutItem).
-                    if (item.Control is StackLayout row)
-                    {
-                        string childPath = $"{basePath}[{index}]";
-                        if (row.Items.Count >= 2 && row.Items[1].Control != null)
-                        {
-                            object value = SerializeValue(row.Items[1].Control, childPath);
-                            list.Add(value);
-                        }
-                        index++;
-                    }
-                }
-                return list;
-            }
-            else
-            {
-                Dictionary<string, object> obj = new Dictionary<string, object>();
-                foreach (var item in container.Items)
-                {
-                    if (item.Control is StackLayout row && row.Items.Count >= 2)
-                    {
-                        // The first item is the label; extract the key.
-                        var lblItem = row.Items[0].Control as Label;
-                        string key = lblItem?.Tag as string ?? lblItem?.Text;
-                        string childPath = string.IsNullOrEmpty(basePath) ? key : $"{basePath}.{key}";
-
-                        if (row.Items[1].Control != null)
-                        {
-                            object value = SerializeValue(row.Items[1].Control, childPath);
-                            obj[key] = value;
-                        }
-                    }
-                }
-                return obj;
-            }
-        }
-
-        /// <summary>
-        /// Checks whether the container appears to represent an array.
-        /// </summary>
-        private bool IsArrayContainer(StackLayout container)
-        {
-            foreach (var item in container.Items)
-            {
-                if (item.Control is StackLayout row && row.Items.Count > 0 && row.Items[0].Control is Label label)
-                {
-                    string text = label.Text;
-                    if (!(text.StartsWith("[") && text.EndsWith("]")))
-                        return false;
-                }
-            }
-            return true;
         }
     }
 
