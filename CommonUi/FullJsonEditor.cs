@@ -988,9 +988,41 @@ namespace JsonEditorExample
             var indexLabel = new Label { Text = $"[{index}]", Width = 50 };
             row.Items.Add(new StackLayoutItem(indexLabel));
 
+            // Create a container for the value control
+            var valueContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
             // Item value control
             var valueControl = item.CreateControl(editorPanel);
-            row.Items.Add(new StackLayoutItem(valueControl, HorizontalAlignment.Stretch, true));
+            valueContainer.Items.Add(new StackLayoutItem(valueControl, HorizontalAlignment.Stretch, true));
+
+            // Set up the callback for string nodes
+            if (item is JsonStringNode stringNode)
+            {
+                stringNode.OnControlNeedsRebuild = (node) => {
+                    // Find the index of the current item control
+                    int itemIndex = -1;
+                    for (int i = 0; i < container.Items.Count; i++)
+                    {
+                        if (container.Items[i].Control == row)
+                        {
+                            itemIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (itemIndex >= 0)
+                    {
+                        // Recreate the item control
+                        var newItemControl = CreateItemControl(editorPanel, index, item, container);
+
+                        // Replace the old control with the new one
+                        container.Items.RemoveAt(itemIndex);
+                        container.Items.Insert(itemIndex, new StackLayoutItem(newItemControl, HorizontalAlignment.Stretch));
+                    }
+                };
+            }
+
+            row.Items.Add(new StackLayoutItem(valueContainer, HorizontalAlignment.Stretch, true));
 
             // Delete button
             var deleteButton = new Button { Text = "×", Width = 25 };
@@ -999,6 +1031,7 @@ namespace JsonEditorExample
 
             return row;
         }
+
 
         private void AddItem(FullJsonEditorPanel editorPanel, StackLayout container)
         {
@@ -1194,6 +1227,7 @@ namespace JsonEditorExample
     public class JsonStringNode : IJsonNode
     {
         public string Value { get; set; }
+        public Action<JsonStringNode> OnControlNeedsRebuild { get; set; }
 
         public Control CreateControl(FullJsonEditorPanel editorPanel)
         {
@@ -1240,7 +1274,8 @@ namespace JsonEditorExample
                     // Handle date changes
                     datePicker.ValueChanged += (sender, e) => {
                         Value = datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                        RefreshParentContainer(editorPanel, container);
+                        // Notify that the control needs to be rebuilt
+                        OnControlNeedsRebuild?.Invoke(this);
                     };
                     container.Items.Add(new StackLayoutItem(datePicker, HorizontalAlignment.Stretch, true));
 
@@ -1251,7 +1286,8 @@ namespace JsonEditorExample
                     var _imageButton = new Button { Text = "Set/Edit Image" };
                     _imageButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => {
                         Value = newValue;
-                        RefreshParentContainer(editorPanel, container);
+                        // Notify that the control needs to be rebuilt
+                        OnControlNeedsRebuild?.Invoke(this);
                     });
                     _buttonContainer.Items.Add(new StackLayoutItem(_imageButton));
 
@@ -1259,7 +1295,8 @@ namespace JsonEditorExample
                     var textButton = new Button { Text = "Add text instead" };
                     textButton.Click += (s, e) => {
                         Value = ""; // Reset to empty string
-                        RefreshParentContainer(editorPanel, container);
+                                    // Notify that the control needs to be rebuilt
+                        OnControlNeedsRebuild?.Invoke(this);
                     };
                     _buttonContainer.Items.Add(new StackLayoutItem(textButton));
 
@@ -1268,45 +1305,10 @@ namespace JsonEditorExample
                     return container;
                 }
             }
-
             // Check for images (base64, URLs, or file extensions)
             bool isImage = IsBase64Image(Value, out ImageType imageType) || IsImageUrl(Value) || HasImageExtension(Value);
 
-            // Create a container for the text field and buttons
-            var textContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
-
-            // Add text box
-            var textBox = new TextBox { Text = Value };
-            textBox.TextChanged += (sender, e) => {
-                Value = textBox.Text;
-                RefreshParentContainer(editorPanel, textContainer);
-            };
-            textContainer.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
-
-            // Add buttons in a horizontal layout
-            var buttonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
-
-            // Add Set/Edit Image button for all text fields
-            var imageButton = new Button { Text = "Set/Edit Image" };
-            imageButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => {
-                Value = newValue;
-                RefreshParentContainer(editorPanel, textContainer);
-            });
-            buttonContainer.Items.Add(new StackLayoutItem(imageButton));
-
-            // Add Set Date button for all text fields
-            var dateButton = new Button { Text = "Set Date" };
-            dateButton.Click += (s, e) => {
-                SetDate(editorPanel, (newDate) => {
-                    Value = newDate;
-                    RefreshParentContainer(editorPanel, textContainer);
-                });
-            };
-            buttonContainer.Items.Add(new StackLayoutItem(dateButton));
-
-            textContainer.Items.Add(new StackLayoutItem(buttonContainer, HorizontalAlignment.Left));
-
-            // If this is already an image, show the image preview
+            // If this is an image, create an image container
             if (isImage)
             {
                 var imageContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
@@ -1367,13 +1369,24 @@ namespace JsonEditorExample
                     imageContainer.Items.Add(new StackLayoutItem(urlLabel, HorizontalAlignment.Stretch, true));
                 }
 
-                // Add "Add text instead" button for images
+                // Add buttons in a horizontal layout
                 var imageButtonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
 
+                // Add Set/Edit Image button
+                var _imageButton = new Button { Text = "Set/Edit Image" };
+                _imageButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => {
+                    Value = newValue;
+                    // Notify that the control needs to be rebuilt
+                    OnControlNeedsRebuild?.Invoke(this);
+                });
+                imageButtonContainer.Items.Add(new StackLayoutItem(_imageButton));
+
+                // Add "Add text instead" button for images
                 var textInsteadButton = new Button { Text = "Add text instead" };
                 textInsteadButton.Click += (s, e) => {
                     Value = ""; // Reset to empty string
-                    RefreshParentContainer(editorPanel, imageContainer);
+                                // Notify that the control needs to be rebuilt
+                    OnControlNeedsRebuild?.Invoke(this);
                 };
                 imageButtonContainer.Items.Add(new StackLayoutItem(textInsteadButton));
 
@@ -1382,8 +1395,46 @@ namespace JsonEditorExample
                 return imageContainer;
             }
 
+            // Default to a text field
+            var textContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Add text box
+            var textBox = new TextBox { Text = Value };
+            textBox.TextChanged += (sender, e) => {
+                Value = textBox.Text;
+                // Notify that the control needs to be rebuilt
+                OnControlNeedsRebuild?.Invoke(this);
+            };
+            textContainer.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
+
+            // Add buttons in a horizontal layout
+            var buttonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+            // Add Set/Edit Image button for all text fields
+            var imageButton = new Button { Text = "Set/Edit Image" };
+            imageButton.Click += (s, e) => UploadImageAsBase64(editorPanel, (newValue) => {
+                Value = newValue;
+                // Notify that the control needs to be rebuilt
+                OnControlNeedsRebuild?.Invoke(this);
+            });
+            buttonContainer.Items.Add(new StackLayoutItem(imageButton));
+
+            // Add Set Date button for all text fields
+            var dateButton = new Button { Text = "Set Date" };
+            dateButton.Click += (s, e) => {
+                SetDate(editorPanel, (newDate) => {
+                    Value = newDate;
+                    // Notify that the control needs to be rebuilt
+                    OnControlNeedsRebuild?.Invoke(this);
+                });
+            };
+            buttonContainer.Items.Add(new StackLayoutItem(dateButton));
+
+            textContainer.Items.Add(new StackLayoutItem(buttonContainer, HorizontalAlignment.Left));
+
             return textContainer;
         }
+
 
         // Update the RefreshParentContainer method to work with the correct structure:
 
@@ -1472,20 +1523,20 @@ namespace JsonEditorExample
                 Padding = 10,
                 Spacing = 5,
                 Items =
-        {
-            new Label { Text = "Select a date:" },
-            new StackLayoutItem(datePicker, HorizontalAlignment.Stretch),
-            new StackLayoutItem(new StackLayout
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Items =
+                new Label { Text = "Select a date:" },
+                new StackLayoutItem(datePicker, HorizontalAlignment.Stretch),
+                new StackLayoutItem(new StackLayout
                 {
-                    new StackLayoutItem(okButton),
-                    new StackLayoutItem(cancelButton)
-                }
-            }, HorizontalAlignment.Right)
-        }
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 5,
+                    Items =
+                    {
+                        new StackLayoutItem(okButton),
+                        new StackLayoutItem(cancelButton)
+                    }
+                }, HorizontalAlignment.Right)
+            }
             };
 
             dialog.Content = layout;
@@ -1506,6 +1557,7 @@ namespace JsonEditorExample
             // Show the dialog
             dialog.ShowModal(editorPanel);
         }
+
 
 
 
@@ -1670,9 +1722,9 @@ namespace JsonEditorExample
             {
                 Title = "Select an image",
                 Filters =
-        {
-            new FileFilter("Image Files (*.png;*.jpg;*.jpeg;*.gif;*.webp)", ".png", ".jpg", ".jpeg", ".gif", ".webp")
-        }
+            {
+                new FileFilter("Image Files (*.png;*.jpg;*.jpeg;*.gif;*.webp)", ".png", ".jpg", ".jpeg", ".gif", ".webp")
+            }
             };
 
             if (fileDialog.ShowDialog(editorPanel) == DialogResult.Ok)
@@ -1708,6 +1760,7 @@ namespace JsonEditorExample
                 FullJsonEditorPanel.Log("[Upload Image] User cancelled image selection");
             }
         }
+
     }
 
     /// <summary>
