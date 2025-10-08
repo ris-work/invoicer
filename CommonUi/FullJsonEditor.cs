@@ -2915,9 +2915,7 @@ namespace JsonEditorExample
             var (basePath, indices) = ParseComplexArrayPath(arrayPath);
             Log($"[Delete Array Item] Base path: '{basePath}', Indices: [{string.Join(", ", indices)}]");
 
-            var message = indices.Count > 1
-                ? $"Are you sure you want to delete item at index {index} in nested array at path '{arrayPath}'?"
-                : $"Are you sure you want to delete item at index {index} in array at path '{arrayPath}'?";
+            var message = $"Are you sure you want to delete item at index {index} in array at path '{arrayPath}'?";
 
             var result = MessageBox.Show(this, message, "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxType.Question);
             if (result == DialogResult.Yes)
@@ -2927,21 +2925,30 @@ namespace JsonEditorExample
                     var json = GetCurrentJson();
                     Log($"[Delete Array Item] Current JSON length: {json.Length}");
 
-                    // For nested arrays, we need special handling
-                    if (indices.Count > 1)
+                    // Handle nested array deletion
+                    if (indices.Count > 0)
                     {
-                        Log("[Delete Array Item] Handling nested array deletion");
-                        // TODO: Implement nested array deletion for multiple levels
-                        MessageBox.Show(this, "Nested array deletion is not yet fully implemented.", "Not Implemented", MessageBoxButtons.OK, MessageBoxType.Information);
-                        return;
+                        // For paths like "misc.longArrayNested[3]", we need to:
+                        // 1. Navigate to the array at "misc.longArrayNested"
+                        // 2. Delete index 3 from that array
+
+                        var updatedJson = DeleteItemFromArrayJson(json, arrayPath, index);
+                        Log($"[Delete Array Item] Updated JSON length: {updatedJson.Length}");
+                        SetCurrentJson(updatedJson);
+
+                        // Refresh the UI for the specific array path
+                        RefreshPath(arrayPath);
                     }
+                    else
+                    {
+                        // Simple array deletion (no indices in path)
+                        var updatedJson = DeleteItemFromArrayJson(json, basePath, index);
+                        Log($"[Delete Array Item] Updated JSON length: {updatedJson.Length}");
+                        SetCurrentJson(updatedJson);
 
-                    var updatedJson = DeleteItemFromArrayJson(json, basePath, index);
-                    Log($"[Delete Array Item] Updated JSON length: {updatedJson.Length}");
-                    SetCurrentJson(updatedJson);
-
-                    // Refresh the UI for the specific path
-                    RefreshPath(basePath);
+                        // Refresh the UI for the specific path
+                        RefreshPath(basePath);
+                    }
 
                     Log("[Delete Array Item] Item deleted successfully");
                 }
@@ -2952,6 +2959,7 @@ namespace JsonEditorExample
                 }
             }
         }
+
 
         /// <summary>
         /// Adds a property to the JSON string.
@@ -3114,6 +3122,7 @@ namespace JsonEditorExample
             }
         }
 
+
         /// <summary>
         /// Deletes an item from an array in the JSON string.
         /// </summary>
@@ -3122,13 +3131,6 @@ namespace JsonEditorExample
             try
             {
                 Log($"[Delete Item Array JSON] Starting - Deleting item at index {index} in array at path '{arrayPath}'");
-
-                // Ensure we have valid JSON
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    Log("[Delete Item Array JSON] JSON is empty, using empty object");
-                    json = "{}";
-                }
 
                 var document = JsonDocument.Parse(json);
                 var root = document.RootElement;
@@ -3203,30 +3205,35 @@ namespace JsonEditorExample
             }
         }
 
+
+
         /// <summary>
         /// Parses a complex array path that might contain nested array indices
         /// </summary>
         private (string arrayPath, List<int> indices) ParseComplexArrayPath(string path)
         {
-            var indices = new List<int>();
-            string remainingPath = path;
+            // Match patterns like "key[0]", "key[1][0]", "key[1][1][0]", etc.
+            var match = Regex.Match(path, @"^(.+?)(\[[0-9]+(?:\[[0-9]+\])*)$");
 
-            // Extract all array indices from the path
-            while (remainingPath.Contains("[") && remainingPath.Contains("]"))
+            if (match.Success)
             {
-                var match = Regex.Match(remainingPath, @"(.+)\[(\d+)\]$");
-                if (match.Success)
-                {
-                    indices.Insert(0, int.Parse(match.Groups[2].Value)); // Insert at beginning to maintain order
-                    remainingPath = match.Groups[1].Value;
-                }
-                else
-                {
-                    break;
-                }
-            }
+                var arrayPath = match.Groups[1].Value;
+                var indicesStr = match.Groups[2].Value;
 
-            return (remainingPath, indices);
+                // Extract all indices
+                var indices = new List<int>();
+                foreach (Match indexMatch in Regex.Matches(indicesStr, @"\[(\d+)\]"))
+                {
+                    indices.Add(int.Parse(indexMatch.Groups[1].Value));
+                }
+
+                return (arrayPath, indices);
+            }
+            else
+            {
+                // No array indices found, return the path as is
+                return (path, new List<int>());
+            }
         }
 
         /// <summary>
@@ -3473,6 +3480,7 @@ namespace JsonEditorExample
             }
         }
 
+
         /// <summary>
         /// Updates an array at a specific path in the JSON document.
         /// </summary>
@@ -3519,6 +3527,8 @@ namespace JsonEditorExample
                 throw new Exception($"Failed to update array: {ex.Message}", ex);
             }
         }
+
+
 
 
         /// <summary>

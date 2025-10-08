@@ -111,7 +111,8 @@ var SampleJsonNested =
     ""misc"": {
         ""floatValue"": 3.14159,
         ""bool"": true,
-        ""longArray"": [65536, 131072, 262144]
+        ""longArray"": [65536, 131072, 262144],
+        ""longArrayNested"": [65536, 131072, 262144, [1,2,3, [4,5,6]]]
     },
     ""funFacts"": {
         ""hobbies"": [
