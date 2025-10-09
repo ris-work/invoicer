@@ -25,6 +25,7 @@ namespace EtoFE.Panels
         public string ProvidedPrivilegeLevels { get; set; } = string.Empty;
         public string Source { get; set; } = string.Empty; // To differentiate between Request and RequestsBad
         public object OriginalData { get; set; } // Store the original data for double-click handling
+        public string Body { get; set; } = string.Empty; // Add this new property
 
         // Convert to a view array for display in the search results
 
@@ -44,7 +45,8 @@ namespace EtoFE.Panels
                 RequestedPrivilegeLevel,
                 Endpoint,
                 ProvidedPrivilegeLevels,
-                Source
+                Source,
+                Body
             };
         }
 
@@ -64,7 +66,8 @@ namespace EtoFE.Panels
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
                 Source = "Request",
-                OriginalData = req
+                OriginalData = req,
+                Body = req.RequestBody ?? string.Empty // Extract body
             };
         }
 
@@ -84,7 +87,8 @@ namespace EtoFE.Panels
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
                 Source = "RequestsBad",
-                OriginalData = req
+                OriginalData = req,
+                Body = req.RequestBody ?? string.Empty // Extract body
             };
         }
 
@@ -194,6 +198,13 @@ namespace EtoFE.Panels
                 data.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
                 Log($"  ProvidedPrivilegeLevels: {data.ProvidedPrivilegeLevels}");
             }
+
+            if (TryGetPropertyCaseInsensitive(element, "Body", out var bodyProp))
+            {
+                data.Body = bodyProp.GetString() ?? string.Empty;
+                Log($"  Body: {data.Body.Substring(0, Math.Min(100, data.Body.Length))}...");
+            }
+
 
             // Determine source based on the presence of certain properties
             data.Source = TryGetPropertyCaseInsensitive(element, "ErrorMessage", out _) ? "RequestsBad" : "Request";
@@ -709,7 +720,8 @@ namespace EtoFE.Panels
             ("RequestedPrivilegeLevel", TextAlignment.Left, false),
             ("Endpoint", TextAlignment.Left, false),
             ("ProvidedPrivilegeLevels", TextAlignment.Left, false),
-            ("Source", TextAlignment.Left, false)
+            ("Source", TextAlignment.Left, false),
+            ("Body", TextAlignment.Left, false) // Add this new column
         };
 
                 // Define the callback for double-click
@@ -724,7 +736,9 @@ namespace EtoFE.Panels
 
                         if (selectedItem != null && selectedItem.OriginalData != null)
                         {
-                            ShowJsonEditor(selectedItem.OriginalData);
+                            //ShowJsonEditor(selectedItem.OriginalData);
+                            Log(String.Join(',',selected));
+                            ShowJsonEditor(selected[9]);
                         }
                     }
                 };
