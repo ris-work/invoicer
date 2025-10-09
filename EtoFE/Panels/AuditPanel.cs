@@ -695,6 +695,23 @@ namespace EtoFE.Panels
                 // Convert RequestData objects to string arrays for display
                 var viewData = searchResults.Select(r => r.ToViewArray()).ToList();
 
+                // Convert to the required format for SearchPanelEto constructor
+                var searchData = viewData.Select(row => (row, (Eto.Drawing.Color?)null, (Eto.Drawing.Color?)null)).ToList();
+
+                // Define headers with alignment and sorting info
+                var headerEntries = new List<(string Header, TextAlignment Alignment, bool NumericalSort)>
+        {
+            ("TimeTai", TextAlignment.Left, false),
+            ("Principal", TextAlignment.Right, true),
+            ("Token", TextAlignment.Left, false),
+            ("Type", TextAlignment.Left, false),
+            ("RequestedAction", TextAlignment.Left, false),
+            ("RequestedPrivilegeLevel", TextAlignment.Left, false),
+            ("Endpoint", TextAlignment.Left, false),
+            ("ProvidedPrivilegeLevels", TextAlignment.Left, false),
+            ("Source", TextAlignment.Left, false)
+        };
+
                 // Define the callback for double-click
                 Action<string[]> doubleClickCallback = (selected) =>
                 {
@@ -712,30 +729,23 @@ namespace EtoFE.Panels
                     }
                 };
 
-                // Create a simple grid view instead of using SearchPanelUtility
-                var gridView = new GridView();
+                // Create a SearchPanelEto with the correct constructor parameters
+                var searchPanel = new SearchPanelEto(
+                    searchData,
+                    headerEntries,
+                    false, // Debug
+                    null,  // LocalColors
+                    800,   // GWW (Grid Width)
+                    400    // GWH (Grid Height)
+                );
 
-                // Add columns
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[0]) }, HeaderText = "TimeTai" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[1]) }, HeaderText = "Principal" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[2]) }, HeaderText = "Token" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[3]) }, HeaderText = "Type" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[4]) }, HeaderText = "RequestedAction" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[5]) }, HeaderText = "RequestedPrivilegeLevel" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[6]) }, HeaderText = "Endpoint" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[7]) }, HeaderText = "ProvidedPrivilegeLevels" });
-                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[8]) }, HeaderText = "Source" });
-
-                // Set the data source
-                gridView.DataStore = viewData;
-
-                // Handle double-click
-                gridView.MouseDoubleClick += (sender, e) =>
+                // Set the double-click callback
+                searchPanel.OnSelectionMade = () =>
                 {
-                    var selectedRow = gridView.SelectedItem as string[];
-                    if (selectedRow != null)
+                    // Read from the Selected property
+                    if (searchPanel.Selected != null)
                     {
-                        doubleClickCallback(selectedRow);
+                        doubleClickCallback(searchPanel.Selected);
                     }
                 };
 
@@ -746,7 +756,7 @@ namespace EtoFE.Panels
                 }
 
                 // Add the new results panel
-                mainLayout.Items.Add(new StackLayoutItem(gridView, true));
+                mainLayout.Items.Add(new StackLayoutItem(searchPanel, true));
 
                 // Force a layout update
                 mainLayout.Invalidate();
