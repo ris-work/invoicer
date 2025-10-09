@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Reflection;
 using Eto.Forms;
 using Eto.Drawing;
 using CommonUi;
@@ -11,11 +12,11 @@ using JsonEditorExample;
 
 namespace EtoFE.Panels
 {
-    // Unified view model for both Request and RequestsBad
-    public class RequestViewModel
+    // Solid type for request data
+    public class RequestData
     {
-        public string TimeTai { get; set; } = string.Empty;
-        public string Principal { get; set; } = string.Empty;
+        public DateTime TimeTai { get; set; }
+        public long Principal { get; set; }
         public string Token { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public string RequestedAction { get; set; } = string.Empty;
@@ -25,73 +26,262 @@ namespace EtoFE.Panels
         public string Source { get; set; } = string.Empty; // To differentiate between Request and RequestsBad
         public object OriginalData { get; set; } // Store the original data for double-click handling
 
-        public static RequestViewModel FromRequest(Request req)
+        // Convert to a view array for display in the search results
+
+        private static void Log(string message)
         {
-            return new RequestViewModel
+            Console.WriteLine($"[RequestsSearchPanel] {DateTime.Now}: {message}");
+        }
+        public string[] ToViewArray()
+        {
+            return new string[]
             {
-                TimeTai = req.TimeTai.ToString(),
-                Principal = req.Principal.ToString(),
-                Token = req.Token,
+                TimeTai.ToString(),
+                Principal.ToString(),
+                Token,
+                Type,
+                RequestedAction,
+                RequestedPrivilegeLevel,
+                Endpoint,
+                ProvidedPrivilegeLevels,
+                Source
+            };
+        }
+
+        // Create from Request object
+        public static RequestData FromRequest(Request req)
+        {
+            Log($"Creating RequestData from Request: Token={req.Token}, Type={req.Type}");
+
+            return new RequestData
+            {
+                TimeTai = req.TimeTai.UtcDateTime,
+                Principal = req.Principal,
+                Token = req.Token ?? string.Empty,
                 Type = req.Type ?? string.Empty,
                 RequestedAction = req.RequestedAction ?? string.Empty,
                 RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
                 Source = "Request",
-                OriginalData = req // Store the original Request object
+                OriginalData = req
             };
         }
 
-        public static RequestViewModel FromRequestsBad(RequestsBad req)
+        // Create from RequestsBad object
+        public static RequestData FromRequestsBad(RequestsBad req)
         {
-            return new RequestViewModel
+            Log($"Creating RequestData from RequestsBad: Token={req.Token}, Type={req.Type}");
+
+            return new RequestData
             {
-                TimeTai = req.TimeTai.ToString(),
-                Principal = req.Principal?.ToString() ?? string.Empty,
-                Token = req.Token,
+                TimeTai = req.TimeTai,
+                Principal = req.Principal ?? 0,
+                Token = req.Token ?? string.Empty,
                 Type = req.Type ?? string.Empty,
                 RequestedAction = req.RequestedAction ?? string.Empty,
                 RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
                 Source = "RequestsBad",
-                OriginalData = req // Store the original RequestsBad object
+                OriginalData = req
             };
         }
 
-        public static RequestViewModel FromJsonElement(JsonElement element)
+        // Create from JsonElement with case-insensitive property names
+        public static RequestData FromJsonElement(JsonElement element)
         {
-            var viewModel = new RequestViewModel();
+            Log("Creating RequestData from JsonElement");
 
-            if (element.TryGetProperty("TimeTai", out var timeTaiProp))
-                viewModel.TimeTai = timeTaiProp.GetDateTime().ToString();
+            var data = new RequestData();
 
-            if (element.TryGetProperty("Principal", out var principalProp))
-                viewModel.Principal = principalProp.GetInt64().ToString();
+            // Helper function to try get property with different case variations
+            bool TryGetPropertyCaseInsensitive(JsonElement elem, string propertyName, out JsonElement value)
+            {
+                // Try exact match first
+                if (elem.TryGetProperty(propertyName, out value))
+                    return true;
 
-            if (element.TryGetProperty("Token", out var tokenProp))
-                viewModel.Token = tokenProp.GetString() ?? string.Empty;
+                // Try lowercase
+                if (elem.TryGetProperty(char.ToLower(propertyName[0]) + propertyName.Substring(1), out value))
+                    return true;
 
-            if (element.TryGetProperty("Type", out var typeProp))
-                viewModel.Type = typeProp.GetString() ?? string.Empty;
+                // Try uppercase
+                if (elem.TryGetProperty(char.ToUpper(propertyName[0]) + propertyName.Substring(1), out value))
+                    return true;
 
-            if (element.TryGetProperty("RequestedAction", out var requestedActionProp))
-                viewModel.RequestedAction = requestedActionProp.GetString() ?? string.Empty;
+                return false;
+            }
 
-            if (element.TryGetProperty("RequestedPrivilegeLevel", out var requestedPrivilegeLevelProp))
-                viewModel.RequestedPrivilegeLevel = requestedPrivilegeLevelProp.GetString() ?? string.Empty;
+            if (TryGetPropertyCaseInsensitive(element, "TimeTai", out var timeTaiProp))
+            {
+                if (timeTaiProp.ValueKind == JsonValueKind.String)
+                {
+                    if (DateTime.TryParse(timeTaiProp.GetString(), out var timeTai))
+                    {
+                        data.TimeTai = timeTai;
+                        Log($"  TimeTai: {data.TimeTai}");
+                    }
+                }
+                else
+                {
+                    data.TimeTai = timeTaiProp.GetDateTime();
+                    Log($"  TimeTai: {data.TimeTai}");
+                }
+            }
 
-            if (element.TryGetProperty("Endpoint", out var endpointProp))
-                viewModel.Endpoint = endpointProp.GetString() ?? string.Empty;
+            if (TryGetPropertyCaseInsensitive(element, "Principal", out var principalProp))
+            {
+                data.Principal = principalProp.GetInt64();
+                Log($"  Principal: {data.Principal}");
+            }
 
-            if (element.TryGetProperty("ProvidedPrivilegeLevels", out var providedPrivilegeLevelsProp))
-                viewModel.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
+            if (TryGetPropertyCaseInsensitive(element, "Token", out var tokenProp))
+            {
+                if (tokenProp.ValueKind == JsonValueKind.String)
+                {
+                    data.Token = tokenProp.GetString() ?? string.Empty;
+
+                    // Check if the token is itself a JSON string
+                    if (data.Token.StartsWith("{") && data.Token.EndsWith("}"))
+                    {
+                        try
+                        {
+                            // Try to parse the token as JSON to extract TokenID
+                            var tokenElement = JsonSerializer.Deserialize<JsonElement>(data.Token);
+                            if (tokenElement.TryGetProperty("TokenID", out var tokenIdProp))
+                            {
+                                data.Token = tokenIdProp.GetString() ?? data.Token;
+                                Log($"  Extracted TokenID: {data.Token}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log($"  Error parsing token as JSON: {ex.Message}");
+                        }
+                    }
+
+                    Log($"  Token: {data.Token}");
+                }
+            }
+
+            if (TryGetPropertyCaseInsensitive(element, "Type", out var typeProp))
+            {
+                data.Type = typeProp.GetString() ?? string.Empty;
+                Log($"  Type: {data.Type}");
+            }
+
+            if (TryGetPropertyCaseInsensitive(element, "RequestedAction", out var requestedActionProp))
+            {
+                data.RequestedAction = requestedActionProp.GetString() ?? string.Empty;
+                Log($"  RequestedAction: {data.RequestedAction}");
+            }
+
+            if (TryGetPropertyCaseInsensitive(element, "RequestedPrivilegeLevel", out var requestedPrivilegeLevelProp))
+            {
+                data.RequestedPrivilegeLevel = requestedPrivilegeLevelProp.GetString() ?? string.Empty;
+                Log($"  RequestedPrivilegeLevel: {data.RequestedPrivilegeLevel}");
+            }
+
+            if (TryGetPropertyCaseInsensitive(element, "Endpoint", out var endpointProp))
+            {
+                data.Endpoint = endpointProp.GetString() ?? string.Empty;
+                Log($"  Endpoint: {data.Endpoint}");
+            }
+
+            if (TryGetPropertyCaseInsensitive(element, "ProvidedPrivilegeLevels", out var providedPrivilegeLevelsProp))
+            {
+                data.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
+                Log($"  ProvidedPrivilegeLevels: {data.ProvidedPrivilegeLevels}");
+            }
 
             // Determine source based on the presence of certain properties
-            viewModel.Source = element.TryGetProperty("ErrorMessage", out _) ? "RequestsBad" : "Request";
-            viewModel.OriginalData = element; // Store the original JsonElement
+            data.Source = TryGetPropertyCaseInsensitive(element, "ErrorMessage", out _) ? "RequestsBad" : "Request";
+            Log($"  Source: {data.Source}");
 
-            return viewModel;
+            data.OriginalData = element;
+
+            return data;
+        }
+
+        // Create from unknown object using reflection
+        public static RequestData FromUnknownObject(object obj)
+        {
+            Log($"Creating RequestData from unknown object of type: {obj?.GetType().FullName ?? "null"}");
+
+            var data = new RequestData
+            {
+                Source = "Unknown",
+                OriginalData = obj
+            };
+
+            if (obj == null)
+                return data;
+
+            // Special handling for JObject without directly referencing it
+            if (obj.GetType().FullName?.Contains("JObject") == true)
+            {
+                try
+                {
+                    // Convert the JObject to a JSON string using its ToString method
+                    var jsonString = obj.ToString();
+                    Log($"  Converted JObject to JSON string: {jsonString.Substring(0, Math.Min(100, jsonString.Length))}...");
+
+                    // Parse the JSON string using System.Text.Json
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(jsonString);
+                    return FromJsonElement(jsonElement);
+                }
+                catch (Exception ex)
+                {
+                    Log($"  Error handling JObject: {ex.Message}");
+                }
+            }
+
+            var type = obj.GetType();
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Helper function to safely get property value
+            T GetPropertyValue<T>(string propertyName, T defaultValue = default)
+            {
+                var prop = properties.FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+                if (prop != null && prop.PropertyType == typeof(T))
+                {
+                    var value = prop.GetValue(obj);
+                    if (value != null)
+                    {
+                        Log($"  {propertyName}: {value}");
+                        return (T)value;
+                    }
+                }
+                return defaultValue;
+            }
+
+            // Helper function for string properties
+            string GetStringProperty(string propertyName)
+            {
+                var prop = properties.FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+                if (prop != null)
+                {
+                    var value = prop.GetValue(obj)?.ToString();
+                    if (value != null)
+                    {
+                        Log($"  {propertyName}: {value}");
+                        return value;
+                    }
+                }
+                return string.Empty;
+            }
+
+            data.TimeTai = GetPropertyValue<DateTime>("TimeTai");
+            data.Principal = GetPropertyValue<long>("Principal");
+            data.Token = GetStringProperty("Token");
+            data.Type = GetStringProperty("Type");
+            data.RequestedAction = GetStringProperty("RequestedAction");
+            data.RequestedPrivilegeLevel = GetStringProperty("RequestedPrivilegeLevel");
+            data.Endpoint = GetStringProperty("Endpoint");
+            data.ProvidedPrivilegeLevels = GetStringProperty("ProvidedPrivilegeLevels");
+
+            return data;
         }
     }
 
@@ -113,7 +303,7 @@ namespace EtoFE.Panels
         private StackLayout mainLayout;
 
         // Data
-        private List<RequestViewModel> searchResults = new List<RequestViewModel>();
+        private List<RequestData> searchResults = new List<RequestData>();
 
         public RequestsSearchPanel()
         {
@@ -360,6 +550,9 @@ namespace EtoFE.Panels
                     Limit = string.IsNullOrEmpty(txtLimit.Text) ? null : int.Parse(txtLimit.Text)
                 };
 
+                // Log the search criteria
+                Log($"Search criteria: {JsonSerializer.Serialize(searchCriteria, new JsonSerializerOptions { WriteIndented = true })}");
+
                 // Send request to backend
                 var (Out, Error) = SendAuthenticatedRequest<RequestSearchCriteria, List<object>>.Send(
                     searchCriteria,
@@ -369,8 +562,8 @@ namespace EtoFE.Panels
 
                 if (Error == false)
                 {
-                    // Convert the results to our view model
-                    searchResults = new List<RequestViewModel>();
+                    // Convert the results to our solid type
+                    searchResults = new List<RequestData>();
 
                     // Debug: Log the raw results
                     Log($"Raw results count: {Out?.Count ?? 0}");
@@ -398,6 +591,8 @@ namespace EtoFE.Panels
 
                     foreach (var item in Out)
                     {
+                        RequestData requestData = null;
+
                         // Try to handle JsonElement case
                         if (item is JsonElement element)
                         {
@@ -407,7 +602,7 @@ namespace EtoFE.Panels
                                 var request = element.Deserialize<Request>();
                                 if (request != null)
                                 {
-                                    searchResults.Add(RequestViewModel.FromRequest(request));
+                                    requestData = RequestData.FromRequest(request);
                                     continue;
                                 }
                             }
@@ -422,7 +617,7 @@ namespace EtoFE.Panels
                                 var badRequest = element.Deserialize<RequestsBad>();
                                 if (badRequest != null)
                                 {
-                                    searchResults.Add(RequestViewModel.FromRequestsBad(badRequest));
+                                    requestData = RequestData.FromRequestsBad(badRequest);
                                     continue;
                                 }
                             }
@@ -432,46 +627,37 @@ namespace EtoFE.Panels
                             }
 
                             // If we can't deserialize to either type, use FromJsonElement
-                            searchResults.Add(RequestViewModel.FromJsonElement(element));
+                            requestData = RequestData.FromJsonElement(element);
                         }
                         // Direct type handling
                         else if (item is Request req)
                         {
-                            searchResults.Add(RequestViewModel.FromRequest(req));
+                            requestData = RequestData.FromRequest(req);
                         }
                         else if (item is RequestsBad badReq)
                         {
-                            searchResults.Add(RequestViewModel.FromRequestsBad(badReq));
+                            requestData = RequestData.FromRequestsBad(badReq);
                         }
                         else if (item != null)
                         {
                             Log($"Unknown item type: {item.GetType().FullName}");
 
-                            // Try to cast to dynamic and extract properties
+                            // Use reflection instead of dynamic to extract properties
                             try
                             {
-                                dynamic dynamicItem = item;
-                                var manualViewModel = new RequestViewModel
-                                {
-                                    TimeTai = dynamicItem.TimeTai?.ToString() ?? string.Empty,
-                                    Principal = dynamicItem.Principal?.ToString() ?? string.Empty,
-                                    Token = dynamicItem.Token?.ToString() ?? string.Empty,
-                                    Type = dynamicItem.Type?.ToString() ?? string.Empty,
-                                    RequestedAction = dynamicItem.RequestedAction?.ToString() ?? string.Empty,
-                                    RequestedPrivilegeLevel = dynamicItem.RequestedPrivilegeLevel?.ToString() ?? string.Empty,
-                                    Endpoint = dynamicItem.Endpoint?.ToString() ?? string.Empty,
-                                    ProvidedPrivilegeLevels = dynamicItem.ProvidedPrivilegeLevels?.ToString() ?? string.Empty,
-                                    Source = "Unknown",
-                                    OriginalData = item // Store the original object
-                                };
-
-                                searchResults.Add(manualViewModel);
-                                Log($"Manually created RequestViewModel from dynamic object");
+                                requestData = RequestData.FromUnknownObject(item);
+                                Log($"Created RequestData using reflection");
                             }
                             catch (Exception ex)
                             {
-                                Log($"Error extracting from dynamic object: {ex.Message}");
+                                Log($"Error extracting properties using reflection: {ex.Message}");
                             }
+                        }
+
+                        if (requestData != null)
+                        {
+                            searchResults.Add(requestData);
+                            Log($"Added RequestData to results: Token={requestData.Token}, Type={requestData.Type}");
                         }
                     }
 
@@ -506,6 +692,9 @@ namespace EtoFE.Panels
         {
             try
             {
+                // Convert RequestData objects to string arrays for display
+                var viewData = searchResults.Select(r => r.ToViewArray()).ToList();
+
                 // Define the callback for double-click
                 Action<string[]> doubleClickCallback = (selected) =>
                 {
@@ -514,7 +703,7 @@ namespace EtoFE.Panels
                     {
                         // Try to find the item by matching the TimeTai (first column)
                         var timeTai = selected[0];
-                        var selectedItem = searchResults.FirstOrDefault(r => r.TimeTai == timeTai);
+                        var selectedItem = searchResults.FirstOrDefault(r => r.TimeTai.ToString() == timeTai);
 
                         if (selectedItem != null && selectedItem.OriginalData != null)
                         {
@@ -523,24 +712,32 @@ namespace EtoFE.Panels
                     }
                 };
 
-                // Generate the search panel with our data
-                var newResultsPanel = SearchPanelUtility.GenerateSearchPanel(
-                    searchResults,
-                    false,
-                    null,
-                    [
-                        "TimeTai",
-                        "Principal",
-                        "Token",
-                        "Type",
-                        "RequestedAction",
-                        "RequestedPrivilegeLevel",
-                        "Endpoint",
-                        "ProvidedPrivilegeLevels",
-                        "Source"
-                    ]
-                );
-                newResultsPanel.OnSelectionMade = () => { doubleClickCallback(newResultsPanel.OutputList[0]); };
+                // Create a simple grid view instead of using SearchPanelUtility
+                var gridView = new GridView();
+
+                // Add columns
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[0]) }, HeaderText = "TimeTai" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[1]) }, HeaderText = "Principal" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[2]) }, HeaderText = "Token" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[3]) }, HeaderText = "Type" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[4]) }, HeaderText = "RequestedAction" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[5]) }, HeaderText = "RequestedPrivilegeLevel" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[6]) }, HeaderText = "Endpoint" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[7]) }, HeaderText = "ProvidedPrivilegeLevels" });
+                gridView.Columns.Add(new GridColumn { DataCell = new TextBoxCell { Binding = Binding.Property((string[] item) => item[8]) }, HeaderText = "Source" });
+
+                // Set the data source
+                gridView.DataStore = viewData;
+
+                // Handle double-click
+                gridView.MouseDoubleClick += (sender, e) =>
+                {
+                    var selectedRow = gridView.SelectedItem as string[];
+                    if (selectedRow != null)
+                    {
+                        doubleClickCallback(selectedRow);
+                    }
+                };
 
                 // Remove the old results panel (last item in mainLayout)
                 if (mainLayout.Items.Count > 0)
@@ -549,7 +746,7 @@ namespace EtoFE.Panels
                 }
 
                 // Add the new results panel
-                mainLayout.Items.Add(new StackLayoutItem(newResultsPanel, true));
+                mainLayout.Items.Add(new StackLayoutItem(gridView, true));
 
                 // Force a layout update
                 mainLayout.Invalidate();
@@ -571,53 +768,36 @@ namespace EtoFE.Panels
         {
             try
             {
-                // Serialize the data to JSON
-                var json = JsonSerializer.Serialize(data);
+                string json;
 
-                // Parse the JSON back to a JsonElement
-                var jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
-
-                // Convert the JsonElement to a dictionary of JsonElements
-                var dataDict = new Dictionary<string, JsonElement>();
-                foreach (var property in jsonElement.EnumerateObject())
+                // Handle JObject without directly referencing it
+                if (data?.GetType().FullName?.Contains("JObject") == true)
                 {
-                    dataDict[property.Name] = property.Value;
+                    // Convert the JObject to a JSON string using its ToString method
+                    json = data.ToString();
+                    Log($"Converted JObject to JSON string for editor");
+                }
+                else
+                {
+                    // Serialize the data to JSON with proper formatting
+                    var jsonOptions = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNamingPolicy = null
+                    };
+
+                    json = JsonSerializer.Serialize(data, jsonOptions);
                 }
 
-                // Determine the original types for each property
-                var originalTypes = new Dictionary<string, Type>();
+                Log($"Opening JSON editor with data: {json.Substring(0, Math.Min(200, json.Length))}...");
 
-                if (data is Request)
-                {
-                    originalTypes["TimeTai"] = typeof(DateTime);
-                    originalTypes["Principal"] = typeof(long);
-                    originalTypes["Token"] = typeof(string);
-                    originalTypes["Type"] = typeof(string);
-                    originalTypes["RequestedAction"] = typeof(string);
-                    originalTypes["RequestedPrivilegeLevel"] = typeof(string);
-                    originalTypes["Endpoint"] = typeof(string);
-                    originalTypes["ProvidedPrivilegeLevels"] = typeof(string);
-                }
-                else if (data is RequestsBad)
-                {
-                    originalTypes["TimeTai"] = typeof(DateTime);
-                    originalTypes["Principal"] = typeof(long?);
-                    originalTypes["Token"] = typeof(string);
-                    originalTypes["Type"] = typeof(string);
-                    originalTypes["RequestedAction"] = typeof(string);
-                    originalTypes["RequestedPrivilegeLevel"] = typeof(string);
-                    originalTypes["Endpoint"] = typeof(string);
-                    originalTypes["ProvidedPrivilegeLevels"] = typeof(string);
-                    originalTypes["ErrorMessage"] = typeof(string);
-                }
-
-                // Create a new form with the JsonEditorPanel
+                // Create a new form with the JsonEditorPanel using the specified signature
                 var form = new Form
                 {
                     Title = TranslationHelper.Translate("Request Details"),
                     ClientSize = new Size(800, 600),
                     Content = new JsonEditorPanel(
-                        dataDict,
+                        json, // Pass the JSON string directly
                         Orientation.Vertical
                     )
                 };
