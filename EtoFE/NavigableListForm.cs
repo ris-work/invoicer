@@ -140,7 +140,7 @@ namespace EtoFE
                                         ),
                                         (
                                             "🧮 Cycle Count",
-                                            new LoadOncePanel<Panel>(),
+                                            new LoadOncePanel<CycleCountPanel>(),
                                             "CycleCount"
                                         ),
                                         (
@@ -210,6 +210,11 @@ namespace EtoFE
                                         (
                                             "⏰➡ Scheduled Receipts",
                                             new LoadOncePanel<ScheduledReceiptPanel>(),
+                                            "ScheduledPayments"
+                                        ),
+                                        (
+                                            "⏰➡ Audits",
+                                            new LoadOncePanel<RequestsSearchPanel>(),
                                             "ScheduledPayments"
                                         ),
                                     }

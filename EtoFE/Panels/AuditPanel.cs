@@ -10,6 +10,52 @@ using RV.InvNew.Common;
 
 namespace EtoFE.Panels
 {
+    // Unified view model for both Request and RequestsBad
+    public class RequestViewModel
+    {
+        public string TimeTai { get; set; } = string.Empty;
+        public string Principal { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string RequestedAction { get; set; } = string.Empty;
+        public string RequestedPrivilegeLevel { get; set; } = string.Empty;
+        public string Endpoint { get; set; } = string.Empty;
+        public string ProvidedPrivilegeLevels { get; set; } = string.Empty;
+        public string Source { get; set; } = string.Empty; // To differentiate between Request and RequestsBad
+
+        public static RequestViewModel FromRequest(Request req)
+        {
+            return new RequestViewModel
+            {
+                TimeTai = req.TimeTai.ToString(),
+                Principal = req.Principal.ToString(),
+                Token = req.Token,
+                Type = req.Type ?? string.Empty,
+                RequestedAction = req.RequestedAction ?? string.Empty,
+                RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
+                Endpoint = req.Endpoint ?? string.Empty,
+                ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
+                Source = "Request"
+            };
+        }
+
+        public static RequestViewModel FromRequestsBad(RequestsBad req)
+        {
+            return new RequestViewModel
+            {
+                TimeTai = req.TimeTai.ToString(),
+                Principal = req.Principal?.ToString() ?? string.Empty,
+                Token = req.Token,
+                Type = req.Type ?? string.Empty,
+                RequestedAction = req.RequestedAction ?? string.Empty,
+                RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
+                Endpoint = req.Endpoint ?? string.Empty,
+                ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
+                Source = "RequestsBad"
+            };
+        }
+    }
+
     public class RequestsSearchPanel : Panel
     {
         // Controls
@@ -25,10 +71,10 @@ namespace EtoFE.Panels
         private TextBox txtLimit;
         private Button btnSearch;
         private Button btnReset;
-        private GridView gvResults;
+        private StackLayout mainLayout;
 
         // Data
-        private List<object> searchResults = new List<object>();
+        private List<RequestViewModel> searchResults = new List<RequestViewModel>();
 
         public RequestsSearchPanel()
         {
@@ -57,44 +103,6 @@ namespace EtoFE.Panels
             txtLimit = new TextBox();
             btnSearch = new Button { Text = TranslationHelper.Translate("Search") };
             btnReset = new Button { Text = TranslationHelper.Translate("Reset") };
-            gvResults = new GridView();
-
-            // Set up grid view columns
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("TimeTai") },
-                HeaderText = TranslationHelper.Translate("Time")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("Principal") },
-                HeaderText = TranslationHelper.Translate("Principal")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("Token") },
-                HeaderText = TranslationHelper.Translate("Token")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("Type") },
-                HeaderText = TranslationHelper.Translate("Type")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("RequestedAction") },
-                HeaderText = TranslationHelper.Translate("Requested Action")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("RequestedPrivilegeLevel") },
-                HeaderText = TranslationHelper.Translate("Requested Privilege Level")
-            });
-            gvResults.Columns.Add(new GridColumn
-            {
-                DataCell = new TextBoxCell { Binding = new PropertyBinding<object>("Endpoint") },
-                HeaderText = TranslationHelper.Translate("Endpoint")
-            });
         }
 
         private void SetupLayout()
@@ -153,7 +161,8 @@ namespace EtoFE.Panels
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
-                Items = {
+                Items =
+                {
                     new StackLayoutItem(btnSearch, true),
                     new StackLayoutItem(btnReset, true)
                 },
@@ -161,28 +170,29 @@ namespace EtoFE.Panels
                 Width = ColorSettings.ControlWidth ?? 400
             };
 
-            // Results panel
-            var resultsPanel = new StackLayout
+            // Initial results panel with placeholder
+            var initialResultsPanel = new Panel
             {
-                Items = {
-                    new Label { Text = TranslationHelper.Translate("Search Results") },
-                    gvResults
-                },
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                VerticalContentAlignment = VerticalAlignment.Stretch
+                Content = new Label { Text = TranslationHelper.Translate("No search results yet") }
             };
 
-            // Main layout
-            Content = new StackLayout
+            // Create main layout
+            mainLayout = new StackLayout
             {
-                Items = {
+                Items =
+                {
                     criteriaPanel,
-                    buttonPanel,
-                    resultsPanel
+                    buttonPanel
                 },
                 Padding = 10,
                 Spacing = 10
             };
+
+            // Add results panel separately to make it easier to replace
+            mainLayout.Items.Add(initialResultsPanel);
+
+            // Set the content
+            Content = mainLayout;
         }
 
         private void SetupEventHandlers()
@@ -203,7 +213,8 @@ namespace EtoFE.Panels
             txtLimit.KeyDown += HandleTextBoxKeyDown;
 
             // Global key handlers
-            KeyDown += (sender, e) => {
+            KeyDown += (sender, e) =>
+            {
                 switch (e.Key)
                 {
                     case Keys.F1:
@@ -236,7 +247,8 @@ namespace EtoFE.Panels
             {
                 // Find the next control in the tab order
                 var currentControl = sender as Control;
-                var allControls = new List<Control> {
+                var allControls = new List<Control>
+                {
                     txtToken, txtType, txtRequestedAction, txtRequestedPrivilegeLevel,
                     txtEndpoint, txtPrincipal, dpFrom, dpTo, txtLimit,
                     chkIncludeBadRequests, btnSearch, btnReset
@@ -257,7 +269,8 @@ namespace EtoFE.Panels
             var errors = new List<string>();
 
             // Validate limit
-            if (!string.IsNullOrEmpty(txtLimit.Text) && (!int.TryParse(txtLimit.Text, out int limit) || limit <= 0))
+            if (!string.IsNullOrEmpty(txtLimit.Text) &&
+                (!int.TryParse(txtLimit.Text, out int limit) || limit <= 0))
             {
                 errors.Add(TranslationHelper.Translate("Limit must be a positive integer"));
             }
@@ -269,7 +282,8 @@ namespace EtoFE.Panels
             }
 
             // Validate principal if provided
-            if (!string.IsNullOrEmpty(txtPrincipal.Text) && (!long.TryParse(txtPrincipal.Text, out long principal) || principal <= 0))
+            if (!string.IsNullOrEmpty(txtPrincipal.Text) &&
+                (!long.TryParse(txtPrincipal.Text, out long principal) || principal <= 0))
             {
                 errors.Add(TranslationHelper.Translate("Principal must be a positive integer"));
             }
@@ -282,7 +296,11 @@ namespace EtoFE.Panels
             var validation = ValidateInputs();
             if (!validation.IsValid)
             {
-                MessageBox.Show(validation.ConsolidatedErrorList, TranslationHelper.Translate("Validation Error"), MessageBoxType.Error);
+                MessageBox.Show(
+                    validation.ConsolidatedErrorList,
+                    TranslationHelper.Translate("Validation Error"),
+                    MessageBoxType.Error
+                );
                 return;
             }
 
@@ -312,21 +330,227 @@ namespace EtoFE.Panels
 
                 if (Error == false)
                 {
-                    searchResults = Out;
-                    gvResults.DataStore = searchResults;
-                    Log($"Found {searchResults.Count} results");
+                    // Convert the results to our view model
+                    searchResults = new List<RequestViewModel>();
+
+                    // Debug: Log the raw results
+                    Log($"Raw results count: {Out?.Count ?? 0}");
+
+                    // Debug: Log the types of the first few items
+                    if (Out != null && Out.Count > 0)
+                    {
+                        for (int i = 0; i < Math.Min(5, Out.Count); i++)
+                        {
+                            var item = Out[i];
+                            Log($"Item {i} type: {item?.GetType().FullName ?? "null"}");
+
+                            // Try to serialize to JSON to see the structure
+                            try
+                            {
+                                var json = JsonSerializer.Serialize(item);
+                                Log($"Item {i} JSON: {json}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"Error serializing item {i}: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    foreach (var item in Out)
+                    {
+                        // Try to handle JsonElement case
+                        if (item is JsonElement element)
+                        {
+                            try
+                            {
+                                // Try to deserialize as Request
+                                var request = element.Deserialize<Request>();
+                                if (request != null)
+                                {
+                                    searchResults.Add(RequestViewModel.FromRequest(request));
+                                    continue;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"Error deserializing as Request: {ex.Message}");
+                            }
+
+                            try
+                            {
+                                // Try to deserialize as RequestsBad
+                                var badRequest = element.Deserialize<RequestsBad>();
+                                if (badRequest != null)
+                                {
+                                    searchResults.Add(RequestViewModel.FromRequestsBad(badRequest));
+                                    continue;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"Error deserializing as RequestsBad: {ex.Message}");
+                            }
+
+                            // If we can't deserialize to either type, try to extract properties manually
+                            try
+                            {
+                                var manualViewModel = new RequestViewModel();
+
+                                if (element.TryGetProperty("TimeTai", out var timeTaiProp))
+                                    manualViewModel.TimeTai = timeTaiProp.GetDateTime().ToString();
+
+                                if (element.TryGetProperty("Principal", out var principalProp))
+                                    manualViewModel.Principal = principalProp.GetInt64().ToString();
+
+                                if (element.TryGetProperty("Token", out var tokenProp))
+                                    manualViewModel.Token = tokenProp.GetString() ?? string.Empty;
+
+                                if (element.TryGetProperty("Type", out var typeProp))
+                                    manualViewModel.Type = typeProp.GetString() ?? string.Empty;
+
+                                if (element.TryGetProperty("RequestedAction", out var requestedActionProp))
+                                    manualViewModel.RequestedAction = requestedActionProp.GetString() ?? string.Empty;
+
+                                if (element.TryGetProperty("RequestedPrivilegeLevel", out var requestedPrivilegeLevelProp))
+                                    manualViewModel.RequestedPrivilegeLevel = requestedPrivilegeLevelProp.GetString() ?? string.Empty;
+
+                                if (element.TryGetProperty("Endpoint", out var endpointProp))
+                                    manualViewModel.Endpoint = endpointProp.GetString() ?? string.Empty;
+
+                                if (element.TryGetProperty("ProvidedPrivilegeLevels", out var providedPrivilegeLevelsProp))
+                                    manualViewModel.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
+
+                                // Determine source based on the presence of certain properties
+                                manualViewModel.Source = element.TryGetProperty("ErrorMessage", out _) ? "RequestsBad" : "Request";
+
+                                searchResults.Add(manualViewModel);
+                                Log($"Manually created RequestViewModel from JsonElement");
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"Error manually extracting properties: {ex.Message}");
+                            }
+                        }
+                        // Direct type handling
+                        else if (item is Request req)
+                        {
+                            searchResults.Add(RequestViewModel.FromRequest(req));
+                        }
+                        else if (item is RequestsBad badReq)
+                        {
+                            searchResults.Add(RequestViewModel.FromRequestsBad(badReq));
+                        }
+                        else if (item != null)
+                        {
+                            Log($"Unknown item type: {item.GetType().FullName}");
+
+                            // Try to cast to dynamic and extract properties
+                            try
+                            {
+                                dynamic dynamicItem = item;
+                                var manualViewModel = new RequestViewModel
+                                {
+                                    TimeTai = dynamicItem.TimeTai?.ToString() ?? string.Empty,
+                                    Principal = dynamicItem.Principal?.ToString() ?? string.Empty,
+                                    Token = dynamicItem.Token?.ToString() ?? string.Empty,
+                                    Type = dynamicItem.Type?.ToString() ?? string.Empty,
+                                    RequestedAction = dynamicItem.RequestedAction?.ToString() ?? string.Empty,
+                                    RequestedPrivilegeLevel = dynamicItem.RequestedPrivilegeLevel?.ToString() ?? string.Empty,
+                                    Endpoint = dynamicItem.Endpoint?.ToString() ?? string.Empty,
+                                    ProvidedPrivilegeLevels = dynamicItem.ProvidedPrivilegeLevels?.ToString() ?? string.Empty,
+                                    Source = "Unknown"
+                                };
+
+                                searchResults.Add(manualViewModel);
+                                Log($"Manually created RequestViewModel from dynamic object");
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"Error extracting from dynamic object: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    // Debug: Log the converted results
+                    Log($"Converted results count: {searchResults.Count}");
+
+                    // Update the results panel
+                    UpdateResultsPanel();
                 }
                 else
                 {
                     // Use a generic error message since we don't have access to the error details
-                    MessageBox.Show(TranslationHelper.Translate("An error occurred while searching for requests"),
-                                   TranslationHelper.Translate("Search Error"), MessageBoxType.Error);
+                    MessageBox.Show(
+                        TranslationHelper.Translate("An error occurred while searching for requests"),
+                        TranslationHelper.Translate("Search Error"),
+                        MessageBoxType.Error
+                    );
                 }
             }
             catch (Exception ex)
             {
                 Log($"Error during search: {ex.Message}");
-                MessageBox.Show(ex.Message, TranslationHelper.Translate("Search Error"), MessageBoxType.Error);
+                MessageBox.Show(
+                    ex.Message,
+                    TranslationHelper.Translate("Search Error"),
+                    MessageBoxType.Error
+                );
+            }
+        }
+
+        private void UpdateResultsPanel()
+        {
+            try
+            {
+                // Generate the search results panel - explicitly cast to Panel
+                Panel newResultsPanel = (Panel)SearchPanelUtility.GenerateSearchPanel(
+                    searchResults,
+                    false,
+                    null,
+                    [
+                        "TimeTai",
+                        "Principal",
+                        "Token",
+                        "Type",
+                        "RequestedAction",
+                        "RequestedPrivilegeLevel",
+                        "Endpoint",
+                        "ProvidedPrivilegeLevels",
+                        "Source"
+                    ]
+                );
+
+                // Debug: Check if the panel is null
+                if (newResultsPanel == null)
+                {
+                    Log("Error: SearchPanelUtility.GenerateSearchPanel returned null");
+                    newResultsPanel = new Panel { Content = new Label { Text = TranslationHelper.Translate("Error generating results panel") } };
+                }
+
+                // Remove the old results panel (last item in mainLayout)
+                if (mainLayout.Items.Count > 0)
+                {
+                    mainLayout.Items.RemoveAt(mainLayout.Items.Count - 1);
+                }
+
+                // Add the new results panel
+                mainLayout.Items.Add(new StackLayoutItem(newResultsPanel,true));
+
+                // Force a layout update
+                mainLayout.Invalidate();
+
+
+                Log("Results panel updated successfully");
+            }
+            catch (Exception ex)
+            {
+                Log($"Error updating results panel: {ex.Message}");
+                MessageBox.Show(
+                    ex.Message,
+                    TranslationHelper.Translate("Display Error"),
+                    MessageBoxType.Error
+                );
             }
         }
 
@@ -342,7 +566,25 @@ namespace EtoFE.Panels
             dpFrom.Value = DateTime.Now.AddDays(-180);
             dpTo.Value = DateTime.Now;
             txtLimit.Text = "100";
-            gvResults.DataStore = null;
+
+            // Reset results panel
+            var resetResultsPanel = new Panel
+            {
+                Content = new Label { Text = TranslationHelper.Translate("No search results yet") }
+            };
+
+            // Remove the old results panel (last item in mainLayout)
+            if (mainLayout.Items.Count > 0)
+            {
+                mainLayout.Items.RemoveAt(mainLayout.Items.Count - 1);
+            }
+
+            // Add the reset results panel
+            mainLayout.Items.Add(new StackLayoutItem(resetResultsPanel));
+
+            // Force a layout update
+            mainLayout.Invalidate();
+
         }
 
         private void Log(string message)
