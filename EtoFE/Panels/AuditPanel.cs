@@ -7,6 +7,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using CommonUi;
 using RV.InvNew.Common;
+using JsonEditorExample;
 
 namespace EtoFE.Panels
 {
@@ -22,6 +23,7 @@ namespace EtoFE.Panels
         public string Endpoint { get; set; } = string.Empty;
         public string ProvidedPrivilegeLevels { get; set; } = string.Empty;
         public string Source { get; set; } = string.Empty; // To differentiate between Request and RequestsBad
+        public object OriginalData { get; set; } // Store the original data for double-click handling
 
         public static RequestViewModel FromRequest(Request req)
         {
@@ -35,7 +37,8 @@ namespace EtoFE.Panels
                 RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
-                Source = "Request"
+                Source = "Request",
+                OriginalData = req // Store the original Request object
             };
         }
 
@@ -51,8 +54,44 @@ namespace EtoFE.Panels
                 RequestedPrivilegeLevel = req.RequestedPrivilegeLevel ?? string.Empty,
                 Endpoint = req.Endpoint ?? string.Empty,
                 ProvidedPrivilegeLevels = req.ProvidedPrivilegeLevels ?? string.Empty,
-                Source = "RequestsBad"
+                Source = "RequestsBad",
+                OriginalData = req // Store the original RequestsBad object
             };
+        }
+
+        public static RequestViewModel FromJsonElement(JsonElement element)
+        {
+            var viewModel = new RequestViewModel();
+
+            if (element.TryGetProperty("TimeTai", out var timeTaiProp))
+                viewModel.TimeTai = timeTaiProp.GetDateTime().ToString();
+
+            if (element.TryGetProperty("Principal", out var principalProp))
+                viewModel.Principal = principalProp.GetInt64().ToString();
+
+            if (element.TryGetProperty("Token", out var tokenProp))
+                viewModel.Token = tokenProp.GetString() ?? string.Empty;
+
+            if (element.TryGetProperty("Type", out var typeProp))
+                viewModel.Type = typeProp.GetString() ?? string.Empty;
+
+            if (element.TryGetProperty("RequestedAction", out var requestedActionProp))
+                viewModel.RequestedAction = requestedActionProp.GetString() ?? string.Empty;
+
+            if (element.TryGetProperty("RequestedPrivilegeLevel", out var requestedPrivilegeLevelProp))
+                viewModel.RequestedPrivilegeLevel = requestedPrivilegeLevelProp.GetString() ?? string.Empty;
+
+            if (element.TryGetProperty("Endpoint", out var endpointProp))
+                viewModel.Endpoint = endpointProp.GetString() ?? string.Empty;
+
+            if (element.TryGetProperty("ProvidedPrivilegeLevels", out var providedPrivilegeLevelsProp))
+                viewModel.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
+
+            // Determine source based on the presence of certain properties
+            viewModel.Source = element.TryGetProperty("ErrorMessage", out _) ? "RequestsBad" : "Request";
+            viewModel.OriginalData = element; // Store the original JsonElement
+
+            return viewModel;
         }
     }
 
@@ -392,45 +431,8 @@ namespace EtoFE.Panels
                                 Log($"Error deserializing as RequestsBad: {ex.Message}");
                             }
 
-                            // If we can't deserialize to either type, try to extract properties manually
-                            try
-                            {
-                                var manualViewModel = new RequestViewModel();
-
-                                if (element.TryGetProperty("TimeTai", out var timeTaiProp))
-                                    manualViewModel.TimeTai = timeTaiProp.GetDateTime().ToString();
-
-                                if (element.TryGetProperty("Principal", out var principalProp))
-                                    manualViewModel.Principal = principalProp.GetInt64().ToString();
-
-                                if (element.TryGetProperty("Token", out var tokenProp))
-                                    manualViewModel.Token = tokenProp.GetString() ?? string.Empty;
-
-                                if (element.TryGetProperty("Type", out var typeProp))
-                                    manualViewModel.Type = typeProp.GetString() ?? string.Empty;
-
-                                if (element.TryGetProperty("RequestedAction", out var requestedActionProp))
-                                    manualViewModel.RequestedAction = requestedActionProp.GetString() ?? string.Empty;
-
-                                if (element.TryGetProperty("RequestedPrivilegeLevel", out var requestedPrivilegeLevelProp))
-                                    manualViewModel.RequestedPrivilegeLevel = requestedPrivilegeLevelProp.GetString() ?? string.Empty;
-
-                                if (element.TryGetProperty("Endpoint", out var endpointProp))
-                                    manualViewModel.Endpoint = endpointProp.GetString() ?? string.Empty;
-
-                                if (element.TryGetProperty("ProvidedPrivilegeLevels", out var providedPrivilegeLevelsProp))
-                                    manualViewModel.ProvidedPrivilegeLevels = providedPrivilegeLevelsProp.GetString() ?? string.Empty;
-
-                                // Determine source based on the presence of certain properties
-                                manualViewModel.Source = element.TryGetProperty("ErrorMessage", out _) ? "RequestsBad" : "Request";
-
-                                searchResults.Add(manualViewModel);
-                                Log($"Manually created RequestViewModel from JsonElement");
-                            }
-                            catch (Exception ex)
-                            {
-                                Log($"Error manually extracting properties: {ex.Message}");
-                            }
+                            // If we can't deserialize to either type, use FromJsonElement
+                            searchResults.Add(RequestViewModel.FromJsonElement(element));
                         }
                         // Direct type handling
                         else if (item is Request req)
@@ -459,7 +461,8 @@ namespace EtoFE.Panels
                                     RequestedPrivilegeLevel = dynamicItem.RequestedPrivilegeLevel?.ToString() ?? string.Empty,
                                     Endpoint = dynamicItem.Endpoint?.ToString() ?? string.Empty,
                                     ProvidedPrivilegeLevels = dynamicItem.ProvidedPrivilegeLevels?.ToString() ?? string.Empty,
-                                    Source = "Unknown"
+                                    Source = "Unknown",
+                                    OriginalData = item // Store the original object
                                 };
 
                                 searchResults.Add(manualViewModel);
@@ -503,8 +506,25 @@ namespace EtoFE.Panels
         {
             try
             {
-                // Generate the search results panel - explicitly cast to Panel
-                Panel newResultsPanel = (Panel)SearchPanelUtility.GenerateSearchPanel(
+                // Define the callback for double-click
+                Action<string[]> doubleClickCallback = (selected) =>
+                {
+                    // Find the selected item in our results
+                    if (selected != null && selected.Length > 0)
+                    {
+                        // Try to find the item by matching the TimeTai (first column)
+                        var timeTai = selected[0];
+                        var selectedItem = searchResults.FirstOrDefault(r => r.TimeTai == timeTai);
+
+                        if (selectedItem != null && selectedItem.OriginalData != null)
+                        {
+                            ShowJsonEditor(selectedItem.OriginalData);
+                        }
+                    }
+                };
+
+                // Generate the search panel with our data
+                var newResultsPanel = SearchPanelUtility.GenerateSearchPanel(
                     searchResults,
                     false,
                     null,
@@ -520,13 +540,7 @@ namespace EtoFE.Panels
                         "Source"
                     ]
                 );
-
-                // Debug: Check if the panel is null
-                if (newResultsPanel == null)
-                {
-                    Log("Error: SearchPanelUtility.GenerateSearchPanel returned null");
-                    newResultsPanel = new Panel { Content = new Label { Text = TranslationHelper.Translate("Error generating results panel") } };
-                }
+                newResultsPanel.OnSelectionMade = () => { doubleClickCallback(newResultsPanel.OutputList[0]); };
 
                 // Remove the old results panel (last item in mainLayout)
                 if (mainLayout.Items.Count > 0)
@@ -535,17 +549,84 @@ namespace EtoFE.Panels
                 }
 
                 // Add the new results panel
-                mainLayout.Items.Add(new StackLayoutItem(newResultsPanel,true));
+                mainLayout.Items.Add(new StackLayoutItem(newResultsPanel, true));
 
                 // Force a layout update
                 mainLayout.Invalidate();
-
 
                 Log("Results panel updated successfully");
             }
             catch (Exception ex)
             {
                 Log($"Error updating results panel: {ex.Message}");
+                MessageBox.Show(
+                    ex.Message,
+                    TranslationHelper.Translate("Display Error"),
+                    MessageBoxType.Error
+                );
+            }
+        }
+
+        private void ShowJsonEditor(object data)
+        {
+            try
+            {
+                // Serialize the data to JSON
+                var json = JsonSerializer.Serialize(data);
+
+                // Parse the JSON back to a JsonElement
+                var jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
+
+                // Convert the JsonElement to a dictionary of JsonElements
+                var dataDict = new Dictionary<string, JsonElement>();
+                foreach (var property in jsonElement.EnumerateObject())
+                {
+                    dataDict[property.Name] = property.Value;
+                }
+
+                // Determine the original types for each property
+                var originalTypes = new Dictionary<string, Type>();
+
+                if (data is Request)
+                {
+                    originalTypes["TimeTai"] = typeof(DateTime);
+                    originalTypes["Principal"] = typeof(long);
+                    originalTypes["Token"] = typeof(string);
+                    originalTypes["Type"] = typeof(string);
+                    originalTypes["RequestedAction"] = typeof(string);
+                    originalTypes["RequestedPrivilegeLevel"] = typeof(string);
+                    originalTypes["Endpoint"] = typeof(string);
+                    originalTypes["ProvidedPrivilegeLevels"] = typeof(string);
+                }
+                else if (data is RequestsBad)
+                {
+                    originalTypes["TimeTai"] = typeof(DateTime);
+                    originalTypes["Principal"] = typeof(long?);
+                    originalTypes["Token"] = typeof(string);
+                    originalTypes["Type"] = typeof(string);
+                    originalTypes["RequestedAction"] = typeof(string);
+                    originalTypes["RequestedPrivilegeLevel"] = typeof(string);
+                    originalTypes["Endpoint"] = typeof(string);
+                    originalTypes["ProvidedPrivilegeLevels"] = typeof(string);
+                    originalTypes["ErrorMessage"] = typeof(string);
+                }
+
+                // Create a new form with the JsonEditorPanel
+                var form = new Form
+                {
+                    Title = TranslationHelper.Translate("Request Details"),
+                    ClientSize = new Size(800, 600),
+                    Content = new JsonEditorPanel(
+                        dataDict,
+                        Orientation.Vertical
+                    )
+                };
+
+                form.Show();
+            }
+            catch (Exception ex)
+            {
+                Log($"Error showing JSON editor: {ex.Message}");
                 MessageBox.Show(
                     ex.Message,
                     TranslationHelper.Translate("Display Error"),
@@ -580,11 +661,10 @@ namespace EtoFE.Panels
             }
 
             // Add the reset results panel
-            mainLayout.Items.Add(new StackLayoutItem(resetResultsPanel));
+            mainLayout.Items.Add(new StackLayoutItem(resetResultsPanel, true));
 
             // Force a layout update
             mainLayout.Invalidate();
-
         }
 
         private void Log(string message)
