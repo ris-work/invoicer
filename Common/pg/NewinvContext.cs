@@ -479,29 +479,32 @@ public partial class NewinvContext : DbContext
 
             entity.ToTable("cycle_count");
 
-            entity.HasIndex(e => e.CountedBy, "idx_cycle_count_counted_by");
-
             entity.HasIndex(e => e.CountDate, "idx_cycle_count_date");
 
             entity.HasIndex(e => e.Itemcode, "idx_cycle_count_itemcode");
 
+            entity.HasIndex(e => e.PrincipalId, "idx_cycle_count_principal_id");
+
+            entity.HasIndex(e => e.SeqNo, "idx_cycle_count_seq_no");
+
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.ActualQty)
-                .HasPrecision(20, 4)
-                .HasColumnName("actual_qty");
+            entity.Property(e => e.ActualQty).HasColumnName("actual_qty");
             entity.Property(e => e.CountDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("count_date");
-            entity.Property(e => e.CountedBy).HasColumnName("counted_by");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Location)
                 .HasMaxLength(100)
                 .HasColumnName("location");
             entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.RecordedQty)
-                .HasPrecision(20, 4)
-                .HasColumnName("recorded_qty");
-            entity.Property(e => e.SeqNo).HasColumnName("seq_no");
+            entity.Property(e => e.PrincipalId).HasColumnName("principal_id");
+            entity.Property(e => e.PrincipalName)
+                .HasMaxLength(100)
+                .HasColumnName("principal_name");
+            entity.Property(e => e.RecordedQty).HasColumnName("recorded_qty");
+            entity.Property(e => e.SeqNo)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("seq_no");
         });
 
         modelBuilder.Entity<DefaultDenyField>(entity =>
@@ -738,19 +741,19 @@ public partial class NewinvContext : DbContext
                 .HasNoKey()
                 .ToView("latest_cycle_count");
 
-            entity.Property(e => e.ActualQty)
-                .HasPrecision(20, 4)
-                .HasColumnName("actual_qty");
+            entity.Property(e => e.ActualQty).HasColumnName("actual_qty");
             entity.Property(e => e.CountDate).HasColumnName("count_date");
-            entity.Property(e => e.CountedBy).HasColumnName("counted_by");
+            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Location)
                 .HasMaxLength(100)
                 .HasColumnName("location");
             entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.RecordedQty)
-                .HasPrecision(20, 4)
-                .HasColumnName("recorded_qty");
+            entity.Property(e => e.PrincipalId).HasColumnName("principal_id");
+            entity.Property(e => e.PrincipalName)
+                .HasMaxLength(100)
+                .HasColumnName("principal_name");
+            entity.Property(e => e.RecordedQty).HasColumnName("recorded_qty");
             entity.Property(e => e.SeqNo).HasColumnName("seq_no");
         });
 

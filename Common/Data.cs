@@ -408,4 +408,26 @@ namespace RV.InvNew.Common
         /// </summary>
         public DateTime? EndDate { get; set; }
     }
+
+
+    // Define search criteria for requests
+    [JsonSerializable(typeof(RequestSearchCriteria))]
+    [JsonSerializable(typeof(DateTime))]
+    [JsonSerializable(typeof(long))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(bool))]
+    [JsonSerializable(typeof(int))]
+    public class RequestSearchCriteria
+    {
+        [JsonInclude] public DateTime? From { get; set; }
+        [JsonInclude] public DateTime? To { get; set; }
+        [JsonInclude] public long? Principal { get; set; }
+        [JsonInclude] public string? Token { get; set; }
+        [JsonInclude] public string? Type { get; set; }
+        [JsonInclude] public string? RequestedAction { get; set; }
+        [JsonInclude] public string? RequestedPrivilegeLevel { get; set; }
+        [JsonInclude] public string? Endpoint { get; set; }
+        [JsonInclude] public bool IncludeBadRequests { get; set; } = false;
+        [JsonInclude] public int? Limit { get; set; } = 100; // Default limit to avoid returning too many records
+    }
 }

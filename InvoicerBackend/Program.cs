@@ -227,6 +227,8 @@ app.AddCatalogueDefaultImageEndpoints();
 app.AddJournalEndpoints();
 app.AddAnalyticsEndpoints();
 app.AddBackOfficeAccountingEndpoints();
+app.AddCycleCountEndpoints();
+app.AddRequestsEndpoints();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();
