@@ -45,6 +45,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<CustomerDiscount> CustomerDiscounts { get; set; }
 
+    public virtual DbSet<CycleCount> CycleCounts { get; set; }
+
     public virtual DbSet<DefaultDenyField> DefaultDenyFields { get; set; }
 
     public virtual DbSet<DescriptionsOtherLanguage> DescriptionsOtherLanguages { get; set; }
@@ -62,6 +64,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<InventoryMovement> InventoryMovements { get; set; }
 
     public virtual DbSet<IssuedInvoice> IssuedInvoices { get; set; }
+
+    public virtual DbSet<LatestCycleCount> LatestCycleCounts { get; set; }
 
     public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
 
@@ -469,6 +473,37 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.RecommendedDiscountPercent).HasColumnName("recommended_discount_percent");
         });
 
+        modelBuilder.Entity<CycleCount>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("cycle_count_pkey");
+
+            entity.ToTable("cycle_count");
+
+            entity.HasIndex(e => e.CountedBy, "idx_cycle_count_counted_by");
+
+            entity.HasIndex(e => e.CountDate, "idx_cycle_count_date");
+
+            entity.HasIndex(e => e.Itemcode, "idx_cycle_count_itemcode");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ActualQty)
+                .HasPrecision(20, 4)
+                .HasColumnName("actual_qty");
+            entity.Property(e => e.CountDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("count_date");
+            entity.Property(e => e.CountedBy).HasColumnName("counted_by");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Location)
+                .HasMaxLength(100)
+                .HasColumnName("location");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.RecordedQty)
+                .HasPrecision(20, 4)
+                .HasColumnName("recorded_qty");
+            entity.Property(e => e.SeqNo).HasColumnName("seq_no");
+        });
+
         modelBuilder.Entity<DefaultDenyField>(entity =>
         {
             entity.HasKey(e => e.Field).HasName("default_deny_fields_pkey");
@@ -695,6 +730,28 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.SalesPersonId).HasColumnName("sales_person_id");
             entity.Property(e => e.SubTotal).HasColumnName("sub_total");
             entity.Property(e => e.TaxTotal).HasColumnName("tax_total");
+        });
+
+        modelBuilder.Entity<LatestCycleCount>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("latest_cycle_count");
+
+            entity.Property(e => e.ActualQty)
+                .HasPrecision(20, 4)
+                .HasColumnName("actual_qty");
+            entity.Property(e => e.CountDate).HasColumnName("count_date");
+            entity.Property(e => e.CountedBy).HasColumnName("counted_by");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Location)
+                .HasMaxLength(100)
+                .HasColumnName("location");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.RecordedQty)
+                .HasPrecision(20, 4)
+                .HasColumnName("recorded_qty");
+            entity.Property(e => e.SeqNo).HasColumnName("seq_no");
         });
 
         modelBuilder.Entity<LoyaltyPoint>(entity =>

@@ -11,6 +11,8 @@ namespace RV.InvNew.Common
     [JsonSerializable(typeof(List<PosBatch>))]
     [JsonSerializable(typeof(List<PosCatalogue>))]
     [JsonSerializable(typeof(List<VatCategory>))]
+    [JsonSerializable(typeof(List<PiiImage>))]
+    [JsonSerializable(typeof(List<Pii>))]
     [JsonSourceGenerationOptions(IncludeFields = true)]
     //[JsonSourceGenerationOptions(WriteIndented =true, IncludeFields =true)]
     public class PosRefresh
@@ -23,6 +25,10 @@ namespace RV.InvNew.Common
 
         [JsonInclude]
         public List<VatCategory> VatCategories;
+        [JsonInclude]
+        public List<Pii> Pii;
+        [JsonInclude]
+        public List<PiiImage> PiiImage;
     }
 
     [JsonSerializable(typeof(PosCatalogue))]
