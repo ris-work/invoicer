@@ -57,7 +57,7 @@ namespace EtoFE.Panels
 
             return new RequestData
             {
-                TimeTai = req.TimeTai.UtcDateTime,
+                TimeTai = req.DatetimeTai,
                 Principal = req.Principal,
                 Token = req.Token ?? string.Empty,
                 Type = req.Type ?? string.Empty,
@@ -134,6 +134,23 @@ namespace EtoFE.Panels
                 }
             }
 
+            if (TryGetPropertyCaseInsensitive(element, "DatetimeTai", out var dateTimeTaiProp))
+            {
+                if (dateTimeTaiProp.ValueKind == JsonValueKind.String)
+                {
+                    if (DateTime.TryParse(dateTimeTaiProp.GetString(), out var dateTimeTai))
+                    {
+                        data.TimeTai = dateTimeTai;
+                        Log($"  DateTimeTai: {data.TimeTai}");
+                    }
+                }
+                else
+                {
+                    data.TimeTai = dateTimeTaiProp.GetDateTime();
+                    Log($"  DateTimeTai: {data.TimeTai}");
+                }
+            }
+
             if (TryGetPropertyCaseInsensitive(element, "Principal", out var principalProp))
             {
                 data.Principal = principalProp.GetInt64();
@@ -199,7 +216,7 @@ namespace EtoFE.Panels
                 Log($"  ProvidedPrivilegeLevels: {data.ProvidedPrivilegeLevels}");
             }
 
-            if (TryGetPropertyCaseInsensitive(element, "Body", out var bodyProp))
+            if (TryGetPropertyCaseInsensitive(element, "RequestBody", out var bodyProp))
             {
                 data.Body = bodyProp.GetString() ?? string.Empty;
                 Log($"  Body: {data.Body.Substring(0, Math.Min(100, data.Body.Length))}...");
@@ -738,7 +755,10 @@ namespace EtoFE.Panels
                         {
                             //ShowJsonEditor(selectedItem.OriginalData);
                             Log(String.Join(',',selected));
+                            Log(selected[9]);
+                            Log(selected[10]);
                             ShowJsonEditor(selected[9]);
+                            ShowJsonEditor(selected[10]);
                         }
                     }
                 };
@@ -810,7 +830,8 @@ namespace EtoFE.Panels
                         PropertyNamingPolicy = null
                     };
 
-                    json = JsonSerializer.Serialize(data, jsonOptions);
+                    //json = JsonSerializer.Serialize(data, jsonOptions);
+                    json = (string)data;
                 }
 
                 Log($"Opening JSON editor with data: {json.Substring(0, Math.Min(200, json.Length))}...");

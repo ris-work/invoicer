@@ -1,0 +1,2125 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Eto.Drawing;
+using Eto.Forms;
+
+namespace JsonEditor
+{
+    // Define a logging delegate for better control
+    public delegate void LogDelegate(string message);
+
+    public class FullJsonReadWriteEditor : Panel
+    {
+        private int fontSize = 12;
+        private int cWidth = 200;
+        private bool _appMode = false;
+        private bool _showHeader = true;
+        private bool _isReadOnly = false;
+        private bool _showUploadButton = true;
+        public IJsonReadWriteNode _rootNode;
+        private StackLayout _rootLayout;
+
+        public IJsonReadWriteNode RootNode => _rootNode;
+
+        // Add a logging delegate
+        public static LogDelegate Log = Console.WriteLine;
+
+        // JSON serialization options for reuse
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        /// <summary>
+        /// Gets or sets whether panel is in app mode, which limits interactions to buttons and date fields.
+        /// </summary>
+        public bool AppMode
+        {
+            get => _appMode;
+            set
+            {
+                _appMode = value;
+                UpdateControlStates();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether the editor is in read-only mode.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get => _isReadOnly;
+            set
+            {
+                _isReadOnly = value;
+                UpdateControlStates();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether header with Show/Load buttons is visible.
+        /// </summary>
+        public bool ShowHeader
+        {
+            get => _showHeader;
+            set
+            {
+                _showHeader = value;
+                UpdateHeaderVisibility();
+            }
+        }
+
+        /// <summary>
+        /// Constructs a FullJsonReadWriteEditor from a JSON string.
+        /// </summary>
+        public FullJsonReadWriteEditor(
+            string jsonString,
+            bool showHeader = true,
+            bool showUploadButton = true,
+            bool isReadOnly = false
+        )
+        {
+            Log($"[Init] String constructor called with showHeader: {showHeader}, showUploadButton: {showUploadButton}, isReadOnly: {isReadOnly}");
+
+            _showHeader = showHeader;
+            _showUploadButton = showUploadButton;
+            _isReadOnly = isReadOnly;
+
+            try
+            {
+                // Validate and normalize JSON
+                if (string.IsNullOrWhiteSpace(jsonString))
+                {
+                    Log("[Init] JSON string is empty, using empty object");
+                    jsonString = "{}";
+                }
+
+                Log($"[Init] Original JSON: {jsonString}");
+
+                // Parse and validate JSON
+                var document = JsonDocument.Parse(jsonString);
+                jsonString = JsonSerializer.Serialize(document, _jsonOptions);
+
+                Log($"[Init] Normalized JSON: {jsonString}");
+
+                // Create the root node from the JSON
+                _rootNode = JsonReadWriteNodeFactory.CreateFromJson(jsonString);
+            }
+            catch (JsonException ex)
+            {
+                // If JSON is invalid, start with an empty object
+                Log($"[Init] Invalid JSON: {ex.Message}");
+                _rootNode = new JsonObjectReadWriteNode();
+            }
+
+            InitializeUI();
+            Log("[Init] String constructor completed successfully");
+        }
+
+        /// <summary>
+        /// Initializes the UI components.
+        /// </summary>
+        private void InitializeUI()
+        {
+            // Create the root layout with header
+            _rootLayout = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Create header if needed
+            if (_showHeader)
+            {
+                var header = CreateHeader();
+                _rootLayout.Items.Add(new StackLayoutItem(header, HorizontalAlignment.Stretch));
+            }
+
+            // Create a container for the content
+            var contentContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+            _rootLayout.Items.Add(new StackLayoutItem(contentContainer, HorizontalAlignment.Stretch, true));
+
+            // Add the root node's control to the content
+            var rootControl = _rootNode.CreateControl(this);
+            contentContainer.Items.Add(new StackLayoutItem(rootControl, HorizontalAlignment.Stretch, true));
+
+            this.Content = _rootLayout;
+
+            // Set control states based on app mode and read-only mode
+            UpdateControlStates();
+        }
+
+        public Control CreateControl()
+        {
+            // Add the root node's control to the content
+            var rootControl = _rootNode.CreateControl(this);
+
+            // Set the parent references for the root node
+            if (_rootNode is JsonObjectReadWriteNode objectNode)
+            {
+                if (rootControl is StackLayout rootLayout)
+                {
+                    objectNode.SetParentReferences(this, rootLayout);
+                }
+            }
+            else if (_rootNode is JsonArrayReadWriteNode arrayNode)
+            {
+                if (rootControl is StackLayout rootLayout)
+                {
+                    arrayNode.SetParentReferences(this, rootLayout);
+                }
+            }
+
+            return rootControl;
+        }
+
+        /// <summary>
+        /// Creates the header with Show and Load buttons.
+        /// </summary>
+        private Control CreateHeader()
+        {
+            var headerPanel = new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Padding = new Padding(5)
+            };
+
+            var showButton = new Button { Text = "Show JSON" };
+            var loadButton = new Button { Text = "Load JSON" };
+            var validateButton = new Button { Text = "Validate" };
+            var refreshButton = new Button { Text = "Refresh UI" };
+
+            // Attach event handlers
+            showButton.Click += ShowJsonDialog;
+            loadButton.Click += LoadJsonDialog;
+            validateButton.Click += ValidateAndShowErrors;
+            refreshButton.Click += (sender, e) => RefreshUI();
+
+            headerPanel.Items.Add(new StackLayoutItem(showButton));
+            headerPanel.Items.Add(new StackLayoutItem(loadButton));
+            headerPanel.Items.Add(new StackLayoutItem(validateButton));
+            headerPanel.Items.Add(new StackLayoutItem(refreshButton));
+
+            return headerPanel;
+        }
+
+        private void RefreshUI()
+        {
+            try
+            {
+                Log("[Refresh UI] Starting full UI refresh");
+
+                // Get the current JSON
+                var currentJson = ToJson();
+
+                // Update the root node with the current JSON
+                _rootNode = JsonReadWriteNodeFactory.CreateFromJson(currentJson);
+
+                // Rebuild the entire UI
+                _rootLayout.Items.Clear();
+                InitializeUI();
+
+                Log("[Refresh UI] Full UI refresh completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Log($"[Refresh UI] Error: {ex.Message}");
+                MessageBox.Show(this, $"Error refreshing UI: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
+        }
+
+        /// <summary>
+        /// Updates the visibility of the header based on the ShowHeader property.
+        /// </summary>
+        private void UpdateHeaderVisibility()
+        {
+            if (_rootLayout == null || _rootLayout.Items.Count == 0)
+                return;
+
+            // Check if header is currently visible
+            bool headerVisible = _rootLayout.Items.Count > 0 && _rootLayout.Items[0].Control is StackLayout;
+
+            // Show header if needed and not already visible
+            if (_showHeader && !headerVisible)
+            {
+                var header = CreateHeader();
+                _rootLayout.Items.Insert(0, new StackLayoutItem(header, HorizontalAlignment.Stretch));
+            }
+            // Hide header if needed and currently visible
+            else if (!_showHeader && headerVisible)
+            {
+                _rootLayout.Items.RemoveAt(0);
+            }
+        }
+
+        /// <summary>
+        /// Shows a dialog with the current JSON.
+        /// </summary>
+        private void ShowJsonDialog(object sender, EventArgs e)
+        {
+            Log("[Show JSON] Starting to show JSON dialog");
+
+            try
+            {
+                // Get the latest JSON from the root node
+                var json = ToJson();
+                Log($"[Show JSON] Current JSON: {json}");
+
+                // Create dialog and content separately
+                var dialog = new Dialog
+                {
+                    Title = "Current JSON",
+                    ClientSize = new Size(600, 400)
+                };
+
+                var textArea = new TextArea
+                {
+                    Text = json,
+                    ReadOnly = true,
+                    Font = Fonts.Monospace(10)
+                };
+
+                var closeButton = new Button { Text = "Close" };
+                closeButton.Click += (s, args) => dialog.Close();
+
+                var layout = new StackLayout
+                {
+                    Padding = 10,
+                    Spacing = 5,
+                    Items =
+                    {
+                        new Label { Text = "Current JSON:" },
+                        new StackLayoutItem(textArea, HorizontalAlignment.Stretch, true),
+                        new StackLayoutItem(closeButton, HorizontalAlignment.Right)
+                    }
+                };
+
+                dialog.Content = layout;
+                dialog.ShowModal(this);
+
+                Log("[Show JSON] Dialog shown successfully");
+            }
+            catch (Exception ex)
+            {
+                Log($"[Show JSON] Error: {ex.Message}");
+                MessageBox.Show(this, $"Error showing JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
+        }
+
+        /// <summary>
+        /// Shows a dialog to load new JSON.
+        /// </summary>
+        private void LoadJsonDialog(object sender, EventArgs e)
+        {
+            // Create dialog and content separately
+            var dialog = new Dialog<string>
+            {
+                Title = "Load JSON",
+                ClientSize = new Size(600, 400)
+            };
+
+            var jsonTextArea = new TextArea
+            {
+                Text = ToJson(),
+                Font = Fonts.Monospace(10)
+            };
+
+            var loadButton = new Button { Text = "Load" };
+            var cancelButton = new Button { Text = "Cancel" };
+
+            // Attach event handlers
+            loadButton.Click += (s, args) => dialog.Close(jsonTextArea.Text);
+            cancelButton.Click += (s, args) => dialog.Close(null);
+
+            var buttonPanel = new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Items =
+                {
+                    new StackLayoutItem(loadButton),
+                    new StackLayoutItem(cancelButton)
+                }
+            };
+
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+                {
+                    new Label { Text = "Enter new JSON:" },
+                    new StackLayoutItem(jsonTextArea, HorizontalAlignment.Stretch, true),
+                    new StackLayoutItem(buttonPanel, HorizontalAlignment.Right)
+                }
+            };
+
+            dialog.Content = layout;
+
+            var result = dialog.ShowModal(this);
+            if (!string.IsNullOrEmpty(result))
+            {
+                try
+                {
+                    Log($"[Load JSON] New JSON to load: {result}");
+                    UpdateJson(result);
+                    Log("[Load JSON] JSON loaded successfully");
+                }
+                catch (Exception ex)
+                {
+                    Log($"[Load JSON] Error: {ex.Message}");
+                    MessageBox.Show(this, $"Error loading JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates the current JSON and shows any errors.
+        /// </summary>
+        private void ValidateAndShowErrors(object sender, EventArgs e)
+        {
+            var errors = ValidateFields();
+
+            // Create dialog and content separately
+            var dialog = new Dialog
+            {
+                Title = "Validation Results",
+                ClientSize = new Size(500, 300)
+            };
+
+            Control errorContent;
+
+            if (errors.Any())
+            {
+                var errorList = new StackLayout { Spacing = 5 };
+                foreach (var error in errors)
+                {
+                    errorList.Items.Add(new Label { Text = $"• {error}" });
+                }
+
+                // Use a Scrollable control instead of ScrollView
+                var scrollable = new Scrollable
+                {
+                    Content = errorList,
+                    Border = BorderType.None
+                };
+
+                errorContent = new StackLayout
+                {
+                    Spacing = 5,
+                    Items =
+                    {
+                        new Label { Text = "Validation errors found:" },
+                        new StackLayoutItem(scrollable, HorizontalAlignment.Stretch, true)
+                    }
+                };
+            }
+            else
+            {
+                errorContent = new Label { Text = "No validation errors found." };
+            }
+
+            var closeButton = new Button { Text = "Close" };
+            closeButton.Click += (s, args) => dialog.Close();
+
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+                {
+                    new StackLayoutItem(errorContent, HorizontalAlignment.Stretch, true),
+                    new StackLayoutItem(closeButton, HorizontalAlignment.Right)
+                }
+            };
+
+            dialog.Content = layout;
+            dialog.ShowModal(this);
+        }
+
+        /// <summary>
+        /// Updates the panel with new JSON data.
+        /// </summary>
+        public void UpdateJson(string json)
+        {
+            try
+            {
+                Log($"[Update JSON] Starting with JSON: {json}");
+
+                // Ensure we have valid JSON
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Log("[Update JSON] JSON is empty, using empty object");
+                    json = "{}";
+                }
+
+                // Validate and normalize JSON
+                var document = JsonDocument.Parse(json);
+                json = JsonSerializer.Serialize(document, _jsonOptions);
+
+                Log($"[Update JSON] Normalized JSON: {json}");
+
+                // Create the new root node
+                _rootNode = JsonReadWriteNodeFactory.CreateFromJson(json);
+
+                // Rebuild the UI
+                _rootLayout.Items.Clear();
+                InitializeUI();
+
+                Log("[Update JSON] UI updated successfully");
+            }
+            catch (JsonException ex)
+            {
+                Log($"[Update JSON] JSON error: {ex.Message}");
+                MessageBox.Show(this, $"Invalid JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
+            catch (Exception ex)
+            {
+                Log($"[Update JSON] General error: {ex.Message}");
+                MessageBox.Show(this, $"Failed to update JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
+        }
+
+        /// <summary>
+        /// Updates the enabled state of controls based on the AppMode and IsReadOnly settings.
+        /// </summary>
+        private void UpdateControlStates()
+        {
+            UpdateControlStatesRecursively(_rootLayout);
+        }
+
+        private void UpdateControlStatesRecursively(Control control)
+        {
+            if (control is TextBox textBox)
+            {
+                textBox.Enabled = !AppMode && !IsReadOnly;
+            }
+            else if (control is CheckBox checkBox)
+            {
+                checkBox.Enabled = !AppMode && !IsReadOnly;
+            }
+            else if (control is DateTimePicker datePicker)
+            {
+                if (AppMode || IsReadOnly)
+                {
+                    datePicker.Enabled = false;
+                    // Already set up mouse double-click handler in BuildControlForValue
+                }
+                else
+                {
+                    datePicker.Enabled = true;
+                }
+            }
+            else if (control is Button button)
+            {
+                // In app mode, only keep buttons that start with "button:" enabled
+                // In read-only mode, disable all editing buttons
+                if ((AppMode && !(button.Text.StartsWith("button:") || button.Text.Contains("Add"))) || IsReadOnly)
+                {
+                    button.Enabled = false;
+                }
+                else
+                {
+                    button.Enabled = true;
+                }
+            }
+            else if (control is Panel containerPanel && containerPanel.Content != null)
+            {
+                UpdateControlStatesRecursively(containerPanel.Content);
+            }
+            else if (control is StackLayout layout)
+            {
+                foreach (var item in layout.Items)
+                {
+                    if (item.Control != null)
+                        UpdateControlStatesRecursively(item.Control);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Recursively validates each interactive field.
+        /// </summary>
+        public List<string> ValidateFields()
+        {
+            List<string> errors = new List<string>();
+            _rootNode.Validate(errors);
+            return errors;
+        }
+
+        /// <summary>
+        /// Returns the JSON string representation of the current UI state.
+        /// </summary>
+        public string ToJson()
+        {
+            Log("[To JSON] Starting JSON serialization");
+
+            var errors = ValidateFields();
+            if (errors.Any())
+            {
+                Log("[To JSON] Validation errors: " + string.Join(", ", errors));
+            }
+
+            try
+            {
+                // Get the JSON from the root node
+                var json = _rootNode.ToJson();
+
+                // Parse and re-serialize with indentation
+                var document = JsonDocument.Parse(json);
+                var indentedJson = JsonSerializer.Serialize(document, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                Log($"[To JSON] Built JSON: {indentedJson}");
+                return indentedJson;
+            }
+            catch (Exception ex)
+            {
+                Log($"[To JSON] Error: {ex.Message}");
+                return "{}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Interface for all JSON nodes in the tree.
+    /// </summary>
+    public interface IJsonReadWriteNode
+    {
+        /// <summary>
+        /// Creates a control for this node.
+        /// </summary>
+        Control CreateControl(FullJsonReadWriteEditor editorPanel);
+
+        /// <summary>
+        /// Converts this node to JSON.
+        /// </summary>
+        string ToJson();
+
+        /// <summary>
+        /// Validates this node and adds any errors to the list.
+        /// </summary>
+        void Validate(List<string> errors);
+    }
+
+    /// <summary>
+    /// Factory class for creating JSON nodes.
+    /// </summary>
+    public static class JsonReadWriteNodeFactory
+    {
+        /// <summary>
+        /// Creates a JSON node from a JSON string.
+        /// </summary>
+        public static IJsonReadWriteNode CreateFromJson(string json)
+        {
+            var document = JsonDocument.Parse(json);
+            return CreateFromJsonElement(document.RootElement);
+        }
+
+        /// <summary>
+        /// Creates a JSON node from a JsonElement.
+        /// </summary>
+        public static IJsonReadWriteNode CreateFromJsonElement(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var objNode = new JsonObjectReadWriteNode();
+                    foreach (var property in element.EnumerateObject())
+                    {
+                        objNode.Properties[property.Name] = CreateFromJsonElement(property.Value);
+                    }
+                    return objNode;
+
+                case JsonValueKind.Array:
+                    var arrayNode = new JsonArrayReadWriteNode();
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        arrayNode.Items.Add(CreateFromJsonElement(item));
+                    }
+                    return arrayNode;
+
+                case JsonValueKind.String:
+                    return new JsonStringReadWriteNode { Value = element.GetString() };
+
+                case JsonValueKind.Number:
+                    if (element.TryGetInt64(out long l))
+                        return new JsonNumberReadWriteNode { Value = l };
+                    else
+                        return new JsonNumberReadWriteNode { Value = element.GetDouble() };
+
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    return new JsonBooleanReadWriteNode { Value = element.GetBoolean() };
+
+                case JsonValueKind.Null:
+                    return new JsonNullReadWriteNode();
+
+                default:
+                    throw new NotSupportedException($"Unsupported JSON value kind: {element.ValueKind}");
+            }
+        }
+
+        /// <summary>
+        /// Creates a new JSON node of the specified type.
+        /// </summary>
+        public static IJsonReadWriteNode CreateNewNode(string type, string value = null)
+        {
+            switch (type)
+            {
+                case "String":
+                    return new JsonStringReadWriteNode { Value = value ?? "" };
+
+                case "Number":
+                    if (long.TryParse(value, out long l))
+                        return new JsonNumberReadWriteNode { Value = l };
+                    else if (double.TryParse(value, out double d))
+                        return new JsonNumberReadWriteNode { Value = d };
+                    else
+                        return new JsonNumberReadWriteNode { Value = 0 };
+
+                case "Boolean":
+                    if (bool.TryParse(value, out bool b))
+                        return new JsonBooleanReadWriteNode { Value = b };
+                    else
+                        return new JsonBooleanReadWriteNode { Value = false };
+
+                case "Object":
+                    return new JsonObjectReadWriteNode();
+
+                case "Array":
+                    return new JsonArrayReadWriteNode();
+
+                case "Null":
+                    return new JsonNullReadWriteNode();
+
+                case "Date":
+                    if (DateTime.TryParse(value, out DateTime date))
+                        return new JsonStringReadWriteNode { Value = date.ToString("yyyy-MM-ddTHH:mm:ssZ") };
+                    else
+                        return new JsonStringReadWriteNode { Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ") };
+
+                case "Image":
+                    if (IsBase64Image(value, out ImageType imageType) && imageType != ImageType.Unknown)
+                        return new JsonStringReadWriteNode { Value = value };
+                    else
+                        return new JsonStringReadWriteNode { Value = "" };
+
+                default:
+                    throw new ArgumentException($"Unknown node type: {type}");
+            }
+        }
+
+        // Add this helper method to JsonReadWriteNodeFactory class:
+        private static bool IsBase64Image(string value, out ImageType imageType)
+        {
+            imageType = ImageType.Unknown;
+
+            if (string.IsNullOrEmpty(value) || value.Length < 100) // Base64 images are usually longer
+                return false;
+
+            // Check if it's a valid base64 string
+            if (value.Length % 4 != 0 || !Regex.IsMatch(value, @"^[a-zA-Z0-9\+/]*={0,3}$"))
+                return false;
+
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(value);
+
+                // Check for image signatures
+                if (bytes.Length < 8) // Need at least 8 bytes for reliable detection
+                    return false;
+
+                // JPEG signature: FF D8 FF
+                if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+                {
+                    imageType = ImageType.Jpeg;
+                    return true;
+                }
+
+                // PNG signature: 89 50 4E 47
+                if (bytes.Length >= 8 &&
+                    bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                {
+                    imageType = ImageType.Png;
+                    return true;
+                }
+
+                // WebP signature
+                if (bytes.Length >= 12 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON object node.
+    /// </summary>
+    public class JsonObjectReadWriteNode : IJsonReadWriteNode
+    {
+        public Dictionary<string, IJsonReadWriteNode> Properties { get; set; } = new Dictionary<string, IJsonReadWriteNode>();
+
+        // Direct reference to the parent editor panel
+        private FullJsonReadWriteEditor _editorPanel;
+
+        // Direct reference to the parent container
+        private StackLayout _parentContainer;
+
+        // Method to set the parent references
+        public void SetParentReferences(FullJsonReadWriteEditor editorPanel, StackLayout parentContainer)
+        {
+            _editorPanel = editorPanel;
+            _parentContainer = parentContainer;
+        }
+
+        public void RebuildPropertyControl(FullJsonReadWriteEditor editorPanel, string key)
+        {
+            if (!Properties.ContainsKey(key))
+                return;
+
+            // Find the index of the property control in the parent container
+            int index = -1;
+            for (int i = 0; i < _parentContainer.Items.Count; i++)
+            {
+                var item = _parentContainer.Items[i];
+                if (item.Control is StackLayout row && row.Items.Count > 0)
+                {
+                    var firstItem = row.Items[0];
+                    if (firstItem.Control is Label label && label.Text == key)
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+
+            if (index >= 0)
+            {
+                // Remove the old property control
+                _parentContainer.Items.RemoveAt(index);
+
+                // Create the new property control
+                var propertyControl = CreatePropertyControl(editorPanel, key, Properties[key]);
+
+                // Insert the new property control at the same position
+                _parentContainer.Items.Insert(index, new StackLayoutItem(propertyControl, HorizontalAlignment.Stretch));
+            }
+        }
+
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            var container = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Add a button to add new properties (only if not in read-only mode)
+            if (!editorPanel.IsReadOnly)
+            {
+                var addButton = new Button { Text = "Add Property" };
+                addButton.Click += (sender, e) => AddProperty(editorPanel, container);
+                container.Items.Add(new StackLayoutItem(addButton, HorizontalAlignment.Left));
+            }
+
+            // Add controls for each property
+            foreach (var kvp in Properties)
+            {
+                var propertyControl = CreatePropertyControl(editorPanel, kvp.Key, kvp.Value);
+                container.Items.Add(new StackLayoutItem(propertyControl, HorizontalAlignment.Stretch));
+            }
+
+            return container;
+        }
+
+        private Control CreatePropertyControl(FullJsonReadWriteEditor editorPanel, string key, IJsonReadWriteNode value)
+        {
+            var row = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+            // Property name label
+            var nameLabel = new Label { Text = key, Width = 150 };
+            row.Items.Add(new StackLayoutItem(nameLabel));
+
+            // Create a container for the value control
+            var valueContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Property value control
+            var valueControl = value.CreateControl(editorPanel);
+            valueContainer.Items.Add(new StackLayoutItem(valueControl, HorizontalAlignment.Stretch, true));
+
+            // Set up parent references for string nodes
+            if (value is JsonStringReadWriteNode stringNode)
+            {
+                stringNode.SetParentReferences(editorPanel, valueContainer, key, -1);
+            }
+
+            row.Items.Add(new StackLayoutItem(valueContainer, HorizontalAlignment.Stretch, true));
+
+            // Delete button (only if not in read-only mode)
+            if (!editorPanel.IsReadOnly)
+            {
+                var deleteButton = new Button { Text = "×", Width = 25 };
+                deleteButton.Click += (sender, e) => DeleteProperty(editorPanel, key);
+                row.Items.Add(new StackLayoutItem(deleteButton));
+            }
+
+            return row;
+        }
+
+        private void AddProperty(FullJsonReadWriteEditor editorPanel, StackLayout container)
+        {
+            // Create a dialog for adding a new property
+            var dialog = new Dialog<string>
+            {
+                Title = "Add New Property",
+                ClientSize = new Size(300, 250)
+            };
+
+            var propertyNameTextBox = new TextBox { ID = "propertyName" };
+            var propertyTypeDropDown = new DropDown { ID = "propertyType", Items = { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" } };
+            var propertyValueTextBox = new TextBox { ID = "propertyValue" };
+            var validationLabel = new Label { Text = "", TextColor = Colors.Red };
+
+            var okButton = new Button { Text = "OK" };
+            var cancelButton = new Button { Text = "Cancel" };
+
+            // Create the layout
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+                {
+                    new Label { Text = "Property Name:" },
+                    new StackLayoutItem(propertyNameTextBox, HorizontalAlignment.Stretch),
+                    new Label { Text = "Property Type:" },
+                    new StackLayoutItem(propertyTypeDropDown, HorizontalAlignment.Stretch),
+                    new Label { Text = "Property Value (optional):" },
+                    new StackLayoutItem(propertyValueTextBox, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
+                }
+            };
+
+            var buttonPanel = new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Items =
+                {
+                    new StackLayoutItem(okButton),
+                    new StackLayoutItem(cancelButton)
+                }
+            };
+
+            layout.Items.Add(new StackLayoutItem(buttonPanel, HorizontalAlignment.Right));
+
+            dialog.Content = layout;
+
+            // Set up event handlers
+            propertyTypeDropDown.SelectedIndexChanged += (sender, e) => {
+                // Update placeholder text based on type
+                switch (propertyTypeDropDown.SelectedKey)
+                {
+                    case "String":
+                        propertyValueTextBox.PlaceholderText = "Enter a string value";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Number":
+                        propertyValueTextBox.PlaceholderText = "Enter a numeric value (e.g., 42 or 3.14)";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Boolean":
+                        propertyValueTextBox.PlaceholderText = "Enter 'true' or 'false'";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Date":
+                        propertyValueTextBox.PlaceholderText = "Enter a date (e.g., 2023-04-25T14:30:00Z)";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Image":
+                        propertyValueTextBox.PlaceholderText = "Enter a base64 encoded image or leave empty to upload";
+                        propertyValueTextBox.Enabled = true;
+                        break;
+                    case "Null":
+                        propertyValueTextBox.PlaceholderText = "Value will be null";
+                        propertyValueTextBox.Enabled = false;
+                        break;
+                    case "Object":
+                        propertyValueTextBox.PlaceholderText = "Creating empty object";
+                        propertyValueTextBox.Enabled = false;
+                        break;
+                    case "Array":
+                        propertyValueTextBox.PlaceholderText = "Creating empty array";
+                        propertyValueTextBox.Enabled = false;
+                        break;
+                }
+
+                // Clear validation when type changes
+                validationLabel.Text = "";
+            };
+
+            okButton.Click += (sender, e) => {
+                var name = propertyNameTextBox.Text;
+                var type = propertyTypeDropDown.SelectedKey;
+                var value = propertyValueTextBox.Text;
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    validationLabel.Text = "Property name cannot be empty.";
+                }
+                else if (Properties.ContainsKey(name))
+                {
+                    validationLabel.Text = "Property already exists.";
+                }
+                else
+                {
+                    dialog.Close($"{name}|{type}|{value}");
+                }
+            };
+
+            cancelButton.Click += (sender, e) => {
+                dialog.Close(null);
+            };
+
+            // Initialize the placeholder text
+            propertyTypeDropDown.SelectedIndex = 0; // Select "String" by default
+
+            // Show the dialog
+            var result = dialog.ShowModal(editorPanel);
+            if (!string.IsNullOrEmpty(result))
+            {
+                var parts = result.Split('|');
+                var name = parts[0];
+                var type = parts[1];
+                var value = parts.Length > 2 ? parts[2] : null;
+
+                // Create the new node
+                var newNode = JsonReadWriteNodeFactory.CreateNewNode(type, value);
+
+                // If it's an Image type with no value, open the image upload dialog
+                if (type == "Image" && string.IsNullOrEmpty(value))
+                {
+                    var stringNode = newNode as JsonStringReadWriteNode;
+                    stringNode.UploadImageAsBase64(editorPanel, (newValue) => stringNode.Value = newValue);
+                }
+
+                // Add the property
+                Properties[name] = newNode;
+
+                // Rebuild the UI
+                RebuildContainer(editorPanel, container);
+            }
+        }
+
+        private void DeleteProperty(FullJsonReadWriteEditor editorPanel, string key)
+        {
+            // Confirm deletion
+            var result = MessageBox.Show(
+                editorPanel,
+                $"Are you sure you want to delete property '{key}'?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxType.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                // Remove the property
+                Properties.Remove(key);
+
+                // Find the index of the property control in the parent container
+                int index = -1;
+                for (int i = 0; i < _parentContainer.Items.Count; i++)
+                {
+                    var item = _parentContainer.Items[i];
+                    if (item.Control is StackLayout layout && layout.Items.Count > 0)
+                    {
+                        var firstItem = layout.Items[0];
+                        if (firstItem.Control is Label label && label.Text == key)
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (index >= 0)
+                {
+                    // Remove the property control
+                    _parentContainer.Items.RemoveAt(index);
+                }
+            }
+        }
+
+        private void RebuildContainer(FullJsonReadWriteEditor editorPanel, StackLayout container)
+        {
+            // Clear the container
+            container.Items.Clear();
+
+            // Re-add the add button if not in read-only mode
+            if (!editorPanel.IsReadOnly)
+            {
+                var addButton = new Button { Text = "Add Property" };
+                addButton.Click += (sender, e) => AddProperty(editorPanel, container);
+                container.Items.Add(new StackLayoutItem(addButton, HorizontalAlignment.Left));
+            }
+
+            // Re-add all property controls
+            foreach (var kvp in Properties)
+            {
+                var propertyControl = CreatePropertyControl(editorPanel, kvp.Key, kvp.Value);
+                container.Items.Add(new StackLayoutItem(propertyControl, HorizontalAlignment.Stretch));
+            }
+        }
+
+        public string ToJson()
+        {
+            var properties = new List<string>();
+            foreach (var kvp in Properties)
+            {
+                properties.Add($"\"{kvp.Key}\": {kvp.Value.ToJson()}");
+            }
+            return $"{{{string.Join(", ", properties)}}}";
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // Validate each property
+            foreach (var kvp in Properties)
+            {
+                kvp.Value.Validate(errors);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON array node.
+    /// </summary>
+    public class JsonArrayReadWriteNode : IJsonReadWriteNode
+    {
+        public List<IJsonReadWriteNode> Items { get; set; } = new List<IJsonReadWriteNode>();
+
+        // Direct reference to the parent editor panel
+        private FullJsonReadWriteEditor _editorPanel;
+
+        // Direct reference to the parent container
+        private StackLayout _parentContainer;
+
+        // Method to set the parent references
+        public void SetParentReferences(FullJsonReadWriteEditor editorPanel, StackLayout parentContainer)
+        {
+            _editorPanel = editorPanel;
+            _parentContainer = parentContainer;
+        }
+
+        public void RebuildItemControl(FullJsonReadWriteEditor editorPanel, int index)
+        {
+            if (index < 0 || index >= Items.Count)
+                return;
+
+            // Find the index of the item control in the parent container
+            int controlIndex = -1;
+            for (int i = 0; i < _parentContainer.Items.Count; i++)
+            {
+                var item = _parentContainer.Items[i];
+                if (item.Control is StackLayout layout && layout.Items.Count > 0)
+                {
+                    var firstItem = layout.Items[0];
+                    if (firstItem.Control is Label label && label.Text == $"[{index}]")
+                    {
+                        controlIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (controlIndex >= 0)
+            {
+                // Remove the old item control
+                _parentContainer.Items.RemoveAt(controlIndex);
+
+                // Create the new item control
+                var itemControl = CreateItemControl(editorPanel, index, Items[index]);
+
+                // Insert the new item control at the same position
+                _parentContainer.Items.Insert(controlIndex, new StackLayoutItem(itemControl, HorizontalAlignment.Stretch));
+            }
+        }
+
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            var container = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Add a button to add new items (only if not in read-only mode)
+            if (!editorPanel.IsReadOnly)
+            {
+                var addButton = new Button { Text = "Add Item" };
+                addButton.Click += (sender, e) => AddItem(editorPanel, container);
+                container.Items.Add(new StackLayoutItem(addButton, HorizontalAlignment.Left));
+            }
+
+            // Add controls for each item
+            for (int i = 0; i < Items.Count; i++)
+            {
+                var itemControl = CreateItemControl(editorPanel, i, Items[i]);
+                container.Items.Add(new StackLayoutItem(itemControl, HorizontalAlignment.Stretch));
+            }
+
+            return container;
+        }
+
+        private Control CreateItemControl(FullJsonReadWriteEditor editorPanel, int index, IJsonReadWriteNode item)
+        {
+            var row = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+            // Item index label
+            var indexLabel = new Label { Text = $"[{index}]", Width = 50 };
+            row.Items.Add(new StackLayoutItem(indexLabel));
+
+            // Create a container for the value control
+            var valueContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Item value control
+            var valueControl = item.CreateControl(editorPanel);
+            valueContainer.Items.Add(new StackLayoutItem(valueControl, HorizontalAlignment.Stretch, true));
+
+            // Set up parent references for string nodes
+            if (item is JsonStringReadWriteNode stringNode)
+            {
+                stringNode.SetParentReferences(editorPanel, valueContainer, null, index);
+            }
+
+            row.Items.Add(new StackLayoutItem(valueContainer, HorizontalAlignment.Stretch, true));
+
+            // Delete button (only if not in read-only mode)
+            if (!editorPanel.IsReadOnly)
+            {
+                var deleteButton = new Button { Text = "×", Width = 25 };
+                deleteButton.Click += (sender, e) => DeleteItem(editorPanel, index);
+                row.Items.Add(new StackLayoutItem(deleteButton));
+            }
+
+            return row;
+        }
+
+        private void AddItem(FullJsonReadWriteEditor editorPanel, StackLayout container)
+        {
+            // Create a dialog for adding a new item
+            var dialog = new Dialog<string>
+            {
+                Title = "Add New Array Item",
+                ClientSize = new Size(300, 250)
+            };
+
+            var itemTypeDropDown = new DropDown { ID = "itemType", Items = { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" } };
+            var itemValueTextBox = new TextBox { ID = "itemValue" };
+            var validationLabel = new Label { Text = "", TextColor = Colors.Red };
+
+            var okButton = new Button { Text = "OK" };
+            var cancelButton = new Button { Text = "Cancel" };
+
+            // Create the layout
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+                {
+                    new Label { Text = "Item Type:" },
+                    new StackLayoutItem(itemTypeDropDown, HorizontalAlignment.Stretch),
+                    new Label { Text = "Item Value (optional):" },
+                    new StackLayoutItem(itemValueTextBox, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(validationLabel, HorizontalAlignment.Stretch)
+                }
+            };
+
+            var buttonPanel = new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Items =
+                {
+                    new StackLayoutItem(okButton),
+                    new StackLayoutItem(cancelButton)
+                }
+            };
+
+            layout.Items.Add(new StackLayoutItem(buttonPanel, HorizontalAlignment.Right));
+
+            dialog.Content = layout;
+
+            // Set up event handlers
+            itemTypeDropDown.SelectedIndexChanged += (sender, e) => {
+                // Update placeholder text based on type
+                switch (itemTypeDropDown.SelectedKey)
+                {
+                    case "String":
+                        itemValueTextBox.PlaceholderText = "Enter a string value";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Number":
+                        itemValueTextBox.PlaceholderText = "Enter a numeric value (e.g., 42 or 3.14)";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Boolean":
+                        itemValueTextBox.PlaceholderText = "Enter 'true' or 'false'";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Date":
+                        itemValueTextBox.PlaceholderText = "Enter a date (e.g., 2023-04-25T14:30:00Z)";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Image":
+                        itemValueTextBox.PlaceholderText = "Enter a base64 encoded image or leave empty to upload";
+                        itemValueTextBox.Enabled = true;
+                        break;
+                    case "Null":
+                        itemValueTextBox.PlaceholderText = "Value will be null";
+                        itemValueTextBox.Enabled = false;
+                        break;
+                    case "Object":
+                        itemValueTextBox.PlaceholderText = "Creating empty object";
+                        itemValueTextBox.Enabled = false;
+                        break;
+                    case "Array":
+                        itemValueTextBox.PlaceholderText = "Creating empty array";
+                        itemValueTextBox.Enabled = false;
+                        break;
+                }
+
+                // Clear validation when type changes
+                validationLabel.Text = "";
+            };
+
+            okButton.Click += (sender, e) => {
+                var type = itemTypeDropDown.SelectedKey;
+                var value = itemValueTextBox.Text;
+
+                dialog.Close($"{type}|{value}");
+            };
+
+            cancelButton.Click += (sender, e) => {
+                dialog.Close(null);
+            };
+
+            // Initialize the placeholder text
+            itemTypeDropDown.SelectedIndex = 0; // Select "String" by default
+
+            // Show the dialog
+            var result = dialog.ShowModal(editorPanel);
+            if (!string.IsNullOrEmpty(result))
+            {
+                var parts = result.Split('|');
+                var type = parts[0];
+                var value = parts.Length > 1 ? parts[1] : null;
+
+                // Create the new node
+                var newNode = JsonReadWriteNodeFactory.CreateNewNode(type, value);
+
+                // If it's an Image type with no value, open the image upload dialog
+                if (type == "Image" && string.IsNullOrEmpty(value))
+                {
+                    var stringNode = newNode as JsonStringReadWriteNode;
+                    stringNode.UploadImageAsBase64(editorPanel, (newValue) => stringNode.Value = newValue);
+                }
+
+                // Add the item
+                Items.Add(newNode);
+
+                // Rebuild the UI
+                RebuildContainer(editorPanel, container);
+            }
+        }
+
+        private void DeleteItem(FullJsonReadWriteEditor editorPanel, int index)
+        {
+            // Confirm deletion
+            var result = MessageBox.Show(
+                editorPanel,
+                $"Are you sure you want to delete item at index {index}?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxType.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                // Remove the item
+                Items.RemoveAt(index);
+
+                // Find the index of the item control in the parent container
+                int controlIndex = -1;
+                for (int i = 0; i < _parentContainer.Items.Count; i++)
+                {
+                    var item = _parentContainer.Items[i];
+                    if (item.Control is StackLayout layout && layout.Items.Count > 0)
+                    {
+                        var firstItem = layout.Items[0];
+                        if (firstItem.Control is Label label && label.Text == $"[{index}]")
+                        {
+                            controlIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (controlIndex >= 0)
+                {
+                    // Remove the item control
+                    _parentContainer.Items.RemoveAt(controlIndex);
+                }
+            }
+        }
+
+        private void RebuildContainer(FullJsonReadWriteEditor editorPanel, StackLayout container)
+        {
+            // Clear the container
+            container.Items.Clear();
+
+            // Re-add the add button if not in read-only mode
+            if (!editorPanel.IsReadOnly)
+            {
+                var addButton = new Button { Text = "Add Item" };
+                addButton.Click += (sender, e) => AddItem(editorPanel, container);
+                container.Items.Add(new StackLayoutItem(addButton, HorizontalAlignment.Left));
+            }
+
+            // Re-add all item controls
+            for (int i = 0; i < Items.Count; i++)
+            {
+                var itemControl = CreateItemControl(editorPanel, i, Items[i]);
+                container.Items.Add(new StackLayoutItem(itemControl, HorizontalAlignment.Stretch));
+            }
+        }
+
+        public string ToJson()
+        {
+            var items = new List<string>();
+            foreach (var item in Items)
+            {
+                items.Add(item.ToJson());
+            }
+            return $"[{string.Join(", ", items)}]";
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // Validate each item
+            foreach (var item in Items)
+            {
+                item.Validate(errors);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON string node.
+    /// </summary>
+    public class JsonStringReadWriteNode : IJsonReadWriteNode
+    {
+        public string Value { get; set; }
+        public Action<JsonStringReadWriteNode> OnControlNeedsRebuild { get; set; }
+
+        // Direct reference to the parent container
+        private StackLayout _parentContainer;
+
+        // Direct reference to the parent property name (for objects) or index (for arrays)
+        private string _parentKey;
+        private int _parentIndex;
+
+        // Direct reference to the parent editor panel
+        private FullJsonReadWriteEditor _editorPanel;
+
+        public void SetParentReferences(FullJsonReadWriteEditor editorPanel, StackLayout parentContainer, string parentKey = null, int parentIndex = -1)
+        {
+            _editorPanel = editorPanel;
+            _parentContainer = parentContainer;
+            _parentKey = parentKey;
+            _parentIndex = parentIndex;
+        }
+
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            _editorPanel = editorPanel;
+
+            // Check for special string types
+            if (Value.StartsWith("button:"))
+            {
+                var buttonText = Value.Substring(7); // Remove "button:" prefix
+                var button = new Button { Text = buttonText };
+                button.Click += (sender, e) =>
+                {
+                    if (editorPanel.AppMode)
+                    {
+                        FullJsonReadWriteEditor.Log($"[App Mode] Button '{buttonText}' clicked");
+                    }
+                };
+                return button;
+            }
+
+            // Check for date syntax or ISO8601 format
+            if (Value.StartsWith("date:") || IsISO8601Date(Value))
+            {
+                string dateValue = Value.StartsWith("date:") ? Value.Substring(5) : Value;
+                if (DateTime.TryParse(dateValue, out DateTime dateTime))
+                {
+                    var container = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+                    // Add the date picker
+                    var datePicker = new DateTimePicker
+                    {
+                        Value = dateTime,
+                        Mode = DateTimePickerMode.DateTime
+                    };
+
+                    // In app mode or read-only mode, make the picker read-only but still clickable to log
+                    if (editorPanel.AppMode || editorPanel.IsReadOnly)
+                    {
+                        datePicker.Enabled = false;
+                        datePicker.MouseDoubleClick += (sender, e) =>
+                        {
+                            FullJsonReadWriteEditor.Log($"[App Mode/Read-Only] Date '{dateValue}' clicked");
+                        };
+                    }
+
+                    // Handle date changes (only if not in read-only mode)
+                    if (!editorPanel.IsReadOnly)
+                    {
+                        datePicker.ValueChanged += (sender, e) => {
+                            Value = datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                            RefreshParentContainer();
+                        };
+                    }
+                    container.Items.Add(new StackLayoutItem(datePicker, HorizontalAlignment.Stretch, true));
+
+                    // Add buttons in a horizontal layout (only if not in read-only mode)
+                    if (!editorPanel.IsReadOnly)
+                    {
+                        var _buttonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+                        // Add Set/Edit Image button
+                        var _imageButton = new Button { Text = "Set/Edit Image" };
+                        _imageButton.Click += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
+                            Value = newValue;
+                            RefreshParentContainer();
+                        });
+
+                        _buttonContainer.Items.Add(new StackLayoutItem(_imageButton));
+
+                        // Add "Add text instead" button
+                        var textButton = new Button { Text = "Add text instead" };
+                        textButton.Click += (s, e) => {
+                            Value = ""; // Reset to empty string
+                            RefreshParentContainer();
+                        };
+                        _buttonContainer.Items.Add(new StackLayoutItem(textButton));
+
+                        container.Items.Add(new StackLayoutItem(_buttonContainer, HorizontalAlignment.Left));
+                    }
+
+                    return container;
+                }
+            }
+
+            // Check for images (base64, URLs, or file extensions)
+            bool isImage = IsBase64Image(Value, out ImageType imageType) || IsImageUrl(Value) || HasImageExtension(Value);
+
+            // Create a container for the text field and buttons
+            var textContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+            // Add text box
+            var textBox = new TextBox { Text = Value };
+
+            // In read-only mode, make the text box read-only
+            if (editorPanel.IsReadOnly)
+            {
+                textBox.ReadOnly = true;
+            }
+            else
+            {
+                textBox.TextChanged += (sender, e) => {
+                    Value = textBox.Text;
+                    // Don't refresh on every text change, only when needed
+                };
+            }
+
+            textContainer.Items.Add(new StackLayoutItem(textBox, HorizontalAlignment.Stretch, true));
+
+            // Add buttons in a horizontal layout (only if not in read-only mode)
+            if (!editorPanel.IsReadOnly)
+            {
+                var buttonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+                // Add Set/Edit Image button for all text fields
+                var imageButton = new Button { Text = "Set/Edit Image" };
+                imageButton.Click += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
+                    Value = newValue;
+                    RefreshParentContainer();
+                });
+
+                buttonContainer.Items.Add(new StackLayoutItem(imageButton));
+
+                // Add Set Date button for all text fields
+                var dateButton = new Button { Text = "Set Date" };
+                dateButton.Click += (s, e) => SetDate();
+                buttonContainer.Items.Add(new StackLayoutItem(dateButton));
+
+                textContainer.Items.Add(new StackLayoutItem(buttonContainer, HorizontalAlignment.Left));
+            }
+
+            // If this is already an image, show the image preview
+            if (isImage)
+            {
+                var imageContainer = new StackLayout { Orientation = Orientation.Vertical, Spacing = 5 };
+
+                if (IsBase64Image(Value, out ImageType type) && type != ImageType.Unknown)
+                {
+                    try
+                    {
+                        byte[] imageBytes = Convert.FromBase64String(Value);
+                        var image = new Bitmap(imageBytes);
+                        var imageView = new ImageView
+                        {
+                            Image = image,
+                            Width = 200,
+                            Height = 150
+                        };
+
+                        // In app mode or read-only mode, make the image clickable to log
+                        if (editorPanel.AppMode || editorPanel.IsReadOnly)
+                        {
+                            imageView.Cursor = Cursors.Pointer;
+                            imageView.MouseDown += (sender, e) =>
+                            {
+                                FullJsonReadWriteEditor.Log($"[App Mode/Read-Only] Image clicked");
+                            };
+                        }
+
+                        imageContainer.Items.Add(new StackLayoutItem(imageView, HorizontalAlignment.Center));
+                    }
+                    catch (Exception ex)
+                    {
+                        FullJsonReadWriteEditor.Log($"[JsonStringReadWriteNode] Error loading image: {ex.Message}");
+                        // Fall back to showing just the text box and buttons
+                    }
+                }
+                else if (IsImageUrl(Value))
+                {
+                    // For URLs, show the URL as a clickable link
+                    var urlLabel = new Label
+                    {
+                        Text = $"URL: {Value}",
+                        TextColor = Colors.Blue,
+                        Cursor = Cursors.Pointer,
+                        Wrap = WrapMode.Word
+                    };
+
+                    urlLabel.MouseDoubleClick += (sender, e) => {
+                        try
+                        {
+                            Process.Start(new Uri(Value).ToString());
+                        }
+                        catch (Exception ex)
+                        {
+                            FullJsonReadWriteEditor.Log($"[JsonStringReadWriteNode] Error opening URL '{Value}': {ex.Message}");
+                        }
+                    };
+
+                    imageContainer.Items.Add(new StackLayoutItem(urlLabel, HorizontalAlignment.Stretch, true));
+                }
+
+                // Add "Add text instead" button for images (only if not in read-only mode)
+                if (!editorPanel.IsReadOnly)
+                {
+                    var imageButtonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+                    var textInsteadButton = new Button { Text = "Add text instead" };
+                    textInsteadButton.Click += (s, e) => {
+                        Value = ""; // Reset to empty string
+                        RefreshParentContainer();
+                    };
+                    imageButtonContainer.Items.Add(new StackLayoutItem(textInsteadButton));
+
+                    imageContainer.Items.Add(new StackLayoutItem(imageButtonContainer, HorizontalAlignment.Left));
+                }
+
+                return imageContainer;
+            }
+
+            return textContainer;
+        }
+
+        // Update the RefreshParentContainer method to work with the correct structure:
+        private void RefreshParentContainer()
+        {
+            if (_parentContainer != null && _editorPanel != null)
+            {
+                if (_parentKey != null)
+                {
+                    // We're in an object, refresh the specific property
+                    var objectNode = FindParentObjectNode();
+                    if (objectNode != null)
+                    {
+                        objectNode.RebuildPropertyControl(_editorPanel, _parentKey);
+                    }
+                }
+                else if (_parentIndex >= 0)
+                {
+                    // We're in an array, refresh the specific item
+                    var arrayNode = FindParentArrayNode();
+                    if (arrayNode != null)
+                    {
+                        arrayNode.RebuildItemControl(_editorPanel, _parentIndex);
+                    }
+                }
+            }
+        }
+
+        // Helper method to find the parent object node
+        private JsonObjectReadWriteNode FindParentObjectNode()
+        {
+            // Navigate up the visual tree to find the JsonObjectReadWriteNode that contains this string node
+            var current = _parentContainer;
+            while (current != null)
+            {
+                // Check if current control is a StackLayout with a property control
+                if (current is StackLayout layout && layout.Items.Count > 0)
+                {
+                    var firstItem = layout.Items[0];
+                    if (firstItem.Control is Label label && label.Text == _parentKey)
+                    {
+                        // Found the parent object, return it
+                        return _editorPanel.RootNode as JsonObjectReadWriteNode;
+                    }
+                }
+
+                // Move up to the parent
+                current = (StackLayout)current.Parent;
+            }
+
+            return null;
+        }
+
+        // Helper method to find the parent array node
+        private JsonArrayReadWriteNode FindParentArrayNode()
+        {
+            // Navigate up the visual tree to find the JsonArrayReadWriteNode that contains this string node
+            var current = _parentContainer;
+            while (current != null)
+            {
+                // Check if current control is a StackLayout with an item control
+                if (current is StackLayout layout && layout.Items.Count > 0)
+                {
+                    var firstItem = layout.Items[0];
+                    if (firstItem.Control is Label label && label.Text == $"[{_parentIndex}]")
+                    {
+                        // Found the parent array, return it
+                        return _editorPanel.RootNode as JsonArrayReadWriteNode;
+                    }
+                }
+
+                // Move up to the parent
+                current = (StackLayout)current.Parent;
+            }
+
+            return null;
+        }
+
+        // Add this method to JsonStringReadWriteNode class to handle date setting:
+        private void SetDate()
+        {
+            // Create a dialog to set a date
+            var dialog = new Dialog
+            {
+                Title = "Set Date",
+                ClientSize = new Size(300, 200)
+            };
+
+            var datePicker = new DateTimePicker { Mode = DateTimePickerMode.DateTime };
+            var okButton = new Button { Text = "OK" };
+            var cancelButton = new Button { Text = "Cancel" };
+
+            // Create the layout
+            var layout = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 5,
+                Items =
+                {
+                    new Label { Text = "Select a date:" },
+                    new StackLayoutItem(datePicker, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(new StackLayout
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 5,
+                        Items =
+                        {
+                            new StackLayoutItem(okButton),
+                            new StackLayoutItem(cancelButton)
+                        }
+                    }, HorizontalAlignment.Right)
+                }
+            };
+
+            dialog.Content = layout;
+
+            // Set up event handlers
+            okButton.Click += (sender, e) => {
+                if (datePicker.Value.HasValue)
+                {
+                    Value = datePicker.Value.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    RefreshParentContainer();
+                    dialog.Close();
+                }
+            };
+
+            cancelButton.Click += (sender, e) => {
+                dialog.Close();
+            };
+
+            // Show the dialog
+            dialog.ShowModal(_editorPanel);
+        }
+
+        public string ToJson()
+        {
+            return $"\"{Value.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // String values are always valid
+        }
+
+        private bool IsISO8601Date(string value)
+        {
+            // Basic ISO8601 pattern - matches dates like "2023-04-25T14:30:00Z" or "2023-04-25"
+            return Regex.IsMatch(value, @"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$");
+        }
+
+        private bool IsImageUrl(string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length < 8)
+                return false;
+
+            // Must start with http:// or https://
+            if (!value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            try
+            {
+                var uri = new Uri(value);
+
+                // Must be HTTP or HTTPS
+                if (uri.Scheme != "http" && uri.Scheme != "https")
+                    return false;
+
+                // Remove protocol and any query parameters for pattern matching
+                string cleanedUrl = uri.AbsoluteUri.Substring(uri.Scheme.Length + 3); // Remove "://" or "://"
+
+                // Remove any query parameters or fragments
+                int queryIndex = cleanedUrl.IndexOf('?');
+                if (queryIndex >= 0)
+                    cleanedUrl = cleanedUrl.Substring(0, queryIndex);
+
+                int fragmentIndex = cleanedUrl.IndexOf('#');
+                if (fragmentIndex >= 0)
+                    cleanedUrl = cleanedUrl.Substring(0, fragmentIndex);
+
+                // Check for specific image URL patterns
+                return Regex.IsMatch(cleanedUrl,
+                    @"^(?:" +
+                    @"i\.imgur\.com/|" +                    // Imgur
+                    @"images\.(?:unsplash|pixabay|pexels)\.com/|" + // Unsplash, Pixabay, Pexels
+                    @"media\.giphy\.com/|" +                  // Giphy
+                    @"(?:img|image|photo)\." +                // Common image subdomains
+                    @")" +
+                    @"(?:" +
+                    @"/[^/]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:/)?$|" +  // Ends with image extension
+                    @"/[^/]+/[^/]+/\d+$|" +                // Imgur pattern (username/image/id)
+                    @"/media/[^/]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)$|" + // Media folder with extension
+                    @")",
+                    RegexOptions.IgnoreCase);
+            }
+            catch (UriFormatException)
+            {
+                // Not a valid URI
+                return false;
+            }
+            catch (Exception ex)
+            {
+                FullJsonReadWriteEditor.Log($"[IsImageUrl] Error checking URL '{value}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private bool HasImageExtension(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            string lowerValue = value.ToLowerInvariant();
+            return lowerValue.EndsWith(".jpg") ||
+                   lowerValue.EndsWith(".jpeg") ||
+                   lowerValue.EndsWith(".png") ||
+                   lowerValue.EndsWith(".gif") ||
+                   lowerValue.EndsWith(".webp") ||
+                   lowerValue.EndsWith(".bmp") ||
+                   lowerValue.EndsWith(".svg");
+        }
+
+        private bool IsBase64Image(string value, out ImageType imageType)
+        {
+            imageType = ImageType.Unknown;
+
+            if (string.IsNullOrEmpty(value) || value.Length < 100) // Base64 images are usually longer
+                return false;
+
+            // Check if it's a valid base64 string
+            if (value.Length % 4 != 0 || !Regex.IsMatch(value, @"^[a-zA-Z0-9\+/]*={0,3}$"))
+                return false;
+
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(value);
+
+                // Check for image signatures
+                if (bytes.Length < 8) // Need at least 8 bytes for reliable detection
+                    return false;
+
+                // JPEG signature: FF D8 FF
+                if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+                {
+                    imageType = ImageType.Jpeg;
+                    return true;
+                }
+
+                // PNG signature: 89 50 4E 47
+                if (bytes.Length >= 8 &&
+                    bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                {
+                    imageType = ImageType.Png;
+                    return true;
+                }
+
+                // GIF signature: GIF87a or GIF89a
+                if (bytes.Length >= 6 &&
+                    bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46)
+                {
+                    if ((bytes[3] == 0x38 && bytes[4] == 0x37 && bytes[5] == 0x61) || // GIF87a
+                        (bytes[3] == 0x38 && bytes[4] == 0x39 && bytes[5] == 0x61)) // GIF89a
+                    {
+                        return true;
+                    }
+                }
+
+                // BMP signature: BM
+                if (bytes.Length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D)
+                {
+                    return true;
+                }
+
+                // WebP signature
+                if (bytes.Length >= 12 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public void UploadImageAsBase64(FullJsonReadWriteEditor editorPanel, Action<string> onImageUploaded)
+        {
+            var fileDialog = new OpenFileDialog
+            {
+                Title = "Select an image",
+                Filters =
+                {
+                    new FileFilter("Image Files (*.png;*.jpg;*.jpeg;*.gif;*.webp)", ".png", ".jpg", ".jpeg", ".gif", ".webp")
+                }
+            };
+
+            if (fileDialog.ShowDialog(editorPanel) == DialogResult.Ok)
+            {
+                try
+                {
+                    byte[] imageBytes = File.ReadAllBytes(fileDialog.FileName);
+                    string base64 = Convert.ToBase64String(imageBytes);
+
+                    // Detect image type from file extension
+                    ImageType imageType = ImageType.Unknown;
+                    string extension = Path.GetExtension(fileDialog.FileName).ToLowerInvariant();
+                    if (extension == ".png")
+                        imageType = ImageType.Png;
+                    else if (extension == ".jpg" || extension == ".jpeg")
+                        imageType = ImageType.Jpeg;
+
+                    FullJsonReadWriteEditor.Log($"[Upload Image] Selected image: {fileDialog.FileName}, Type: {imageType}, Size: {imageBytes.Length} bytes");
+
+                    // Call the callback with the new base64 value
+                    onImageUploaded?.Invoke(base64);
+
+                    FullJsonReadWriteEditor.Log($"[Upload Image] Image updated successfully");
+                }
+                catch (Exception ex)
+                {
+                    FullJsonReadWriteEditor.Log($"[Upload Image] Error: {ex.Message}");
+                    MessageBox.Show(editorPanel, $"Error loading image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxType.Error);
+                }
+            }
+            else
+            {
+                FullJsonReadWriteEditor.Log("[Upload Image] User cancelled image selection");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON number node.
+    /// </summary>
+    public class JsonNumberReadWriteNode : IJsonReadWriteNode
+    {
+        public object Value { get; set; }
+
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            var textBox = new TextBox { Text = Value.ToString() };
+
+            // In read-only mode, make the text box read-only
+            if (editorPanel.IsReadOnly)
+            {
+                textBox.ReadOnly = true;
+            }
+            else
+            {
+                textBox.TextChanged += (sender, e) => {
+                    if (Value is long || (Value is double && double.TryParse(textBox.Text, out double d)))
+                    {
+                        if (Value is long)
+                        {
+                            if (long.TryParse(textBox.Text, out long l))
+                                Value = l;
+                        }
+                        else
+                        {
+                            if (double.TryParse(textBox.Text, out double _d))
+                                Value = _d;
+                        }
+                    }
+                    else
+                    {
+                        // Try to parse as long first, then double
+                        if (long.TryParse(textBox.Text, out long l))
+                            Value = l;
+                        else if (double.TryParse(textBox.Text, out double _d))
+                            Value = _d;
+                    }
+                };
+            }
+
+            return textBox;
+        }
+
+        public string ToJson()
+        {
+            return Value.ToString();
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // Number values are always valid
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON boolean node.
+    /// </summary>
+    public class JsonBooleanReadWriteNode : IJsonReadWriteNode
+    {
+        public bool Value { get; set; }
+
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            var checkBox = new CheckBox { Checked = Value };
+
+            // In read-only mode, disable the checkbox
+            if (editorPanel.IsReadOnly)
+            {
+                checkBox.Enabled = false;
+            }
+            else
+            {
+                checkBox.CheckedChanged += (sender, e) => {
+                    Value = checkBox.Checked ?? false;
+                };
+            }
+
+            return checkBox;
+        }
+
+        public string ToJson()
+        {
+            return Value ? "true" : "false";
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // Boolean values are always valid
+        }
+    }
+
+    /// <summary>
+    /// Represents a JSON null node.
+    /// </summary>
+    public class JsonNullReadWriteNode : IJsonReadWriteNode
+    {
+        public Control CreateControl(FullJsonReadWriteEditor editorPanel)
+        {
+            return new Label
+            {
+                Text = "null",
+                TextColor = Colors.Gray
+            };
+        }
+
+        public string ToJson()
+        {
+            return "null";
+        }
+
+        public void Validate(List<string> errors)
+        {
+            // Null values are always valid
+        }
+    }
+
+    /// <summary>
+    /// Represents the type of an image.
+    /// </summary>
+    public enum ImageType
+    {
+        Unknown,
+        Jpeg,
+        Png
+    }
+}

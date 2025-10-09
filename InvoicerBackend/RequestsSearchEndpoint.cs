@@ -52,6 +52,7 @@ namespace InvoicerBackend
                         // Apply limit if specified
                         if (criteria.Limit.HasValue)
                             requestsQuery = requestsQuery.Take(criteria.Limit.Value);
+                        requestsQuery = requestsQuery.OrderByDescending(r => r.DatetimeTai);
 
                         var requests = requestsQuery.ToList();
                         results.AddRange(requests);
@@ -88,6 +89,7 @@ namespace InvoicerBackend
                             // Apply limit if specified
                             if (criteria.Limit.HasValue)
                                 badRequestsQuery = badRequestsQuery.Take(criteria.Limit.Value);
+                            badRequestsQuery = badRequestsQuery.OrderByDescending(r => r.TimeTai);
 
                             var badRequests = badRequestsQuery.ToList();
                             results.AddRange(badRequests);
