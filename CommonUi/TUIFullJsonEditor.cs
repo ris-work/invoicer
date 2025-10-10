@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -29,7 +32,7 @@ namespace TUIJsonEditorExample
         public ITUIJsonNode RootNode => _rootNode;
 
         // Add a logging delegate
-        public static TUILogDelegate Log = Console.WriteLine;
+        public static TUILogDelegate Log = message => Console.WriteLine(message);
 
         // JSON serialization options for reuse
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -121,7 +124,10 @@ namespace TUIJsonEditorExample
             {
                 ShowVerticalScrollIndicator = true,
                 ShowHorizontalScrollIndicator = true,
-                ContentSize = new Size(Dim.Fill(), Dim.Fill())
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = Dim.Fill()
             };
 
             // Create the content container
@@ -154,7 +160,7 @@ namespace TUIJsonEditorExample
             layout.Add(rootControl);
 
             _contentView.Add(layout);
-            _scrollView.Content = _contentView;
+            _scrollView.Add(_contentView);
             Add(_scrollView);
 
             // Set control states based on app mode
@@ -198,32 +204,31 @@ namespace TUIJsonEditorExample
                 Height = 3
             };
 
-            var showButton = new Button("Show JSON")
-            {
-                X = 0,
-                Y = 0
-            };
-            var loadButton = new Button("Load JSON")
-            {
-                X = 20,
-                Y = 0
-            };
-            var validateButton = new Button("Validate")
-            {
-                X = 40,
-                Y = 0
-            };
-            var refreshButton = new Button("Refresh UI")
-            {
-                X = 60,
-                Y = 0
-            };
+            var showButton = new Button();
+            showButton.Text = "Show JSON";
+            showButton.X = 0;
+            showButton.Y = 0;
+
+            var loadButton = new Button();
+            loadButton.Text = "Load JSON";
+            loadButton.X = 20;
+            loadButton.Y = 0;
+
+            var validateButton = new Button();
+            validateButton.Text = "Validate";
+            validateButton.X = 40;
+            validateButton.Y = 0;
+
+            var refreshButton = new Button();
+            refreshButton.Text = "Refresh UI";
+            refreshButton.X = 60;
+            refreshButton.Y = 0;
 
             // Attach event handlers
-            showButton.Clicked += ShowJsonDialog;
-            loadButton.Clicked += LoadJsonDialog;
-            validateButton.Clicked += ValidateAndShowErrors;
-            refreshButton.Clicked += (sender, e) => RefreshUI();
+            showButton.Accept += (sender, e) => { ShowJsonDialog(sender, e); e.Handled = true; };
+            loadButton.Accept += (sender, e) => { LoadJsonDialog(sender, e); e.Handled = true; };
+            validateButton.Accept += (sender, e) => { ValidateAndShowErrors(sender, e); e.Handled = true; };
+            refreshButton.Accept += (sender, e) => { RefreshUI(); e.Handled = true; };
 
             headerPanel.Add(showButton, loadButton, validateButton, refreshButton);
 
@@ -286,7 +291,7 @@ namespace TUIJsonEditorExample
         /// <summary>
         /// Shows a dialog with the current JSON.
         /// </summary>
-        private void ShowJsonDialog(object sender, EventArgs e)
+        private void ShowJsonDialog(object sender, HandledEventArgs e)
         {
             Log("[Show JSON] Starting to show JSON dialog");
 
@@ -314,12 +319,11 @@ namespace TUIJsonEditorExample
                     ReadOnly = true
                 };
 
-                var closeButton = new Button("Close")
-                {
-                    X = Pos.Center(),
-                    Y = Pos.Bottom(textView)
-                };
-                closeButton.Clicked += () => { Application.RequestStop(); };
+                var closeButton = new Button();
+                closeButton.Text = "Close";
+                closeButton.X = Pos.Center();
+                closeButton.Y = Pos.Bottom(textView);
+                closeButton.Accept += (s, args) => { Application.RequestStop(); args.Handled = true; };
 
                 dialog.Add(textView, closeButton);
                 Application.Run(dialog);
@@ -336,7 +340,7 @@ namespace TUIJsonEditorExample
         /// <summary>
         /// Shows a dialog to load new JSON.
         /// </summary>
-        private void LoadJsonDialog(object sender, EventArgs e)
+        private void LoadJsonDialog(object sender, HandledEventArgs e)
         {
             // Create dialog and content
             var dialog = new Dialog()
@@ -355,25 +359,25 @@ namespace TUIJsonEditorExample
                 Text = ToJson()
             };
 
-            var loadButton = new Button("Load")
-            {
-                X = Pos.Center() - 10,
-                Y = Pos.Bottom(jsonTextView)
-            };
-            var cancelButton = new Button("Cancel")
-            {
-                X = Pos.Center() + 10,
-                Y = Pos.Bottom(jsonTextView)
-            };
+            var loadButton = new Button();
+            loadButton.Text = "Load";
+            loadButton.X = Pos.Center() - 10;
+            loadButton.Y = Pos.Bottom(jsonTextView);
+
+            var cancelButton = new Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.X = Pos.Center() + 10;
+            cancelButton.Y = Pos.Bottom(jsonTextView);
 
             // Attach event handlers
-            loadButton.Clicked += () => {
+            loadButton.Accept += (s, args) => {
                 try
                 {
                     Log($"[Load JSON] New JSON to load: {jsonTextView.Text.ToString()}");
                     UpdateJson(jsonTextView.Text.ToString());
                     Log("[Load JSON] JSON loaded successfully");
                     Application.RequestStop();
+                    args.Handled = true;
                 }
                 catch (Exception ex)
                 {
@@ -382,7 +386,7 @@ namespace TUIJsonEditorExample
                 }
             };
 
-            cancelButton.Clicked += () => { Application.RequestStop(); };
+            cancelButton.Accept += (s, args) => { Application.RequestStop(); args.Handled = true; };
 
             dialog.Add(jsonTextView, loadButton, cancelButton);
             Application.Run(dialog);
@@ -391,7 +395,7 @@ namespace TUIJsonEditorExample
         /// <summary>
         /// Validates the current JSON and shows any errors.
         /// </summary>
-        private void ValidateAndShowErrors(object sender, EventArgs e)
+        private void ValidateAndShowErrors(object sender, HandledEventArgs e)
         {
             var errors = ValidateFields();
 
@@ -407,14 +411,15 @@ namespace TUIJsonEditorExample
 
             if (errors.Any())
             {
-                var errorText = string.Join("\n", errors.Select(e => $"• {e}"));
-                var errorLabel = new Label(errorText)
+                var errorText = string.Join("\n", errors.Select(err => $"• {err}"));
+                var errorLabel = new Label()
                 {
+                    Text = errorText,
                     X = 0,
                     Y = 0,
                     Width = Dim.Fill() - 1,
                     Height = Dim.Fill() - 1,
-                    TextAlignment = TextAlignment.Left
+                    TextAlignment = Alignment.Start
                 };
 
                 var scrollView = new ScrollView()
@@ -423,7 +428,6 @@ namespace TUIJsonEditorExample
                     Y = 1,
                     Width = Dim.Fill(),
                     Height = Dim.Fill() - 2,
-                    ContentSize = new Size(errorLabel.Frame.Width, errorLabel.Frame.Height),
                     ShowVerticalScrollIndicator = true,
                     ShowHorizontalScrollIndicator = true
                 };
@@ -436,24 +440,33 @@ namespace TUIJsonEditorExample
                     Width = Dim.Fill(),
                     Height = Dim.Fill()
                 };
-                errorContent.Add(new Label("Validation errors found:") { X = 0, Y = 0 });
+
+                var title = new Label()
+                {
+                    Text = "Validation errors found:",
+                    X = 0,
+                    Y = 0
+                };
+                errorContent.Add(title);
                 errorContent.Add(scrollView);
             }
             else
             {
-                errorContent = new Label("No validation errors found.")
+                errorContent = new Label()
                 {
+                    Text = "No validation errors found.",
                     X = Pos.Center(),
                     Y = Pos.Center()
                 };
             }
 
-            var closeButton = new Button("Close")
+            var closeButton = new Button()
             {
+                Text = "Close",
                 X = Pos.Center(),
                 Y = Pos.Bottom(errorContent)
             };
-            closeButton.Clicked += () => { Application.RequestStop(); };
+            closeButton.Accept += (s, args) => { Application.RequestStop(); args.Handled = true; };
 
             dialog.Add(errorContent, closeButton);
             Application.Run(dialog);
@@ -832,13 +845,12 @@ namespace TUIJsonEditorExample
             };
 
             // Add a button to add new properties
-            var addButton = new Button("Add Property")
-            {
-                X = 0,
-                Y = Pos.Top(container),
-                Width = 15
-            };
-            addButton.Clicked += (sender, e) => AddProperty(editorPanel, container);
+            var addButton = new Button();
+            addButton.Text = "Add Property";
+            addButton.X = 0;
+            addButton.Y = Pos.Top(container);
+            addButton.Width = 15;
+            addButton.Accept += (sender, e) => { AddProperty(editorPanel, container); e.Handled = true; };
             container.Add(addButton);
 
             // Add controls for each property
@@ -865,8 +877,9 @@ namespace TUIJsonEditorExample
             };
 
             // Property name label
-            var nameLabel = new Label(key)
+            var nameLabel = new Label()
             {
+                Text = key,
                 X = 0,
                 Y = 0,
                 Width = 20
@@ -895,13 +908,12 @@ namespace TUIJsonEditorExample
             row.Add(valueContainer);
 
             // Delete button
-            var deleteButton = new Button("×")
-            {
-                X = Pos.Right(valueContainer) + 1,
-                Y = 0,
-                Width = 3
-            };
-            deleteButton.Clicked += (sender, e) => DeleteProperty(editorPanel, key);
+            var deleteButton = new Button();
+            deleteButton.Text = "×";
+            deleteButton.X = Pos.Right(valueContainer) + 1;
+            deleteButton.Y = 0;
+            deleteButton.Width = 3;
+            deleteButton.Accept += (sender, e) => { DeleteProperty(editorPanel, key); e.Handled = true; };
             row.Add(deleteButton);
 
             // Set the height of the row based on the tallest child
@@ -921,60 +933,58 @@ namespace TUIJsonEditorExample
                 Height = Dim.Percent(60)
             };
 
-            var propertyNameField = new TextField("")
-            {
-                X = 0,
-                Y = 1,
-                Width = Dim.Fill()
-            };
-            var propertyTypeDropDown = new ListView()
-            {
-                X = 0,
-                Y = 3,
-                Width = Dim.Fill(),
-                Height = 8,
-                Source = new List<string> { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" }
-            };
+            var propertyNameField = new TextField();
+            propertyNameField.X = 0;
+            propertyNameField.Y = 1;
+            propertyNameField.Width = Dim.Fill();
+
+            var propertyTypeDropDown = new ListView();
+            propertyTypeDropDown.X = 0;
+            propertyTypeDropDown.Y = 3;
+            propertyTypeDropDown.Width = Dim.Fill();
+            propertyTypeDropDown.Height = 8;
+            propertyTypeDropDown.Source = new ListWrapper(new List<string> { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" });
             propertyTypeDropDown.SelectedItem = 0;
 
-            var propertyValueField = new TextField("")
-            {
-                X = 0,
-                Y = 12,
-                Width = Dim.Fill()
-            };
+            var propertyValueField = new TextField();
+            propertyValueField.X = 0;
+            propertyValueField.Y = 12;
+            propertyValueField.Width = Dim.Fill();
 
-            var validationLabel = new Label("")
-            {
-                X = 0,
-                Y = 14,
-                Width = Dim.Fill(),
-                TextColor = Color.Red
-            };
+            var validationLabel = new Label();
+            validationLabel.X = 0;
+            validationLabel.Y = 14;
+            validationLabel.Width = Dim.Fill();
+            // Use a color scheme with red text for errors
+            //validationLabel.ColorScheme = Colors.Base;
 
-            var okButton = new Button("OK")
-            {
-                X = Pos.Center() - 10,
-                Y = Pos.Bottom(validationLabel) + 1
-            };
-            var cancelButton = new Button("Cancel")
-            {
-                X = Pos.Center() + 10,
-                Y = Pos.Bottom(validationLabel) + 1
-            };
+            var okButton = new Button();
+            okButton.Text = "OK";
+            okButton.X = Pos.Center() - 10;
+            okButton.Y = Pos.Bottom(validationLabel) + 1;
+
+            var cancelButton = new Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.X = Pos.Center() + 10;
+            cancelButton.Y = Pos.Bottom(validationLabel) + 1;
 
             // Add labels
-            dialog.Add(
-                new Label("Property Name:") { X = 0, Y = 0 },
-                propertyNameField,
-                new Label("Property Type:") { X = 0, Y = 2 },
-                propertyTypeDropDown,
-                new Label("Property Value (optional):") { X = 0, Y = 11 },
-                propertyValueField,
-                validationLabel,
-                okButton,
-                cancelButton
-            );
+            var nameLabel = new Label();
+            nameLabel.Text = "Property Name:";
+            nameLabel.X = 0;
+            nameLabel.Y = 0;
+
+            var typeLabel = new Label();
+            typeLabel.Text = "Property Type:";
+            typeLabel.X = 0;
+            typeLabel.Y = 2;
+
+            var valueLabel = new Label();
+            valueLabel.Text = "Property Value (optional):";
+            valueLabel.X = 0;
+            valueLabel.Y = 11;
+
+            dialog.Add(nameLabel, propertyNameField, typeLabel, propertyTypeDropDown, valueLabel, propertyValueField, validationLabel, okButton, cancelButton);
 
             // Set up event handlers
             propertyTypeDropDown.SelectedItemChanged += (sender, e) => {
@@ -1019,7 +1029,7 @@ namespace TUIJsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Clicked += () => {
+            okButton.Accept += (sender, e) => {
                 var name = propertyNameField.Text.ToString();
                 var type = propertyTypeDropDown.Source.ToList()[propertyTypeDropDown.SelectedItem];
                 var value = propertyValueField.Text.ToString();
@@ -1035,7 +1045,7 @@ namespace TUIJsonEditorExample
                 else
                 {
                     // Create the new node
-                    var newNode = TUIJsonNodeFactory.CreateNewNode(type, value);
+                    var newNode = TUIJsonNodeFactory.CreateNewNode((string)type, value);
 
                     // If it's an Image type with no value, open the image upload dialog
                     if (type == "Image" && string.IsNullOrEmpty(value))
@@ -1051,10 +1061,12 @@ namespace TUIJsonEditorExample
                     RebuildContainer(editorPanel, container);
                     Application.RequestStop();
                 }
+                e.Handled = true;
             };
 
-            cancelButton.Clicked += () => {
+            cancelButton.Accept += (sender, e) => {
                 Application.RequestStop();
+                e.Handled = true;
             };
 
             Application.Run(dialog);
@@ -1203,13 +1215,12 @@ namespace TUIJsonEditorExample
             };
 
             // Add a button to add new items
-            var addButton = new Button("Add Item")
-            {
-                X = 0,
-                Y = Pos.Top(container),
-                Width = 10
-            };
-            addButton.Clicked += (sender, e) => AddItem(editorPanel, container);
+            var addButton = new Button();
+            addButton.Text = "Add Item";
+            addButton.X = 0;
+            addButton.Y = Pos.Top(container);
+            addButton.Width = 10;
+            addButton.Accept += (sender, e) => { AddItem(editorPanel, container); e.Handled = true; };
             container.Add(addButton);
 
             // Add controls for each item
@@ -1236,12 +1247,11 @@ namespace TUIJsonEditorExample
             };
 
             // Item index label
-            var indexLabel = new Label($"[{index}]")
-            {
-                X = 0,
-                Y = 0,
-                Width = 8
-            };
+            var indexLabel = new Label();
+            indexLabel.Text = $"[{index}]";
+            indexLabel.X = 0;
+            indexLabel.Y = 0;
+            indexLabel.Width = 8;
             row.Add(indexLabel);
 
             // Create a container for the value control
@@ -1266,13 +1276,12 @@ namespace TUIJsonEditorExample
             row.Add(valueContainer);
 
             // Delete button
-            var deleteButton = new Button("×")
-            {
-                X = Pos.Right(valueContainer) + 1,
-                Y = 0,
-                Width = 3
-            };
-            deleteButton.Clicked += (sender, e) => DeleteItem(editorPanel, index);
+            var deleteButton = new Button();
+            deleteButton.Text = "×";
+            deleteButton.X = Pos.Right(valueContainer) + 1;
+            deleteButton.Y = 0;
+            deleteButton.Width = 3;
+            deleteButton.Accept += (sender, e) => { DeleteItem(editorPanel, index); e.Handled = true; };
             row.Add(deleteButton);
 
             // Set the height of the row based on the tallest child
@@ -1292,52 +1301,48 @@ namespace TUIJsonEditorExample
                 Height = Dim.Percent(60)
             };
 
-            var itemTypeDropDown = new ListView()
-            {
-                X = 0,
-                Y = 1,
-                Width = Dim.Fill(),
-                Height = 8,
-                Source = new List<string> { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" }
-            };
+            var itemTypeDropDown = new ListView();
+            itemTypeDropDown.X = 0;
+            itemTypeDropDown.Y = 1;
+            itemTypeDropDown.Width = Dim.Fill();
+            itemTypeDropDown.Height = 8;
+            itemTypeDropDown.Source = new ListWrapper(new List<string> { "String", "Number", "Boolean", "Date", "Image", "Object", "Array", "Null" });
             itemTypeDropDown.SelectedItem = 0;
 
-            var itemValueField = new TextField("")
-            {
-                X = 0,
-                Y = 10,
-                Width = Dim.Fill()
-            };
+            var itemValueField = new TextField();
+            itemValueField.X = 0;
+            itemValueField.Y = 10;
+            itemValueField.Width = Dim.Fill();
 
-            var validationLabel = new Label("")
-            {
-                X = 0,
-                Y = 12,
-                Width = Dim.Fill(),
-                TextColor = Color.Red
-            };
+            var validationLabel = new Label();
+            validationLabel.X = 0;
+            validationLabel.Y = 12;
+            validationLabel.Width = Dim.Fill();
+            // Use a color scheme with red text for errors
+            //validationLabel.ColorScheme = Colors.Base;
 
-            var okButton = new Button("OK")
-            {
-                X = Pos.Center() - 10,
-                Y = Pos.Bottom(validationLabel) + 1
-            };
-            var cancelButton = new Button("Cancel")
-            {
-                X = Pos.Center() + 10,
-                Y = Pos.Bottom(validationLabel) + 1
-            };
+            var okButton = new Button();
+            okButton.Text = "OK";
+            okButton.X = Pos.Center() - 10;
+            okButton.Y = Pos.Bottom(validationLabel) + 1;
+
+            var cancelButton = new Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.X = Pos.Center() + 10;
+            cancelButton.Y = Pos.Bottom(validationLabel) + 1;
 
             // Add labels
-            dialog.Add(
-                new Label("Item Type:") { X = 0, Y = 0 },
-                itemTypeDropDown,
-                new Label("Item Value (optional):") { X = 0, Y = 9 },
-                itemValueField,
-                validationLabel,
-                okButton,
-                cancelButton
-            );
+            var typeLabel = new Label();
+            typeLabel.Text = "Item Type:";
+            typeLabel.X = 0;
+            typeLabel.Y = 0;
+
+            var valueLabel = new Label();
+            valueLabel.Text = "Item Value (optional):";
+            valueLabel.X = 0;
+            valueLabel.Y = 9;
+
+            dialog.Add(typeLabel, itemTypeDropDown, valueLabel, itemValueField, validationLabel, okButton, cancelButton);
 
             // Set up event handlers
             itemTypeDropDown.SelectedItemChanged += (sender, e) => {
@@ -1382,12 +1387,12 @@ namespace TUIJsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Clicked += () => {
+            okButton.Accept += (sender, e) => {
                 var type = itemTypeDropDown.Source.ToList()[itemTypeDropDown.SelectedItem];
                 var value = itemValueField.Text.ToString();
 
                 // Create the new node
-                var newNode = TUIJsonNodeFactory.CreateNewNode(type, value);
+                var newNode = TUIJsonNodeFactory.CreateNewNode((string)type, value);
 
                 // If it's an Image type with no value, open the image upload dialog
                 if (type == "Image" && string.IsNullOrEmpty(value))
@@ -1402,10 +1407,12 @@ namespace TUIJsonEditorExample
                 // Rebuild the UI
                 RebuildContainer(editorPanel, container);
                 Application.RequestStop();
+                e.Handled = true;
             };
 
-            cancelButton.Clicked += () => {
+            cancelButton.Accept += (sender, e) => {
                 Application.RequestStop();
+                e.Handled = true;
             };
 
             Application.Run(dialog);
@@ -1522,18 +1529,18 @@ namespace TUIJsonEditorExample
             if (Value.StartsWith("button:"))
             {
                 var buttonText = Value.Substring(7); // Remove "button:" prefix
-                var button = new Button(buttonText)
-                {
-                    X = 0,
-                    Y = 0,
-                    Width = Dim.Fill()
-                };
-                button.Clicked += () =>
+                var button = new Button();
+                button.Text = buttonText;
+                button.X = 0;
+                button.Y = 0;
+                button.Width = Dim.Fill();
+                button.Accept += (sender, e) =>
                 {
                     if (editorPanel.AppMode)
                     {
                         TUIFullJsonEditorPanel.Log($"[App Mode] Button '{buttonText}' clicked");
                     }
+                    e.Handled = true;
                 };
                 return button;
             }
@@ -1553,12 +1560,11 @@ namespace TUIJsonEditorExample
                     };
 
                     // Add the date field
-                    var dateField = new TextField(dateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"))
-                    {
-                        X = 0,
-                        Y = 0,
-                        Width = Dim.Fill()
-                    };
+                    var dateField = new TextField();
+                    dateField.Text = dateTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    dateField.X = 0;
+                    dateField.Y = 0;
+                    dateField.Width = Dim.Fill();
 
                     // In app mode, make the field read-only but still clickable to log
                     if (editorPanel.AppMode)
@@ -1581,7 +1587,7 @@ namespace TUIJsonEditorExample
                     container.Add(dateField);
 
                     // Add buttons in a horizontal layout
-                    var buttonContainer = new View()
+                    var _buttonContainer = new View()
                     {
                         X = 0,
                         Y = Pos.Bottom(dateField),
@@ -1590,33 +1596,25 @@ namespace TUIJsonEditorExample
                     };
 
                     // Add Set/Edit Image button
-                    var imageButton = new Button("Set/Edit Image")
-                    {
-                        X = 0,
-                        Y = 0,
-                        Width = 15
-                    };
-                    imageButton.Clicked += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
-                        Value = newValue;
-                        RefreshParentContainer();
-                    });
-                    buttonContainer.Add(imageButton);
+                    var _imageButton = new Button();
+                    _imageButton.Text = "Set/Edit Image";
+                    _imageButton.X = 0;
+                    _imageButton.Y = 0;
+                    _imageButton.Width = 15;
+                    _imageButton.Accept += (s, e) => { UploadImageAsBase64(_editorPanel, (newValue) => { Value = newValue; RefreshParentContainer(); }); e.Handled = true; };
+                    _buttonContainer.Add(_imageButton);
 
                     // Add "Add text instead" button
-                    var textButton = new Button("Add text instead")
-                    {
-                        X = Pos.Right(imageButton) + 1,
-                        Y = 0,
-                        Width = 15
-                    };
-                    textButton.Clicked += (s, e) => {
-                        Value = ""; // Reset to empty string
-                        RefreshParentContainer();
-                    };
-                    buttonContainer.Add(textButton);
+                    var textButton = new Button();
+                    textButton.Text = "Add text instead";
+                    textButton.X = Pos.Right(_imageButton) + 1;
+                    textButton.Y = 0;
+                    textButton.Width = 15;
+                    textButton.Accept += (s, e) => { Value = ""; RefreshParentContainer(); e.Handled = true; };
+                    _buttonContainer.Add(textButton);
 
-                    container.Add(buttonContainer);
-                    container.Height = dateField.Frame.Height + buttonContainer.Frame.Height;
+                    container.Add(_buttonContainer);
+                    container.Height = dateField.Frame.Height + _buttonContainer.Frame.Height;
 
                     return container;
                 }
@@ -1635,12 +1633,11 @@ namespace TUIJsonEditorExample
             };
 
             // Add text field
-            var textField = new TextField(Value ?? "")
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill()
-            };
+            var textField = new TextField();
+            textField.Text = Value ?? "";
+            textField.X = 0;
+            textField.Y = 0;
+            textField.Width = Dim.Fill();
             textField.TextChanged += (sender, e) => {
                 Value = textField.Text.ToString();
                 // Don't refresh on every text change, only when needed
@@ -1657,26 +1654,21 @@ namespace TUIJsonEditorExample
             };
 
             // Add Set/Edit Image button for all text fields
-            var imageButton = new Button("Set/Edit Image")
-            {
-                X = 0,
-                Y = 0,
-                Width = 15
-            };
-            imageButton.Clicked += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
-                Value = newValue;
-                RefreshParentContainer();
-            });
+            var imageButton = new Button();
+            imageButton.Text = "Set/Edit Image";
+            imageButton.X = 0;
+            imageButton.Y = 0;
+            imageButton.Width = 15;
+            imageButton.Accept += (s, e) => { UploadImageAsBase64(_editorPanel, (newValue) => { Value = newValue; RefreshParentContainer(); }); e.Handled = true; };
             buttonContainer.Add(imageButton);
 
             // Add Set Date button for all text fields
-            var dateButton = new Button("Set Date")
-            {
-                X = Pos.Right(imageButton) + 1,
-                Y = 0,
-                Width = 10
-            };
-            dateButton.Clicked += (s, e) => SetDate();
+            var dateButton = new Button();
+            dateButton.Text = "Set Date";
+            dateButton.X = Pos.Right(imageButton) + 1;
+            dateButton.Y = 0;
+            dateButton.Width = 10;
+            dateButton.Accept += (s, e) => { SetDate(); e.Handled = true; };
             buttonContainer.Add(dateButton);
 
             textContainer.Add(buttonContainer);
@@ -1696,8 +1688,9 @@ namespace TUIJsonEditorExample
                 if (IsBase64Image(Value, out TUIImageType type) && type != TUIImageType.Unknown)
                 {
                     byte[] imageBytes = Convert.FromBase64String(Value);
-                    var imageLabel = new Label($"Base64 Image: {imageBytes.Length} bytes, Type: {type}")
+                    var imageLabel = new Label()
                     {
+                        Text = $"Base64 Image: {imageBytes.Length} bytes, Type: {type}",
                         X = 0,
                         Y = 0,
                         Width = Dim.Fill()
@@ -1716,8 +1709,9 @@ namespace TUIJsonEditorExample
                 else if (IsImageUrl(Value))
                 {
                     // For URLs, show the URL as a label
-                    var urlLabel = new Label($"URL: {Value}")
+                    var urlLabel = new Label()
                     {
+                        Text = $"URL: {Value}",
                         X = 0,
                         Y = 0,
                         Width = Dim.Fill()
@@ -1734,16 +1728,12 @@ namespace TUIJsonEditorExample
                     Height = 1
                 };
 
-                var textInsteadButton = new Button("Add text instead")
-                {
-                    X = 0,
-                    Y = 0,
-                    Width = 15
-                };
-                textInsteadButton.Clicked += (s, e) => {
-                    Value = ""; // Reset to empty string
-                    RefreshParentContainer();
-                };
+                var textInsteadButton = new Button();
+                textInsteadButton.Text = "Add text instead";
+                textInsteadButton.X = 0;
+                textInsteadButton.Y = 0;
+                textInsteadButton.Width = 15;
+                textInsteadButton.Accept += (s, e) => { Value = ""; RefreshParentContainer(); e.Handled = true; };
                 imageButtonContainer.Add(textInsteadButton);
 
                 imageContainer.Add(imageButtonContainer);
@@ -1813,7 +1803,7 @@ namespace TUIJsonEditorExample
             var current = _parentContainer;
             while (current != null)
             {
-                // Check if current control is a View with an item control
+                // Check if Current control is a View with an item control
                 if (current is View view && view.Subviews.Count > 0)
                 {
                     var firstItem = view.Subviews[0];
@@ -1842,34 +1832,32 @@ namespace TUIJsonEditorExample
                 Height = Dim.Percent(50)
             };
 
-            var dateField = new TextField(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"))
-            {
-                X = 0,
-                Y = 1,
-                Width = Dim.Fill()
-            };
+            var dateField = new TextField();
+            dateField.Text = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            dateField.X = 0;
+            dateField.Y = 1;
+            dateField.Width = Dim.Fill();
 
-            var okButton = new Button("OK")
-            {
-                X = Pos.Center() - 10,
-                Y = Pos.Bottom(dateField) + 1
-            };
-            var cancelButton = new Button("Cancel")
-            {
-                X = Pos.Center() + 10,
-                Y = Pos.Bottom(dateField) + 1
-            };
+            var okButton = new Button();
+            okButton.Text = "OK";
+            okButton.X = Pos.Center() - 10;
+            okButton.Y = Pos.Bottom(dateField) + 1;
+
+            var cancelButton = new Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.X = Pos.Center() + 10;
+            cancelButton.Y = Pos.Bottom(dateField) + 1;
 
             // Add labels
-            dialog.Add(
-                new Label("Enter a date (yyyy-MM-ddTHH:mm:ssZ):") { X = 0, Y = 0 },
-                dateField,
-                okButton,
-                cancelButton
-            );
+            var label = new Label();
+            label.Text = "Enter a date (yyyy-MM-ddTHH:mm:ssZ):";
+            label.X = 0;
+            label.Y = 0;
+
+            dialog.Add(label, dateField, okButton, cancelButton);
 
             // Set up event handlers
-            okButton.Clicked += () => {
+            okButton.Accept += (sender, e) => {
                 if (DateTime.TryParse(dateField.Text.ToString(), out DateTime date))
                 {
                     Value = date.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -1880,10 +1868,12 @@ namespace TUIJsonEditorExample
                 {
                     MessageBox.ErrorQuery("Error", "Invalid date format", "OK");
                 }
+                e.Handled = true;
             };
 
-            cancelButton.Clicked += () => {
+            cancelButton.Accept += (sender, e) => {
                 Application.RequestStop();
+                e.Handled = true;
             };
 
             Application.Run(dialog);
@@ -2053,34 +2043,31 @@ namespace TUIJsonEditorExample
                 Height = Dim.Percent(30)
             };
 
-            var pathField = new TextField("")
-            {
-                X = 0,
-                Y = 1,
-                Width = Dim.Fill()
-            };
+            var pathField = new TextField();
+            pathField.X = 0;
+            pathField.Y = 1;
+            pathField.Width = Dim.Fill();
 
-            var okButton = new Button("OK")
-            {
-                X = Pos.Center() - 10,
-                Y = Pos.Bottom(pathField) + 1
-            };
-            var cancelButton = new Button("Cancel")
-            {
-                X = Pos.Center() + 10,
-                Y = Pos.Bottom(pathField) + 1
-            };
+            var okButton = new Button();
+            okButton.Text = "OK";
+            okButton.X = Pos.Center() - 10;
+            okButton.Y = Pos.Bottom(pathField) + 1;
+
+            var cancelButton = new Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.X = Pos.Center() + 10;
+            cancelButton.Y = Pos.Bottom(pathField) + 1;
 
             // Add labels
-            dialog.Add(
-                new Label("Enter path to image file:") { X = 0, Y = 0 },
-                pathField,
-                okButton,
-                cancelButton
-            );
+            var label = new Label();
+            label.Text = "Enter path to image file:";
+            label.X = 0;
+            label.Y = 0;
+
+            dialog.Add(label, pathField, okButton, cancelButton);
 
             // Set up event handlers
-            okButton.Clicked += () => {
+            okButton.Accept += (sender, e) => {
                 try
                 {
                     string path = pathField.Text.ToString();
@@ -2115,11 +2102,13 @@ namespace TUIJsonEditorExample
                     TUIFullJsonEditorPanel.Log($"[Upload Image] Error: {ex.Message}");
                     MessageBox.ErrorQuery("Error", $"Error loading image: {ex.Message}", "OK");
                 }
+                e.Handled = true;
             };
 
-            cancelButton.Clicked += () => {
+            cancelButton.Accept += (sender, e) => {
                 TUIFullJsonEditorPanel.Log("[Upload Image] User cancelled image selection");
                 Application.RequestStop();
+                e.Handled = true;
             };
 
             Application.Run(dialog);
@@ -2135,12 +2124,11 @@ namespace TUIJsonEditorExample
 
         public View CreateControl(TUIFullJsonEditorPanel editorPanel)
         {
-            var textField = new TextField(Value.ToString())
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill()
-            };
+            var textField = new TextField();
+            textField.Text = Value.ToString();
+            textField.X = 0;
+            textField.Y = 0;
+            textField.Width = Dim.Fill();
 
             textField.TextChanged += (sender, e) => {
                 if (Value is long || (Value is double && double.TryParse(textField.Text.ToString(), out double d)))
@@ -2189,15 +2177,13 @@ namespace TUIJsonEditorExample
 
         public View CreateControl(TUIFullJsonEditorPanel editorPanel)
         {
-            var checkBox = new CheckBox("")
-            {
-                X = 0,
-                Y = 0,
-                Checked = Value
-            };
+            var checkBox = new CheckBox();
+            checkBox.X = 0;
+            checkBox.Y = 0;
+            checkBox.CheckedState = Value ? CheckState.Checked : CheckState.UnChecked;
 
-            checkBox.Toggled += (sender, e) => {
-                Value = checkBox.Checked;
+            checkBox.CheckedStateChanging += (sender, e) => {
+                Value = checkBox.CheckedState == CheckState.Checked;
             };
 
             return checkBox;
@@ -2221,13 +2207,11 @@ namespace TUIJsonEditorExample
     {
         public View CreateControl(TUIFullJsonEditorPanel editorPanel)
         {
-            return new Label("null")
-            {
-                X = 0,
-                Y = 0,
-                ColorScheme = Colors.Base,
-                TextColor = Color.Gray
-            };
+            var label = new Label();
+            label.Text = "null";
+            label.X = 0;
+            label.Y = 0;
+            return label;
         }
 
         public string ToJson()
@@ -2249,5 +2233,74 @@ namespace TUIJsonEditorExample
         Unknown,
         Jpeg,
         Png
+    }
+
+    // Helper class for ListView data source
+    // Helper class for ListView data source
+    // Helper class for ListView data source
+    public class ListWrapper : IListDataSource
+    {
+        private List<string> _list;
+        private bool _suspendCollectionChangedEvent;
+
+        public ListWrapper(List<string> list)
+        {
+            _list = list;
+        }
+
+        public int Count => _list.Count;
+
+        public bool IsMarked(int item)
+        {
+            return false;
+        }
+
+        public void SetMark(int item, bool value)
+        {
+            // Not implemented
+        }
+
+        public string this[int item]
+        {
+            get => _list[item];
+            set => _list[item] = value;
+        }
+
+        public int Length => _list.Count;
+
+        public void Render(ListView container, ConsoleDriver driver, bool selected, int item, int col, int line, int width, int start = 0)
+        {
+            driver.AddStr(_list[item].Substring(start, Math.Min(_list[item].Length - start, width)));
+        }
+
+        // Implementation of ToList method
+        public IList ToList()
+        {
+            return _list;
+        }
+
+        // Implementation of CollectionChanged event
+        public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        // Implementation of SuspendCollectionChangedEvent as a property
+        public bool SuspendCollectionChangedEvent
+        {
+            get => _suspendCollectionChangedEvent;
+            set => _suspendCollectionChangedEvent = value;
+        }
+
+        // Helper method to trigger collection changed events when not suspended
+        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            if (!_suspendCollectionChangedEvent && CollectionChanged != null)
+            {
+                CollectionChanged(this, e);
+            }
+        }
+
+        public void Dispose()
+        {
+            // Not implemented
+        }
     }
 }
