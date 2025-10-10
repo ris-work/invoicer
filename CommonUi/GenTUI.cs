@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Terminal.Gui;
+using TUIJsonEditorExample;
 
 namespace CommonUi
 {
@@ -17,13 +19,15 @@ namespace CommonUi
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
             IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
+            string OrigJson,
             string? IdentityColumn
         )
         {
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
             Enabled = true;
-            Add(
+            Add(new TUIFullJsonEditorPanel(OrigJson, showHeader: true) { Width = 80, Height = 80});
+            /*Add(
                 new GenTUI(
                     Inputs,
                     SaveNewHandler,
@@ -31,7 +35,7 @@ namespace CommonUi
                     InputHandler,
                     IdentityColumn
                 )
-            );
+            );*/
             LayoutSubviews();
         }
     }

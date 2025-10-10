@@ -893,6 +893,7 @@ Terminal.Gui.Application.Run(
             return 100;
         },
         ActionsMap,
-        null
+        null,
+        SampleJsonNested
     )
 );
