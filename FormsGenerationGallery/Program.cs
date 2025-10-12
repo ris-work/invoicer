@@ -882,8 +882,7 @@ var mauiApp = mauiBuilder.ConfigureFonts().Build();
 //Microsoft.Maui.Controls.Application.Current.OpenWindow(newMauiWindow);
 
 Terminal.Gui.Application.Run(
-    new GenTopLevel(
-        SimpleJsonToUISerialization.ConvertToUISerialization(SampleJson),
+    new GenTopLevel(new Dictionary<string, (string, object, string)>(),//SimpleJsonToUISerialization.ConvertToUISerialization(SampleJsonNested),
         (_) =>
         {
             return 100;
@@ -893,7 +892,8 @@ Terminal.Gui.Application.Run(
             return 100;
         },
         ActionsMap,
-        null,
-        SampleJsonNested
+        
+        SampleJsonNested,
+        null
     )
 );

@@ -26,7 +26,7 @@ namespace CommonUi
             //Add(new Button() { Text = "Hello" });
             //Add(new Button() { Text = "Hello" }, new Button() { Text = "Hello" }, new Button() { Text = "Hello" });
             Enabled = true;
-            Add(new TUIFullJsonEditorPanel(OrigJson, showHeader: true) { Width = 80, Height = 80});
+            //Add(new TUIFullJsonEditorPanel(OrigJson, showHeader: true) { Width = 80, Height = 80});
             /*Add(
                 new GenTUI(
                     Inputs,
@@ -36,7 +36,37 @@ namespace CommonUi
                     IdentityColumn
                 )
             );*/
+            //LayoutSubviews();
+
+            // Create a scroll view
+            var scrollView = new ScrollView()
+            {
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = Dim.Fill(),
+                ShowVerticalScrollIndicator = true,
+                ShowHorizontalScrollIndicator = true
+            };
+
+            // Create the JSON editor as a child of the scroll view
+            var jsonEditor = new TUIFullJsonEditorPanel(OrigJson, showHeader: true)
+            {
+                X = 0,
+                Y = 0,
+                Width = 150,
+                Height = 90
+            };
+
+            // Add the JSON editor to the scroll view
+            scrollView.Add(jsonEditor);
+
+            // Add the scroll view to the top level
+            Add(scrollView);
+
             LayoutSubviews();
+
+
         }
     }
 

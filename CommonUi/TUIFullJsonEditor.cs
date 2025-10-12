@@ -32,7 +32,23 @@ namespace TUIJsonEditorExample
         public ITUIJsonNode RootNode => _rootNode;
 
         // Add a logging delegate
-        public static TUILogDelegate Log = message => Console.WriteLine(message);
+        private static readonly object _logLock = new object();
+
+        public static TUILogDelegate Log = message =>
+        {
+            lock (_logLock)
+            {
+                try
+                {
+                    File.AppendAllText("tui.log", $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}{Environment.NewLine}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error writing to log file: {ex.Message}");
+                    Console.WriteLine(message); // Fallback to console if file writing fails
+                }
+            }
+        };
 
         // JSON serialization options for reuse
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -899,10 +915,18 @@ namespace TUIJsonEditorExample
             var valueControl = value.CreateControl(editorPanel);
             valueContainer.Add(valueControl);
 
-            // Set up parent references for string nodes
+            // Set up parent references for all node types
             if (value is TUIJsonStringNode stringNode)
             {
                 stringNode.SetParentReferences(editorPanel, valueContainer, key, -1);
+            }
+            else if (value is TUIJsonObjectNode objectNode)
+            {
+                objectNode.SetParentReferences(editorPanel, valueContainer);
+            }
+            else if (value is TUIJsonArrayNode arrayNode)
+            {
+                arrayNode.SetParentReferences(editorPanel, valueContainer);
             }
 
             row.Add(valueContainer);
@@ -922,6 +946,7 @@ namespace TUIJsonEditorExample
 
             return row;
         }
+
 
         private void AddProperty(TUIFullJsonEditorPanel editorPanel, View container)
         {
@@ -1267,10 +1292,18 @@ namespace TUIJsonEditorExample
             var valueControl = item.CreateControl(editorPanel);
             valueContainer.Add(valueControl);
 
-            // Set up parent references for string nodes
+            // Set up parent references for all node types
             if (item is TUIJsonStringNode stringNode)
             {
                 stringNode.SetParentReferences(editorPanel, valueContainer, null, index);
+            }
+            else if (item is TUIJsonObjectNode objectNode)
+            {
+                objectNode.SetParentReferences(editorPanel, valueContainer);
+            }
+            else if (item is TUIJsonArrayNode arrayNode)
+            {
+                arrayNode.SetParentReferences(editorPanel, valueContainer);
             }
 
             row.Add(valueContainer);
