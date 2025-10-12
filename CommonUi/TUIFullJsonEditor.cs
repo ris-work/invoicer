@@ -135,15 +135,31 @@ namespace TUIJsonEditorExample
         {
             Title = "JSON Editor";
 
+            // Create the main container
+            var mainContainer = new View()
+            {
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = Dim.Fill()
+            };
+
+            // Create header if needed
+            if (_showHeader)
+            {
+                var header = CreateHeader();
+                mainContainer.Add(header);
+            }
+
             // Create a scrollable view for the content
             _scrollView = new ScrollView()
             {
                 ShowVerticalScrollIndicator = true,
                 ShowHorizontalScrollIndicator = true,
                 X = 0,
-                Y = 0,
+                Y = _showHeader ? Pos.Bottom(mainContainer.Subviews[0]) : 0,
                 Width = Dim.Fill(),
-                Height = Dim.Fill()
+                Height = Dim.Fill() // Fill the remaining space
             };
 
             // Create the content container
@@ -152,32 +168,19 @@ namespace TUIJsonEditorExample
                 X = 0,
                 Y = 0,
                 Width = Dim.Fill(),
-                Height = Dim.Fill()
+                Height = Dim.Auto() // Let the content determine the height
             };
-
-            // Create a vertical layout for the content
-            var layout = new View()
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill(),
-                Height = Dim.Auto()
-            };
-
-            // Create header if needed
-            if (_showHeader)
-            {
-                var header = CreateHeader();
-                layout.Add(header);
-            }
 
             // Add the root node's control to the content
             var rootControl = _rootNode.CreateControl(this);
-            layout.Add(rootControl);
+            rootControl.X = 0;
+            rootControl.Y = 0;
+            rootControl.Width = Dim.Fill();
+            _contentView.Add(rootControl);
 
-            _contentView.Add(layout);
             _scrollView.Add(_contentView);
-            Add(_scrollView);
+            mainContainer.Add(_scrollView);
+            Add(mainContainer);
 
             // Set control states based on app mode
             UpdateControlStates();
@@ -217,28 +220,36 @@ namespace TUIJsonEditorExample
                 X = 0,
                 Y = 0,
                 Width = Dim.Fill(),
-                Height = 3
+                Height = 3 // Fixed height for the header
             };
 
             var showButton = new Button();
             showButton.Text = "Show JSON";
             showButton.X = 0;
             showButton.Y = 0;
+            showButton.Width = 15;
+            showButton.Height = 1;
 
             var loadButton = new Button();
             loadButton.Text = "Load JSON";
-            loadButton.X = 20;
+            loadButton.X = Pos.Right(showButton) + 2;
             loadButton.Y = 0;
+            loadButton.Width = 15;
+            loadButton.Height = 1;
 
             var validateButton = new Button();
             validateButton.Text = "Validate";
-            validateButton.X = 40;
+            validateButton.X = Pos.Right(loadButton) + 2;
             validateButton.Y = 0;
+            validateButton.Width = 15;
+            validateButton.Height = 1;
 
             var refreshButton = new Button();
             refreshButton.Text = "Refresh UI";
-            refreshButton.X = 60;
+            refreshButton.X = Pos.Right(validateButton) + 2;
             refreshButton.Y = 0;
+            refreshButton.Width = 15;
+            refreshButton.Height = 1;
 
             // Attach event handlers
             showButton.Accept += (sender, e) => { ShowJsonDialog(sender, e); e.Handled = true; };
