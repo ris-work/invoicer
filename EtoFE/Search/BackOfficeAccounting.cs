@@ -23,6 +23,7 @@ namespace EtoFE.Search
         public static string[]? SearchBatches(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Inv, Owner, false, null, ["Itemcode", "Batchcode"]);
         public static string[]? SearchBatches(Control Owner, long Itemcode) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Inv.Where(e => e.Itemcode == Itemcode).ToList(), Owner, false, null, ["Itemcode", "Batchcode"]);
         public static string[]? SearchVatCategories(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.VCat, Owner, false, null, ["VatCategoryId"]);
+        public static string[]? SearchCustomers(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.PersonalInfo, Owner, false, null, ["Id"]);
 
         // New search methods with enhanced filtering options
         public static string[]? SearchAccountsByType(Control Owner, long accountType)
@@ -135,5 +136,9 @@ namespace EtoFE.Search
                 .FirstOrDefault("Unknown Batch");
         public static string? LookupVatCategory(long id) => GlobalState.BAT.VCat.Where(v => v.VatCategoryId == id)
             .Select(v => v.VatName).FirstOrDefault("Unknown VAT Category");
+        public static string? LookupCustomerName(long id) => GlobalState.BAT.PersonalInfo.Where(v => v.Id == id)
+            .Select(v => v.Name).FirstOrDefault("Unknown Customer");
+        public static string? LookupCustomerImage(long id) => GlobalState.BAT.PersonalImages.Where(v => v.PiiId == id)
+            .Select(v => v.Image).FirstOrDefault(string.Empty);
     }
 }

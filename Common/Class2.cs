@@ -22,6 +22,9 @@ namespace common
     [JsonSerializable(typeof(List<Inventory>))]
     [JsonSerializable(typeof(List<Catalogue>))]
     [JsonSerializable(typeof(List<VatCategory>))]
+    [JsonSerializable(typeof(List<Pii>))]
+    [JsonSerializable(typeof(List<PiiImage>))]
+    [JsonSerializable(typeof(List<InventoryImage>))]
     [JsonSourceGenerationOptions(IncludeFields = true)]
     public class BackOfficeAccountingDataTransfer
     {
@@ -58,6 +61,12 @@ namespace common
         [JsonInclude]
         public List<Inventory> Inv;
         [JsonInclude]
+        public List<InventoryImage> InvImages;
+        [JsonInclude]
         public List<VatCategory> VCat;
+        [JsonInclude]
+        public List<Pii> PersonalInfo;
+        [JsonInclude]
+        public List<PiiImage> PersonalImages;
     }
 }

@@ -21,6 +21,9 @@ namespace InvoicerBackend
                     BAT.RSchd = ctx.ScheduledReceipts.ToList();
                     BAT.AccJI = ctx.AccountsJournalInformations.ToList();
                     BAT.UserAccounts = ctx.Users.ToList();
+                    BAT.PersonalInfo = ctx.Piis.ToList();
+                    BAT.PersonalImages = ctx.PiiImages.ToList();
+                    BAT.InvImages = ctx.InventoryImages.ToList();
                 }
                 Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
                 return BAT;
