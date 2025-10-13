@@ -22,9 +22,9 @@ namespace EtoFE.Panels
         List<Sale> sales;
         List<Receipt> receipts;
         IssuedInvoice invoice;
-        List<Inventory> availableBatches = new List<Inventory>();
+        List<Inventory> selectedBatches = new List<Inventory>(); // Changed from availableBatches
 
-        // UI Controls - Invoice Information (NA fields need buttons)
+        // UI Controls - Invoice Information
         TextBox tbCustomer;
         Button btnCustomerSearch;
         Label lblCustomerName;
@@ -36,19 +36,19 @@ namespace EtoFE.Panels
         CheckBox cbIsPosted;
         TextArea taRemarks;
 
-        // UI Controls - Sales Items (NA fields need buttons)
+        // UI Controls - Sales Items
         GridView saleGrid;
         TextBox tbItem;
         Button btnItemSearch;
         Label lblItemName;
-        TextBox tbInventory;
-        Button btnInventorySearch;
-        Label lblInventoryName;
         TextBox tbQty;
         TextBox tbPrice;
         TextBox tbDisc;
         Button btnSaveSale;
         Button btnResetSale;
+
+        // New gridview to show selected batches
+        GridView batchGrid;
 
         // UI Controls - Summary
         Label lblQtyTot;
@@ -57,7 +57,7 @@ namespace EtoFE.Panels
         TextBox tbPaid;
         Label lblChange;
 
-        // UI Controls - Receipts (NA fields need buttons)
+        // UI Controls - Receipts
         GridView rcptGrid;
         TextBox tbRcptAcct;
         Button btnRcptAcctSearch;
@@ -109,12 +109,10 @@ namespace EtoFE.Panels
 
         void InitializeData()
         {
-            // Initialize with empty data
             sales = new List<Sale> { new Sale() };
             receipts = new List<Receipt> { new Receipt() };
             invoice = new IssuedInvoice();
 
-            // Refresh data from backend
             GlobalState.RefreshBAT();
             GlobalState.RefreshPR();
         }
@@ -125,7 +123,7 @@ namespace EtoFE.Panels
             var ch = ColorSettings.ControlHeight ?? FHeight;
             int hw = (int)Math.Floor(cw * 0.2);
 
-            // Invoice Information Fields (with NA buttons)
+            // Invoice Information Fields
             tbCustomer = new TextBox { Width = cw, Height = ch };
             btnCustomerSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblCustomerName = new Label();
@@ -149,7 +147,7 @@ namespace EtoFE.Panels
                 //PlaceholderText = TranslationHelper.Translate("Remarks")
             };
 
-            // Sales Items Fields (with NA buttons)
+            // Sales grid
             saleGrid = new GridView
             {
                 Width = 600,
@@ -157,55 +155,98 @@ namespace EtoFE.Panels
                 DataStore = sales,
             };
 
-            // Add columns to sales grid
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Name"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.ProductName) },
+                Width = 150
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Item"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Itemcode.ToString()) },
+                Width = 60
             });
             saleGrid.Columns.Add(new GridColumn
             {
-                HeaderText = TranslationHelper.Translate("Inventory"),
+                HeaderText = TranslationHelper.Translate("Batch"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Batchcode.ToString()) },
+                Width = 60
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Qty"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.Quantity.ToString("F2")) },
+                Width = 80
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Price"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.SellingPrice.ToString("C2")) },
+                Width = 80
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Disc%"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.DiscountRate.ToString("F2")) },
+                Width = 60
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("VAT"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.VatAsCharged.ToString("C2")) },
+                Width = 80
             });
             saleGrid.Columns.Add(new GridColumn
             {
                 HeaderText = TranslationHelper.Translate("Total"),
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.TotalEffectiveSellingPrice.ToString("C2")) },
+                Width = 80
             });
+
+            // New batch selection grid
+            batchGrid = new GridView
+            {
+                Width = 600,
+                Height = 100,
+                AllowMultipleSelection = true,
+                DataStore = selectedBatches,
+            };
+
+            batchGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = TranslationHelper.Translate("Batch Code"),
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Batchcode.ToString()) },
+                Width = 80
+            });
+            batchGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = TranslationHelper.Translate("Available"),
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Units.ToString("F2")) },
+                Width = 100
+            });
+            batchGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = TranslationHelper.Translate("MFG Date"),
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.MfgDate?.ToString("yyyy-MM-dd") ?? "") },
+                Width = 100
+            });
+            batchGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = TranslationHelper.Translate("Expiry Date"),
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.ExpDate?.ToString("yyyy-MM-dd") ?? "") },
+                Width = 100
+            });
+            /*batchGrid.Columns.Add(new GridColumn
+            {
+                HeaderText = TranslationHelper.Translate("Cost"),
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Cost?.ToString("C2") ?? "") },
+                Width = 100
+            });*/
 
             tbItem = new TextBox { Width = cw, Height = ch };
             btnItemSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblItemName = new Label();
-
-            tbInventory = new TextBox { Width = cw, Height = ch };
-            btnInventorySearch = new Button { Text = "...", Height = ch, Width = hw };
-            lblInventoryName = new Label();
 
             tbQty = NewTextBox("Quantity");
             tbPrice = NewTextBox("Price");
@@ -231,7 +272,7 @@ namespace EtoFE.Panels
             tbPaid = NewTextBox("Paid");
             lblChange = new Label();
 
-            // Receipts Fields (with NA button)
+            // Receipts Fields
             rcptGrid = new GridView
             {
                 Width = 600,
@@ -275,28 +316,24 @@ namespace EtoFE.Panels
             btnCancel = new Button { Text = TranslationHelper.Translate("Cancel"), Width = cw, Height = ch };
             btnReset = new Button { Text = TranslationHelper.Translate("Reset"), Width = cw, Height = ch };
 
-            // Setup navigation
             SetupNavigation();
         }
 
         void SetupNavigation()
         {
-            // Define NA fields in order - these are the fields that need search
+            // NA fields only include Customer, SalesPerson, and Receipt Account - Item selection triggers batch dialog
             naFieldsInOrder = new List<TextBox>
             {
-                tbCustomer, tbSalesPerson, tbItem, tbInventory, tbRcptAcct
+                tbCustomer, tbSalesPerson, tbRcptAcct
             };
 
             naFieldIndex = naFieldsInOrder.Select((field, index) => new { field, index })
                 .ToDictionary(x => x.field, x => x.index);
 
-            // Map NA textboxes to their search buttons
             naFieldMap = new Dictionary<TextBox, Button>
             {
                 { tbCustomer, btnCustomerSearch },
                 { tbSalesPerson, btnSalesPersonSearch },
-                { tbItem, btnItemSearch },
-                { tbInventory, btnInventorySearch },
                 { tbRcptAcct, btnRcptAcctSearch }
             };
 
@@ -307,7 +344,7 @@ namespace EtoFE.Panels
             {
                 tbCustomer, btnCustomerSearch, tbSalesPerson, btnSalesPersonSearch,
                 tbCurrency, dpInvoiceDate, cbIsPosted, taRemarks,
-                tbItem, btnItemSearch, tbInventory, btnInventorySearch,
+                tbItem, btnItemSearch,
                 tbQty, tbPrice, tbDisc, btnSaveSale, btnResetSale,
                 tbPaid, tbRcptAcct, btnRcptAcctSearch, tbRcptAmt, btnSaveRcpt, btnResetRcpt,
                 btnNew, btnLoad, btnEdit, btnSave, btnCancel, btnReset
@@ -370,15 +407,6 @@ namespace EtoFE.Panels
                         Items = { tbItem, btnItemSearch, lblItemName },
                     }
                 ),
-                (
-                    TranslationHelper.Translate("Inventory:"),
-                    new StackLayout
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 5,
-                        Items = { tbInventory, btnInventorySearch, lblInventoryName },
-                    }
-                ),
                 (TranslationHelper.Translate("Qty:"), tbQty),
                 (TranslationHelper.Translate("Price:"), tbPrice),
                 (TranslationHelper.Translate("Disc%:"), tbDisc),
@@ -431,7 +459,19 @@ namespace EtoFE.Panels
                     new GroupBox
                     {
                         Text = TranslationHelper.Translate("Sales Items"),
-                        Content = new StackLayout { Spacing = 5, Items = { saleGrid, saleForm } },
+                        Content = new StackLayout
+                        {
+                            Spacing = 5,
+                            Items = {
+                                saleGrid,
+                                saleForm,
+                                new GroupBox
+                                {
+                                    Text = TranslationHelper.Translate("Selected Batches (Ordered by Expiry)"),
+                                    Content = batchGrid
+                                }
+                            }
+                        },
                     },
                     new GroupBox { Text = TranslationHelper.Translate("Summary"), Content = summaryPanel },
                     new GroupBox { Text = TranslationHelper.Translate("Payment"), Content = paymentPanel },
@@ -506,12 +546,10 @@ namespace EtoFE.Panels
                 BackOfficeAccounting.SearchUsers, BackOfficeAccounting.LookupUser);
             btnItemSearch.Click += (_, __) => HandleNASearch(tbItem, lblItemName,
                 BackOfficeAccounting.SearchItems, BackOfficeAccounting.LookupItem);
-            btnInventorySearch.Click += (_, __) => HandleNASearchWithParam(tbInventory, lblInventoryName,
-                () => BackOfficeAccounting.SearchBatches(this, ParseLong(tbItem.Text)));
             btnRcptAcctSearch.Click += (_, __) => HandleNASearch(tbRcptAcct, lblAcctName,
                 BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
 
-            // Text change events - validate before lookup
+            // Text change events
             tbCustomer.TextChanged += (_, __) =>
             {
                 var id = ParseLong(tbCustomer.Text);
@@ -526,14 +564,7 @@ namespace EtoFE.Panels
             {
                 var id = ParseLong(tbItem.Text);
                 lblItemName.Text = id > 0 ? BackOfficeAccounting.LookupItem(id) : "";
-                if (id > 0) LoadAvailableBatches();
-            };
-            tbInventory.TextChanged += (_, __) =>
-            {
-                var itemId = ParseLong(tbItem.Text);
-                var batchId = ParseLong(tbInventory.Text);
-                lblInventoryName.Text = (itemId > 0 && batchId > 0) ?
-                    BackOfficeAccounting.LookupBatch(itemId, batchId) : "";
+                if (id > 0) LoadAndSelectBatches(id);
             };
             tbRcptAcct.TextChanged += (_, __) =>
             {
@@ -552,6 +583,124 @@ namespace EtoFE.Panels
             }
         }
 
+        void LoadAndSelectBatches(long itemCode)
+        {
+            selectedBatches.Clear();
+
+            var batches = GlobalState.BAT.Inv
+                .Where(b => b.Itemcode == itemCode)
+                .OrderBy(b => b.ExpDate ?? DateTime.MaxValue)
+                .ToList();
+
+            if (batches.Count == 0)
+            {
+                MessageBox.Show(this, "No available batches for this item", "Warning", MessageBoxType.Warning);
+                return;
+            }
+
+            if (batches.Count == 1)
+            {
+                // Auto-select the single batch
+                selectedBatches.Add(batches[0]);
+                batchGrid.DataStore = null;
+                batchGrid.DataStore = selectedBatches;
+            }
+            else
+            {
+                // Show batch selection dialog
+                var selectedIndices = ShowBatchSelectionDialog(batches);
+                if (selectedIndices != null && selectedIndices.Length > 0)
+                {
+                    foreach (var idx in selectedIndices)
+                    {
+                        if (idx >= 0 && idx < batches.Count)
+                            selectedBatches.Add(batches[idx]);
+                    }
+                    batchGrid.DataStore = null;
+                    batchGrid.DataStore = selectedBatches;
+                }
+            }
+        }
+
+        int[] ShowBatchSelectionDialog(List<Inventory> batches)
+        {
+            var dialog = new Dialog { Title = "Select Batches", Width = 700, Height = 400 };
+
+            var grid = new GridView
+            {
+                AllowMultipleSelection = true,
+                DataStore = batches,
+            };
+
+            grid.Columns.Add(new GridColumn
+            {
+                HeaderText = "Batch Code",
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Batchcode.ToString()) },
+                Width = 80
+            });
+            grid.Columns.Add(new GridColumn
+            {
+                HeaderText = "Available",
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Units.ToString("F2")) },
+                Width = 100
+            });
+            grid.Columns.Add(new GridColumn
+            {
+                HeaderText = "MFG Date",
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.MfgDate?.ToString("yyyy-MM-dd") ?? "") },
+                Width = 100
+            });
+            grid.Columns.Add(new GridColumn
+            {
+                HeaderText = "Expiry Date",
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.ExpDate?.ToString("yyyy-MM-dd") ?? "") },
+                Width = 100
+            });
+            /*grid.Columns.Add(new GridColumn
+            {
+                HeaderText = "Cost",
+                DataCell = new TextBoxCell { Binding = Binding.Delegate<Inventory, string>(b => b.Cost?.ToString("C2") ?? "") },
+                Width = 100
+            });*/
+
+            var btnOK = new Button { Text = "OK" };
+            var btnCancel = new Button { Text = "Cancel" };
+
+            int[] result = null;
+
+            btnOK.Click += (_, __) =>
+            {
+                var selected = grid.SelectedItems.Cast<Inventory>().ToList();
+                result = selected.Select(b => batches.IndexOf(b)).ToArray();
+                dialog.Close();
+            };
+
+            btnCancel.Click += (_, __) => dialog.Close();
+
+            var buttonPanel = new StackLayout
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                HorizontalContentAlignment = HorizontalAlignment.Right,
+                Items = { btnOK, btnCancel }
+            };
+
+            dialog.Content = new StackLayout
+            {
+                Padding = 10,
+                Spacing = 10,
+                Items =
+                {
+                    new Label { Text = "Select one or more batches (ordered by expiry date):" },
+                    grid,
+                    buttonPanel
+                }
+            };
+
+            dialog.ShowModal(this);
+            return result;
+        }
+
         void HandleNASearch(TextBox textBox, Label label, Func<Control, string[]> searchFunc,
             Func<long, string> lookupFunc)
         {
@@ -564,21 +713,8 @@ namespace EtoFE.Panels
             }
         }
 
-        void HandleNASearchWithParam(TextBox textBox, Label label, Func<string[]> searchFunc)
-        {
-            var sel = searchFunc();
-            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
-            {
-                textBox.Text = id.ToString();
-                var itemId = ParseLong(tbItem.Text);
-                label.Text = itemId > 0 ? BackOfficeAccounting.LookupBatch(itemId, id) : "";
-                MoveToNextNAField(textBox);
-            }
-        }
-
         void WireKeyNavigation()
         {
-            // KeyDown for Enter key navigation
             this.KeyDown += (s, e) =>
             {
                 if (isProcessingKey) return;
@@ -605,7 +741,6 @@ namespace EtoFE.Panels
                 }
             };
 
-            // KeyUp for F-keys
             this.KeyUp += (s, e) =>
             {
                 if (isProcessingKey) return;
@@ -683,21 +818,6 @@ namespace EtoFE.Panels
             }
         }
 
-        void LoadAvailableBatches()
-        {
-            long itemCode = ParseLong(tbItem.Text);
-            if (itemCode <= 0)
-            {
-                availableBatches.Clear();
-                return;
-            }
-
-            availableBatches = GlobalState.BAT.Inv
-                .Where(b => b.Itemcode == itemCode)
-                .OrderBy(b => b.ExpDate ?? DateTime.MaxValue)
-                .ToList();
-        }
-
         void AddSale()
         {
             if (!ValidateSaleForm())
@@ -706,35 +826,23 @@ namespace EtoFE.Panels
             long itemCode = ParseLong(tbItem.Text);
             double quantity = ParseDouble(tbQty.Text);
 
-            // Get available batches for this item
-            LoadAvailableBatches();
-
-            if (availableBatches.Count == 0)
+            if (selectedBatches.Count == 0)
             {
-                MessageBox.Show(this, "No available batches for this item", "Error", MessageBoxType.Error);
+                MessageBox.Show(this, "Please select batches for this item", "Error", MessageBoxType.Error);
                 return;
             }
 
-            // If there's only one batch, use it directly
-            if (availableBatches.Count == 1)
-            {
-                var batch = availableBatches[0];
-                tbInventory.Text = batch.Batchcode.ToString();
-                AddSaleWithBatch(itemCode, batch.Batchcode, quantity);
-                return;
-            }
-
-            // If there are multiple batches, select them automatically based on quantity
-            List<(long batchCode, double quantity)> selectedBatches = new List<(long, double)>();
+            // Distribute quantity across selected batches in order
             double remainingQuantity = quantity;
+            List<(long batchCode, double quantity)> batchAllocations = new List<(long, double)>();
 
-            foreach (var batch in availableBatches)
+            foreach (var batch in selectedBatches)
             {
                 if (remainingQuantity <= 0)
                     break;
 
                 double batchQuantity = Math.Min(remainingQuantity, batch.Units);
-                selectedBatches.Add((batch.Batchcode, batchQuantity));
+                batchAllocations.Add((batch.Batchcode, batchQuantity));
                 remainingQuantity -= batchQuantity;
             }
 
@@ -744,48 +852,40 @@ namespace EtoFE.Panels
                 return;
             }
 
-            // Add sales for each selected batch
-            foreach (var (batchCode, batchQuantity) in selectedBatches)
+            // Add sales for each allocated batch
+            foreach (var (batchCode, batchQuantity) in batchAllocations)
             {
-                AddSaleWithBatch(itemCode, batchCode, batchQuantity);
+                var item = GlobalState.BAT.Cat.FirstOrDefault(c => c.Itemcode == itemCode);
+                if (item == null) continue;
+
+                var vatCategory = GlobalState.BAT.VCat.FirstOrDefault(v => v.VatCategoryId == item.DefaultVatCategory);
+                double vatRate = vatCategory?.VatPercentage ?? 0;
+
+                double price = ParseDouble(tbPrice.Text);
+                double discountRate = ParseDouble(tbDisc.Text);
+
+                var sale = new Sale
+                {
+                    Itemcode = itemCode,
+                    Batchcode = batchCode,
+                    Quantity = batchQuantity,
+                    SellingPrice = price,
+                    DiscountRate = discountRate,
+                    ProductName = item.Description,
+                    Discount = batchQuantity * price * discountRate / 100,
+                    VatRatePercentage = vatRate
+                };
+
+                sale.VatAsCharged = (batchQuantity * price - sale.Discount) * vatRate / 100;
+                sale.TotalEffectiveSellingPrice = batchQuantity * price - sale.Discount + sale.VatAsCharged;
+
+                sales.Add(sale);
             }
 
-            ResetSaleForm();
-        }
-
-        void AddSaleWithBatch(long itemCode, long batchCode, double quantity)
-        {
-            double price = ParseDouble(tbPrice.Text);
-            double discountRate = ParseDouble(tbDisc.Text);
-
-            var batch = GlobalState.BAT.Inv.FirstOrDefault(b => b.Itemcode == itemCode && b.Batchcode == batchCode);
-            if (batch == null) return;
-
-            var item = GlobalState.BAT.Cat.FirstOrDefault(c => c.Itemcode == itemCode);
-            if (item == null) return;
-
-            var vatCategory = GlobalState.BAT.VCat.FirstOrDefault(v => v.VatCategoryId == item.DefaultVatCategory);
-            double vatRate = vatCategory?.VatPercentage ?? 0;
-
-            var sale = new Sale
-            {
-                Itemcode = itemCode,
-                Batchcode = batchCode,
-                Quantity = quantity,
-                SellingPrice = price,
-                DiscountRate = discountRate,
-                ProductName = item.Description,
-                Discount = quantity * price * discountRate / 100,
-                VatRatePercentage = vatRate
-            };
-
-            sale.VatAsCharged = (quantity * price - sale.Discount) * vatRate / 100;
-            sale.TotalEffectiveSellingPrice = quantity * price - sale.Discount + sale.VatAsCharged;
-
-            sales.Add(sale);
             saleGrid.DataStore = null;
             saleGrid.DataStore = sales;
             RecalculateAll();
+            ResetSaleForm();
         }
 
         bool ValidateSaleForm()
@@ -798,9 +898,24 @@ namespace EtoFE.Panels
                 return false;
             }
 
+            if (selectedBatches.Count == 0)
+            {
+                MessageBox.Show(this, "Please select at least one batch", "Validation Error", MessageBoxType.Error);
+                batchGrid.Focus();
+                return false;
+            }
+
             if (!double.TryParse(tbQty.Text, out double qty) || qty <= 0)
             {
                 MessageBox.Show(this, "Please enter a valid quantity", "Validation Error", MessageBoxType.Error);
+                tbQty.Focus();
+                return false;
+            }
+
+            var totalAvailable = selectedBatches.Sum(b => b.Units);
+            if (qty > totalAvailable)
+            {
+                MessageBox.Show(this, $"Requested quantity ({qty}) exceeds available stock ({totalAvailable})", "Validation Error", MessageBoxType.Error);
                 tbQty.Focus();
                 return false;
             }
@@ -824,9 +939,10 @@ namespace EtoFE.Panels
 
         void ResetSaleForm()
         {
-            tbItem.Text = tbInventory.Text = tbQty.Text = tbPrice.Text = tbDisc.Text = "";
-            lblItemName.Text = lblInventoryName.Text = "";
-            availableBatches.Clear();
+            tbItem.Text = tbQty.Text = tbPrice.Text = tbDisc.Text = "";
+            lblItemName.Text = "";
+            selectedBatches.Clear();
+            batchGrid.DataStore = null;
         }
 
         void AddReceipt()
@@ -880,7 +996,6 @@ namespace EtoFE.Panels
 
         void RecalculateAll()
         {
-            // Update invoice data
             invoice.Customer = ParseLong(tbCustomer.Text);
             invoice.SalesPersonId = ParseLong(tbSalesPerson.Text);
             invoice.CurrencyCode = tbCurrency.Text;
@@ -888,14 +1003,12 @@ namespace EtoFE.Panels
             invoice.IsPosted = cbIsPosted.Checked == true;
             invoice.InvoiceHumanFriendly = taRemarks.Text;
 
-            // Calculate totals
             invoice.SubTotal = sales.Where(s => s.Itemcode > 0).Sum(x => x.Quantity * x.SellingPrice);
             invoice.DiscountTotal = sales.Where(s => s.Itemcode > 0).Sum(x => x.Discount);
             invoice.TaxTotal = sales.Where(s => s.Itemcode > 0).Sum(x => x.VatAsCharged);
             invoice.GrandTotal = sales.Where(s => s.Itemcode > 0).Sum(x => x.TotalEffectiveSellingPrice);
             invoice.EffectiveDiscountPercentage = invoice.SubTotal > 0 ? invoice.DiscountTotal / invoice.SubTotal * 100 : 0;
 
-            // Update summary labels
             lblQtyTot.Text = $"{TranslationHelper.Translate("Qty")}: {sales.Where(s => s.Itemcode > 0).Sum(x => x.Quantity):F2}";
             lblSubTot.Text = $"{TranslationHelper.Translate("Sub")}: {invoice.SubTotal:C}";
             lblTaxTot.Text = $"{TranslationHelper.Translate("Tax")}: {invoice.TaxTotal:C}";
@@ -932,17 +1045,11 @@ namespace EtoFE.Panels
         void LoadData(long invoiceId)
         {
             Log($"Loading invoice with ID: {invoiceId}");
-
-            // Reset form with default values
             ResetForm();
-
-            // In a real implementation, you would load the invoice data here
-            // and populate the form fields
         }
 
         void EditForm()
         {
-            // Enable editing
             tbCustomer.ReadOnly = false;
             tbSalesPerson.ReadOnly = false;
             tbCurrency.ReadOnly = false;
@@ -950,9 +1057,7 @@ namespace EtoFE.Panels
             cbIsPosted.Enabled = true;
             taRemarks.ReadOnly = false;
 
-            // Enable sales and receipts editing
             tbItem.ReadOnly = false;
-            tbInventory.ReadOnly = false;
             tbQty.ReadOnly = false;
             tbPrice.ReadOnly = false;
             tbDisc.ReadOnly = false;
@@ -988,44 +1093,34 @@ namespace EtoFE.Panels
             Log($"Saving invoice: {json}");
 
             MessageBox.Show(this, json, TranslationHelper.Translate("Invoice Data"), MessageBoxType.Information);
-
-            // In a real implementation, you would send this data to the backend
         }
 
         void CancelForm()
         {
-            // Reset to the last saved state
-            // For now, just reset the form
             ResetForm();
         }
 
         void ResetForm()
         {
-            // Reset invoice data
             invoice = new IssuedInvoice();
 
-            // Reset form fields
             tbCustomer.Text = tbSalesPerson.Text = tbCurrency.Text = "";
             dpInvoiceDate.Value = DateTime.Now;
             cbIsPosted.Checked = false;
             taRemarks.Text = "";
 
-            // Reset labels
             lblCustomerName.Text = lblSalesPersonName.Text = "";
 
-            // Reset sales
             sales = new List<Sale> { new Sale() };
             saleGrid.DataStore = null;
             saleGrid.DataStore = sales;
             ResetSaleForm();
 
-            // Reset receipts
             receipts = new List<Receipt> { new Receipt() };
             rcptGrid.DataStore = null;
             rcptGrid.DataStore = receipts;
             ResetRcptForm();
 
-            // Reset summary
             RecalculateAll();
 
             Log("Form reset");
