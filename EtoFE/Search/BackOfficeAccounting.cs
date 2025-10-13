@@ -24,6 +24,7 @@ namespace EtoFE.Search
         public static string[]? SearchBatches(Control Owner, long Itemcode) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.Inv.Where(e => e.Itemcode == Itemcode).ToList(), Owner, false, null, ["Itemcode", "Batchcode"]);
         public static string[]? SearchVatCategories(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.VCat, Owner, false, null, ["VatCategoryId"]);
         public static string[]? SearchCustomers(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.PersonalInfo, Owner, false, null, ["Id"]);
+        public static string[]? SearchUsers(Control Owner) => SearchPanelUtility.GenerateSearchDialog(GlobalState.BAT.UserAccounts, Owner, false, null, ["Id"]);
 
         // New search methods with enhanced filtering options
         public static string[]? SearchAccountsByType(Control Owner, long accountType)

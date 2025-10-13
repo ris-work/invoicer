@@ -25,6 +25,7 @@ namespace common
     [JsonSerializable(typeof(List<Pii>))]
     [JsonSerializable(typeof(List<PiiImage>))]
     [JsonSerializable(typeof(List<InventoryImage>))]
+    [JsonSerializable(typeof(List<User>))]
     [JsonSourceGenerationOptions(IncludeFields = true)]
     public class BackOfficeAccountingDataTransfer
     {
