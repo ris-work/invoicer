@@ -24,21 +24,25 @@ namespace EtoFE.Panels
         IssuedInvoice invoice;
         List<Inventory> availableBatches = new List<Inventory>();
 
-        // UI Controls - Invoice Information
+        // UI Controls - Invoice Information (NA fields need buttons)
         TextBox tbCustomer;
+        Button btnCustomerSearch;
         Label lblCustomerName;
         TextBox tbSalesPerson;
+        Button btnSalesPersonSearch;
         Label lblSalesPersonName;
         TextBox tbCurrency;
         DateTimePicker dpInvoiceDate;
         CheckBox cbIsPosted;
         TextArea taRemarks;
 
-        // UI Controls - Sales Items
+        // UI Controls - Sales Items (NA fields need buttons)
         GridView saleGrid;
         TextBox tbItem;
+        Button btnItemSearch;
         Label lblItemName;
         TextBox tbInventory;
+        Button btnInventorySearch;
         Label lblInventoryName;
         TextBox tbQty;
         TextBox tbPrice;
@@ -53,9 +57,10 @@ namespace EtoFE.Panels
         TextBox tbPaid;
         Label lblChange;
 
-        // UI Controls - Receipts
+        // UI Controls - Receipts (NA fields need buttons)
         GridView rcptGrid;
         TextBox tbRcptAcct;
+        Button btnRcptAcctSearch;
         Label lblAcctName;
         TextBox tbRcptAmt;
         Button btnSaveRcpt;
@@ -74,7 +79,10 @@ namespace EtoFE.Panels
         List<Control> essentialControls;
         List<TextBox> naFieldsInOrder;
         Dictionary<TextBox, int> naFieldIndex;
+        Dictionary<TextBox, Button> naFieldMap;
+        Dictionary<Button, TextBox> naButtonToTextBoxMap;
         Control lastFocused;
+        bool isProcessingKey = false;
 
         // Constructor with ID parameter
         public SalesPanel(long? invoiceId = null)
@@ -113,19 +121,25 @@ namespace EtoFE.Panels
 
         void InitializeFields()
         {
-            // Invoice Information Fields
-            tbCustomer = NewTextBox("Customer ID");
+            var cw = ColorSettings.ControlWidth ?? FWidth;
+            var ch = ColorSettings.ControlHeight ?? FHeight;
+            int hw = (int)Math.Floor(cw * 0.2);
+
+            // Invoice Information Fields (with NA buttons)
+            tbCustomer = new TextBox { Width = cw, Height = ch };
+            btnCustomerSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblCustomerName = new Label();
 
-            tbSalesPerson = NewTextBox("Sales Person ID");
+            tbSalesPerson = new TextBox { Width = cw, Height = ch };
+            btnSalesPersonSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblSalesPersonName = new Label();
 
             tbCurrency = NewTextBox("Currency");
             dpInvoiceDate = new DateTimePicker
             {
                 Value = DateTime.Now,
-                Width = FWidth,
-                Height = FHeight,
+                Width = cw,
+                Height = ch,
             };
             cbIsPosted = new CheckBox { Text = TranslationHelper.Translate("Posted") };
             taRemarks = new TextArea
@@ -135,7 +149,7 @@ namespace EtoFE.Panels
                 //PlaceholderText = TranslationHelper.Translate("Remarks")
             };
 
-            // Sales Items Fields
+            // Sales Items Fields (with NA buttons)
             saleGrid = new GridView
             {
                 Width = 600,
@@ -185,10 +199,12 @@ namespace EtoFE.Panels
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Sale, string>(s => s.TotalEffectiveSellingPrice.ToString("C2")) },
             });
 
-            tbItem = NewTextBox("Item Code");
+            tbItem = new TextBox { Width = cw, Height = ch };
+            btnItemSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblItemName = new Label();
 
-            tbInventory = NewTextBox("Inventory Code");
+            tbInventory = new TextBox { Width = cw, Height = ch };
+            btnInventorySearch = new Button { Text = "...", Height = ch, Width = hw };
             lblInventoryName = new Label();
 
             tbQty = NewTextBox("Quantity");
@@ -198,14 +214,14 @@ namespace EtoFE.Panels
             btnSaveSale = new Button
             {
                 Text = TranslationHelper.Translate("Save"),
-                Width = FWidth,
-                Height = FHeight,
+                Width = cw,
+                Height = ch,
             };
             btnResetSale = new Button
             {
                 Text = TranslationHelper.Translate("Reset"),
-                Width = FWidth,
-                Height = FHeight,
+                Width = cw,
+                Height = ch,
             };
 
             // Summary Fields
@@ -215,7 +231,7 @@ namespace EtoFE.Panels
             tbPaid = NewTextBox("Paid");
             lblChange = new Label();
 
-            // Receipts Fields
+            // Receipts Fields (with NA button)
             rcptGrid = new GridView
             {
                 Width = 600,
@@ -233,60 +249,31 @@ namespace EtoFE.Panels
                 DataCell = new TextBoxCell { Binding = Binding.Delegate<Receipt, string>(r => r.Amount.ToString("C2")) },
             });
 
-            tbRcptAcct = NewTextBox("Account ID");
+            tbRcptAcct = new TextBox { Width = cw, Height = ch };
+            btnRcptAcctSearch = new Button { Text = "...", Height = ch, Width = hw };
             lblAcctName = new Label();
             tbRcptAmt = NewTextBox("Amount");
             btnSaveRcpt = new Button
             {
                 Text = TranslationHelper.Translate("Save"),
-                Width = FWidth,
-                Height = FHeight,
+                Width = cw,
+                Height = ch,
             };
             btnResetRcpt = new Button
             {
                 Text = TranslationHelper.Translate("Reset"),
-                Width = FWidth,
-                Height = FHeight,
+                Width = cw,
+                Height = ch,
             };
             lblRcptTot = new Label();
 
             // Action Buttons
-            btnNew = new Button
-            {
-                Text = TranslationHelper.Translate("New"),
-                Width = FWidth,
-                Height = FHeight,
-            };
-            btnLoad = new Button
-            {
-                Text = TranslationHelper.Translate("Load"),
-                Width = FWidth,
-                Height = FHeight,
-            };
-            btnEdit = new Button
-            {
-                Text = TranslationHelper.Translate("Edit"),
-                Width = FWidth,
-                Height = FHeight,
-            };
-            btnSave = new Button
-            {
-                Text = TranslationHelper.Translate("Save"),
-                Width = FWidth,
-                Height = FHeight,
-            };
-            btnCancel = new Button
-            {
-                Text = TranslationHelper.Translate("Cancel"),
-                Width = FWidth,
-                Height = FHeight,
-            };
-            btnReset = new Button
-            {
-                Text = TranslationHelper.Translate("Reset"),
-                Width = FWidth,
-                Height = FHeight,
-            };
+            btnNew = new Button { Text = TranslationHelper.Translate("New"), Width = cw, Height = ch };
+            btnLoad = new Button { Text = TranslationHelper.Translate("Load"), Width = cw, Height = ch };
+            btnEdit = new Button { Text = TranslationHelper.Translate("Edit"), Width = cw, Height = ch };
+            btnSave = new Button { Text = TranslationHelper.Translate("Save"), Width = cw, Height = ch };
+            btnCancel = new Button { Text = TranslationHelper.Translate("Cancel"), Width = cw, Height = ch };
+            btnReset = new Button { Text = TranslationHelper.Translate("Reset"), Width = cw, Height = ch };
 
             // Setup navigation
             SetupNavigation();
@@ -294,7 +281,7 @@ namespace EtoFE.Panels
 
         void SetupNavigation()
         {
-            // Define NA fields in order
+            // Define NA fields in order - these are the fields that need search
             naFieldsInOrder = new List<TextBox>
             {
                 tbCustomer, tbSalesPerson, tbItem, tbInventory, tbRcptAcct
@@ -303,12 +290,26 @@ namespace EtoFE.Panels
             naFieldIndex = naFieldsInOrder.Select((field, index) => new { field, index })
                 .ToDictionary(x => x.field, x => x.index);
 
+            // Map NA textboxes to their search buttons
+            naFieldMap = new Dictionary<TextBox, Button>
+            {
+                { tbCustomer, btnCustomerSearch },
+                { tbSalesPerson, btnSalesPersonSearch },
+                { tbItem, btnItemSearch },
+                { tbInventory, btnInventorySearch },
+                { tbRcptAcct, btnRcptAcctSearch }
+            };
+
+            naButtonToTextBoxMap = naFieldMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+
             // Define essential controls for Enter key navigation
             essentialControls = new List<Control>
             {
-                tbCustomer, tbSalesPerson, tbCurrency, dpInvoiceDate, cbIsPosted, taRemarks,
-                tbItem, tbInventory, tbQty, tbPrice, tbDisc, btnSaveSale, btnResetSale,
-                tbPaid, tbRcptAcct, tbRcptAmt, btnSaveRcpt, btnResetRcpt,
+                tbCustomer, btnCustomerSearch, tbSalesPerson, btnSalesPersonSearch,
+                tbCurrency, dpInvoiceDate, cbIsPosted, taRemarks,
+                tbItem, btnItemSearch, tbInventory, btnInventorySearch,
+                tbQty, tbPrice, tbDisc, btnSaveSale, btnResetSale,
+                tbPaid, tbRcptAcct, btnRcptAcctSearch, tbRcptAmt, btnSaveRcpt, btnResetRcpt,
                 btnNew, btnLoad, btnEdit, btnSave, btnCancel, btnReset
             };
         }
@@ -340,7 +341,7 @@ namespace EtoFE.Panels
                     {
                         Orientation = Orientation.Horizontal,
                         Spacing = 5,
-                        Items = { tbCustomer, lblCustomerName },
+                        Items = { tbCustomer, btnCustomerSearch, lblCustomerName },
                     }
                 ),
                 (
@@ -349,7 +350,7 @@ namespace EtoFE.Panels
                     {
                         Orientation = Orientation.Horizontal,
                         Spacing = 5,
-                        Items = { tbSalesPerson, lblSalesPersonName },
+                        Items = { tbSalesPerson, btnSalesPersonSearch, lblSalesPersonName },
                     }
                 ),
                 (TranslationHelper.Translate("Currency:"), tbCurrency),
@@ -366,7 +367,7 @@ namespace EtoFE.Panels
                     {
                         Orientation = Orientation.Horizontal,
                         Spacing = 5,
-                        Items = { tbItem, lblItemName },
+                        Items = { tbItem, btnItemSearch, lblItemName },
                     }
                 ),
                 (
@@ -375,7 +376,7 @@ namespace EtoFE.Panels
                     {
                         Orientation = Orientation.Horizontal,
                         Spacing = 5,
-                        Items = { tbInventory, lblInventoryName },
+                        Items = { tbInventory, btnInventorySearch, lblInventoryName },
                     }
                 ),
                 (TranslationHelper.Translate("Qty:"), tbQty),
@@ -401,7 +402,15 @@ namespace EtoFE.Panels
 
             // Create receipt form
             var rcptForm = BuildNColumnForm(
-                (TranslationHelper.Translate("Acct:"), tbRcptAcct),
+                (
+                    TranslationHelper.Translate("Acct:"),
+                    new StackLayout
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 5,
+                        Items = { tbRcptAcct, btnRcptAcctSearch, lblAcctName },
+                    }
+                ),
                 (TranslationHelper.Translate("Amt:"), tbRcptAmt),
                 (TranslationHelper.Translate("Save"), btnSaveRcpt),
                 (TranslationHelper.Translate("Reset"), btnResetRcpt)
@@ -490,23 +499,47 @@ namespace EtoFE.Panels
             btnSaveRcpt.Click += (_, __) => AddReceipt();
             btnResetRcpt.Click += (_, __) => ResetRcptForm();
 
-            // Text change events
+            // NA search button clicks
+            btnCustomerSearch.Click += (_, __) => HandleNASearch(tbCustomer, lblCustomerName,
+                BackOfficeAccounting.SearchCustomers, BackOfficeAccounting.LookupCustomerName);
+            btnSalesPersonSearch.Click += (_, __) => HandleNASearch(tbSalesPerson, lblSalesPersonName,
+                BackOfficeAccounting.SearchUsers, BackOfficeAccounting.LookupUser);
+            btnItemSearch.Click += (_, __) => HandleNASearch(tbItem, lblItemName,
+                BackOfficeAccounting.SearchItems, BackOfficeAccounting.LookupItem);
+            btnInventorySearch.Click += (_, __) => HandleNASearchWithParam(tbInventory, lblInventoryName,
+                () => BackOfficeAccounting.SearchBatches(this, ParseLong(tbItem.Text)));
+            btnRcptAcctSearch.Click += (_, __) => HandleNASearch(tbRcptAcct, lblAcctName,
+                BackOfficeAccounting.SearchAccounts, BackOfficeAccounting.LookupAccount);
+
+            // Text change events - validate before lookup
             tbCustomer.TextChanged += (_, __) =>
-                lblCustomerName.Text = BackOfficeAccounting.LookupCustomerName(ParseLong(tbCustomer.Text));
+            {
+                var id = ParseLong(tbCustomer.Text);
+                lblCustomerName.Text = id > 0 ? BackOfficeAccounting.LookupCustomerName(id) : "";
+            };
             tbSalesPerson.TextChanged += (_, __) =>
-                lblSalesPersonName.Text = BackOfficeAccounting.LookupUser(ParseLong(tbSalesPerson.Text));
+            {
+                var id = ParseLong(tbSalesPerson.Text);
+                lblSalesPersonName.Text = id > 0 ? BackOfficeAccounting.LookupUser(id) : "";
+            };
             tbItem.TextChanged += (_, __) =>
             {
-                lblItemName.Text = BackOfficeAccounting.LookupItem(ParseLong(tbItem.Text));
-                LoadAvailableBatches();
+                var id = ParseLong(tbItem.Text);
+                lblItemName.Text = id > 0 ? BackOfficeAccounting.LookupItem(id) : "";
+                if (id > 0) LoadAvailableBatches();
             };
             tbInventory.TextChanged += (_, __) =>
-                lblInventoryName.Text = BackOfficeAccounting.LookupBatch(
-                    ParseLong(tbItem.Text),
-                    ParseLong(tbInventory.Text)
-                );
+            {
+                var itemId = ParseLong(tbItem.Text);
+                var batchId = ParseLong(tbInventory.Text);
+                lblInventoryName.Text = (itemId > 0 && batchId > 0) ?
+                    BackOfficeAccounting.LookupBatch(itemId, batchId) : "";
+            };
             tbRcptAcct.TextChanged += (_, __) =>
-                lblAcctName.Text = BackOfficeAccounting.LookupAccount(ParseLong(tbRcptAcct.Text));
+            {
+                var id = ParseLong(tbRcptAcct.Text);
+                lblAcctName.Text = id > 0 ? BackOfficeAccounting.LookupAccount(id) : "";
+            };
             tbPaid.TextChanged += (_, __) => UpdateChange();
 
             // Key events for navigation
@@ -519,86 +552,115 @@ namespace EtoFE.Panels
             }
         }
 
+        void HandleNASearch(TextBox textBox, Label label, Func<Control, string[]> searchFunc,
+            Func<long, string> lookupFunc)
+        {
+            var sel = searchFunc(this);
+            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
+            {
+                textBox.Text = id.ToString();
+                label.Text = lookupFunc(id) ?? "";
+                MoveToNextNAField(textBox);
+            }
+        }
+
+        void HandleNASearchWithParam(TextBox textBox, Label label, Func<string[]> searchFunc)
+        {
+            var sel = searchFunc();
+            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
+            {
+                textBox.Text = id.ToString();
+                var itemId = ParseLong(tbItem.Text);
+                label.Text = itemId > 0 ? BackOfficeAccounting.LookupBatch(itemId, id) : "";
+                MoveToNextNAField(textBox);
+            }
+        }
+
         void WireKeyNavigation()
         {
-            // F1-F4 for searching NA fields
-            tbCustomer.KeyUp += (s, e) => HandleSearchKeys(e, tbCustomer, () => BackOfficeAccounting.SearchCustomers(this));
-            tbSalesPerson.KeyUp += (s, e) => HandleSearchKeys(e, tbSalesPerson, () => BackOfficeAccounting.SearchUsers(this));
-            tbItem.KeyUp += (s, e) => HandleSearchKeys(e, tbItem, () => BackOfficeAccounting.SearchItems(this));
-            tbInventory.KeyUp += (s, e) => HandleSearchKeys(e, tbInventory, () => BackOfficeAccounting.SearchBatches(this, ParseLong(tbItem.Text)));
-            tbRcptAcct.KeyUp += (s, e) => HandleSearchKeys(e, tbRcptAcct, () => BackOfficeAccounting.SearchAccounts(this));
-
-            // F9-F12 for save
-            btnSave.KeyUp += (s, e) => HandleSaveKeys(e, () => SaveForm());
-            btnSaveSale.KeyUp += (s, e) => HandleSaveKeys(e, () => AddSale());
-            btnSaveRcpt.KeyUp += (s, e) => HandleSaveKeys(e, () => AddReceipt());
-
-            // F5-F6 for edit
-            btnEdit.KeyUp += (s, e) => HandleEditKeys(e, () => EditForm());
-
-            // F7-F8 for reset
-            btnReset.KeyUp += (s, e) => HandleResetKeys(e, () => ResetForm());
-            btnResetSale.KeyUp += (s, e) => HandleResetKeys(e, () => ResetSaleForm());
-            btnResetRcpt.KeyUp += (s, e) => HandleResetKeys(e, () => ResetRcptForm());
-
-            // Enter key navigation for essential controls
-            WireEnterKeyNavigation();
-        }
-
-        void WireEnterKeyNavigation()
-        {
-            foreach (var control in essentialControls)
+            // KeyDown for Enter key navigation
+            this.KeyDown += (s, e) =>
             {
-                control.KeyDown += (s, e) =>
+                if (isProcessingKey) return;
+
+                if (e.Key == Keys.Enter)
                 {
-                    if (e.Key == Keys.Enter)
+                    isProcessingKey = true;
+
+                    if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                     {
-                        e.Handled = true;
-                        MoveToNextEssentialControl(control);
+                        associatedButton.Focus();
                     }
-                };
-            }
-        }
+                    else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
+                    {
+                        focusedButton.PerformClick();
+                    }
+                    else
+                    {
+                        MoveToNextEssentialControl();
+                    }
 
-        void HandleSearchKeys(KeyEventArgs e, TextBox textBox, Func<string[]> searchFunc)
-        {
-            if ((e.Key >= Keys.F1 && e.Key <= Keys.F4) && string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                e.Handled = true;
-                var sel = searchFunc();
-                if (sel?.Length > 0)
-                {
-                    textBox.Text = sel[0];
-                    MoveToNextNAField(textBox);
+                    e.Handled = true;
+                    isProcessingKey = false;
                 }
-            }
-        }
+            };
 
-        void HandleSaveKeys(KeyEventArgs e, Action saveAction)
-        {
-            if (e.Key >= Keys.F9 && e.Key <= Keys.F12)
+            // KeyUp for F-keys
+            this.KeyUp += (s, e) =>
             {
-                e.Handled = true;
-                saveAction();
-            }
-        }
+                if (isProcessingKey) return;
 
-        void HandleEditKeys(KeyEventArgs e, Action editAction)
-        {
-            if (e.Key == Keys.F5 || e.Key == Keys.F6)
-            {
-                e.Handled = true;
-                editAction();
-            }
-        }
+                Control keyControl = lastFocused;
+                if (lastFocused is Button && lastFocused.Parent is StackLayout sl)
+                {
+                    keyControl = sl.Items.Select(i => i.Control).OfType<TextBox>().FirstOrDefault();
+                }
 
-        void HandleResetKeys(KeyEventArgs e, Action resetAction)
-        {
-            if (e.Key == Keys.F7 || e.Key == Keys.F8)
-            {
-                e.Handled = true;
-                resetAction();
-            }
+                if (new[] { Keys.F1, Keys.F2, Keys.F3, Keys.F4 }.Contains(e.Key))
+                {
+                    if (keyControl is TextBox textBox)
+                    {
+                        isProcessingKey = true;
+                        Application.Instance.AsyncInvoke(() =>
+                        {
+                            if (naFieldMap.TryGetValue(textBox, out var btn))
+                                btn.PerformClick();
+                            isProcessingKey = false;
+                        });
+                    }
+                    e.Handled = true;
+                }
+                else if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key))
+                {
+                    isProcessingKey = true;
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        SaveForm();
+                        isProcessingKey = false;
+                    });
+                    e.Handled = true;
+                }
+                else if (new[] { Keys.F5, Keys.F6 }.Contains(e.Key))
+                {
+                    isProcessingKey = true;
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        EditForm();
+                        isProcessingKey = false;
+                    });
+                    e.Handled = true;
+                }
+                else if (new[] { Keys.F7, Keys.F8 }.Contains(e.Key))
+                {
+                    isProcessingKey = true;
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        ResetForm();
+                        isProcessingKey = false;
+                    });
+                    e.Handled = true;
+                }
+            };
         }
 
         void MoveToNextNAField(TextBox currentField)
@@ -611,9 +673,9 @@ namespace EtoFE.Panels
             nextField.Focus();
         }
 
-        void MoveToNextEssentialControl(Control currentControl)
+        void MoveToNextEssentialControl()
         {
-            var currentIndex = essentialControls.IndexOf(currentControl);
+            var currentIndex = essentialControls.IndexOf(lastFocused);
             if (currentIndex >= 0 && currentIndex < essentialControls.Count - 1)
             {
                 var nextControl = essentialControls[currentIndex + 1];
@@ -728,9 +790,10 @@ namespace EtoFE.Panels
 
         bool ValidateSaleForm()
         {
-            if (string.IsNullOrWhiteSpace(tbItem.Text))
+            var itemId = ParseLong(tbItem.Text);
+            if (itemId <= 0)
             {
-                MessageBox.Show(this, "Please select an item", "Validation Error", MessageBoxType.Error);
+                MessageBox.Show(this, "Please select a valid item", "Validation Error", MessageBoxType.Error);
                 tbItem.Focus();
                 return false;
             }
@@ -791,9 +854,10 @@ namespace EtoFE.Panels
 
         bool ValidateReceiptForm()
         {
-            if (string.IsNullOrWhiteSpace(tbRcptAcct.Text))
+            var accountId = ParseLong(tbRcptAcct.Text);
+            if (accountId <= 0)
             {
-                MessageBox.Show(this, "Please select an account", "Validation Error", MessageBoxType.Error);
+                MessageBox.Show(this, "Please select a valid account", "Validation Error", MessageBoxType.Error);
                 tbRcptAcct.Focus();
                 return false;
             }
@@ -867,8 +931,6 @@ namespace EtoFE.Panels
 
         void LoadData(long invoiceId)
         {
-            // In a real implementation, this would load data from the backend
-            // For now, we'll just log the action
             Log($"Loading invoice with ID: {invoiceId}");
 
             // Reset form with default values
@@ -971,7 +1033,22 @@ namespace EtoFE.Panels
 
         (bool IsValid, string ConsolidatedErrorList) ValidateInputs()
         {
-            return invoice.Validate(sales, receipts);
+            var errs = new List<string>();
+
+            var customerId = ParseLong(tbCustomer.Text);
+            if (customerId <= 0) errs.Add("Customer is required");
+
+            if (sales.All(s => s.Itemcode <= 0))
+                errs.Add("At least one sale item is required");
+
+            if (receipts.All(r => r.AccountId <= 0 && r.Amount <= 0))
+            {
+                var paid = ParseDouble(tbPaid.Text);
+                if (paid < invoice.GrandTotal)
+                    errs.Add("Payment or receipt is required");
+            }
+
+            return (errs.Count == 0, string.Join(", ", errs));
         }
 
         long ParseLong(string txt) => long.TryParse(txt, out var v) ? v : 0;
