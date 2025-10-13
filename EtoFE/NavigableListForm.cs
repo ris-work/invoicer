@@ -64,7 +64,7 @@ namespace EtoFE
                                     ("📝 Sales Orders", new LoadOncePanel<Panel>(), "SalesOrders"),
                                     (
                                         "💳 POS Terminal",
-                                        new LoadOncePanel<PosPanel>(),
+                                        new LoadOncePanel<SalesPanel>(),
                                         "PosTerminal"
                                     ),
                                     ("📄 Invoices", new LoadOncePanel<Panel>(), "Invoices"),
