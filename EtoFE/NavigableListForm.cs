@@ -22,6 +22,12 @@ namespace EtoFE
 {
     public class NavigableListForm : Form
     {
+        // Track currently selected button index for visual feedback
+        private int SelectedButtonIndex = -1;
+
+        // Store buttons list at class level for access in event handlers
+        private List<RoundedLabel> Buttons = new List<RoundedLabel>();
+
         public NavigableListForm()
         {
             Location = new Eto.Drawing.Point(200, 150);
@@ -42,211 +48,15 @@ namespace EtoFE
                 }
             );
             LB.BackgroundColor = ColorSettings.BackgroundColor;
-            //LB.TextColor = ColorSettings.ForegroundColor;
-            //LB.Font = new Eto.Drawing.Font("Courier", 18);
 
             Panel CurrentPanel = new Panel()
             {
-                //MinimumSize = new Eto.Drawing.Size(1100, 700),
                 Size = new Eto.Drawing.Size(-1, -1),
             };
 
-            var loadOncePanels = (
-                new List<(string Label, object Content, string Name)>()
-                {
-                    (
-                        "🛒 Sales / POS",
-                        new LoadOncePanel<Panel>(
-                            new NestableNavigableListPanel(
-                                new List<(string Label, object Content, string Name)>
-                                {
-                                    ("👥 Customers", new LoadOncePanel<Panel>(), "Customers"),
-                                    ("📝 Sales Orders", new LoadOncePanel<Panel>(), "SalesOrders"),
-                                    (
-                                        "💳 POS Terminal",
-                                        new LoadOncePanel<SalesPanel>(),
-                                        "PosTerminal"
-                                    ),
-                                    ("📄 Invoices", new LoadOncePanel<Panel>(), "Invoices"),
-                                    ("📦 Shipments", new LoadOncePanel<Panel>(), "Shipments"),
-                                    ("↩️ Returns", new LoadOncePanel<Panel>(), "Returns"),
-                                    ("🧾 Payments", new LoadOncePanel<Panel>(), "Payments"),
-                                    (
-                                        "📈 Sales Reports",
-                                        new LoadOncePanel<Panel>(),
-                                        "SalesReports"
-                                    ),
-                                    ("🏷️ Price Lists", new LoadOncePanel<Panel>(), "PriceLists"),
-                                    ("🎯 Promotions", new LoadOncePanel<Panel>(), "Promotions"),
-                                }
-                            )
-                        ),
-                        "Sales"
-                    ),
-                    (
-                        $" 📦 Inventory ",
-                        (
-                            new LoadOncePanel<Panel>(
-                                new NestableNavigableListPanel(
-                                    new List<(string Label, object Content, string Name)>
-                                    {
-                                        // Core inventory panels
-                                        (
-                                            "📝 Editor",
-                                            new LoadOncePanel<CatalogueEditPanel>(),
-                                            "Editor"
-                                        ),
-                                        (
-                                            "📋 Batch Editor",
-                                            new LoadOncePanel<Panel>(),
-                                            "BatchEditor"
-                                        ),
-                                        (
-                                            "🔧 Adjustments",
-                                            new LoadOncePanel<InventoryAdjustmentPanel>(),
-                                            "Adjustments"
-                                        ),
-                                        ("📦 Items", new LoadOncePanel<Panel>(), "Items"),
-                                        (
-                                            "📊 Stock Overview",
-                                            new LoadOncePanel<Panel>(),
-                                            "StockOverview"
-                                        ),
-                                        ("📍 Locations", new LoadOncePanel<Panel>(), "Locations"),
-                                        ("🔄 Transfers", new LoadOncePanel<Panel>(), "Transfers"),
-                                        ("📈 Reports", new LoadOncePanel<Panel>(), "Reports"),
-                                        (
-                                            "📈 Inventory Movements",
-                                            new LoadOncePanel<InventoryMovementsPanel>(),
-                                            "InventoryMovements"
-                                        ),
-                                        ("⛑ Alerts", new LoadOncePanel<Panel>(), "Alerts"),
-                                        ("🔍 Search", new LoadOncePanel<Panel>(), "Search"),
-                                        // Additional standardized ERP modules
-                                        (
-                                            "🗃 Material Master",
-                                            new LoadOncePanel<Panel>(),
-                                            "MaterialMaster"
-                                        ),
-                                        (
-                                            "📥 Goods Receipt",
-                                            new LoadOncePanel<ReceivedInvoicePanel>(),
-                                            "GoodsReceipt"
-                                        ),
-                                        (
-                                            "📤 Goods Issue",
-                                            new LoadOncePanel<Panel>(),
-                                            "GoodsIssued"
-                                        ),
-                                        (
-                                            "🧮 Cycle Count",
-                                            new LoadOncePanel<CycleCountPanel>(),
-                                            "CycleCount"
-                                        ),
-                                        (
-                                            "🏭 Warehouse Management",
-                                            new LoadOncePanel<Panel>(),
-                                            "Warehouse"
-                                        ),
-                                        (
-                                            "🔢 Serial & Lot Control",
-                                            new LoadOncePanel<Panel>(),
-                                            "SerialControl"
-                                        ),
-                                        (
-                                            "🔄 Replenishment",
-                                            new LoadOncePanel<Panel>(),
-                                            "Replenishment"
-                                        ),
-                                        // Barcode printing section
-                                        (
-                                            "🖨️ Barcode Print",
-                                            new LoadOncePanel<Panel>(),
-                                            "BarcodePrint"
-                                        ),
-                                    }
-                                )
-                            )
-                        ),
-                        "Inventory"
-                    ),
-                    (
-                        " 💰 Accounts  ",
-                        (
-                            new LoadOncePanel<Panel>(
-                                new NestableNavigableListPanel(
-                                    new List<(string Label, object Content, string Name)>
-                                    {
-                                        (
-                                            "📝 Account Types",
-                                            new LoadOncePanel<AllAccountsTypes>(),
-                                            "AccountTypes"
-                                        ),
-                                        (
-                                            "📋 All Journal Entries (Recent)",
-                                            new LoadOncePanel<AllJournalEntries>(),
-                                            "AllJournalEntries"
-                                        ),
-                                        (
-                                            "📋 All Journal Entries By Time",
-                                            new LoadOncePanel<AllJournalEntriesInTimePeriod>(),
-                                            "AllJournalEntries"
-                                        ),
-                                        (
-                                            "📋 Make Journal Entries",
-                                            new LoadOncePanel<JournalEntriesPanel>(),
-                                            "JournalEntry"
-                                        ),
-                                        (
-                                            "📋 All Account Balances",
-                                            new LoadOncePanel<AllAccountsBalances>(),
-                                            "AllAccountBalances"
-                                        ),
-                                        (
-                                            "⏰⬅ Scheduled Payments",
-                                            new LoadOncePanel<ScheduledPaymentPanel>(),
-                                            "ScheduledPayments"
-                                        ),
-                                        (
-                                            "⏰➡ Scheduled Receipts",
-                                            new LoadOncePanel<ScheduledReceiptPanel>(),
-                                            "ScheduledPayments"
-                                        ),
-                                        (
-                                            "⏰➡ Audits",
-                                            new LoadOncePanel<RequestsSearchPanel>(),
-                                            "ScheduledPayments"
-                                        ),
-                                    }
-                                )
-                            )
-                        ),
-                        "Accounts"
-                    ),
-                    (
-                        $" 👥 HR / {Environment.NewLine} Employees  ",
-                        (new LoadOncePanel<Panel>()),
-                        "HR"
-                    ),
-                    (
-                        $" 🤝 CRM {Environment.NewLine} (Customer Management)  ",
-                        (new LoadOncePanel<Panel>()),
-                        "CRM"
-                    ),
-                    (
-                        $" ⚙️ Administration / {Environment.NewLine} Settings  ",
-                        (new LoadOncePanel<Panel>()),
-                        "Settings"
-                    ),
-                    (
-                        $" ⚙️ Current {Environment.NewLine} Connection ",
-                        (new LoadOncePanel<Panel>()),
-                        "Connection"
-                    ),
-                    (" 🎫 About ", (new LoadOncePanel<Panel>()), "About"),
-                }
-            ).ToArray();
-            int SelectedButtonIndex = -1;
+            // Simplified panel configuration
+            var loadOncePanels = CreatePanelConfiguration();
+
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
@@ -256,10 +66,10 @@ namespace EtoFE
                 );
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1 }).ToList();
-
             LB.GridLines = GridLines.None;
 
             IReadOnlyDictionary<string, object> ROD = Panels;
+
             LB.CellFormatting += (e, a) =>
             {
                 if (a.Row == LB.SelectedRow)
@@ -279,117 +89,26 @@ namespace EtoFE
                     Eto.Drawing.FontDecoration.None
                 );
             };
-            List<RoundedLabel> Buttons = new();
+
             int i = 0;
-            foreach ((string, object, string) LoadOncePanel in loadOncePanels)
+            foreach ((string, object, string) loadOncePanel in loadOncePanels)
             {
-                RoundedLabel B = new RoundedLabel()
-                {
-                    Text = TranslationHelper.Translate(
-                        LoadOncePanel.Item3,
-                        LoadOncePanel.Item1,
-                        Program.lang
-                    ),
-                    CornerRadius = 2,
-                    HoverBorderColor = ColorSettings.LesserForegroundColor,
-                    BorderColor = ColorSettings.LesserBackgroundColor,
-                    Enabled = true,
-                    CanFocus = true,
-                    TabIndex = 2,
-                };
-                B.ConfigureForPlatform();
-
-                //B.VerticalAlignment = VerticalAlignment.Center;
-                B.Height = 60;
-                B.Width = 150;
-
-                B.Font = new Eto.Drawing.Font(Program.UIFont, 11) { };
-                B.TextColor = ColorSettings.LesserForegroundColor;
-                B.Enabled = true;
-                B.BackgroundColor = ColorSettings.BackgroundColor;
-                //B.Click += (e, a) => { };
-                B.MouseEnter += (e, a) =>
-                {
-                    RoundedLabel CurrentLabel = ((RoundedLabel)e);
-                    if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
+                RoundedLabel B = CreateNavigationButton(
+                    loadOncePanel.Item1,
+                    loadOncePanel.Item3,
+                    i,
+                    () => LoadPanelContent(loadOncePanel.Item1, CurrentPanel, ROD),
+                    (index) =>
                     {
-                        B.TextColor = ColorSettings.SelectedColumnColor;
-                        B.BackgroundColor = ColorSettings.ForegroundColor;
+                        SelectedButtonIndex = index;
+                        UpdateButtonStyles(Buttons, index);
+                        Title = $"\u300e{loadOncePanel.Item1}\u300f RV InvNew Inventory Manager";
                     }
-                };
-                B.MouseLeave += (e, a) =>
-                {
-                    RoundedLabel CurrentLabel = ((RoundedLabel)e);
-                    if (SelectedButtonIndex != Buttons.IndexOf(CurrentLabel))
-                    {
-                        B.TextColor = ColorSettings.ForegroundColor;
-                        B.BackgroundColor = ColorSettings.BackgroundColor;
-                    }
-                    this.Invalidate();
-                };
-                B.TabIndex = i;
-                B.MouseDown += (e, a) =>
-                {
-                    RoundedLabel ClickedLabel = ((RoundedLabel)e);
-                    //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
-
-                    CurrentPanel.Content = (Control)
-                        (
-                            (ILoadOncePanel<object>)
-                                ROD.GetValueOrDefault<string, object?>(
-                                    (string)((string)ClickedLabel.Text),
-                                    null
-                                )
-                        ).GetInnerAsObject();
-                    SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
-                    foreach (RoundedLabel L in Buttons)
-                    {
-                        L.TextColor = ColorSettings.ForegroundColor;
-                        L.BackgroundColor = ColorSettings.BackgroundColor;
-                        System.Console.WriteLine($"Adding button: {L.Text}");
-                        //L.Invalidate(true);
-                    }
-
-                    ClickedLabel.TextColor = ColorSettings.BackgroundColor;
-                    ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
-                    this.Size = new Eto.Drawing.Size(-1, -1);
-                    this.Invalidate(true);
-                    this.TriggerStyleChanged();
-                    Title = $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
-                };
-                B.KeyUp += (e, a) =>
-                {
-                    RoundedLabel ClickedLabel = ((RoundedLabel)e);
-                    //MessageBox.Show($"Clicked {ClickedLabel.Text}", MessageBoxType.Information);
-
-                    CurrentPanel.Content = (Control)
-                        (
-                            (ILoadOncePanel<object>)
-                                ROD.GetValueOrDefault<string, object?>(
-                                    (string)((string)ClickedLabel.Text),
-                                    null
-                                )
-                        ).GetInnerAsObject();
-                    SelectedButtonIndex = Buttons.IndexOf(ClickedLabel);
-                    foreach (RoundedLabel L in Buttons)
-                    {
-                        L.TextColor = ColorSettings.ForegroundColor;
-                        L.BackgroundColor = ColorSettings.BackgroundColor;
-                        System.Console.WriteLine($"Adding button: {L.Text}");
-                        //L.Invalidate(true);
-                    }
-
-                    ClickedLabel.TextColor = ColorSettings.BackgroundColor;
-                    ClickedLabel.BackgroundColor = ColorSettings.ForegroundColor;
-                    this.Size = new Eto.Drawing.Size(-1, -1);
-                    this.Invalidate(true);
-                    this.TriggerStyleChanged();
-                    Title = $"\u300e{ClickedLabel.Text}\u300f RV InvNew Inventory Manager";
-                };
-
+                );
                 Buttons.Add(B);
                 i++;
             }
+
             LB.SelectedItemsChanged += (sender, e) =>
             {
                 CurrentPanel.Content = (Control)
@@ -405,141 +124,19 @@ namespace EtoFE
                 this.Invalidate();
                 this.UpdateLayout();
             };
+
             LB.DisableLines();
-            //LB.DisableGridViewEnterKey();
             BackgroundColor = ColorSettings.BackgroundColor;
             Padding = 10;
-            Button EnableAccessibilityButton = new Button()
-            {
-                Text = TranslationHelper.Translate(" Enable Accessibility... ♿👓 "),
-                Font = new Eto.Drawing.Font(Program.UIFont, 10),
-                MinimumSize = new Eto.Drawing.Size(30, 30),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                Width = Program.ControlWidth ?? 100,
-                Height = Program.ControlHeight ?? 30,
-            };
-            Label CurrentClientTimeLabel = new Label()
-            {
-                Text = DateTime.UtcNow.ToString("O"),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.LesserForegroundColor,
-                VerticalAlignment = VerticalAlignment.Center,
-                Font = new Eto.Drawing.Font(Program.UIFont, 10),
-                Width = Program.ControlWidth ?? 150,
-                Height = Program.ControlHeight ?? 30,
-            };
-            Label CurrentServerTimeLabel = new Label()
-            {
-                Text = "TBD",
-                BackgroundColor = ColorSettings.LesserBackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                VerticalAlignment = VerticalAlignment.Center,
-                Font = new Eto.Drawing.Font(Program.UIFont, 10),
-                Width = Program.ControlWidth ?? 150,
-                Height = Program.ControlHeight ?? 30,
-            };
-            Label HueRotateLabel = new Label()
-            {
-                Text =
-                    $"Rotate{Environment.NewLine}Colours{Environment.NewLine}by 15{Environment.NewLine}degrees",
-                BackgroundColor = ColorSettings.LesserBackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                TextAlignment = TextAlignment.Center,
 
-                Font = new Eto.Drawing.Font(Program.UIFont, 5),
-                Width = Program.ControlWidth / 3 ?? 50,
-                Height = Program.ControlHeight ?? 30,
-            };
-            Label IncreaseLightnessLabel = new Label()
-            {
-                Text =
-                    $"Increase{Environment.NewLine}Lightness{Environment.NewLine}by 10{Environment.NewLine}percentage",
-                BackgroundColor = ColorSettings.LesserBackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                TextAlignment = TextAlignment.Center,
+            // Create UI elements
+            Button EnableAccessibilityButton = CreateUIButton(" Enable Accessibility... ♿👓 ");
+            Label CurrentClientTimeLabel = CreateStatusLabel("Client time: ", showUtcNow: false);
+            Label CurrentServerTimeLabel = CreateStatusLabel("TBD", isServerLabel: true);
 
-                Font = new Eto.Drawing.Font(Program.UIFont, 5),
-                Width = Program.ControlWidth / 3 ?? 50,
-                Height = Program.ControlHeight ?? 30,
-            };
-            Label IncreaseContrastLabel = new Label()
-            {
-                Text =
-                    $"Increase{Environment.NewLine}Contrast{Environment.NewLine}by 10{Environment.NewLine}percentage",
-                BackgroundColor = ColorSettings.LesserBackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                TextAlignment = TextAlignment.Center,
+            // Create color adjustment labels
+            var colorAdjustmentLabels = CreateColorAdjustmentLabels();
 
-                Font = new Eto.Drawing.Font(Program.UIFont, 5),
-                Width = Program.ControlWidth / 3 ?? 50,
-                Height = Program.ControlHeight ?? 30,
-            };
-
-            HueRotateLabel.MouseDown += (_, _) =>
-            {
-                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.HueRotate(15);
-                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.HueRotate(15);
-                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.HueRotate(15);
-                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.HueRotate(15);
-                ColorSettings.LesserForegroundColor = ColorSettings.LesserForegroundColor.HueRotate(
-                    15
-                );
-                ColorSettings.LesserBackgroundColor = ColorSettings.LesserBackgroundColor.HueRotate(
-                    15
-                );
-                ColorSettings.SelectedColumnColor = ColorSettings.SelectedColumnColor.HueRotate(15);
-                this.UpdateLayout();
-                (new NavigableListForm()).Show();
-                this.Close();
-                this.Invalidate(true);
-            };
-
-            IncreaseContrastLabel.MouseDown += (_, _) =>
-            {
-                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.AdjustContrast(
-                    10
-                );
-                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.AdjustContrast(
-                    10
-                );
-                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.AdjustContrast(10);
-                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.AdjustContrast(10);
-                ColorSettings.LesserForegroundColor =
-                    ColorSettings.LesserForegroundColor.AdjustContrast(10);
-                ColorSettings.LesserBackgroundColor =
-                    ColorSettings.LesserBackgroundColor.AdjustContrast(10);
-                ColorSettings.SelectedColumnColor =
-                    ColorSettings.SelectedColumnColor.AdjustContrast(10);
-                this.UpdateLayout();
-                (new NavigableListForm()).Show();
-                this.Close();
-                this.Invalidate(true);
-            };
-            IncreaseLightnessLabel.MouseDown += (_, _) =>
-            {
-                ColorSettings.AlternatingColor1 = ColorSettings.AlternatingColor1.AdjustLightness(
-                    10
-                );
-                ColorSettings.AlternatingColor2 = ColorSettings.AlternatingColor2.AdjustLightness(
-                    10
-                );
-                ColorSettings.ForegroundColor = ColorSettings.ForegroundColor.AdjustLightness(10);
-                ColorSettings.BackgroundColor = ColorSettings.BackgroundColor.AdjustLightness(10);
-                ColorSettings.LesserForegroundColor =
-                    ColorSettings.LesserForegroundColor.AdjustLightness(10);
-                ColorSettings.LesserBackgroundColor =
-                    ColorSettings.LesserBackgroundColor.AdjustLightness(10);
-                ColorSettings.SelectedColumnColor =
-                    ColorSettings.SelectedColumnColor.AdjustLightness(10);
-                this.UpdateLayout();
-                (new NavigableListForm()).Show();
-                this.Close();
-                this.Invalidate(true);
-            };
             Label CurrentUserAndToken = new Label()
             {
                 Text = $"{LoginTokens.Username}{Environment.NewLine}{LoginTokens.token.TokenID}",
@@ -549,11 +146,12 @@ namespace EtoFE
                 VerticalAlignment = VerticalAlignment.Center,
                 Font = new Eto.Drawing.Font(Program.UIFont, 10),
             };
-            EnableAccessibilityButton.ConfigureForPlatform();
+
             EnableAccessibilityButton.Click += (sender, e) =>
             {
                 (new ListPanelOptionsAsButtons(loadOncePanels)).Show();
             };
+
             var Inner = new StackLayout(
                 new StackLayout(Buttons.Select(b => new StackLayoutItem(b)).ToArray())
                 {
@@ -572,14 +170,15 @@ namespace EtoFE
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Size = new Eto.Drawing.Size(-1, -1),
             };
+
             var TopPanel = new StackLayout(
                 EnableAccessibilityButton,
                 CurrentClientTimeLabel,
                 CurrentServerTimeLabel,
                 CurrentUserAndToken,
-                HueRotateLabel,
-                IncreaseContrastLabel,
-                IncreaseLightnessLabel
+                colorAdjustmentLabels.HueRotate,
+                colorAdjustmentLabels.Contrast,
+                colorAdjustmentLabels.Lightness
             )
             {
                 Spacing = 4,
@@ -587,6 +186,7 @@ namespace EtoFE
                 Orientation = Orientation.Horizontal,
                 Padding = 4,
             };
+
             var A = new StackLayout(
                 new StackLayoutItem(TopPanel),
                 new StackLayoutItem(
@@ -601,57 +201,378 @@ namespace EtoFE
 
             Content = A;
             Padding = 10;
-            var LocalTimeRefresher = (
-                new Thread(() =>
-                {
-                    while (true)
-                    {
-                        if (Application.Instance != null)
-                            Application.Instance.Invoke(() =>
+
+            StartTimeRefreshers(CurrentClientTimeLabel, CurrentServerTimeLabel);
+        }
+
+        // Helper methods to reduce repetition
+
+        private (string Label, object Content, string Name)[] CreatePanelConfiguration()
+        {
+            return new (string, object, string)[]
+            {
+                (
+                    "🏷️ Sales & POS",
+                    new LoadOncePanel<Panel>(
+                        new NestableNavigableListPanel(
+                            new List<(string Label, object Content, string Name)>
                             {
-                                CurrentClientTimeLabel.Text =
-                                    $"Client time: {Environment.NewLine}{DateTime.Now.ToString("s")}";
-                            });
-                        Thread.Sleep(1000);
-                    }
-                })
-            );
-            //SizeChanged += (e, a) => { this.UpdateLayout(); this.Invalidate(true); };
-            var ServerTimeRefresher = (
-                new Thread(() =>
-                {
-                    while (true)
-                    {
-                        try
-                        {
-                            SingleValueString TR;
-                            var req = (
-                                SendAuthenticatedRequest<string, SingleValueString>.Send(
-                                    "Time",
-                                    "/AutogeneratedClockEndpointBearerAuth",
-                                    true
-                                )
-                            );
-                            //req.ShowModal();
-                            if (req.Error == false)
-                            {
-                                TR = req.Out;
-                                if (Application.Instance != null)
-                                    Application.Instance.Invoke(() =>
-                                    {
-                                        CurrentServerTimeLabel.Text =
-                                            $"Server Time: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime().ToString("s")}";
-                                    });
+                                ("👤 Customers", new LoadOncePanel<Panel>(), "Customers"),
+                                ("📋 Sales Orders", new LoadOncePanel<Panel>(), "SalesOrders"),
+                                ("💳 Point of Sale", new LoadOncePanel<SalesPanel>(), "PosTerminal"),
+                                ("🧾 Invoices", new LoadOncePanel<Panel>(), "Invoices"),
+                                ("📦 Shipments", new LoadOncePanel<Panel>(), "Shipments"),
+                                ("🔄 Returns", new LoadOncePanel<Panel>(), "Returns"),
+                                ("💰 Payments", new LoadOncePanel<Panel>(), "Payments"),
+                                ("📊 Sales Reports", new LoadOncePanel<Panel>(), "SalesReports"),
+                                ("💲 Price Lists", new LoadOncePanel<Panel>(), "PriceLists"),
+                                ("🎁 Promotions", new LoadOncePanel<Panel>(), "Promotions"),
                             }
-                        }
-                        catch (Exception E) { }
-                        Thread.Sleep(1000);
-                    }
-                })
+                        )
+                    ),
+                    "Sales"
+                ),
+                (
+                    $" 📦 Inventory ",
+                    new LoadOncePanel<Panel>(
+                        new NestableNavigableListPanel(
+                            new List<(string Label, object Content, string Name)>
+                            {
+                                ("✏️ Item Editor", new LoadOncePanel<CatalogueEditPanel>(), "Editor"),
+                                ("📝 Batch Editor", new LoadOncePanel<Panel>(), "BatchEditor"),
+                                ("⚙️ Adjustments", new LoadOncePanel<InventoryAdjustmentPanel>(), "Adjustments"),
+                                ("📦 All Items", new LoadOncePanel<Panel>(), "Items"),
+                                ("📈 Stock Status", new LoadOncePanel<Panel>(), "StockOverview"),
+                                ("📍 Locations", new LoadOncePanel<Panel>(), "Locations"),
+                                ("🔄 Stock Transfers", new LoadOncePanel<Panel>(), "Transfers"),
+                                ("📊 Inventory Reports", new LoadOncePanel<Panel>(), "Reports"),
+                                ("📜 Movement History", new LoadOncePanel<InventoryMovementsPanel>(), "InventoryMovements"),
+                                ("⚠️ Stock Alerts", new LoadOncePanel<Panel>(), "Alerts"),
+                                ("🔍 Item Search", new LoadOncePanel<Panel>(), "Search"),
+                                ("🗂️ Material Master", new LoadOncePanel<Panel>(), "MaterialMaster"),
+                                ("📥 Goods Receipt", new LoadOncePanel<ReceivedInvoicePanel>(), "GoodsReceipt"),
+                                ("📤 Goods Issue", new LoadOncePanel<Panel>(), "GoodsIssued"),
+                                ("🔢 Cycle Count", new LoadOncePanel<CycleCountPanel>(), "CycleCount"),
+                                ("🏭 Warehouse", new LoadOncePanel<Panel>(), "Warehouse"),
+                                ("🏷️ Serial/Lot", new LoadOncePanel<Panel>(), "SerialControl"),
+                                ("♻️ Replenishment", new LoadOncePanel<Panel>(), "Replenishment"),
+                                ("🖨️ Barcode Print", new LoadOncePanel<Panel>(), "BarcodePrint"),
+                            }
+                        )
+                    ),
+                    "Inventory"
+                ),
+                (
+                    " 💰 Accounting ",
+                    new LoadOncePanel<Panel>(
+                        new NestableNavigableListPanel(
+                            new List<(string Label, object Content, string Name)>
+                            {
+                                ("🏦 Chart of Accounts", new LoadOncePanel<AllAccountsTypes>(), "AccountTypes"),
+                                ("📖 Recent Journal", new LoadOncePanel<AllJournalEntries>(), "AllJournalEntries"),
+                                ("📅 Journal by Date", new LoadOncePanel<AllJournalEntriesInTimePeriod>(), "AllJournalEntries"),
+                                ("✏️ New Journal Entry", new LoadOncePanel<JournalEntriesPanel>(), "JournalEntry"),
+                                ("⚖️ Account Balances", new LoadOncePanel<AllAccountsBalances>(), "AllAccountBalances"),
+                                ("💸 Outgoing Payments", new LoadOncePanel<ScheduledPaymentPanel>(), "ScheduledPayments"),
+                                ("💵 Incoming Receipts", new LoadOncePanel<ScheduledReceiptPanel>(), "ScheduledPayments"),
+                                ("🔍 Audit Trail", new LoadOncePanel<RequestsSearchPanel>(), "Audits"),
+                            }
+                        )
+                    ),
+                    "Accounts"
+                ),
+                (
+                    $" 👥 Human Resources ",
+                    (new LoadOncePanel<Panel>()),
+                    "HR"
+                ),
+                (
+                    $" 🤝 Customer Relations ",
+                    (new LoadOncePanel<Panel>()),
+                    "CRM"
+                ),
+                (
+                    $" ⚙️ System Settings ",
+                    (new LoadOncePanel<Panel>()),
+                    "Settings"
+                ),
+                (
+                    $" 🔗 Connection Status ",
+                    (new LoadOncePanel<Panel>()),
+                    "Connection"
+                ),
+                (" ℹ️ About ", (new LoadOncePanel<Panel>()), "About"),
+            };
+        }
+
+        private RoundedLabel CreateNavigationButton(
+            string label,
+            string translationKey,
+            int tabIndex,
+            Action loadAction,
+            Action<int> selectAction)
+        {
+            RoundedLabel button = new RoundedLabel()
+            {
+                Text = TranslationHelper.Translate(translationKey, label, Program.lang),
+                CornerRadius = 2,
+                HoverBorderColor = ColorSettings.LesserForegroundColor,
+                BorderColor = ColorSettings.LesserBackgroundColor,
+                BorderWidth = 1,
+                Enabled = true,
+                CanFocus = true,
+                TabIndex = tabIndex,
+                Height = 60,
+                Width = 150,
+                Font = new Eto.Drawing.Font(Program.UIFont, 11),
+                TextColor = ColorSettings.LesserForegroundColor,
+                BackgroundColor = ColorSettings.BackgroundColor,
+            };
+            button.ConfigureForPlatform();
+
+            button.MouseEnter += (e, a) =>
+            {
+                RoundedLabel currentLabel = ((RoundedLabel)e);
+                if (SelectedButtonIndex != Buttons.IndexOf(currentLabel))
+                {
+                    currentLabel.TextColor = ColorSettings.SelectedColumnColor;
+                    currentLabel.BackgroundColor = ColorSettings.ForegroundColor;
+                }
+            };
+
+            button.MouseLeave += (e, a) =>
+            {
+                RoundedLabel currentLabel = ((RoundedLabel)e);
+                if (SelectedButtonIndex != Buttons.IndexOf(currentLabel))
+                {
+                    currentLabel.TextColor = ColorSettings.ForegroundColor;
+                    currentLabel.BackgroundColor = ColorSettings.BackgroundColor;
+                }
+                this.Invalidate();
+            };
+
+            button.MouseDown += (e, a) =>
+            {
+                RoundedLabel clickedLabel = ((RoundedLabel)e);
+                loadAction();
+                selectAction(Buttons.IndexOf(clickedLabel));
+                this.Size = new Eto.Drawing.Size(-1, -1);
+                this.Invalidate(true);
+                this.TriggerStyleChanged();
+            };
+
+            button.KeyUp += (e, a) =>
+            {
+                RoundedLabel clickedLabel = ((RoundedLabel)e);
+                loadAction();
+                selectAction(Buttons.IndexOf(clickedLabel));
+                this.Size = new Eto.Drawing.Size(-1, -1);
+                this.Invalidate(true);
+                this.TriggerStyleChanged();
+            };
+
+            return button;
+        }
+
+        private void LoadPanelContent(string panelKey, Panel currentPanel, IReadOnlyDictionary<string, object> panels)
+        {
+            currentPanel.Content = (Control)
+                (
+                    (ILoadOncePanel<object>)
+                        panels.GetValueOrDefault<string, object?>(
+                            panelKey,
+                            null
+                        )
+                ).GetInnerAsObject();
+        }
+
+        private void UpdateButtonStyles(List<RoundedLabel> buttons, int selectedIndex)
+        {
+            foreach (RoundedLabel L in buttons)
+            {
+                // Reset all buttons to normal state
+                L.TextColor = ColorSettings.ForegroundColor;
+                L.BackgroundColor = ColorSettings.BackgroundColor;
+                L.BorderWidth = 1;
+                L.BorderColor = ColorSettings.LesserBackgroundColor;
+                // Remove the selection indicator from non-selected buttons
+                string text = L.Text;
+                if (text.StartsWith("▶ "))
+                {
+                    L.Text = text.Substring(2);
+                }
+            }
+
+            // Highlight selected button
+            if (selectedIndex >= 0 && selectedIndex < buttons.Count)
+            {
+                var selected = buttons[selectedIndex];
+                selected.TextColor = ColorSettings.BackgroundColor;
+                selected.BackgroundColor = ColorSettings.ForegroundColor;
+                selected.BorderWidth = 2;
+                selected.BorderColor = ColorSettings.SelectedColumnColor;
+                // Add selection indicator with arrow
+                if (!selected.Text.StartsWith("▶ "))
+                {
+                    selected.Text = "▶ " + selected.Text;
+                }
+            }
+        }
+
+        private (Label HueRotate, Label Contrast, Label Lightness) CreateColorAdjustmentLabels()
+        {
+            Label CreateColorLabel(string text)
+            {
+                return new Label()
+                {
+                    Text = text,
+                    BackgroundColor = ColorSettings.LesserBackgroundColor,
+                    TextColor = ColorSettings.ForegroundColor,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    TextAlignment = TextAlignment.Center,
+                    Font = new Eto.Drawing.Font(Program.UIFont, 5),
+                    Width = Program.ControlWidth / 3 ?? 50,
+                    Height = Program.ControlHeight ?? 30,
+                };
+            }
+
+            var hueRotateLabel = CreateColorLabel(
+                $"🌈 Rotate{Environment.NewLine}Colors{Environment.NewLine}+15°"
             );
+            var contrastLabel = CreateColorLabel(
+                $"◐ Contrast{Environment.NewLine}+10%"
+            );
+            var lightnessLabel = CreateColorLabel(
+                $"☀️ Brightness{Environment.NewLine}+10%"
+            );
+
+            hueRotateLabel.MouseDown += (_, _) => AdjustColors(ColorAdjustType.HueRotate);
+            contrastLabel.MouseDown += (_, _) => AdjustColors(ColorAdjustType.Contrast);
+            lightnessLabel.MouseDown += (_, _) => AdjustColors(ColorAdjustType.Lightness);
+
+            return (hueRotateLabel, contrastLabel, lightnessLabel);
+        }
+
+        private enum ColorAdjustType { HueRotate, Contrast, Lightness }
+
+        private void AdjustColors(ColorAdjustType adjustType)
+        {
+            // Apply adjustments using a different approach since methods might be in-place
+            switch (adjustType)
+            {
+                case ColorAdjustType.HueRotate:
+                    ColorSettings.AlternatingColor1.HueRotate(15);
+                    ColorSettings.AlternatingColor2.HueRotate(15);
+                    ColorSettings.ForegroundColor.HueRotate(15);
+                    ColorSettings.BackgroundColor.HueRotate(15);
+                    ColorSettings.LesserForegroundColor.HueRotate(15);
+                    ColorSettings.LesserBackgroundColor.HueRotate(15);
+                    ColorSettings.SelectedColumnColor.HueRotate(15);
+                    break;
+
+                case ColorAdjustType.Contrast:
+                    ColorSettings.AlternatingColor1.AdjustContrast(10);
+                    ColorSettings.AlternatingColor2.AdjustContrast(10);
+                    ColorSettings.ForegroundColor.AdjustContrast(10);
+                    ColorSettings.BackgroundColor.AdjustContrast(10);
+                    ColorSettings.LesserForegroundColor.AdjustContrast(10);
+                    ColorSettings.LesserBackgroundColor.AdjustContrast(10);
+                    ColorSettings.SelectedColumnColor.AdjustContrast(10);
+                    break;
+
+                case ColorAdjustType.Lightness:
+                    ColorSettings.AlternatingColor1.AdjustLightness(10);
+                    ColorSettings.AlternatingColor2.AdjustLightness(10);
+                    ColorSettings.ForegroundColor.AdjustLightness(10);
+                    ColorSettings.BackgroundColor.AdjustLightness(10);
+                    ColorSettings.LesserForegroundColor.AdjustLightness(10);
+                    ColorSettings.LesserBackgroundColor.AdjustLightness(10);
+                    ColorSettings.SelectedColumnColor.AdjustLightness(10);
+                    break;
+            }
+
+            this.UpdateLayout();
+            (new NavigableListForm()).Show();
+            this.Close();
+            this.Invalidate(true);
+        }
+
+        private Button CreateUIButton(string text)
+        {
+            return new Button()
+            {
+                Text = TranslationHelper.Translate(text, Program.lang),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                MinimumSize = new Eto.Drawing.Size(30, 30),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
+                Height = Program.ControlHeight ?? 30,
+            };
+        }
+
+        private Label CreateStatusLabel(string prefix, bool showUtcNow = false, bool isServerLabel = false)
+        {
+            var label = new Label()
+            {
+                Text = showUtcNow ? $"{prefix}{Environment.NewLine}{DateTime.UtcNow.ToString("O")}" : prefix,
+                BackgroundColor = isServerLabel ? ColorSettings.LesserBackgroundColor : ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.LesserForegroundColor,
+                VerticalAlignment = VerticalAlignment.Center,
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                Width = Program.ControlWidth ?? 150,
+                Height = Program.ControlHeight ?? 30,
+            };
+            label.ConfigureForPlatform();
+            return label;
+        }
+
+        private void StartTimeRefreshers(Label clientTimeLabel, Label serverTimeLabel)
+        {
+            var LocalTimeRefresher = new Thread(() =>
+            {
+                while (true)
+                {
+                    if (Application.Instance != null)
+                        Application.Instance.Invoke(() =>
+                        {
+                            clientTimeLabel.Text = $"⏰ Client: {Environment.NewLine}{DateTime.Now:HH:mm:ss}";
+                        });
+                    Thread.Sleep(1000);
+                }
+            });
             LocalTimeRefresher.Start();
+
+            var ServerTimeRefresher = new Thread(() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        SingleValueString TR;
+                        var req = (
+                            SendAuthenticatedRequest<string, SingleValueString>.Send(
+                                "Time",
+                                "/AutogeneratedClockEndpointBearerAuth",
+                                true
+                            )
+                        );
+                        if (req.Error == false)
+                        {
+                            TR = req.Out;
+                            if (Application.Instance != null)
+                                Application.Instance.Invoke(() =>
+                                {
+                                    serverTimeLabel.Text =
+                                        $"🌐 Server: {Environment.NewLine}{DateTime.Parse(TR.response, null, DateTimeStyles.RoundtripKind).ToLocalTime():HH:mm:ss}";
+                                });
+                        }
+                    }
+                    catch (Exception E) { }
+                    Thread.Sleep(1000);
+                }
+            });
             ServerTimeRefresher.Start();
-            //Position
         }
     }
 }
