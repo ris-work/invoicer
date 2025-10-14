@@ -119,7 +119,7 @@ public static class GlobalState
                 {
                     Interlocked.Exchange(ref BAT, req.Out);
                     _batInitialized = true;
-                    Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch succeeded. Payload: {System.Text.Json.JsonSerializer.Serialize(req.Out)}");
+                    //Console.WriteLine($"[{DateTime.UtcNow:O}] BAT first-time fetch succeeded. Payload: {System.Text.Json.JsonSerializer.Serialize(req.Out)}");
                     return;
                 }
 
