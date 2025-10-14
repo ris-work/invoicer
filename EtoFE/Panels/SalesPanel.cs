@@ -20,6 +20,8 @@ namespace EtoFE.Panels
         // Add these fields to the class
         private bool isProcessingBatchSelection = false;
         private bool itemCodeChanged = false;
+        // Add this flag at class level
+        private bool autoAddWithBatchPrices = false;
 
 
         // Payment type constants
@@ -698,6 +700,11 @@ namespace EtoFE.Panels
                 Log($"tbItem.TextChanged: New value = '{tbItem.Text}'");
                 itemCodeChanged = true;
             };
+            tbPrice.TextChanged += (_, __) =>
+            {
+                Log($"tbPrice.TextChanged: New value = '{tbPrice.Text}'");
+                tbPrice_TextChanged(_, __);
+            };
             // Add LostFocus for item code
             tbItem.LostFocus += (_, __) =>
             {
@@ -749,12 +756,19 @@ namespace EtoFE.Panels
             }
         }
 
+        // First, let's see what properties are available on the batch object
+        // Assuming GlobalState.BAT.Inv contains batch objects with price info
+
         void HandleItemCodeComplete()
         {
             Log($"HandleItemCodeComplete called with tbItem.Text = '{tbItem.Text}'");
 
             var itemCode = ParseLong(tbItem.Text);
             lblItemName.Text = itemCode > 0 ? BackOfficeAccounting.LookupItem(itemCode) : "";
+
+            // Clear existing selections before populating
+            selectedBatchesForCurrentItem.Clear();
+            RefreshSelectedBatchesGrid();
 
             if (itemCode > 0)
             {
@@ -765,14 +779,85 @@ namespace EtoFE.Panels
             try
             {
                 PopulateSelectedBatchesGrid(itemCode);
+
+                // Auto-select price if empty and we have batches selected
+                if (selectedBatchesForCurrentItem.Count > 0 && (string.IsNullOrEmpty(tbPrice.Text) || ParseDouble(tbPrice.Text) <= 0))
+                {
+                    AutoSelectPrice(itemCode);
+                }
             }
             finally
             {
-                // Always reset the flag, even if an exception occurs
                 isProcessingBatchSelection = false;
                 Log($"Resetting isProcessingBatchSelection = false");
             }
         }
+
+        void AutoSelectPrice(long itemCode)
+        {
+            Log("AutoSelectPrice called - START");
+            Log($"  tbPrice.Text before: '{tbPrice.Text}'");
+            Log($"  selectedBatchesForCurrentItem.Count: {selectedBatchesForCurrentItem.Count}");
+
+            if (selectedBatchesForCurrentItem.Count == 0)
+            {
+                Log("No batches selected, returning");
+                return;
+            }
+
+            // Get the actual batch objects to check prices
+            var batchObjects = GlobalState.BAT.Inv
+                .Where(b => selectedBatchesForCurrentItem.Any(sb => sb.Batchcode == b.Batchcode))
+                .ToList();
+
+            Log($"Found {batchObjects.Count} batch objects");
+
+            if (batchObjects.Count > 0)
+            {
+                var firstBatch = batchObjects.First();
+                Log($"First batch details:");
+                Log($"  Batchcode: {firstBatch.Batchcode}");
+                Log($"  Units: {firstBatch.Units}");
+                Log($"  SellingPrice: {firstBatch.SellingPrice}");
+
+                // Check if selected batches have different prices
+                var batchPrices = batchObjects.Select(b => b.SellingPrice).Where(p => p > 0).Distinct().ToList();
+
+                if (batchPrices.Count > 1)
+                {
+                    Log($"Warning: Batches have different prices: {string.Join(", ", batchPrices)}");
+                    // Don't auto-select, let user choose
+                    return;
+                }
+
+                // Use the common price from first batch
+                if (firstBatch.SellingPrice > 0)
+                {
+                    tbPrice.Text = firstBatch.SellingPrice.ToString("F2");
+                    Log($"Auto-selected price: {firstBatch.SellingPrice} -> tbPrice.Text = '{tbPrice.Text}'");
+                }
+                else
+                {
+                    Log("No selling price found on first selected batch");
+
+                    // Check other selected batches
+                    var pricedBatch = batchObjects.FirstOrDefault(b => b.SellingPrice > 0);
+                    if (pricedBatch != null)
+                    {
+                        tbPrice.Text = pricedBatch.SellingPrice.ToString("F2");
+                        Log($"Found price on another batch: {pricedBatch.Batchcode} -> {pricedBatch.SellingPrice}");
+                    }
+                }
+            }
+
+            Log("AutoSelectPrice called - END");
+        }
+
+
+
+
+
+
 
 
         void HandleItemCodeChange()
@@ -945,6 +1030,7 @@ namespace EtoFE.Panels
 
             var itemCode = ParseLong(tbItem.Text);
             double quantity = ParseDouble(tbQty.Text);
+            double discountRate = ParseDouble(tbDisc.Text);
 
             // Check against pre-selected batches
             double totalAvailable = selectedBatchesForCurrentItem.Sum(b => b.AvailableUnits);
@@ -960,8 +1046,10 @@ namespace EtoFE.Panels
             var vatCategory = GlobalState.BAT.VCat.FirstOrDefault(v => v.VatCategoryId == item.DefaultVatCategory);
             double vatRate = vatCategory?.VatPercentage ?? 0;
 
-            double price = ParseDouble(tbPrice.Text);
-            double discountRate = ParseDouble(tbDisc.Text);
+            // Get batch objects to use their individual prices
+            var batchObjects = GlobalState.BAT.Inv
+                .Where(b => selectedBatchesForCurrentItem.Any(sb => sb.Batchcode == b.Batchcode))
+                .ToDictionary(b => b.Batchcode, b => b);
 
             // Distribute quantity across selected batches in order
             double remainingQuantity = quantity;
@@ -971,29 +1059,90 @@ namespace EtoFE.Panels
 
                 double batchQuantity = Math.Min(remainingQuantity, selectedBatch.AvailableUnits);
 
+                if (!batchObjects.TryGetValue(selectedBatch.Batchcode, out var batchObj))
+                {
+                    Log($"ERROR: Could not find batch object for batchcode {selectedBatch.Batchcode}");
+                    continue;
+                }
+
+                // ALWAYS use batch-specific price
+                double batchPrice = batchObj.SellingPrice;
+                if (batchPrice <= 0)
+                {
+                    if (autoAddWithBatchPrices)
+                    {
+                        // Skip batches without price in auto-add mode
+                        Log($"WARNING: Batch {selectedBatch.Batchcode} has no SellingPrice, skipping in auto-add mode");
+                        continue;
+                    }
+                    else
+                    {
+                        Log($"WARNING: Batch {selectedBatch.Batchcode} has no SellingPrice, using user-entered price {tbPrice.Text}");
+                        batchPrice = ParseDouble(tbPrice.Text);
+                    }
+                }
+                else
+                {
+                    Log($"Using batch-specific price for batch {selectedBatch.Batchcode}: {batchPrice}");
+                }
+
                 var sale = new Sale
                 {
                     Itemcode = itemCode,
                     Batchcode = selectedBatch.Batchcode,
                     Quantity = batchQuantity,
-                    SellingPrice = price,
+                    SellingPrice = batchPrice,
                     DiscountRate = discountRate,
                     ProductName = item.Description,
-                    Discount = batchQuantity * price * discountRate / 100,
+                    Discount = batchQuantity * batchPrice * discountRate / 100,
                     VatRatePercentage = vatRate
                 };
 
-                sale.VatAsCharged = (batchQuantity * price - sale.Discount) * vatRate / 100;
-                sale.TotalEffectiveSellingPrice = batchQuantity * price - sale.Discount + sale.VatAsCharged;
+                sale.VatAsCharged = (batchQuantity * batchPrice - sale.Discount) * vatRate / 100;
+                sale.TotalEffectiveSellingPrice = batchQuantity * batchPrice - sale.Discount + sale.VatAsCharged;
 
                 sales.Add(sale);
                 remainingQuantity -= batchQuantity;
+
+                Log($"Added sale: {batchQuantity} units from batch {selectedBatch.Batchcode} at price {batchPrice}");
             }
 
-            RefreshSalesGrid();
-            RecalculateAll();
-            ResetSaleForm();
+            // Check if we met the quantity requirement
+            if (remainingQuantity > 0)
+            {
+                MessageBox.Show(
+                    $"Could not fulfill complete quantity. Only {quantity - remainingQuantity:F2} of {quantity:F2} units were added (some batches have no price).",
+                    "Incomplete",
+                    MessageBoxType.Warning);
+            }
+
+            // Remove auto-added sales from the list if incomplete
+            if (remainingQuantity > 0 && autoAddWithBatchPrices)
+            {
+                // Remove the partially added sales
+                var lastSaleCount = selectedBatchesForCurrentItem.Count(sb =>
+                    sales.Any(s => s.Batchcode == sb.Batchcode && s.Itemcode == itemCode));
+
+                for (int i = sales.Count - 1; i >= sales.Count - lastSaleCount; i--)
+                {
+                    sales.RemoveAt(i);
+                }
+
+                MessageBox.Show(
+                    $"Cannot auto-add: Some selected batches have no selling price. Please set prices for all batches or manually enter a price.",
+                    "Cannot Auto-Add",
+                    MessageBoxType.Error);
+            }
+            else
+            {
+                RefreshSalesGrid();
+                RecalculateAll();
+                ResetSaleForm();
+            }
+
+            autoAddWithBatchPrices = false; // Reset the flag
         }
+
 
         void SelectBatchesWithSearchDialog(long itemCode)
         {
@@ -1002,12 +1151,13 @@ namespace EtoFE.Panels
             var batches = GlobalState.BAT.Inv.Where(b => b.Itemcode == itemCode && b.Units > 0).ToList();
             Log($"Preparing dialog with {batches.Count} batches");
 
-            // Prepare data for SearchDialogEto
+            // Prepare data for SearchDialogEto - ADD PRICE COLUMN
             var searchItems = batches.Select(b => new[]
             {
         b.Itemcode.ToString(),
         b.Batchcode.ToString(),
         b.Units.ToString("F2"),
+        b.SellingPrice.ToString("F2"), // Add price
         b.MfgDate?.ToString("yyyy-MM-dd") ?? "",
         b.ExpDate?.ToString("yyyy-MM-dd") ?? "",
     }).ToList();
@@ -1017,6 +1167,7 @@ namespace EtoFE.Panels
         ("Itemcode", TextAlignment.Left, true),
         ("Batchcode", TextAlignment.Left, true),
         ("Units", TextAlignment.Right, true),
+        ("Price", TextAlignment.Right, true), // Add price header
         ("MFG Date", TextAlignment.Left, false),
         ("Expiry Date", TextAlignment.Left, true),
     };
@@ -1031,36 +1182,18 @@ namespace EtoFE.Panels
             );
 
             dialog.Title = $"Select Batches for {BackOfficeAccounting.LookupItem(itemCode)}";
-            dialog.ReportSelectedButtonText = "Use Selected Order"; // Just for display
-
-            // Don't set the callback - we'll get results after dialog closes
+            dialog.ReportSelectedButtonText = "Use Selected Order";
 
             // Show the dialog
             Log("About to ShowModal");
             dialog.ShowModal(this);
-            Log($"Dialog closed with result: stubbed");
-
-            // Log the dialog properties after closing
-            Log($"After dialog close:");
-            Log($"  dialog.Selected: {(dialog.Selected == null ? "null" : string.Join(", ", dialog.Selected))}");
-            Log($"  dialog.OutputList.Count: {dialog.OutputList?.Count ?? -1}");
-            if (dialog.OutputList != null && dialog.OutputList.Count > 0)
-            {
-                Log("  OutputList contents:");
-                for (int i = 0; i < dialog.OutputList.Count; i++)
-                {
-                    var row = dialog.OutputList[i];
-                    Log($"    [{i}]: [{string.Join(", ", row)}]");
-                }
-            }
-            Log($"  dialog.SelectedOrder: {dialog.SelectedOrder}");
-            Log($"  dialog.ReverseSelection: {dialog.ReverseSelection}");
+            Log($"Dialog closed with result:STUBBED");
 
             // Process the results
             Application.Instance.AsyncInvoke(() => {
                 bool gotSelections = false;
 
-                // Try OutputList first (for ordered selections)
+                // Try OutputList first
                 if (dialog.OutputList != null && dialog.OutputList.Count > 0)
                 {
                     Log($"Processing {dialog.OutputList.Count} batches from OutputList");
@@ -1071,10 +1204,10 @@ namespace EtoFE.Panels
                         {
                             Batchcode = long.Parse(row[1]),
                             AvailableUnits = double.Parse(row[2]),
-                            MfgDate = row[3],
-                            ExpDate = row[4]
+                            MfgDate = row[4], // Mfg date is now at index 4
+                            ExpDate = row[5]  // Exp date is now at index 5
                         });
-                        Log($"Added batch {row[1]} with {row[2]} units");
+                        Log($"Added batch {row[1]} with {row[2]} units and price {row[3]}");
                     }
                     RefreshSelectedBatchesGrid();
                     UpdateBatchSufficiencyLabel();
@@ -1185,7 +1318,15 @@ namespace EtoFE.Panels
                 return false;
             }
 
-            if (!double.TryParse(tbPrice.Text, out double price) || price <= 0)
+            // AUTO-ADD if price is empty - don't validate, let AddSale handle it
+            if (string.IsNullOrEmpty(tbPrice.Text) || ParseDouble(tbPrice.Text) <= 0)
+            {
+                Log("Price is empty, will auto-add using batch prices");
+                // Don't show messagebox, don't fail validation
+                // Set a flag to indicate auto-add mode
+                autoAddWithBatchPrices = true;
+            }
+            else if (!double.TryParse(tbPrice.Text, out double price) || price <= 0)
             {
                 Log("Validation failed: Invalid price");
                 MessageBox.Show(this, "Please enter a valid price", "Validation Error", MessageBoxType.Error);
@@ -1459,6 +1600,18 @@ namespace EtoFE.Panels
             RecalculateAll();
 
             Log("Form reset");
+        }
+
+        // Also need to handle the case where user enters price manually after batches are selected
+        void tbPrice_TextChanged(object sender, EventArgs e)
+        {
+            if (isProcessingBatchSelection) return;
+
+            if (!string.IsNullOrEmpty(tbPrice.Text))
+            {
+                // Clear auto-add flag if user enters a price
+                autoAddWithBatchPrices = false;
+            }
         }
 
         (bool IsValid, string ConsolidatedErrorList) ValidateInputs()
