@@ -33,6 +33,7 @@ public static class GlobalState
 {
     public static common.BackOfficeAccountingDataTransfer BAT;
     public static PosRefresh PR;
+    public static string Terminal = "1";
 
     // locks and init flags used only to ensure the first fetch is performed once under a lock
     private static readonly object _prInitLock = new object();
@@ -40,6 +41,8 @@ public static class GlobalState
 
     private static readonly object _batInitLock = new object();
     private static bool _batInitialized;
+
+    
 
     // Public API: refreshes once (thread-safe). First refresh for each variable acquires a lock;
     // subsequent calls do an atomic swap without taking the lock.

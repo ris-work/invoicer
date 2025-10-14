@@ -88,7 +88,15 @@ namespace CommonUi
             string[]? order = null
         )
         {
-            System.Console.WriteLine($"SearchDialog creation called, Type: {items.GetType().ToString()}, Count: {items.Count}, InnerType: {typeof(T)}");
+            System.Console.WriteLine($"SearchDialog creation called, Pre-Check, items: {items}");
+            try
+            {
+                System.Console.WriteLine($"SearchDialog creation called, Type: {items.GetType().ToString()}, Count: {items.Count}, InnerType: {typeof(T)}");
+            }
+            catch (Exception Ex)
+            {
+                System.Console.WriteLine($"SearchDialog creation called, EXCEPTION, items: {items}");
+            }
             var generated = new Dialog<string[]?>();
 
             var searchPanel = GenerateSearchPanel(items, debug, localColors, order);

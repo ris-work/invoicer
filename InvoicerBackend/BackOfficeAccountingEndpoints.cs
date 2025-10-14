@@ -12,6 +12,25 @@ namespace InvoicerBackend
                 common.BackOfficeAccountingDataTransfer BAT = new();
                 using (var ctx = new NewinvContext())
                 {
+                    long TokenCategoriesBitmask = ctx
+    .Tokens.Where(e => e.Tokenid == LoginInfo.TokenId)
+    .Select(e => e.CategoriesBitmask)
+    .First();
+                    // Load catalogues and their matching inventories in memory
+                    var cataloguesWithInventories = ctx.Catalogues
+                        .Where(c => (c.CategoriesBitmask & TokenCategoriesBitmask) != 0)
+                        .Join(
+                            ctx.Inventories,
+                            cat => cat.Itemcode,
+                            inv => inv.Itemcode,
+                            (cat, inv) => new { cat, inv }
+                        )
+                        .ToList();
+
+                    // Separate the joined results
+                    BAT.Cat = cataloguesWithInventories.Select(ci => ci.cat).Distinct().ToList();
+                    BAT.Inv = cataloguesWithInventories.Select(ci => ci.inv).ToList();
+                    
                     BAT.AccInfo = ctx.AccountsInformations.ToList();
                     BAT.RInv = ctx.ReceivedInvoices.ToList();
                     BAT.IInv = ctx.IssuedInvoices.ToList();
