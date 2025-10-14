@@ -1031,15 +1031,39 @@ namespace EtoFE.Panels
             );
 
             dialog.Title = $"Select Batches for {BackOfficeAccounting.LookupItem(itemCode)}";
-            dialog.ReportSelectedButtonText = "Use Selected Order";
-            dialog.CallbackWhenReportButtonIsClicked = (message, selected) =>
-            {
-                Log($"Dialog callback triggered. OutputList count: {dialog.OutputList?.Count ?? 0}");
+            dialog.ReportSelectedButtonText = "Use Selected Order"; // Just for display
 
-                // Use dialog.OutputList to get the full ordered list
+            // Don't set the callback - we'll get results after dialog closes
+
+            // Show the dialog
+            Log("About to ShowModal");
+            dialog.ShowModal(this);
+            Log($"Dialog closed with result: stubbed");
+
+            // Log the dialog properties after closing
+            Log($"After dialog close:");
+            Log($"  dialog.Selected: {(dialog.Selected == null ? "null" : string.Join(", ", dialog.Selected))}");
+            Log($"  dialog.OutputList.Count: {dialog.OutputList?.Count ?? -1}");
+            if (dialog.OutputList != null && dialog.OutputList.Count > 0)
+            {
+                Log("  OutputList contents:");
+                for (int i = 0; i < dialog.OutputList.Count; i++)
+                {
+                    var row = dialog.OutputList[i];
+                    Log($"    [{i}]: [{string.Join(", ", row)}]");
+                }
+            }
+            Log($"  dialog.SelectedOrder: {dialog.SelectedOrder}");
+            Log($"  dialog.ReverseSelection: {dialog.ReverseSelection}");
+
+            // Process the results
+            Application.Instance.AsyncInvoke(() => {
+                bool gotSelections = false;
+
+                // Try OutputList first (for ordered selections)
                 if (dialog.OutputList != null && dialog.OutputList.Count > 0)
                 {
-                    Log($"Processing {dialog.OutputList.Count} selected batches");
+                    Log($"Processing {dialog.OutputList.Count} batches from OutputList");
                     selectedBatchesForCurrentItem.Clear();
                     foreach (var row in dialog.OutputList)
                     {
@@ -1054,19 +1078,45 @@ namespace EtoFE.Panels
                     }
                     RefreshSelectedBatchesGrid();
                     UpdateBatchSufficiencyLabel();
-                    Log("Batch grid refreshed and sufficiency label updated");
+                    gotSelections = true;
+                    Log("Batch grid refreshed from OutputList");
                 }
-                dialog.Close();
+                // Fallback to Selected if OutputList is empty
+                else if (dialog.Selected != null && dialog.Selected.Length > 0)
+                {
+                    Log($"Processing selection from dialog.Selected");
+                    // Convert single selection to full batch info
+                    var batchCode = long.Parse(dialog.Selected[1]); // Assuming batchcode is at index 1
+                    var batch = batches.FirstOrDefault(b => b.Batchcode == batchCode);
+                    if (batch != null)
+                    {
+                        selectedBatchesForCurrentItem.Clear();
+                        selectedBatchesForCurrentItem.Add(new SelectedBatch
+                        {
+                            Batchcode = batch.Batchcode,
+                            AvailableUnits = batch.Units,
+                            MfgDate = batch.MfgDate?.ToString("yyyy-MM-dd") ?? "",
+                            ExpDate = batch.ExpDate?.ToString("yyyy-MM-dd") ?? ""
+                        });
+                        RefreshSelectedBatchesGrid();
+                        UpdateBatchSufficiencyLabel();
+                        gotSelections = true;
+                        Log("Batch grid refreshed from Selected property");
+                    }
+                }
 
-                // Set focus away from tbItem to prevent re-triggering
-                Application.Instance.AsyncInvoke(() => {
-                    tbQty.Focus();
-                    Log("Focus moved to tbQty");
-                });
-            };
+                if (!gotSelections)
+                {
+                    Log("No selections found in either OutputList or Selected property");
+                    selectedBatchesForCurrentItem.Clear();
+                    RefreshSelectedBatchesGrid();
+                    UpdateBatchSufficiencyLabel();
+                }
 
-            dialog.ShowModal(this);
-            Log("Dialog shown modal");
+                // Move focus away regardless
+                tbQty.Focus();
+                Log("Focus moved to tbQty");
+            });
         }
 
         void UpdateBatchSufficiencyLabel()
@@ -1098,14 +1148,22 @@ namespace EtoFE.Panels
         }
 
         // Also add to tbQty.TextChanged
-        
 
-        
+
+
 
         bool ValidateSaleForm()
         {
+            Log($"ValidateSaleForm called");
+            Log($"  tbItem.Text = '{tbItem.Text}'");
+            Log($"  selectedBatchesForCurrentItem.Count = {selectedBatchesForCurrentItem?.Count ?? -1}");
+            Log($"  tbQty.Text = '{tbQty.Text}'");
+            Log($"  tbPrice.Text = '{tbPrice.Text}'");
+            Log($"  tbDisc.Text = '{tbDisc.Text}'");
+
             if (!long.TryParse(tbItem.Text, out var itemId) || itemId <= 0)
             {
+                Log("Validation failed: Invalid item code");
                 MessageBox.Show(this, "Please select a valid item", "Validation Error", MessageBoxType.Error);
                 tbItem.Focus();
                 return false;
@@ -1113,6 +1171,7 @@ namespace EtoFE.Panels
 
             if (selectedBatchesForCurrentItem == null || selectedBatchesForCurrentItem.Count == 0)
             {
+                Log("Validation failed: No batches selected");
                 MessageBox.Show(this, "No batches selected for this item. Please enter an item code.", "Validation Error", MessageBoxType.Error);
                 tbItem.Focus();
                 return false;
@@ -1120,6 +1179,7 @@ namespace EtoFE.Panels
 
             if (!double.TryParse(tbQty.Text, out double qty) || qty <= 0)
             {
+                Log("Validation failed: Invalid quantity");
                 MessageBox.Show(this, "Please enter a valid quantity", "Validation Error", MessageBoxType.Error);
                 tbQty.Focus();
                 return false;
@@ -1127,6 +1187,7 @@ namespace EtoFE.Panels
 
             if (!double.TryParse(tbPrice.Text, out double price) || price <= 0)
             {
+                Log("Validation failed: Invalid price");
                 MessageBox.Show(this, "Please enter a valid price", "Validation Error", MessageBoxType.Error);
                 tbPrice.Focus();
                 return false;
@@ -1134,11 +1195,13 @@ namespace EtoFE.Panels
 
             if (!double.TryParse(tbDisc.Text, out double disc) || disc < 0 || disc > 100)
             {
+                Log("Validation failed: Invalid discount");
                 MessageBox.Show(this, "Please enter a valid discount (0-100)", "Validation Error", MessageBoxType.Error);
                 tbDisc.Focus();
                 return false;
             }
 
+            Log("Validation passed");
             return true;
         }
 
