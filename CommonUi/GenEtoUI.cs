@@ -351,11 +351,8 @@ namespace CommonUi
             Eto.Forms.Control ELegend = kv.Value.Item3 != null ? new Label() { Width = 10 } : null;
             if (ELegend != null) _ELegends.Add(kv.Key, ELegend);
 
-            // Create table row
-            var EControl = CreateTableRow(EFieldName, EInput, ELegend);
-
+            // Add to collections
             _Einputs.Add(kv.Key, EInput);
-            _EControlsAll.Add(EControl);
 
             // Add to LayoutNext - this is the key part that might be missing
             Console.WriteLine($"Adding to LayoutNext: {kv.Key}, Control type: {EInput.GetType().Name}");
@@ -748,9 +745,17 @@ namespace CommonUi
                     rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                     CurrentNo += GeneratedCustom.RowSpan();
 
-                    // Add to LayoutNext - only once
-                    Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
-                    LayoutNext.Add((_EFieldNames[kv.Key], _Einputs[kv.Key], (Control)GeneratedCustom), CurrentNo);
+                    // Check if this field is already in LayoutNext
+                    bool alreadyInLayout = LayoutNext.Any(item =>
+                        item.Key.MainControl == _Einputs[kv.Key] &&
+                        item.Key.LabelControl == _EFieldNames[kv.Key]);
+
+                    // Only add to LayoutNext if not already there
+                    if (!alreadyInLayout)
+                    {
+                        Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
+                        LayoutNext.Add((_EFieldNames[kv.Key], _Einputs[kv.Key], (Control)GeneratedCustom), CurrentNo);
+                    }
                 }
                 else
                 {
@@ -769,33 +774,20 @@ namespace CommonUi
                         rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                         CurrentNo += GeneratedCustom.RowSpan();
 
-                        // Update the table row to use the custom panel
-                        if (_EFieldNames.TryGetValue(kv.Key, out var fieldLabel) && _ELegends.TryGetValue(kv.Key, out var legend))
+                        // Check if this field is already in LayoutNext
+                        bool alreadyInLayout = LayoutNext.Any(item =>
+                            item.Key.MainControl == _Einputs[kv.Key] &&
+                            item.Key.LabelControl == _EFieldNames[kv.Key]);
+
+                        // Only add to LayoutNext if not already there
+                        if (!alreadyInLayout)
                         {
-                            var tableRow = new TableRow(fieldLabel, (Control)GeneratedCustom, legend)
-                            {
-                                ScaleHeight = ColorSettings.ExpandContentHeight,
-                            };
-
-                            // Replace the existing row in _EControlsAll
-                            var existingIndex = _EControlsAll.FindIndex(tr =>
-                                tr.Cells != null && tr.Cells.Count > 0 && tr.Cells[0].Control == fieldLabel);
-
-                            if (existingIndex >= 0)
-                            {
-                                _EControlsAll[existingIndex] = tableRow;
-                            }
-
-                            // Add to LayoutNext - only once
                             Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
-                            LayoutNext.Add((fieldLabel, (Control)GeneratedCustom, legend), CurrentNo);
+                            LayoutNext.Add((_EFieldNames[kv.Key], (Control)GeneratedCustom, _ELegends.TryGetValue(kv.Key, out var legend) ? legend : null), CurrentNo);
                         }
                     }
                 }
             }
-
-            // Remove the redundant addition at the end of the method
-            // This was causing the duplicate key error
         }
 
         private void SetupCustomPanel(
@@ -1102,9 +1094,9 @@ namespace CommonUi
             Console.WriteLine($"Max row offset: {maxRowOffset}");
 
             // Create bins (one per column) to temporarily hold (leftControl, rightControl) pairs.
-            var columnBins = new List<List<(Control, Control)>>();
+            var columnBins = new List<List<(Control, Control, Control?)>>();
             for (int col = 0; col < nColumns; col++)
-                columnBins.Add(new List<(Control, Control)>());
+                columnBins.Add(new List<(Control, Control, Control?)>());
 
             // Distribute each item into the appropriate column based on its row offset.
             foreach (var kvp in LayoutNext)
@@ -1121,13 +1113,13 @@ namespace CommonUi
                 if (field.MainControl != null)
                 {
                     // Primary row shows LabelControl and MainControl.
-                    columnBins[currentColumnIndex].Add((field.LabelControl, field.MainControl));
+                    columnBins[currentColumnIndex].Add((field.LabelControl, field.MainControl, field.Supplemental));
 
                     // If Supplemental exists, add an extra row below:
                     // The left cell will be empty to reserve label space.
                     if (field.Supplemental != null)
                     {
-                        columnBins[currentColumnIndex].Add((null, field.Supplemental));
+                        columnBins[currentColumnIndex].Add((null, field.Supplemental, null));
                     }
                 }
                 else
@@ -1135,7 +1127,7 @@ namespace CommonUi
                     // No MainControl: use Supplemental in its place.
                     // If neither is provided, a placeholder (empty Panel) is used.
                     Control rightControl = field.Supplemental ?? new Panel { Size = new Size(0, 0) };
-                    columnBins[currentColumnIndex].Add((field.LabelControl, rightControl));
+                    columnBins[currentColumnIndex].Add((field.LabelControl, rightControl, null));
                 }
             }
 
@@ -1156,121 +1148,70 @@ namespace CommonUi
                 {
                     var rows = new List<TableRow>();
 
-                    foreach (var pair in columnBins[i])
+                    foreach (var tuple in columnBins[i])
                     {
                         var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
 
-                        // Create new controls based on the original controls
-                        Control newLeftControl = null;
-                        Control newRightControl = null;
+                        // If the left control is null, insert an empty control to preserve alignment.
+                        Control leftControl = tuple.Item1 ?? new Panel { Size = new Size(0, 0) };
+                        Control mainControl = tuple.Item2;
+                        Control? legendControl = tuple.Item3;
 
-                        // If the left control is not null, create a new label based on the original
-                        if (pair.Item1 != null)
+                        // Apply label colors to the left control if it's a label
+                        if (leftControl is Label label)
                         {
-                            if (pair.Item1 is Label originalLabel)
-                            {
-                                var newLabel = new Label()
-                                {
-                                    Text = originalLabel.Text,
-                                    TextColor = originalLabel.TextColor,
-                                    BackgroundColor = originalLabel.BackgroundColor,
-                                    Font = originalLabel.Font,
-                                    Width = originalLabel.Width,
-                                    Height = originalLabel.Height,
-                                    Wrap = originalLabel.Wrap
-                                };
-                                newLeftControl = newLabel;
-                            }
-                            else if (pair.Item1 is CustomLabel originalCustomLabel)
-                            {
-                                var newCustomLabel = new CustomLabel()
-                                {
-                                    Text = originalCustomLabel.Text,
-                                    ForegroundColor = originalCustomLabel.ForegroundColor,
-                                    Width = originalCustomLabel.Width,
-                                    Height = originalCustomLabel.Height
-                                };
-                                newLeftControl = newCustomLabel;
-                            }
-                            else
-                            {
-                                // For other control types, create a new Panel with the same size
-                                newLeftControl = new Panel() { Size = pair.Item1.Size };
-                            }
+                            var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
+                            label.BackgroundColor = LegendBG;
+                            label.TextColor = LegendFG;
+                            label.Font = LegendTFont;
+                            label.Wrap = WrapMode.None;
                         }
-                        else
+                        else if (leftControl is CustomLabel customLabel)
                         {
-                            // Create an empty control to preserve alignment
-                            newLeftControl = new Panel() { Size = new Size(0, 0) };
-                        }
-
-                        // Create a new right control based on the original
-                        if (pair.Item2 is TextBox originalTextBox)
-                        {
-                            var newTextBox = new TextBox()
-                            {
-                                Text = originalTextBox.Text,
-                                TextAlignment = originalTextBox.TextAlignment,
-                                TextColor = originalTextBox.TextColor,
-                                BackgroundColor = originalTextBox.BackgroundColor,
-                                Font = originalTextBox.Font,
-                                Width = originalTextBox.Width,
-                                Height = originalTextBox.Height,
-                                ReadOnly = originalTextBox.ReadOnly,
-                                ShowBorder = false // Always set to false for consistent look
-                            };
-                            newRightControl = newTextBox;
-                        }
-                        else if (pair.Item2 is CheckBox originalCheckBox)
-                        {
-                            var newCheckBox = new CheckBox()
-                            {
-                                Text = originalCheckBox.Text,
-                                TextColor = originalCheckBox.TextColor,
-                                BackgroundColor = originalCheckBox.BackgroundColor,
-                                Font = originalCheckBox.Font,
-                                Width = originalCheckBox.Width,
-                                Height = originalCheckBox.Height,
-                                Checked = originalCheckBox.Checked
-                            };
-                            newRightControl = newCheckBox;
-                        }
-                        else if (pair.Item2 is Button originalButton)
-                        {
-                            var newButton = new Button()
-                            {
-                                Text = originalButton.Text,
-                                TextColor = originalButton.TextColor,
-                                BackgroundColor = originalButton.BackgroundColor,
-                                Font = originalButton.Font,
-                                Width = originalButton.Width,
-                                Height = originalButton.Height,
-                                Enabled = originalButton.Enabled
-                            };
-                            newRightControl = newButton;
-                        }
-                        else if (pair.Item2 is ILookupSupportedChildPanel originalPanel)
-                        {
-                            // For custom panels, we can't create a new one, so we'll use the original
-                            // but we need to make sure it's not already part of another visual tree
-                            // This is a workaround - ideally we should be able to create a new instance
-                            newRightControl = (Control)originalPanel;
-                        }
-                        else
-                        {
-                            // For other control types, create a new Panel with the same size
-                            newRightControl = new Panel() { Size = pair.Item2.Size };
+                            var (LegendFG, _, _, _, _, _, _) = GetThemeForComponent("Legend");
+                            customLabel.ForegroundColor = LegendFG;
                         }
 
                         // Set the width for the controls
-                        if (newLeftControl != null)
-                            newLeftControl.Width = ColorSettings.InnerLabelWidth ?? -1;
-                        if (newRightControl != null)
-                            newRightControl.Width = ColorSettings.ControlWidth ?? 100;
+                        leftControl.Width = ColorSettings.InnerLabelWidth ?? -1;
+                        mainControl.Width = ColorSettings.ControlWidth ?? 100;
 
-                        // Add the controls to the row
-                        row.Cells.Add(new TableCell(newLeftControl, false)); // Don't expand label
-                        row.Cells.Add(new TableCell(newRightControl, true)); // Expand main control
+                        // Handle TextBox controls specifically
+                        if (mainControl is TextBox textBox)
+                        {
+                            textBox.ShowBorder = false;
+                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
+                            row.Cells.Add(new TableCell(textBox, true)); // Expand text box
+
+                            // Add legend if it exists
+                            if (legendControl != null)
+                            {
+                                row.Cells.Add(new TableCell(legendControl, false));
+                            }
+                        }
+                        else if (mainControl is ILookupSupportedChildPanel customPanel)
+                        {
+                            // For custom panels, add the label and the panel
+                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
+                            row.Cells.Add(new TableCell((Control)customPanel, true)); // Expand panel
+
+                            // Add legend if it exists
+                            if (legendControl != null)
+                            {
+                                row.Cells.Add(new TableCell(legendControl, false));
+                            }
+                        }
+                        else
+                        {
+                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
+                            row.Cells.Add(new TableCell(mainControl, true)); // Expand main control
+
+                            // Add legend if it exists
+                            if (legendControl != null)
+                            {
+                                row.Cells.Add(new TableCell(legendControl, false));
+                            }
+                        }
 
                         rows.Add(row);
                     }
