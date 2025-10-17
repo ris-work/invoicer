@@ -731,7 +731,7 @@ var GeneratedEtoUISample = new GenEtoUI(
         { ["adiscount", "pdiscount"], ("DiscountPanel", "price") },
         { ["today"], ("DatePickerPanel", null) },
     },
-    ["price"]
+    ["name", "price"]
 );
 var ExternalCalculateButton = new Eto.Forms.Button() { Text = "Run external calculation" };
 ExternalCalculateButton.Click += (_, _) =>

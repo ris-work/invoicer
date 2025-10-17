@@ -804,8 +804,30 @@ namespace CommonUi
                         rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                         CurrentNo += GeneratedCustom.RowSpan();
 
-                        // For child fields, we don't add them to LayoutNext as they're handled by the parent
-                        Console.WriteLine($"Skipping LayoutNext for child field: {kv.Key}");
+                        // Find the existing entry in LayoutNext and update it
+                        var existingEntry = LayoutNext.FirstOrDefault(item =>
+                            item.Key.MainControl == _Einputs[kv.Key] &&
+                            item.Key.LabelControl == _EFieldNames[kv.Key]);
+
+                        if (existingEntry.Key != default((Control, Control, Control)))
+                        {
+                            Console.WriteLine($"Updating existing entry in LayoutNext: {kv.Key}");
+                            // Remove the old entry and add a new one with custom panel
+                            LayoutNext.Remove(existingEntry.Key);
+                            LayoutNext.Add((_EFieldNames[kv.Key], (Control)GeneratedCustom, _ELegends.TryGetValue(kv.Key, out var legend) ? legend : null), CurrentNo);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Adding new entry to LayoutNext: {kv.Key}");
+                            LayoutNext.Add((_EFieldNames[kv.Key], (Control)GeneratedCustom, _ELegends.TryGetValue(kv.Key, out var legend) ? legend : null), CurrentNo);
+                        }
+
+                        // Add the field to CustomPanelInputRetrievalFunctions to ensure it's serialized
+                        if (!CustomPanelInputRetrievalFunctions.ContainsKey(kv.Key))
+                        {
+                            Console.WriteLine($"Adding {kv.Key} to CustomPanelInputRetrievalFunctions");
+                            CustomPanelInputRetrievalFunctions.Add(kv.Key, () => GeneratedCustom.LookupValue(kv.Key));
+                        }
                     }
                 }
             }
