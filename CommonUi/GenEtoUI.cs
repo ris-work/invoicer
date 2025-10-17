@@ -733,11 +733,13 @@ namespace CommonUi
 
                 if (parentFields.Any())
                 {
+                    Console.WriteLine($"Found parent field for custom panel: {kv.Key}");
                     var Fields = parentFields.First();
                     var parentTextBox = _Einputs.TryGetValue(kv.Key, out var control) && control is TextBox tb
                         ? tb
                         : null;
 
+                    Console.WriteLine($"Creating custom panel: {Fields.Value.ControlName} for fields: {string.Join(", ", Fields.Key)}");
                     GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, parentTextBox);
 
                     SetupCustomPanel(GeneratedCustom, Fields.Key, Fields.Value.ControlName, kv.Key, EFocusableList, GoToNextFromPanel);
@@ -745,15 +747,21 @@ namespace CommonUi
                     rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                     CurrentNo += GeneratedCustom.RowSpan();
 
-                    // Check if this field is already in LayoutNext
-                    bool alreadyInLayout = LayoutNext.Any(item =>
+                    // Find the existing entry in LayoutNext and update it to add the custom panel as supplemental
+                    var existingEntry = LayoutNext.FirstOrDefault(item =>
                         item.Key.MainControl == _Einputs[kv.Key] &&
                         item.Key.LabelControl == _EFieldNames[kv.Key]);
 
-                    // Only add to LayoutNext if not already there
-                    if (!alreadyInLayout)
+                    if (existingEntry.Key != default((Control, Control, Control)))
                     {
-                        Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
+                        Console.WriteLine($"Updating existing entry in LayoutNext: {kv.Key}");
+                        // Remove the old entry and add a new one with the custom panel as supplemental
+                        LayoutNext.Remove(existingEntry.Key);
+                        LayoutNext.Add((_EFieldNames[kv.Key], _Einputs[kv.Key], (Control)GeneratedCustom), CurrentNo);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Adding new entry to LayoutNext: {kv.Key}");
                         LayoutNext.Add((_EFieldNames[kv.Key], _Einputs[kv.Key], (Control)GeneratedCustom), CurrentNo);
                     }
                 }
@@ -766,6 +774,7 @@ namespace CommonUi
 
                     if (childFields.Any())
                     {
+                        Console.WriteLine($"Found child field for custom panel: {kv.Key}");
                         var Fields = childFields.First();
                         GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, null);
 
@@ -774,17 +783,8 @@ namespace CommonUi
                         rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
                         CurrentNo += GeneratedCustom.RowSpan();
 
-                        // Check if this field is already in LayoutNext
-                        bool alreadyInLayout = LayoutNext.Any(item =>
-                            item.Key.MainControl == _Einputs[kv.Key] &&
-                            item.Key.LabelControl == _EFieldNames[kv.Key]);
-
-                        // Only add to LayoutNext if not already there
-                        if (!alreadyInLayout)
-                        {
-                            Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
-                            LayoutNext.Add((_EFieldNames[kv.Key], (Control)GeneratedCustom, _ELegends.TryGetValue(kv.Key, out var legend) ? legend : null), CurrentNo);
-                        }
+                        // For child fields, we don't add them to LayoutNext as they're handled by the parent
+                        Console.WriteLine($"Skipping LayoutNext for child field: {kv.Key}");
                     }
                 }
             }
@@ -1093,10 +1093,19 @@ namespace CommonUi
             int maxRowOffset = LayoutNext.Count > 0 ? LayoutNext.Max(x => x.Value) : 0;
             Console.WriteLine($"Max row offset: {maxRowOffset}");
 
+            // Debug output for each item in LayoutNext
+            foreach (var item in LayoutNext)
+            {
+                string labelName = item.Key.LabelControl?.GetType().Name ?? "null";
+                string mainName = item.Key.MainControl?.GetType().Name ?? "null";
+                string suppName = item.Key.Supplemental?.GetType().Name ?? "null";
+                Console.WriteLine($"Item: Label={labelName}, Main={mainName}, Supplemental={suppName}, Value={item.Value}");
+            }
+
             // Create bins (one per column) to temporarily hold (leftControl, rightControl) pairs.
-            var columnBins = new List<List<(Control, Control, Control?)>>();
+            var columnBins = new List<List<(Control, Control, Control)>>();
             for (int col = 0; col < nColumns; col++)
-                columnBins.Add(new List<(Control, Control, Control?)>());
+                columnBins.Add(new List<(Control, Control, Control)>());
 
             // Distribute each item into the appropriate column based on its row offset.
             foreach (var kvp in LayoutNext)
@@ -1110,25 +1119,8 @@ namespace CommonUi
 
                 var field = kvp.Key;
 
-                if (field.MainControl != null)
-                {
-                    // Primary row shows LabelControl and MainControl.
-                    columnBins[currentColumnIndex].Add((field.LabelControl, field.MainControl, field.Supplemental));
-
-                    // If Supplemental exists, add an extra row below:
-                    // The left cell will be empty to reserve label space.
-                    if (field.Supplemental != null)
-                    {
-                        columnBins[currentColumnIndex].Add((null, field.Supplemental, null));
-                    }
-                }
-                else
-                {
-                    // No MainControl: use Supplemental in its place.
-                    // If neither is provided, a placeholder (empty Panel) is used.
-                    Control rightControl = field.Supplemental ?? new Panel { Size = new Size(0, 0) };
-                    columnBins[currentColumnIndex].Add((field.LabelControl, rightControl, null));
-                }
+                // Always add the item to the column bins
+                columnBins[currentColumnIndex].Add((field.LabelControl, field.MainControl, field.Supplemental));
             }
 
             // Create the outer TableLayout
@@ -1148,14 +1140,13 @@ namespace CommonUi
                 {
                     var rows = new List<TableRow>();
 
-                    foreach (var tuple in columnBins[i])
+                    foreach (var triplet in columnBins[i])
                     {
-                        var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
+                        // Create a row for the main control
+                        var mainRow = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
 
-                        // If the left control is null, insert an empty control to preserve alignment.
-                        Control leftControl = tuple.Item1 ?? new Panel { Size = new Size(0, 0) };
-                        Control mainControl = tuple.Item2;
-                        Control? legendControl = tuple.Item3;
+                        // Handle the label control
+                        Control leftControl = triplet.Item1 ?? new Panel { Size = new Size(0, 0) };
 
                         // Apply label colors to the left control if it's a label
                         if (leftControl is Label label)
@@ -1165,55 +1156,64 @@ namespace CommonUi
                             label.TextColor = LegendFG;
                             label.Font = LegendTFont;
                             label.Wrap = WrapMode.None;
+                            Console.WriteLine($"Setting up label: {label.Text}");
                         }
                         else if (leftControl is CustomLabel customLabel)
                         {
                             var (LegendFG, _, _, _, _, _, _) = GetThemeForComponent("Legend");
                             customLabel.ForegroundColor = LegendFG;
+                            Console.WriteLine($"Setting up custom label: {customLabel.Text}");
                         }
 
                         // Set the width for the controls
                         leftControl.Width = ColorSettings.InnerLabelWidth ?? -1;
-                        mainControl.Width = ColorSettings.ControlWidth ?? 100;
 
-                        // Handle TextBox controls specifically
-                        if (mainControl is TextBox textBox)
+                        // Add the label to the row
+                        mainRow.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
+
+                        // Handle the main control
+                        Control mainControl = triplet.Item2;
+                        if (mainControl != null)
                         {
-                            textBox.ShowBorder = false;
-                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
-                            row.Cells.Add(new TableCell(textBox, true)); // Expand text box
+                            mainControl.Width = ColorSettings.ControlWidth ?? 100;
 
-                            // Add legend if it exists
-                            if (legendControl != null)
+                            // Handle TextBox controls specifically
+                            if (mainControl is TextBox textBox)
                             {
-                                row.Cells.Add(new TableCell(legendControl, false));
+                                textBox.ShowBorder = false;
+                                mainRow.Cells.Add(new TableCell(textBox, true)); // Expand text box
                             }
-                        }
-                        else if (mainControl is ILookupSupportedChildPanel customPanel)
-                        {
-                            // For custom panels, add the label and the panel
-                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
-                            row.Cells.Add(new TableCell((Control)customPanel, true)); // Expand panel
-
-                            // Add legend if it exists
-                            if (legendControl != null)
+                            else
                             {
-                                row.Cells.Add(new TableCell(legendControl, false));
+                                mainRow.Cells.Add(new TableCell(mainControl, true)); // Expand main control
                             }
                         }
                         else
                         {
-                            row.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
-                            row.Cells.Add(new TableCell(mainControl, true)); // Expand main control
-
-                            // Add legend if it exists
-                            if (legendControl != null)
-                            {
-                                row.Cells.Add(new TableCell(legendControl, false));
-                            }
+                            // Add an empty panel if there's no main control
+                            mainRow.Cells.Add(new TableCell(new Panel(), true));
                         }
 
-                        rows.Add(row);
+                        // Add the main row to the list of rows
+                        rows.Add(mainRow);
+
+                        // If there's a supplemental control, create a row for it
+                        Control supplementalControl = triplet.Item3;
+                        if (supplementalControl != null)
+                        {
+                            var supplementalRow = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
+
+                            // Add an empty cell for the label column
+                            supplementalRow.Cells.Add(new TableCell(new Panel(), false));
+
+                            // Add the supplemental control
+                            supplementalRow.Cells.Add(new TableCell(supplementalControl, true));
+
+                            Console.WriteLine($"Adding supplemental control: {supplementalControl.GetType().Name}");
+
+                            // Add the supplemental row to the list of rows
+                            rows.Add(supplementalRow);
+                        }
                     }
 
                     var colLayout = new TableLayout(rows.ToArray())
