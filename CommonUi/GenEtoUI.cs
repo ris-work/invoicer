@@ -60,7 +60,10 @@ namespace CommonUi
         Dictionary<string, object> ConvertedInputs = new();
         Dictionary<string, Control> _EFieldNames = new();
         Dictionary<string, Type> OriginalTypes = new();
-        Dictionary<string, GeneratePanel> PanelGenerators = new();
+        IReadOnlyDictionary<
+                string,
+                Func<string[], TextBox?, ILookupSupportedChildPanel>
+            >? PanelGenerators = null;
         Dictionary<string, Func<object>> CustomPanelInputRetrievalFunctions = new();
         Dictionary<string, Type> OriginalTypesCustomPanels = new();
         Dictionary<string, ILookupSupportedChildPanel> FieldsHandlerMapping = new();
@@ -70,11 +73,39 @@ namespace CommonUi
         public OrderedDictionary<string, (string ControlName, object Value, string?)> _Inputs;
         public string Identity = "";
         IReadOnlyDictionary<string, object> Configuration;
+        IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler;
 
         // Track the last changed field to prevent recursive updates
         private string _lastChangedField = "";
         private DateTime _lastChangeTime = DateTime.MinValue;
         private const int RECURSION_PREVENTION_MS = 100;
+
+        // Add these fields at class level for caching
+        private readonly Dictionary<string, Func<object>> _valueGetters = new();
+        private readonly Dictionary<string, Action<object>> _valueSetters = new();
+        private readonly Dictionary<Type, Func<string, object>> _parsers = new();
+
+        IReadOnlyDictionary<
+                string[],
+                (string ControlName, string? ParentField)
+            >? FieldsListHandledByGeneratedPanels = null;
+        System.EventHandler<Eto.Forms.KeyEventArgs> GoToNext = (
+                object o,
+                Eto.Forms.KeyEventArgs ea
+            ) => { };
+
+        Action<Control> GoToNextFromPanel = (_) => { };
+
+        // In constructor, initialize parsers once
+        private void InitializeParsers()
+        {
+            _parsers[typeof(long)] = s => long.Parse(s);
+            _parsers[typeof(int)] = s => int.Parse(s);
+            _parsers[typeof(float)] = s => float.Parse(s);
+            _parsers[typeof(double)] = s => double.Parse(s);
+            _parsers[typeof(string)] = s => s;
+            _parsers[typeof(bool)] = s => bool.Parse(s);
+        }
 
         public void Disable(string key)
         {
@@ -86,155 +117,42 @@ namespace CommonUi
             }
         }
 
+        // Replace the original Lookup method with this optimized version
         public object Lookup(string key)
         {
-            object? Out = null;
-            if (_Inputs.ContainsKey(key))
+            if (_valueGetters.TryGetValue(key, out var getter))
             {
-                var e = _Inputs.Where(e => e.Key == key).First();
+                return getter();
+            }
 
-                Type T = OriginalTypes[e.Key];
-                if (T == typeof(long))
-                {
-                    if (e.Value.Item3 == null)
-                    {
-                        Out = long.Parse(((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else
-                    {
-                        Out = long.Parse(((Button)_Einputs[e.Key]).Text);
-                    }
-                }
-                else if (T == typeof(int))
-                {
-                    if (e.Value.Item3 == null)
-                    {
-                        Out = int.Parse(((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else
-                    {
-                        Out = int.Parse(((Button)_Einputs[e.Key]).Text);
-                    }
-                }
-                else if (T == typeof(float))
-                {
-                    if (e.Value.Item3 == null)
-                    {
-                        Out = float.Parse(((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else
-                    {
-                        Out = float.Parse(((Button)_Einputs[e.Key]).Text);
-                    }
-                }
-                else if (T == typeof(double))
-                {
-                    if (e.Value.Item3 == null)
-                    {
-                        Out = double.Parse(((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else
-                    {
-                        Out = double.Parse(((Button)_Einputs[e.Key]).Text);
-                    }
-                }
-                else if (T == typeof(string))
-                {
-                    Out = ((TextBox)_Einputs[e.Key]).Text;
-                }
-                else if (T == typeof(bool))
-                {
-                    Out = ((CheckBox)_Einputs[e.Key]).Checked;
-                }
-            }
-            else
+            // Fall back to custom controls
+            if (CustomPanelInputRetrievalFunctions.TryGetValue(key, out var customGetter))
             {
-                //Console.WriteLine(string.Join(',',CustomPanelInputRetrievalFunctions.Keys.ToArray()));
-                Out = CustomPanelInputRetrievalFunctions[key]();
+                return customGetter();
             }
-            return Out;
+
+            throw new KeyNotFoundException($"Key '{key}' not found in value getters.");
         }
 
+
+        // Replace the original SetValue method with this optimized version
         public void SetValue(string key, object value)
         {
-            // First, try built-in controls from _Inputs.
-            // Built-in controls take precedence over custom ones.
-            if (_Einputs.TryGetValue(key, out Control builtinControl))
+            // Try built-in controls first
+            if (_valueSetters.TryGetValue(key, out var setter))
             {
-                // Assume that OriginalTypes contains the type expected for this key.
-                Type expectedType = OriginalTypes[key];
-
-                // For boolean values, assume a CheckBox is used.
-                if (expectedType == typeof(bool))
-                {
-                    if (builtinControl is CheckBox checkBox)
-                    {
-                        if (value is bool boolValue)
-                            checkBox.Checked = boolValue;
-                        else
-                            throw new ArgumentException(
-                                $"Value for key '{key}' must be a boolean."
-                            );
-                    }
-                    // Fallback in case the built-in control supports the custom interface.
-                    else if (builtinControl is ILookupSupportedChildPanel panel)
-                    {
-                        panel.SetOriginalValue(key, value);
-                    }
-                    else
-                    {
-                        throw new NotSupportedException(
-                            $"Control for key '{key}' is not a CheckBox or a supported custom type for boolean values."
-                        );
-                    }
-                }
-                // For numbers and strings, update the Text property (TextBox or Button).
-                else
-                {
-                    string textValue = value?.ToString() ?? "";
-                    if (builtinControl is TextBox textBox)
-                    {
-                        textBox.Text = textValue;
-                    }
-                    else if (builtinControl is Button button)
-                    {
-                        button.Text = textValue;
-                    }
-                    // Fallback for built-in controls that implement the custom interface
-                    else if (builtinControl is ILookupSupportedChildPanel panel)
-                    {
-                        panel.SetOriginalValue(key, value);
-                    }
-                    else
-                    {
-                        throw new NotSupportedException(
-                            $"Control type '{builtinControl.GetType().Name}' for key '{key}' is not supported for setting text/numeric values."
-                        );
-                    }
-                }
+                setter(value);
                 return;
             }
 
-            // Next, try custom controls from FieldsHandlerMapping (which might not exhaustively contain every key).
-            if (FieldsHandlerMapping.TryGetValue(key, out ILookupSupportedChildPanel customControl))
+            // Fall back to custom controls if needed
+            if (FieldsHandlerMapping.TryGetValue(key, out var customControl))
             {
-                if (customControl is ILookupSupportedChildPanel customPanel)
-                {
-                    customPanel.SetOriginalValue(key, value);
-                }
-                else
-                {
-                    throw new NotSupportedException(
-                        $"Custom control for key '{key}' does not implement ILookupSupportedChildPanel."
-                    );
-                }
+                customControl.SetOriginalValue(key, value);
                 return;
             }
 
-            // If the key is not found in either collection, throw an error.
-            throw new KeyNotFoundException(
-                $"Key '{key}' not found in built-in (_Inputs) or custom (FieldsHandlerMapping) control mappings."
-            );
+            throw new KeyNotFoundException($"Key '{key}' not found in control mappings.");
         }
 
         public void InitializeConfiguration()
@@ -326,7 +244,7 @@ namespace CommonUi
                 return (FG, BG, FGc, BGc, EFont, TSize, CSize);
         }
 
-        // Enhanced serialization with better handling of reactive updates
+        // Optimize the SerializeIfValid method
         public string SerializeIfValid()
         {
             if (!ValidateInputs())
@@ -339,152 +257,54 @@ namespace CommonUi
                 Converters = { new JsonStringEnumConverter() }
             };
 
+            // Use pre-cached getters for better performance
             Dictionary<string, object> _LocalDict = new();
-            foreach (var e in _Inputs)
+
+            foreach (var getter in _valueGetters)
             {
-                if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(getter.Key, out bool x) && x)
                 {
-                    Type T = e.Value.Item2.GetType();
-                    if (T == typeof(long))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            _LocalDict.Add(e.Key, long.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            _LocalDict.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(int))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            _LocalDict.Add(e.Key, int.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            _LocalDict.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(float))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            _LocalDict.Add(e.Key, float.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            _LocalDict.Add(e.Key, float.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(double))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            _LocalDict.Add(e.Key, double.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            _LocalDict.Add(e.Key, double.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(string))
-                    {
-                        _LocalDict.Add(e.Key, ((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else if (T == typeof(bool))
-                    {
-                        _LocalDict.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked == true);
-                    }
+                    _LocalDict[getter.Key] = getter.Value();
                 }
             }
+
+            // Add custom panel values
             foreach (var kvp in CustomPanelInputRetrievalFunctions)
             {
-                _LocalDict[kvp.Key] = kvp.Value();
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(kvp.Key, out bool x) && x)
+                {
+                    _LocalDict[kvp.Key] = kvp.Value();
+                }
             }
 
             return JsonSerializer.Serialize(_LocalDict, options);
         }
 
+
+        // Optimize ConvertInputs method
         public void ConvertInputs()
         {
             ConvertedInputs = new();
-            foreach (var e in _Inputs)
+
+            // Use pre-cached getters for better performance
+            foreach (var getter in _valueGetters)
             {
-                if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(getter.Key, out bool x) && x)
                 {
-                    if (e.Value.Item2 == null)
-                        System.Console.WriteLine($"Null: {e.Key}");
-                    Type T = e.Value.Item2.GetType();
-                    if (T == typeof(long))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            ConvertedInputs.Add(e.Key, long.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(int))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            ConvertedInputs.Add(e.Key, int.Parse(((TextBox)_Einputs[e.Key]).Text));
-                        }
-                        else
-                        {
-                            ConvertedInputs.Add(e.Key, long.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(float))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            ConvertedInputs.Add(
-                                e.Key,
-                                float.Parse(((TextBox)_Einputs[e.Key]).Text)
-                            );
-                        }
-                        else
-                        {
-                            ConvertedInputs.Add(e.Key, float.Parse(((Button)_Einputs[e.Key]).Text));
-                        }
-                    }
-                    else if (T == typeof(double))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            ConvertedInputs.Add(
-                                e.Key,
-                                double.Parse(((TextBox)_Einputs[e.Key]).Text)
-                            );
-                        }
-                        else
-                        {
-                            ConvertedInputs.Add(
-                                e.Key,
-                                double.Parse(((Button)_Einputs[e.Key]).Text)
-                            );
-                        }
-                    }
-                    else if (T == typeof(string))
-                    {
-                        ConvertedInputs.Add(e.Key, ((TextBox)_Einputs[e.Key]).Text);
-                    }
-                    else if (T == typeof(bool))
-                    {
-                        ConvertedInputs.Add(e.Key, ((CheckBox)_Einputs[e.Key]).Checked == true);
-                    }
+                    ConvertedInputs[getter.Key] = getter.Value();
                 }
             }
+
+            // Add custom panel values
             foreach (var kvp in CustomPanelInputRetrievalFunctions)
             {
-                ConvertedInputs[kvp.Key] = kvp.Value();
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(kvp.Key, out bool x) && x)
+                {
+                    ConvertedInputs[kvp.Key] = kvp.Value();
+                }
             }
         }
+
 
         // Prevent recursive updates by tracking the last changed field and time
         private bool ShouldUpdateField(string fieldName)
@@ -501,6 +321,48 @@ namespace CommonUi
             _lastChangeTime = now;
             return true;
         }
+
+        private void CreateControlsForInput(
+    KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
+    List<Eto.Forms.Control> EFocusableList,
+    string[] DenyList,
+    string? IdentityColumn)
+        {
+            Console.WriteLine($"CreateControlsForInput called for key: {kv.Key}");
+
+            // Get theme for this control
+            (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) = GetThemeForComponent(kv.Key);
+            var valueType = kv.Value.Value?.GetType() ?? typeof(long);
+            OriginalTypes[kv.Key] = valueType;
+
+            // Create label with proper text
+            Control EFieldName = CreateFieldLabel(kv.Value.ControlName, kv.Key);
+            _EFieldNames.Add(kv.Key, EFieldName);
+
+            // Create input control based on type
+            Eto.Forms.Control EInput = CreateInputControl(
+                kv, valueType, FG, BG, FGc, BGc, TFont, CSize,
+                DenyList, IdentityColumn, EFocusableList);
+
+            // Cache getters and setters for this control
+            CacheValueAccessors(kv.Key, valueType, EInput);
+
+            // Create legend if needed
+            Eto.Forms.Control ELegend = kv.Value.Item3 != null ? new Label() { Width = 10 } : null;
+            if (ELegend != null) _ELegends.Add(kv.Key, ELegend);
+
+            // Create table row
+            var EControl = CreateTableRow(EFieldName, EInput, ELegend);
+
+            _Einputs.Add(kv.Key, EInput);
+            _EControlsAll.Add(EControl);
+
+            // Add to LayoutNext - this is the key part that might be missing
+            Console.WriteLine($"Adding to LayoutNext: {kv.Key}, Control type: {EInput.GetType().Name}");
+            LayoutNext.Add((EFieldName, EInput, ELegend), LayoutNext.Count);
+        }
+
+
 
         public GenEtoUI(
             IReadOnlyDictionary<
@@ -526,6 +388,10 @@ namespace CommonUi
         )
         {
             this.SuspendLayout();
+            this.FieldsListHandledByGeneratedPanels = FieldsListHandledByGeneratedPanels;
+            this.InputHandler = InputHandler;
+            this.PanelGenerators = PanelGenerators;
+            InitializeParsers();
             OrderedDictionary<
                 string,
                 (string ControlName, object Value, string? LookupFunctionCallback)
@@ -593,10 +459,7 @@ namespace CommonUi
             var ECount = E.Count();
             var EMid = ECount / 2;
             var CurrentNo = 0;
-            System.EventHandler<Eto.Forms.KeyEventArgs> GoToNext = (
-                object o,
-                Eto.Forms.KeyEventArgs ea
-            ) => { };
+            
             Button SaveButton = new Button()
             {
                 Text = TranslationHelper.Translate("Save", "Save", TranslationHelper.Lang),
@@ -661,429 +524,26 @@ namespace CommonUi
                 var LehendTSize,
                 var LegendCSize
             ) = GetThemeForComponent("Legend");
+            
             foreach (var kv in E)
             {
                 if (!NotInNormalFlow.Contains(kv.Key))
                 {
                     Console.WriteLine($"Attempt to construct with: {kv.Key}");
-                    (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) =
-                        GetThemeForComponent(kv.Key);
-                    var BackgroundColor = BG;
-                    var ForegroundColor = FG;
-                    var ChangedBackgroundColor = BGc;
-                    var ChangedForegroundColor = FGc;
-                    Eto.Forms.Control? SupplementalControl = null;
-                    Eto.Forms.TableRow EControl;
-                    Eto.Forms.Label? ELegend = new Label() { Width = 10 };
-                    ELegend.ConfigureForPlatform();
-                    Eto.Forms.Control EInput = new Label();
-                    Console.WriteLine(
-                        $"{kv.Value.ControlName}: {kv.Value.Value}, {kv.Value.Value?.GetType()}"
-                    );
-                    OriginalTypes.Add(kv.Key, kv.Value.Value?.GetType() ?? typeof(long));
-                    if (
-                        kv.Value.Item2 == null
-                        || kv.Value.Item2.GetType() == typeof(long)
-                        || kv.Value.Item2.GetType() == typeof(int)
-                        || kv.Value.Item2.GetType() == typeof(double)
-                        || kv.Value.Item2.GetType() == typeof(float)
-                    )
-                    {
-                        if (
-                            kv.Value.Item2 == null
-                            || kv.Value.Item2.GetType() == typeof(long)
-                            || kv.Value.Item2.GetType() == typeof(Int64)
-                        )
-                        {
-                            if (kv.Value.Item3 == null)
-                            {
-                                // Enhanced event handler that prevents recursion
-                                EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                                {
-                                    if (!ShouldUpdateField(kv.Key)) return;
 
-                                    AnythingChanged([kv.Key]);
-                                    if (e is TextBox tb)
-                                    {
-                                        tb.BackgroundColor = ChangedBackgroundColor;
-                                        tb.TextColor = ChangedForegroundColor;
-                                        _EChangeTracker.TryAdd(kv.Key, true);
-                                    }
-                                };
-                                EInput = new TextBox()
-                                {
-                                    Text = (kv.Value.Item2 ?? 0).ToString(),
-                                    TextAlignment = TextAlignment.Right,
-                                };
-                                ((TextBox)EInput).TextInput += ChangedIndication;
-                                ((TextBox)EInput).BackgroundColor = BG;
-                                ((TextBox)EInput).TextColor = FG;
-                                ((TextBox)EInput).Font = TFont;
-                                ((TextBox)EInput).Size = CSize;
-                                ((TextBox)EInput).KeyUp += GoToNext;
-                                if (DenyList.Contains(kv.Key))
-                                    ((TextBox)EInput).ReadOnly = true;
-                                if (kv.Key == IdentityColumn)
-                                {
-                                    ((TextBox)EInput).Enabled = false;
-                                }
-                            }
-                            else
-                            {
-                                EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                                {
-                                    if (!ShouldUpdateField(kv.Key)) return;
+                    // Create the controls using optimized helper methods
+                    CreateControlsForInput(kv, EFocusableList, DenyList, IdentityColumn);
 
-                                    AnythingChanged([kv.Key]);
-                                    if (e is TextBox tb)
-                                    {
-                                        tb.BackgroundColor = ChangedBackgroundColor;
-                                        tb.TextColor = ChangedForegroundColor;
-                                        _EChangeTracker.TryAdd(kv.Key, true);
-                                    }
-                                };
-                                EInput = new Button() { Text = ((long)kv.Value.Item2).ToString() };
-                                ELegend = new Label() { };
-                                if (DenyList.Contains(kv.Key))
-                                    ((Button)EInput).Enabled = false;
-                                ((Button)EInput).Click += (_, _) =>
-                                {
-                                    long? IHS = InputHandler[kv.Value.Item3].Item1();
-                                    if (IHS != null)
-                                    {
-                                        ((Button)EInput).Text = IHS.ToString();
-                                        ((Label)ELegend).Text = InputHandler[kv.Value.Item3]
-                                            .Item2(IHS.GetValueOrDefault(0));
-                                        ChangedIndication(EInput, null);
-                                    }
-                                };
-                            }
-                        }
-                        else if (kv.Value.Item2.GetType() == typeof(double))
-                        {
-                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                            {
-                                if (!ShouldUpdateField(kv.Key)) return;
+                    // Handle custom panels
+                    HandleCustomPanels(kv, EFocusableList, ref CurrentNo, ref rowSpanFromCustomPanels, GoToNextFromPanel);
 
-                                AnythingChanged([kv.Key]);
-                                if (e is TextBox tb)
-                                {
-                                    tb.BackgroundColor = ChangedBackgroundColor;
-                                    tb.TextColor = ChangedForegroundColor;
-                                    _EChangeTracker.TryAdd(kv.Key, true);
-                                }
-                            };
-                            EInput = new TextBox()
-                            {
-                                Text = ((double)kv.Value.Item2).ToString(),
-                                TextAlignment = TextAlignment.Right,
-                            };
-                            ((TextBox)EInput).TextInput += ChangedIndication;
-                            ((TextBox)EInput).BackgroundColor = BG;
-                            ((TextBox)EInput).TextColor = FG;
-                            ((TextBox)EInput).Font = TFont;
-                            ((TextBox)EInput).Size = CSize;
-                            ((TextBox)EInput).KeyUp += GoToNext;
-                        }
-                        else if (kv.Value.Item2.GetType() == typeof(bool))
-                        {
-                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                            {
-                                if (!ShouldUpdateField(kv.Key)) return;
-
-                                AnythingChanged([kv.Key]);
-                                if (e is CheckBox cb)
-                                {
-                                    cb.BackgroundColor = ChangedBackgroundColor;
-                                    cb.TextColor = ChangedForegroundColor;
-                                    _EChangeTracker.TryAdd(kv.Key, true);
-                                }
-                            };
-                            EInput = new CheckBox() { Text = ((bool)kv.Value.Item2).ToString() };
-                            ((CheckBox)EInput).TextInput += ChangedIndication;
-                            ((CheckBox)EInput).TextColor = FG;
-                            ((CheckBox)EInput).BackgroundColor = BG;
-                            ((CheckBox)EInput).Size = CSize;
-                            ((CheckBox)EInput).Font = TFont;
-                            ((CheckBox)EInput).KeyUp += GoToNext;
-                        }
-                        else if (kv.Value.Item2.GetType() == typeof(string))
-                        {
-                            EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                            {
-                                if (!ShouldUpdateField(kv.Key)) return;
-
-                                AnythingChanged([kv.Key]);
-                                if (e is TextBox tb)
-                                {
-                                    tb.BackgroundColor = ChangedBackgroundColor;
-                                    tb.TextColor = ChangedForegroundColor;
-                                    _EChangeTracker.TryAdd(kv.Key, true);
-                                }
-                            };
-                            EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
-                            if (kv.Key == IdentityColumn)
-                            {
-                                ((TextBox)EInput).Enabled = false;
-                            }
-                            ((TextBox)EInput).TextInput += ChangedIndication;
-                            ((TextBox)EInput).BackgroundColor = BG;
-                            ((TextBox)EInput).TextColor = FG;
-                            ((TextBox)EInput).Font = TFont;
-                            ((TextBox)EInput).Size = CSize;
-                            ((TextBox)EInput).KeyUp += GoToNext;
-                        }
-                    }
-                    else if (kv.Value.Item2.GetType() == typeof(bool))
-                    {
-                        EventHandler<System.EventArgs> ChangedIndication = (e, a) =>
-                        {
-                            if (!ShouldUpdateField(kv.Key)) return;
-
-                            AnythingChanged([kv.Key]);
-                            if (e is CheckBox cb)
-                            {
-                                cb.BackgroundColor = ChangedBackgroundColor;
-                                cb.TextColor = ChangedForegroundColor;
-                                _EChangeTracker.TryAdd(kv.Key, true);
-                            }
-                        };
-                        EInput = new CheckBox() { Checked = ((bool)kv.Value.Item2) };
-                        ((CheckBox)EInput).CheckedChanged += ChangedIndication;
-                        ((CheckBox)EInput).TextColor = FG;
-                        ((CheckBox)EInput).BackgroundColor = BG;
-                        ((CheckBox)EInput).Size = CSize;
-                        ((CheckBox)EInput).Font = TFont;
-                        ((CheckBox)EInput).KeyUp += GoToNext;
-                    }
-                    else
-                    {
-                        EventHandler<TextInputEventArgs> ChangedIndication = (e, a) =>
-                        {
-                            if (!ShouldUpdateField(kv.Key)) return;
-
-                            AnythingChanged([kv.Key]);
-                            if (e is TextBox tb)
-                            {
-                                tb.BackgroundColor = ChangedBackgroundColor;
-                                tb.TextColor = ChangedForegroundColor;
-                                _EChangeTracker.TryAdd(kv.Key, true);
-                            }
-                        };
-                        EInput = new TextBox() { Text = ((string)kv.Value.Item2).ToString() };
-                        ((TextBox)EInput).TextInput += ChangedIndication;
-                        ((TextBox)EInput).TextColor = FG;
-                        ((TextBox)EInput).BackgroundColor = BG;
-                        ((TextBox)EInput).Size = CSize;
-                        ((TextBox)EInput).Font = TFont;
-                        ((TextBox)EInput).KeyUp += GoToNext;
-                    }
-                    EInput.Width = ColorSettings.ControlWidth ?? 100;
-                    if (EInput is TextBox TB)
-                    {
-                        TB.Width = ColorSettings.ControlWidth ?? 100;
-                    }
-                    Control EFieldName;
-                    Console.Error.WriteLine(
-                        $"GenEtoUI: ILW: {ColorSettings.InnerLabelWidth}, ILH: {ColorSettings.InnerLabelHeight}, CW: {ColorSettings.ControlWidth}, CH: {ColorSettings.ControlHeight}"
-                    );
-                    if (
-                        ColorSettings.InnerLabelWidth != null
-                        && ColorSettings.InnerLabelHeight != null
-                        && ColorSettings.ForceNativeLabels == false
-                    )
-                    {
-                        Console.Error.WriteLine($"GenEtoUI: Generated FixedSizeLabel");
-                        EFieldName = new CustomLabel()
-                        {
-                            Width = ColorSettings.InnerLabelWidth ?? -1,
-                            Height = ColorSettings.InnerLabelHeight ?? -1,
-                            Text = ColorSettings.DebugDontRenderLabels
-                                ? ""
-                                : TranslationHelper.Translate(
-                                    kv.Value.ControlName,
-                                    kv.Value.Item1,
-                                    TranslationHelper.Lang
-                                ),
-                            ForegroundColor = CurrentPanelColours.ForegroundColor,
-                        };
-                    }
-                    else
-                    {
-                        Console.Error.WriteLine($"GenEtoUI: Generated Label");
-                        EFieldName = new Label()
-                        {
-                            Width = ColorSettings.InnerLabelWidth ?? -1,
-                            Height = ColorSettings.InnerLabelHeight ?? -1,
-                            Text = ColorSettings.DebugDontRenderLabels
-                                ? ""
-                                : TranslationHelper.Translate(
-                                    kv.Value.ControlName,
-                                    kv.Value.Item1,
-                                    TranslationHelper.Lang
-                                ),
-                            TextColor = CurrentPanelColours.ForegroundColor,
-                        };
-                    }
-                    if (EFieldName is Label EFNL)
-                        EFNL.ConfigureForPlatform();
-                    if (EInput is Eto.Forms.TextBox T)
-                    {
-                        T.ShowBorder = false;
-                        EControl = new TableRow(
-                            EFieldName,
-                            new TableCell(T, true),
-                            ELegend
-                        )
-                        {
-                            ScaleHeight = ColorSettings.ExpandContentHeight,
-                        };
-                    }
-                    else
-                    {
-                        EControl = new TableRow(
-                            EFieldName,
-                            new TableCell(EInput, true),
-                            ELegend
-                        )
-                        {
-                            ScaleHeight = ColorSettings.ExpandContentHeight,
-                        };
-                    }
-                    if (DenyList.Contains(kv.Key))
-                    {
-                        EInput.Enabled = false;
-                    }
-                    EFocusableList.Add(EInput);
-                    _Einputs.Add(kv.Key, EInput);
-                    if (EFieldName != null && EFieldName is Eto.Forms.Label EL)
-                    {
-                        EL.BackgroundColor = LegendBG;
-                        EL.TextColor = LegendFG;
-                        EL.Font = LegendTFont;
-                        EL.Wrap = WrapMode.None;
-                    }
-                    _EFieldNames.Add(kv.Key, EFieldName);
-                    _ELegends.Add(kv.Key, ELegend);
-                    ILookupSupportedChildPanel? GeneratedCustom = null;
-                    if (
-                        FieldsListHandledByGeneratedPanels != null
-                        && FieldsListHandledByGeneratedPanels
-                            .Where(ikvp => ikvp.Value.ParentField == kv.Key)
-                            .Count() > 0
-                    )
-                    {
-                        var Fields = FieldsListHandledByGeneratedPanels
-                            .Where(ikvp => ikvp.Value.ParentField == kv.Key)
-                            .First();
-                        GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
-                            (Fields.Key, (TextBox)EInput);
-                        Console.WriteLine($"{Fields.Key[0]}");
-                        foreach (string s in Fields.Key)
-                        {
-                            CustomPanelInputRetrievalFunctions.Add(
-                                s,
-                                () => GeneratedCustom.LookupValue(s)
-                            );
-                            FieldsHandlerMapping.Add(
-                                s,
-                                (ILookupSupportedChildPanel)GeneratedCustom
-                            );
-                            GeneratedCustom.SetOriginalValue(
-                                s,
-                                Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
-                            );
-                        }
-                        rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
-                        GeneratedCustom.SetGlobalChangeWatcher(() =>
-                            AnythingChanged(Fields.Key.Concat([kv.Key]).ToArray())
-                        );
-                        SupplementalControl = (Panel)GeneratedCustom;
-                        EFocusableList.Add(SupplementalControl);
-                        GeneratedCustom.SetMoveNext(() =>
-                        {
-                            GoToNextFromPanel(SupplementalControl);
-                        });
-                        CurrentNo += GeneratedCustom.RowSpan();
-                    }
-                    else if (
-                        FieldsListHandledByGeneratedPanels != null
-                        && FieldsListHandledByGeneratedPanels
-                            .Where(ikvp => ikvp.Key.Contains(kv.Key))
-                            .Count() > 0
-                    )
-                    {
-                        EInput = null;
-                        var Fields = FieldsListHandledByGeneratedPanels
-                            .Where(ikvp => ikvp.Key.Contains(kv.Key))
-                            .First();
-                        GeneratedCustom = PanelGenerators[Fields.Value.ControlName]
-                            (Fields.Key, (TextBox)EInput);
-                        Console.WriteLine($"{Fields.Key[0]}");
-                        foreach (string s in Fields.Key)
-                        {
-                            CustomPanelInputRetrievalFunctions.Add(
-                                s,
-                                () => GeneratedCustom.LookupValue(s)
-                            );
-                            FieldsHandlerMapping.Add(
-                                s,
-                                (ILookupSupportedChildPanel)GeneratedCustom
-                            );
-
-                            GeneratedCustom.SetOriginalValue(
-                                s,
-                                Inputs.Where(kvpair => kvpair.Key == s).First().Value.Value
-                            );
-                        }
-                        rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
-                        GeneratedCustom.SetGlobalChangeWatcher(() => AnythingChanged(Fields.Key));
-                        EControl = new TableRow(EFieldName, (Control)GeneratedCustom, ELegend);
-                        EFocusableList.Add((Control)GeneratedCustom);
-                        GeneratedCustom.SetMoveNext(() =>
-                        {
-                            GoToNextFromPanel(SupplementalControl);
-                        });
-                        CurrentNo += GeneratedCustom.RowSpan();
-                    }
-                    if (EInput != null)
-                        EInput.KeyUp += (_, _) => AnythingChanged([kv.Key]);
-                    _EControlsAll.Add(EControl);
-                    if (EInput != null)
-                        LayoutNext.Add(
-                            (
-                                EFieldName,
-                                EInput,
-                                (Control)GeneratedCustom
-                            ),
-                            CurrentNo
-                        );
-                    else
-                    {
-                        LayoutNext.Add((EFieldName, (Control)GeneratedCustom, null), CurrentNo);
-                    }
                     CurrentNo++;
                 }
             }
             _EControlsL = EControlsL;
             _EControlsR = EControlsR;
-            int maxRowOffset = LayoutNext.Max(x => x.Value);
-            int nRows = maxRowOffset / nColumns;
-            for (int i = 0; i < nRows; i++)
-            {
-                AllRows.Add(new List<(Eto.Forms.Control, Eto.Forms.Control)>());
-            }
-
-            foreach (var x in LayoutNext)
-            {
-                int currentRowIndex = (int)Math.Floor((double)nRows * x.Value / (maxRowOffset + 1));
-                System.Console.WriteLine(
-                    $"[Layouting] Current control column: {currentRowIndex}, {nColumns}*{x.Value}/{maxRowOffset}"
-                );
-                AllRows[currentRowIndex].Add((x.Key.LabelControl, x.Key.MainControl));
-                if (x.Key.Supplemental != null)
-                    AllRows[currentRowIndex].Add((null, x.Key.Supplemental));
-            }
+            // Use optimized layout generation
+            var tableLayout = new Scrollable() { Content = OptimizeLayoutGeneration() };
 
             Button NewButton = new Button()
             {
@@ -1187,27 +647,23 @@ namespace CommonUi
                 Height = ColorSettings.ControlHeight ?? -1,
             };
 
-            var tableLayout2 = MainTableLayoutGenerator.GenerateMainTableLayout(
-                LayoutNext,
-                nColumns,
-                maxRowOffset
-            );
+            
 
-            var GeneratedControls = tableLayout2;
+            
 
             Content = new StackLayout(
-                ActionButtons,
-                new StackLayoutItem(
-                    new Scrollable()
-                    {
-                        Content = GeneratedControls,
-                        Border = BorderType.None,
-                        ExpandContentHeight = ColorSettings.ExpandContentHeight,
-                        ExpandContentWidth = ColorSettings.ExpandContentWidth,
-                    },
-                    false
-                )
-            )
+    ActionButtons,
+    new StackLayoutItem(
+        new Scrollable()
+        {
+            Content = tableLayout,
+            Border = BorderType.None,
+            ExpandContentHeight = ColorSettings.ExpandContentHeight,
+            ExpandContentWidth = ColorSettings.ExpandContentWidth,
+        },
+        false
+    )
+)
             {
                 Orientation = Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -1216,107 +672,628 @@ namespace CommonUi
             this.ResumeLayout();
         }
 
-        public bool ValidateInputs()
+        private Control CreateFieldLabel(string controlName, string key)
         {
-            (
-                var LegendFG,
-                var LegendBG,
-                var LegendFGc,
-                var LegendBGc,
-                var LegendTFont,
-                var LehendTSize,
-                var LegendCSize
-            ) = GetThemeForComponent("Legend");
-            bool CumulativeSuccess = true;
-            foreach (var e in _Inputs)
+            // Get legend theme
+            var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
+
+            Control label;
+
+            if (ColorSettings.InnerLabelWidth != null &&
+                ColorSettings.InnerLabelHeight != null &&
+                !ColorSettings.ForceNativeLabels)
             {
-                bool Success = false;
-                if (!ChangesOnly || _EChangeTracker.TryGetValue(e.Key, out bool x) && x)
+                var customLabel = new CustomLabel()
                 {
-                    Type T = OriginalTypes[e.Key];
-                    if (T == typeof(long))
+                    Width = ColorSettings.InnerLabelWidth ?? -1,
+                    Height = ColorSettings.InnerLabelHeight ?? -1,
+                    Text = ColorSettings.DebugDontRenderLabels
+                        ? ""
+                        : TranslationHelper.Translate(controlName, controlName, TranslationHelper.Lang),
+                    ForegroundColor = LegendFG,
+                };
+                label = customLabel;
+            }
+            else
+            {
+                var regularLabel = new Label()
+                {
+                    Width = ColorSettings.InnerLabelWidth ?? -1,
+                    Height = ColorSettings.InnerLabelHeight ?? -1,
+                    Text = ColorSettings.DebugDontRenderLabels
+                        ? ""
+                        : TranslationHelper.Translate(controlName, controlName, TranslationHelper.Lang),
+                    TextColor = LegendFG,
+                    BackgroundColor = LegendBG,
+                    Font = LegendTFont,
+                    Wrap = WrapMode.None,
+                };
+                regularLabel.ConfigureForPlatform();
+                label = regularLabel;
+            }
+
+            return label;
+        }
+
+        private void HandleCustomPanels(
+    KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
+    List<Eto.Forms.Control> EFocusableList,
+    ref int CurrentNo,
+    ref int rowSpanFromCustomPanels,
+    Action<Control> GoToNextFromPanel)
+        {
+            Console.WriteLine($"HandleCustomPanels called for key: {kv.Key}");
+
+            ILookupSupportedChildPanel? GeneratedCustom = null;
+            var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
+
+            // Check if this field is a parent for custom panels
+            if (FieldsListHandledByGeneratedPanels != null)
+            {
+                var parentFields = FieldsListHandledByGeneratedPanels
+                    .Where(ikvp => ikvp.Value.ParentField == kv.Key)
+                    .ToList();
+
+                if (parentFields.Any())
+                {
+                    var Fields = parentFields.First();
+                    var parentTextBox = _Einputs.TryGetValue(kv.Key, out var control) && control is TextBox tb
+                        ? tb
+                        : null;
+
+                    GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, parentTextBox);
+
+                    SetupCustomPanel(GeneratedCustom, Fields.Key, Fields.Value.ControlName, kv.Key, EFocusableList, GoToNextFromPanel);
+
+                    rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
+                    CurrentNo += GeneratedCustom.RowSpan();
+
+                    // Add to LayoutNext - only once
+                    Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
+                    LayoutNext.Add((_EFieldNames[kv.Key], _Einputs[kv.Key], (Control)GeneratedCustom), CurrentNo);
+                }
+                else
+                {
+                    // Check if this field is part of a custom panel
+                    var childFields = FieldsListHandledByGeneratedPanels
+                        .Where(ikvp => ikvp.Key.Contains(kv.Key))
+                        .ToList();
+
+                    if (childFields.Any())
                     {
-                        if (e.Value.Item3 == null)
+                        var Fields = childFields.First();
+                        GeneratedCustom = PanelGenerators[Fields.Value.ControlName](Fields.Key, null);
+
+                        SetupCustomPanel(GeneratedCustom, Fields.Key, Fields.Value.ControlName, null, EFocusableList, GoToNextFromPanel);
+
+                        rowSpanFromCustomPanels += GeneratedCustom.RowSpan();
+                        CurrentNo += GeneratedCustom.RowSpan();
+
+                        // Update the table row to use the custom panel
+                        if (_EFieldNames.TryGetValue(kv.Key, out var fieldLabel) && _ELegends.TryGetValue(kv.Key, out var legend))
                         {
-                            Success = long.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
-                        }
-                        else
-                        {
-                            Success = long.TryParse(((Button)_Einputs[e.Key]).Text, out _);
-                        }
-                    }
-                    else if (T == typeof(int))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            Success = int.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
-                        }
-                        else
-                        {
-                            Success = int.TryParse(((Button)_Einputs[e.Key]).Text, out _);
-                        }
-                    }
-                    else if (T == typeof(float))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            Success = float.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
-                        }
-                        else
-                        {
-                            Success = float.TryParse(((Button)_Einputs[e.Key]).Text, out _);
-                        }
-                    }
-                    else if (T == typeof(double))
-                    {
-                        if (e.Value.Item3 == null)
-                        {
-                            Success = double.TryParse(((TextBox)_Einputs[e.Key]).Text, out _);
-                        }
-                        else
-                        {
-                            Success = double.TryParse(((Button)_Einputs[e.Key]).Text, out _);
-                        }
-                    }
-                    else if (T == typeof(string))
-                    {
-                        Success = true;
-                    }
-                    else if (T == typeof(bool))
-                    {
-                        Success = true;
-                    }
-                    if (!Success)
-                    {
-                        CumulativeSuccess = false;
-                        _EFieldNames[e.Key].BackgroundColor = ColorSettings.AlternatingColor1;
-                        if (_EFieldNames[e.Key] is Label EFNL)
-                        {
-                            EFNL.TextColor = LocalColor?.ForegroundColor ?? LegendFG;
-                        }
-                        else if (_EFieldNames[e.Key] is CustomLabel CL)
-                        {
-                            CL.ForegroundColor = LocalColor?.ForegroundColor ?? LegendFG;
-                            CL.Invalidate();
-                        }
-                    }
-                    else
-                    {
-                        _EFieldNames[e.Key].BackgroundColor =
-                            LocalColor?.BackgroundColor ?? LegendBG;
-                        if (_EFieldNames[e.Key] is Label EFNL)
-                        {
-                            EFNL.TextColor = LocalColor?.ForegroundColor ?? LegendFG;
-                        }
-                        else if (_EFieldNames[e.Key] is CustomLabel CL)
-                        {
-                            CL.ForegroundColor = LocalColor?.ForegroundColor ?? LegendFG;
-                            CL.Invalidate();
+                            var tableRow = new TableRow(fieldLabel, (Control)GeneratedCustom, legend)
+                            {
+                                ScaleHeight = ColorSettings.ExpandContentHeight,
+                            };
+
+                            // Replace the existing row in _EControlsAll
+                            var existingIndex = _EControlsAll.FindIndex(tr =>
+                                tr.Cells != null && tr.Cells.Count > 0 && tr.Cells[0].Control == fieldLabel);
+
+                            if (existingIndex >= 0)
+                            {
+                                _EControlsAll[existingIndex] = tableRow;
+                            }
+
+                            // Add to LayoutNext - only once
+                            Console.WriteLine($"Adding custom panel to LayoutNext: {kv.Key}");
+                            LayoutNext.Add((fieldLabel, (Control)GeneratedCustom, legend), CurrentNo);
                         }
                     }
                 }
             }
-            return CumulativeSuccess;
+
+            // Remove the redundant addition at the end of the method
+            // This was causing the duplicate key error
+        }
+
+        private void SetupCustomPanel(
+    ILookupSupportedChildPanel GeneratedCustom,
+    string[] Fields,
+    string ControlName,
+    string? ParentField,
+    List<Eto.Forms.Control> EFocusableList,
+    Action<Control> GoToNextFromPanel)  // Add this parameter
+        {
+            Console.WriteLine($"{Fields[0]}");
+
+            foreach (string s in Fields)
+            {
+                CustomPanelInputRetrievalFunctions.Add(
+                    s,
+                    () => GeneratedCustom.LookupValue(s)
+                );
+                FieldsHandlerMapping.Add(
+                    s,
+                    GeneratedCustom
+                );
+
+                if (_Inputs.TryGetValue(s, out var input))
+                {
+                    GeneratedCustom.SetOriginalValue(s, input.Value);
+                }
+            }
+
+            GeneratedCustom.SetGlobalChangeWatcher(() =>
+            {
+                var changedFields = ParentField != null
+                    ? Fields.Concat([ParentField]).ToArray()
+                    : Fields;
+                AnythingChanged(changedFields);
+            });
+
+            EFocusableList.Add((Control)GeneratedCustom);
+            GeneratedCustom.SetMoveNext(() =>
+            {
+                GoToNextFromPanel((Control)GeneratedCustom);  // Use the delegate parameter
+            });
+        }
+
+
+        private Eto.Forms.Control CreateInputControl(
+            KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
+            Type valueType, Color FG, Color BG, Color FGc, Color BGc, Font TFont, Size CSize,
+            string[] DenyList, string? IdentityColumn, List<Eto.Forms.Control> EFocusableList)
+        {
+            // Create a delegate for field change notification
+            Action notifyFieldChanged = () => {
+                if (ShouldUpdateField(kv.Key))
+                {
+                    AnythingChanged([kv.Key]);
+                    _EChangeTracker.TryAdd(kv.Key, true);
+                }
+            };
+
+            // Handle numeric types
+            if (valueType == typeof(long) || valueType == typeof(int) ||
+                valueType == typeof(double) || valueType == typeof(float))
+            {
+                if (kv.Value.Item3 == null)
+                {
+                    var _textBox = new TextBox()
+                    {
+                        Text = kv.Value.Item2?.ToString() ?? "0",
+                        TextAlignment = TextAlignment.Right,
+                        BackgroundColor = BG,
+                        TextColor = FG,
+                        Font = TFont,
+                        Size = CSize,
+                    };
+
+                    _textBox.TextInput += (sender, e) => {
+                        notifyFieldChanged();
+                        _textBox.BackgroundColor = BGc;
+                        _textBox.TextColor = FGc;
+                    };
+
+                    _textBox.KeyUp += GoToNext;
+
+                    if (DenyList.Contains(kv.Key))
+                        _textBox.ReadOnly = true;
+                    if (kv.Key == IdentityColumn)
+                        _textBox.Enabled = false;
+
+                    EFocusableList.Add(_textBox);
+                    return _textBox;
+                }
+                else
+                {
+                    // Button with lookup functionality
+                    var button = new Button() { Text = kv.Value.Item2?.ToString() ?? "0" };
+                    var legend = new Label();
+
+                    if (DenyList.Contains(kv.Key))
+                        button.Enabled = false;
+
+                    button.Click += (_, _) => {
+                        var lookupResult = InputHandler[kv.Value.Item3].Item1();
+                        if (lookupResult.HasValue)
+                        {
+                            button.Text = lookupResult.ToString();
+                            legend.Text = InputHandler[kv.Value.Item3].Item2(lookupResult.Value);
+                            notifyFieldChanged();
+                        }
+                    };
+
+                    EFocusableList.Add(button);
+                    return button;
+                }
+            }
+
+            // Handle boolean type
+            if (valueType == typeof(bool))
+            {
+                var checkBox = new CheckBox() { Checked = (bool)(kv.Value.Item2 ?? false) };
+
+                checkBox.CheckedChanged += (sender, e) => {
+                    notifyFieldChanged();
+                    checkBox.BackgroundColor = BGc;
+                    checkBox.TextColor = FGc;
+                };
+
+                checkBox.TextColor = FG;
+                checkBox.BackgroundColor = BG;
+                checkBox.Size = CSize;
+                checkBox.Font = TFont;
+                checkBox.KeyUp += GoToNext;
+
+                EFocusableList.Add(checkBox);
+                return checkBox;
+            }
+
+            // Handle string type (default)
+            var textBox = new TextBox() { Text = kv.Value.Item2?.ToString() ?? "" };
+
+            if (kv.Key == IdentityColumn)
+                textBox.Enabled = false;
+
+            textBox.TextInput += (sender, e) => {
+                notifyFieldChanged();
+                textBox.BackgroundColor = BGc;
+                textBox.TextColor = FGc;
+            };
+
+            textBox.BackgroundColor = BG;
+            textBox.TextColor = FG;
+            textBox.Font = TFont;
+            textBox.Size = CSize;
+            textBox.KeyUp += GoToNext;
+
+            EFocusableList.Add(textBox);
+            return textBox;
+        }
+
+        private void CacheValueAccessors(string key, Type valueType, Control control)
+        {
+            // Cache getter
+            if (valueType == typeof(bool) && control is CheckBox cb)
+            {
+                _valueGetters[key] = () => cb.Checked ?? false;
+                _valueSetters[key] = value => cb.Checked = (bool)value;
+            }
+            else if (control is TextBox tb)
+            {
+                if (_parsers.TryGetValue(valueType, out var parser))
+                {
+                    _valueGetters[key] = () => parser(tb.Text);
+                    _valueSetters[key] = value => tb.Text = value?.ToString() ?? "";
+                }
+            }
+            else if (control is Button btn && _parsers.TryGetValue(valueType, out var parser))
+            {
+                _valueGetters[key] = () => parser(btn.Text);
+                _valueSetters[key] = value => btn.Text = value?.ToString() ?? "";
+            }
+        }
+
+        private TableRow CreateTableRow(Control fieldLabel, Control inputControl, Control legend)
+        {
+            if (inputControl is TextBox tb)
+            {
+                tb.ShowBorder = false;
+                return new TableRow(fieldLabel, new TableCell(tb, true), legend)
+                {
+                    ScaleHeight = ColorSettings.ExpandContentHeight,
+                };
+            }
+
+            return new TableRow(fieldLabel, new TableCell(inputControl, true), legend)
+            {
+                ScaleHeight = ColorSettings.ExpandContentHeight,
+            };
+        }
+
+
+        // Optimize ValidateInputs method
+        public bool ValidateInputs()
+        {
+            var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
+            bool allValid = true;
+
+            // Use pre-cached getters and type information for validation
+            foreach (var kvp in OriginalTypes)
+            {
+                var key = kvp.Key;
+                var expectedType = kvp.Value;
+
+                if (!ChangesOnly || _EChangeTracker.TryGetValue(key, out bool changed) && changed)
+                {
+                    bool isValid = true;
+
+                    try
+                    {
+                        // Try to get the value using our cached getter
+                        var value = _valueGetters.TryGetValue(key, out var getter)
+                            ? getter()
+                            : CustomPanelInputRetrievalFunctions[key]();
+
+                        // Verify type matches expected
+                        if (value == null && expectedType.IsValueType)
+                        {
+                            isValid = false;
+                        }
+                        else if (value != null && value.GetType() != expectedType)
+                        {
+                            // Try to convert to expected type
+                            try
+                            {
+                                Convert.ChangeType(value, expectedType);
+                            }
+                            catch
+                            {
+                                isValid = false;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        isValid = false;
+                    }
+
+                    if (!isValid)
+                    {
+                        allValid = false;
+                        HighlightInvalidField(key, LegendFG);
+                    }
+                    else
+                    {
+                        ResetFieldHighlight(key, LegendBG, LegendFG);
+                    }
+                }
+            }
+
+            return allValid;
+        }
+
+        private void HighlightInvalidField(string key, Color legendFG)
+        {
+            if (_EFieldNames.TryGetValue(key, out var fieldControl))
+            {
+                fieldControl.BackgroundColor = ColorSettings.AlternatingColor1;
+
+                if (fieldControl is Label label)
+                {
+                    label.TextColor = LocalColor?.ForegroundColor ?? legendFG;
+                }
+                else if (fieldControl is CustomLabel customLabel)
+                {
+                    customLabel.ForegroundColor = LocalColor?.ForegroundColor ?? legendFG;
+                    customLabel.Invalidate();
+                }
+            }
+        }
+
+        private void ResetFieldHighlight(string key, Color legendBG, Color legendFG)
+        {
+            if (_EFieldNames.TryGetValue(key, out var fieldControl))
+            {
+                fieldControl.BackgroundColor = LocalColor?.BackgroundColor ?? legendBG;
+
+                if (fieldControl is Label label)
+                {
+                    label.TextColor = LocalColor?.ForegroundColor ?? legendFG;
+                }
+                else if (fieldControl is CustomLabel customLabel)
+                {
+                    customLabel.ForegroundColor = LocalColor?.ForegroundColor ?? legendFG;
+                    customLabel.Invalidate();
+                }
+            }
+        }
+
+
+        private TableLayout OptimizeLayoutGeneration()
+        {
+            // Debug output to see what we're working with
+            Console.WriteLine($"OptimizeLayoutGeneration called with {LayoutNext.Count} items and {nColumns} columns");
+
+            int maxRowOffset = LayoutNext.Count > 0 ? LayoutNext.Max(x => x.Value) : 0;
+            Console.WriteLine($"Max row offset: {maxRowOffset}");
+
+            // Create bins (one per column) to temporarily hold (leftControl, rightControl) pairs.
+            var columnBins = new List<List<(Control, Control)>>();
+            for (int col = 0; col < nColumns; col++)
+                columnBins.Add(new List<(Control, Control)>());
+
+            // Distribute each item into the appropriate column based on its row offset.
+            foreach (var kvp in LayoutNext)
+            {
+                // Calculate which column this control should go in
+                int currentColumnIndex = (int)Math.Floor((double)nColumns * kvp.Value / (maxRowOffset + 1));
+                if (currentColumnIndex >= nColumns)
+                    currentColumnIndex = nColumns - 1;
+
+                Console.WriteLine($"Distributing to column {currentColumnIndex}: {kvp.Key.MainControl?.GetType().Name ?? "null"}");
+
+                var field = kvp.Key;
+
+                if (field.MainControl != null)
+                {
+                    // Primary row shows LabelControl and MainControl.
+                    columnBins[currentColumnIndex].Add((field.LabelControl, field.MainControl));
+
+                    // If Supplemental exists, add an extra row below:
+                    // The left cell will be empty to reserve label space.
+                    if (field.Supplemental != null)
+                    {
+                        columnBins[currentColumnIndex].Add((null, field.Supplemental));
+                    }
+                }
+                else
+                {
+                    // No MainControl: use Supplemental in its place.
+                    // If neither is provided, a placeholder (empty Panel) is used.
+                    Control rightControl = field.Supplemental ?? new Panel { Size = new Size(0, 0) };
+                    columnBins[currentColumnIndex].Add((field.LabelControl, rightControl));
+                }
+            }
+
+            // Create the outer TableLayout
+            var outerLayout = new TableLayout()
+            {
+                Spacing = new Size(2, 2),
+                Padding = new Padding(2),
+            };
+
+            // Create a single row with all columns side by side
+            var outerRow = new TableRow();
+
+            // Build each column and add it to the outer row
+            for (int i = 0; i < nColumns; i++)
+            {
+                if (i < columnBins.Count && columnBins[i].Count > 0)
+                {
+                    var rows = new List<TableRow>();
+
+                    foreach (var pair in columnBins[i])
+                    {
+                        var row = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
+
+                        // Create new controls based on the original controls
+                        Control newLeftControl = null;
+                        Control newRightControl = null;
+
+                        // If the left control is not null, create a new label based on the original
+                        if (pair.Item1 != null)
+                        {
+                            if (pair.Item1 is Label originalLabel)
+                            {
+                                var newLabel = new Label()
+                                {
+                                    Text = originalLabel.Text,
+                                    TextColor = originalLabel.TextColor,
+                                    BackgroundColor = originalLabel.BackgroundColor,
+                                    Font = originalLabel.Font,
+                                    Width = originalLabel.Width,
+                                    Height = originalLabel.Height,
+                                    Wrap = originalLabel.Wrap
+                                };
+                                newLeftControl = newLabel;
+                            }
+                            else if (pair.Item1 is CustomLabel originalCustomLabel)
+                            {
+                                var newCustomLabel = new CustomLabel()
+                                {
+                                    Text = originalCustomLabel.Text,
+                                    ForegroundColor = originalCustomLabel.ForegroundColor,
+                                    Width = originalCustomLabel.Width,
+                                    Height = originalCustomLabel.Height
+                                };
+                                newLeftControl = newCustomLabel;
+                            }
+                            else
+                            {
+                                // For other control types, create a new Panel with the same size
+                                newLeftControl = new Panel() { Size = pair.Item1.Size };
+                            }
+                        }
+                        else
+                        {
+                            // Create an empty control to preserve alignment
+                            newLeftControl = new Panel() { Size = new Size(0, 0) };
+                        }
+
+                        // Create a new right control based on the original
+                        if (pair.Item2 is TextBox originalTextBox)
+                        {
+                            var newTextBox = new TextBox()
+                            {
+                                Text = originalTextBox.Text,
+                                TextAlignment = originalTextBox.TextAlignment,
+                                TextColor = originalTextBox.TextColor,
+                                BackgroundColor = originalTextBox.BackgroundColor,
+                                Font = originalTextBox.Font,
+                                Width = originalTextBox.Width,
+                                Height = originalTextBox.Height,
+                                ReadOnly = originalTextBox.ReadOnly,
+                                ShowBorder = false // Always set to false for consistent look
+                            };
+                            newRightControl = newTextBox;
+                        }
+                        else if (pair.Item2 is CheckBox originalCheckBox)
+                        {
+                            var newCheckBox = new CheckBox()
+                            {
+                                Text = originalCheckBox.Text,
+                                TextColor = originalCheckBox.TextColor,
+                                BackgroundColor = originalCheckBox.BackgroundColor,
+                                Font = originalCheckBox.Font,
+                                Width = originalCheckBox.Width,
+                                Height = originalCheckBox.Height,
+                                Checked = originalCheckBox.Checked
+                            };
+                            newRightControl = newCheckBox;
+                        }
+                        else if (pair.Item2 is Button originalButton)
+                        {
+                            var newButton = new Button()
+                            {
+                                Text = originalButton.Text,
+                                TextColor = originalButton.TextColor,
+                                BackgroundColor = originalButton.BackgroundColor,
+                                Font = originalButton.Font,
+                                Width = originalButton.Width,
+                                Height = originalButton.Height,
+                                Enabled = originalButton.Enabled
+                            };
+                            newRightControl = newButton;
+                        }
+                        else if (pair.Item2 is ILookupSupportedChildPanel originalPanel)
+                        {
+                            // For custom panels, we can't create a new one, so we'll use the original
+                            // but we need to make sure it's not already part of another visual tree
+                            // This is a workaround - ideally we should be able to create a new instance
+                            newRightControl = (Control)originalPanel;
+                        }
+                        else
+                        {
+                            // For other control types, create a new Panel with the same size
+                            newRightControl = new Panel() { Size = pair.Item2.Size };
+                        }
+
+                        // Set the width for the controls
+                        if (newLeftControl != null)
+                            newLeftControl.Width = ColorSettings.InnerLabelWidth ?? -1;
+                        if (newRightControl != null)
+                            newRightControl.Width = ColorSettings.ControlWidth ?? 100;
+
+                        // Add the controls to the row
+                        row.Cells.Add(new TableCell(newLeftControl, false)); // Don't expand label
+                        row.Cells.Add(new TableCell(newRightControl, true)); // Expand main control
+
+                        rows.Add(row);
+                    }
+
+                    var colLayout = new TableLayout(rows.ToArray())
+                    {
+                        Spacing = new Size(5, 3),
+                        Padding = new Padding(4),
+                    };
+
+                    outerRow.Cells.Add(new TableCell(colLayout, true));
+                }
+                else
+                {
+                    // Add an empty column if there are fewer controls than columns
+                    outerRow.Cells.Add(new TableCell(new Panel(), true));
+                }
+            }
+
+            // Add the row to the outer layout
+            outerLayout.Rows.Add(outerRow);
+
+            return outerLayout;
         }
 
         public long Save()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -137,6 +138,10 @@ namespace CommonUi
             "Report Selected",
             TranslationHelper.Lang
         );
+
+        // Add these new methods at the class level (before the constructor)
+        private static ConcurrentDictionary<string, string> _normalizationCache = new ConcurrentDictionary<string, string>();
+        private static readonly object _searchLock = new object();
 
         public SearchPanelEto(
             List<(string[] SearchText, Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue,

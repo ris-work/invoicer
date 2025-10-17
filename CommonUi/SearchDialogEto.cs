@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,11 +13,15 @@ using Eto.Drawing;
 using Eto.Forms;
 //using Microsoft.EntityFrameworkCore.Diagnostics;
 using RV.InvNew.Common;
+using CommonUi;
 
 namespace CommonUi
 {
     public static class Extensions
     {
+        // Add these new methods at the class level (before the constructor)
+        private static ConcurrentDictionary<string, string> _normalizationCache = new ConcurrentDictionary<string, string>();
+        private static readonly object _searchLock = new object();
         public static string PadRightOrClamp(
             this string input,
             int totalWidth,
@@ -65,12 +71,65 @@ namespace CommonUi
                 return A.Where(x => x.StartsWith(s));
         }
 
+        // Improved normalization method that's more i18n-friendly
         public static string NormalizeSpelling(this string s)
         {
-            var o = Regex.Replace(s, "[aeiouh]", ""); //English has 10+ vowels, mgiht as well remove all of them.
-            o = o.Replace("k", "c").Replace("i", "y"); //K is the C equivalent from Greek, Y is the I equivalent from Greek.
-            //Hope these are the last totally redundant letters...
-            return o;
+            // First check if we've already normalized this string
+            if (_normalizationCache.TryGetValue(s, out var cached))
+                return cached;
+
+            // Use StringInfo to handle Unicode grapheme clusters properly
+            var sb = new StringBuilder();
+            var enumerator = StringInfo.GetTextElementEnumerator(s.ToLowerInvariant());
+
+            while (enumerator.MoveNext())
+            {
+                var element = enumerator.GetTextElement();
+                // Remove common vowels and similar-sounding characters across languages
+                if (!"aeiouáéíóúàèìòùâêîôûäëïöüãõåæœ".Contains(element))
+                {
+                    // Replace similar-sounding consonants across languages
+                    switch (element)
+                    {
+                        case "k":
+                        case "c":
+                        case "ç":
+                        case "q":
+                            sb.Append("c");
+                            break;
+                        case "i":
+                        case "y":
+                        case "j":
+                            sb.Append("i");
+                            break;
+                        case "s":
+                        case "ś":
+                        case "š":
+                        case "ş":
+                        case "ß":
+                        case "с":
+                            sb.Append("s");
+                            break;
+                        case "ph":
+                        case "f":
+                        case "ф":
+                            sb.Append("f");
+                            break;
+                        case "g":
+                        case "ğ":
+                        case "г":
+                            sb.Append("g");
+                            break;
+                        default:
+                            sb.Append(element);
+                            break;
+                    }
+                }
+            }
+
+            var result = sb.ToString();
+            _normalizationCache.TryAdd(s, result);
+            return result;
         }
 
         public static bool FilterAccordingly(
@@ -126,6 +185,9 @@ namespace CommonUi
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
         public string ReportSelectedButtonText = "Report Selected";
+        private static readonly object _searchLock = new object();
+
+        
 
         public SearchDialogEto(
             List<(
@@ -459,109 +521,111 @@ namespace CommonUi
             };
             Results.MouseDoubleClick += SendSelected;
 
+            // Replace the Search method with this optimized version
             var Search = () =>
             {
-                if (SearchBox.Text.Length > 0 && searching != true)
+                if (SearchBox.Text.Length > -1 && SC.Count > 0 && searching != true)
                 {
-                    var SelectedArrayIndex = SelectedSearchIndex;
-                    var searchString = SearchBox.Text.ToLowerInvariant();
-                    var SearchCaseSensitiveSetting = SearchCaseSensitive;
-                    var SearchContainsSetting = SearchContains;
-                    var SearchNormalizeSpelling = NormalizeSpelling;
-                    int SearchSortBy = SortBy;
-                    bool SearchAnythingAnywhere = AnythingAnywhere;
-                    bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
-                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
-                    searching = true;
-                    (
-                        new Thread(() =>
-                        {
-                            if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
-                            {
-                                //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
-                                var FilteredBeforeCountingAndSorting = OptimizedCatalogue
-                                    .AsParallel()
-                                    .Where(
-                                        (x) =>
-                                            x
-                                                .Item1.Last()
-                                                .FilterAccordingly(
-                                                    searchString,
-                                                    !SearchCaseSensitiveSetting,
-                                                    SearchContainsSetting,
-                                                    SearchNormalizeSpelling,
-                                                    SearchAnythingAnywhere
-                                                )
-                                    )
-                                    .AsSequential();
-                                var FilteredBeforeCounting = ReverseSort
-                                    ? (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => x.Item1[SearchSortBy]
-                                            )
-                                    )
-                                    : (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                x.Item1[SearchSortBy]
-                                            )
-                                    );
-                                FilteredUnlim = FilteredBeforeCountingAndSorting;
-                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                                FilteredCount = FilteredBeforeCounting.Count();
-                            }
-                            else
-                            {
-                                var FilteredBeforeCountingAndSorting = SC.AsParallel()
-                                    .Where(
-                                        (x) =>
-                                            x.Item1[SelectedSearchIndex]
-                                                .FilterAccordingly(
-                                                    searchString,
-                                                    !SearchCaseSensitiveSetting,
-                                                    SearchContainsSetting,
-                                                    SearchNormalizeSpelling,
-                                                    SearchAnythingAnywhere
-                                                )
-                                    )
-                                    .AsSequential();
-                                var FilteredBeforeCounting = ReverseSort
-                                    ? (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => x.Item1[SearchSortBy]
-                                            )
-                                    )
-                                    : (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                x.Item1[SearchSortBy]
-                                            )
-                                    );
-                                FilteredUnlim = FilteredBeforeCountingAndSorting;
-                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                                FilteredCount = FilteredBeforeCounting.Count();
-                            }
+                    // Lock to prevent multiple searches at once
+                    if (!Monitor.TryEnter(_searchLock, 0))
+                        return;
 
-                            searching = false;
-                            Application.Instance.Invoke(UpdateView);
-                        })
-                    ).Start();
+                    try
+                    {
+                        var len = SearchBox.Text.Length;
+                        var SelectedArrayIndex = SelectedSearchIndex;
+                        var searchString = SearchBox.Text.ToLowerInvariant();
+                        var SearchCaseSensitiveSetting = SearchCaseSensitive;
+                        var SearchContainsSetting = SearchContains;
+                        var SearchNormalizeSpelling = NormalizeSpelling;
+                        int SearchSortBy = SortBy;
+                        bool SearchAnythingAnywhere = AnythingAnywhere;
+                        bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
+
+                        searching = true;
+
+                        // Use Task.Run instead of Thread for better thread pool utilization
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                // Pre-normalize the search string if needed
+                                var normalizedSearchString = SearchNormalizeSpelling ?
+                                    searchString.NormalizeSpelling() : searchString;
+
+                                IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredBeforeCountingAndSorting;
+
+                                if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
+                                {
+                                    // For omnibox search, pre-compute normalized strings
+                                    var precomputed = OptimizedCatalogue.AsParallel()
+                                        .Select(x => (
+                                            x,
+                                            normalized: SearchNormalizeSpelling ?
+                                                x.Item1.Last().NormalizeSpelling() : x.Item1.Last()
+                                        ));
+
+                                    FilteredBeforeCountingAndSorting = precomputed
+                                        .Where(x =>
+                                            FilterString(x.normalized, normalizedSearchString,
+                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
+                                                SearchAnythingAnywhere))
+                                        .Select(x => x.x);
+                                }
+                                else
+                                {
+                                    // For column-specific search, pre-compute normalized strings
+                                    var precomputed = SC.AsParallel()
+                                        .Select(x => (
+                                            x,
+                                            normalized: SearchNormalizeSpelling ?
+                                                x.Item1[SelectedSearchIndex].NormalizeSpelling() :
+                                                x.Item1[SelectedSearchIndex]
+                                        ));
+
+                                    FilteredBeforeCountingAndSorting = precomputed
+                                        .Where(x =>
+                                            FilterString(x.normalized, normalizedSearchString,
+                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
+                                                SearchAnythingAnywhere))
+                                        .Select(x => x.x);
+                                }
+
+                                // Apply sorting
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy])
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy])
+                                    );
+
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+                            finally
+                            {
+                                searching = false;
+                                Application.Instance.Invoke(UpdateView);
+                            }
+                        });
+                    }
+                    finally
+                    {
+                        Monitor.Exit(_searchLock);
+                    }
                 }
             };
+
             var ResultsContainer = new StackLayout()
             {
                 Items = { Results },
@@ -813,6 +877,24 @@ namespace CommonUi
             };
 
             this.KeyDown += ProcessKeyDown;
+        }
+        // Helper method for filtering strings
+        private static bool FilterString(string source, string search, bool caseInsensitive,
+            bool contains, bool anythingAnywhere)
+        {
+            if (caseInsensitive)
+            {
+                source = source.ToLowerInvariant();
+                search = search.ToLowerInvariant();
+            }
+
+            if (anythingAnywhere)
+            {
+                return search.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .All(seg => source.Contains(seg));
+            }
+
+            return contains ? source.Contains(search) : source.StartsWith(search);
         }
     }
 }

@@ -44,7 +44,7 @@ namespace InvoicerBackend
                     BAT.PersonalImages = ctx.PiiImages.ToList();
                     BAT.InvImages = ctx.InventoryImages.ToList();
                 }
-                Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
+                //Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
                 return BAT;
             }, "Refresh");
             app.AddAsyncEndpointWithBearerAuth<string>("AutoProcessScheduledPayments", async (AS, LoginInfo) =>

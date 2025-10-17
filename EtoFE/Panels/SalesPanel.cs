@@ -1043,7 +1043,7 @@ namespace EtoFE.Panels
             var item = GlobalState.BAT.Cat.FirstOrDefault(c => c.Itemcode == itemCode);
             if (item == null) return;
 
-            var vatCategory = GlobalState.BAT.VCat.FirstOrDefault(v => v.VatCategoryId == item.DefaultVatCategory);
+            var vatCategory = GlobalState.BAT.VCat.FirstOrDefault(v => v.VatCategoryId == item.DefaultVatCategory, new VatCategory() { Active = true, VatCategoryId = 0, VatName = "General Untaxed", VatPercentage = 0 });
             double vatRate = vatCategory?.VatPercentage ?? 0;
 
             // Get batch objects to use their individual prices
