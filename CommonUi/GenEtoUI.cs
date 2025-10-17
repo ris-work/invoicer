@@ -663,12 +663,13 @@ namespace CommonUi
             ExpandContentWidth = ColorSettings.ExpandContentWidth,
         },
         false
-    )
+    ), null
 )
             {
                 Orientation = Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Top,
+                
             };
             this.ResumeLayout();
         }
@@ -1173,10 +1174,12 @@ namespace CommonUi
             {
                 Spacing = new Size(2, 2),
                 Padding = new Padding(2),
+                
+                
             };
 
             // Create a single row with all columns side by side
-            var outerRow = new TableRow();
+            var outerRow = new TableRow() { ScaleHeight = false };
 
             // Build each column and add it to the outer row
             for (int i = 0; i < nColumns; i++)
@@ -1188,7 +1191,7 @@ namespace CommonUi
                     foreach (var triplet in columnBins[i])
                     {
                         // Create a row for the main control
-                        var mainRow = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
+                        var mainRow = new TableRow() { ScaleHeight = false };
 
                         // Handle the label control
                         Control leftControl = triplet.Item1;
@@ -1209,9 +1212,9 @@ namespace CommonUi
                                 TextColor = LegendFG,
                                 BackgroundColor = LegendBG,
                                 Font = LegendTFont,
-                                Wrap = WrapMode.None,
-                                Width = ColorSettings.InnerLabelWidth ?? -1,
-                                Height = ColorSettings.InnerLabelHeight ?? -1
+                                Wrap = WrapMode.Character,
+                                Width = ColorSettings.InnerLabelWidth ?? 150,
+                                Height = ColorSettings.InnerLabelHeight ?? 30
                             };
 
                             leftControl = newLabel;
@@ -1256,17 +1259,17 @@ namespace CommonUi
                             if (mainControl is TextBox textBox)
                             {
                                 textBox.ShowBorder = false;
-                                mainRow.Cells.Add(new TableCell(textBox, true)); // Expand text box
+                                mainRow.Cells.Add(new TableCell(textBox, false)); // Expand text box
                             }
                             else
                             {
-                                mainRow.Cells.Add(new TableCell(mainControl, true)); // Expand main control
+                                mainRow.Cells.Add(new TableCell(mainControl, false)); // Expand main control
                             }
                         }
                         else
                         {
                             // Add an empty panel if there's no main control
-                            mainRow.Cells.Add(new TableCell(new Panel(), true));
+                            mainRow.Cells.Add(new TableCell(new Panel(), false));
                         }
 
                         // Add the main row to the list of rows
@@ -1276,13 +1279,13 @@ namespace CommonUi
                         Control supplementalControl = triplet.Item3;
                         if (supplementalControl != null)
                         {
-                            var supplementalRow = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
+                            var supplementalRow = new TableRow() { ScaleHeight = false };
 
                             // Add an empty cell for the label column
                             supplementalRow.Cells.Add(new TableCell(new Panel(), false));
 
                             // Add the supplemental control
-                            supplementalRow.Cells.Add(new TableCell(supplementalControl, true));
+                            supplementalRow.Cells.Add(new TableCell(supplementalControl, false));
 
                             Console.WriteLine($"Adding supplemental control: {supplementalControl.GetType().Name}");
 
@@ -1308,6 +1311,7 @@ namespace CommonUi
 
             // Add the row to the outer layout
             outerLayout.Rows.Add(outerRow);
+            outerLayout.Rows.Add(new TableRow(new TableCell(null)));
 
             return outerLayout;
         }
