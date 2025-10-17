@@ -329,6 +329,7 @@ namespace CommonUi
     string? IdentityColumn)
         {
             Console.WriteLine($"CreateControlsForInput called for key: {kv.Key}");
+            Console.WriteLine($"CreateControlsForInput: controlName='{kv.Value.ControlName}', value='{kv.Value.Value}'");
 
             // Get theme for this control
             (var FG, var BG, var FGc, var BGc, var TFont, var TSize, var CSize) = GetThemeForComponent(kv.Key);
@@ -337,6 +338,7 @@ namespace CommonUi
 
             // Create label with proper text
             Control EFieldName = CreateFieldLabel(kv.Value.ControlName, kv.Key);
+            Console.WriteLine($"CreateControlsForInput: created label for key: {kv.Key}");
             _EFieldNames.Add(kv.Key, EFieldName);
 
             // Create input control based on type
@@ -358,6 +360,8 @@ namespace CommonUi
             Console.WriteLine($"Adding to LayoutNext: {kv.Key}, Control type: {EInput.GetType().Name}");
             LayoutNext.Add((EFieldName, EInput, ELegend), LayoutNext.Count);
         }
+
+
 
 
 
@@ -671,10 +675,28 @@ namespace CommonUi
 
         private Control CreateFieldLabel(string controlName, string key)
         {
+            Console.WriteLine($"CreateFieldLabel: called with controlName='{controlName}', key='{key}'");
+
             // Get legend theme
             var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
 
             Control label;
+            string labelText = "";
+
+            // Only use DebugDontRenderLabels for debugging purposes, not in production
+            if (!ColorSettings.DebugDontRenderLabels)
+            {
+                labelText = TranslationHelper.Translate(controlName, controlName, TranslationHelper.Lang);
+            }
+            else
+            {
+                // For debugging, use the controlName directly
+                labelText = controlName;
+            }
+
+            Console.WriteLine($"CreateFieldLabel: controlName='{controlName}', key='{key}', labelText='{labelText}'");
+            Console.WriteLine($"CreateFieldLabel: DebugDontRenderLabels={ColorSettings.DebugDontRenderLabels}");
+            Console.WriteLine($"CreateFieldLabel: TranslationHelper.Lang={TranslationHelper.Lang}");
 
             if (ColorSettings.InnerLabelWidth != null &&
                 ColorSettings.InnerLabelHeight != null &&
@@ -684,12 +706,11 @@ namespace CommonUi
                 {
                     Width = ColorSettings.InnerLabelWidth ?? -1,
                     Height = ColorSettings.InnerLabelHeight ?? -1,
-                    Text = ColorSettings.DebugDontRenderLabels
-                        ? ""
-                        : TranslationHelper.Translate(controlName, controlName, TranslationHelper.Lang),
+                    Text = labelText,
                     ForegroundColor = LegendFG,
                 };
                 label = customLabel;
+                Console.WriteLine($"CreateFieldLabel: created CustomLabel with text: '{labelText}'");
             }
             else
             {
@@ -697,9 +718,7 @@ namespace CommonUi
                 {
                     Width = ColorSettings.InnerLabelWidth ?? -1,
                     Height = ColorSettings.InnerLabelHeight ?? -1,
-                    Text = ColorSettings.DebugDontRenderLabels
-                        ? ""
-                        : TranslationHelper.Translate(controlName, controlName, TranslationHelper.Lang),
+                    Text = labelText,
                     TextColor = LegendFG,
                     BackgroundColor = LegendBG,
                     Font = LegendTFont,
@@ -707,8 +726,10 @@ namespace CommonUi
                 };
                 regularLabel.ConfigureForPlatform();
                 label = regularLabel;
+                Console.WriteLine($"CreateFieldLabel: created Label with text: '{labelText}'");
             }
 
+            Console.WriteLine($"CreateFieldLabel: returning label with text: '{labelText}'");
             return label;
         }
 
@@ -1099,7 +1120,9 @@ namespace CommonUi
                 string labelName = item.Key.LabelControl?.GetType().Name ?? "null";
                 string mainName = item.Key.MainControl?.GetType().Name ?? "null";
                 string suppName = item.Key.Supplemental?.GetType().Name ?? "null";
-                Console.WriteLine($"Item: Label={labelName}, Main={mainName}, Supplemental={suppName}, Value={item.Value}");
+                string labelText = item.Key.LabelControl is Label label ? label.Text :
+                                  item.Key.LabelControl is CustomLabel customLabel ? customLabel.Text : "null";
+                Console.WriteLine($"Item: Label={labelName} (Text: '{labelText}'), Main={mainName}, Supplemental={suppName}, Value={item.Value}");
             }
 
             // Create bins (one per column) to temporarily hold (leftControl, rightControl) pairs.
@@ -1107,7 +1130,7 @@ namespace CommonUi
             for (int col = 0; col < nColumns; col++)
                 columnBins.Add(new List<(Control, Control, Control)>());
 
-            // Distribute each item into the appropriate column based on its row offset.
+            // Distribute each item into appropriate column based on its row offset.
             foreach (var kvp in LayoutNext)
             {
                 // Calculate which column this control should go in
@@ -1146,27 +1169,57 @@ namespace CommonUi
                         var mainRow = new TableRow() { ScaleHeight = ColorSettings.ExpandContentHeight };
 
                         // Handle the label control
-                        Control leftControl = triplet.Item1 ?? new Panel { Size = new Size(0, 0) };
+                        Control leftControl = triplet.Item1;
+                        string labelText = "";
 
                         // Apply label colors to the left control if it's a label
                         if (leftControl is Label label)
                         {
+                            labelText = label.Text;
+                            Console.WriteLine($"Original label text: '{labelText}'");
+
                             var (LegendFG, LegendBG, _, _, LegendTFont, _, _) = GetThemeForComponent("Legend");
-                            label.BackgroundColor = LegendBG;
-                            label.TextColor = LegendFG;
-                            label.Font = LegendTFont;
-                            label.Wrap = WrapMode.None;
-                            Console.WriteLine($"Setting up label: {label.Text}");
+
+                            // Create a new label with the same properties to ensure it's properly displayed
+                            var newLabel = new Label()
+                            {
+                                Text = labelText,
+                                TextColor = LegendFG,
+                                BackgroundColor = LegendBG,
+                                Font = LegendTFont,
+                                Wrap = WrapMode.None,
+                                Width = ColorSettings.InnerLabelWidth ?? -1,
+                                Height = ColorSettings.InnerLabelHeight ?? -1
+                            };
+
+                            leftControl = newLabel;
+                            Console.WriteLine($"Setting up label: '{labelText}'");
                         }
                         else if (leftControl is CustomLabel customLabel)
                         {
-                            var (LegendFG, _, _, _, _, _, _) = GetThemeForComponent("Legend");
-                            customLabel.ForegroundColor = LegendFG;
-                            Console.WriteLine($"Setting up custom label: {customLabel.Text}");
-                        }
+                            labelText = customLabel.Text;
+                            Console.WriteLine($"Original custom label text: '{labelText}'");
 
-                        // Set the width for the controls
-                        leftControl.Width = ColorSettings.InnerLabelWidth ?? -1;
+                            var (LegendFG, _, _, _, _, _, _) = GetThemeForComponent("Legend");
+
+                            // Create a new custom label with the same properties to ensure it's properly displayed
+                            var newCustomLabel = new CustomLabel()
+                            {
+                                Text = labelText,
+                                ForegroundColor = LegendFG,
+                                Width = ColorSettings.InnerLabelWidth ?? -1,
+                                Height = ColorSettings.InnerLabelHeight ?? -1
+                            };
+
+                            leftControl = newCustomLabel;
+                            Console.WriteLine($"Setting up custom label: '{labelText}'");
+                        }
+                        else if (leftControl == null)
+                        {
+                            // Create an empty panel to preserve alignment
+                            leftControl = new Panel() { Size = new Size(ColorSettings.InnerLabelWidth ?? 50, ColorSettings.InnerLabelHeight ?? 20) };
+                            Console.WriteLine("Creating empty panel for label");
+                        }
 
                         // Add the label to the row
                         mainRow.Cells.Add(new TableCell(leftControl, false)); // Don't expand label
