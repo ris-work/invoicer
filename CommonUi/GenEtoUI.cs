@@ -1300,12 +1300,12 @@ namespace CommonUi
                         Padding = new Padding(4),
                     };
 
-                    outerRow.Cells.Add(new TableCell(colLayout, true));
+                    outerRow.Cells.Add(new TableCell(colLayout, ColorSettings.ExpandContentWidth));
                 }
                 else
                 {
                     // Add an empty column if there are fewer controls than columns
-                    outerRow.Cells.Add(new TableCell(new Panel(), true));
+                    outerRow.Cells.Add(new TableCell(new Panel(), ColorSettings.ExpandContentWidth));
                 }
             }
 

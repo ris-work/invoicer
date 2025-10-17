@@ -28,6 +28,14 @@ namespace EtoFE
         // Store buttons list at class level for access in event handlers
         private List<RoundedLabel> Buttons = new List<RoundedLabel>();
 
+        private (string Label, object Content, string Name)[] loadOncePanels;
+
+        Panel CurrentPanel;
+
+        IReadOnlyDictionary<string, object> ROD;
+
+
+
         public NavigableListForm()
         {
             Location = new Eto.Drawing.Point(200, 150);
@@ -49,26 +57,24 @@ namespace EtoFE
             );
             LB.BackgroundColor = ColorSettings.BackgroundColor;
 
-            Panel CurrentPanel = new Panel()
+            CurrentPanel = new Panel()
             {
                 Size = new Eto.Drawing.Size(-1, -1),
             };
 
             // Simplified panel configuration
-            var loadOncePanels = CreatePanelConfiguration();
+            loadOncePanels = CreatePanelConfiguration();
 
             Dictionary<string, object> Panels = new Dictionary<string, object>();
             foreach (var panel in loadOncePanels)
             {
-                Panels.Add(
-                    TranslationHelper.Translate(panel.Item3, panel.Item1, Program.lang),
-                    panel.Item2
-                );
+                // Store with original key (panel.Item1), not translated
+                Panels.Add(panel.Item1, panel.Item2);
             }
             LB.DataStore = loadOncePanels.Select(x => new List<string>() { x.Item1 }).ToList();
             LB.GridLines = GridLines.None;
 
-            IReadOnlyDictionary<string, object> ROD = Panels;
+            ROD = Panels;
 
             LB.CellFormatting += (e, a) =>
             {
@@ -111,18 +117,22 @@ namespace EtoFE
 
             LB.SelectedItemsChanged += (sender, e) =>
             {
-                CurrentPanel.Content = (Control)
-                    (
-                        (ILoadOncePanel<object>)
-                            ROD.GetValueOrDefault<string, object?>(
-                                (string)((List<string>)LB.SelectedItem).First(),
-                                null
-                            )
-                    ).GetInnerAsObject();
-                Title = $"{(string)((List<string>)LB.SelectedItem).First()}";
-                this.Size = new Eto.Drawing.Size(-1, -1);
-                this.Invalidate();
-                this.UpdateLayout();
+                string selectedText = (string)((List<string>)LB.SelectedItem).First();
+                string originalKey = loadOncePanels.FirstOrDefault(x =>
+                    TranslationHelper.Translate(x.Item3, x.Item1, Program.lang) == selectedText).Item1;
+
+                if (!string.IsNullOrEmpty(originalKey))
+                {
+                    CurrentPanel.Content = (Control)
+                        (
+                            (ILoadOncePanel<object>)
+                                ROD.GetValueOrDefault<string, object?>(originalKey, null)
+                        ).GetInnerAsObject();
+                    Title = $"{selectedText}";
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate();
+                    this.UpdateLayout();
+                }
             };
 
             LB.DisableLines();
@@ -354,36 +364,54 @@ namespace EtoFE
             button.MouseDown += (e, a) =>
             {
                 RoundedLabel clickedLabel = ((RoundedLabel)e);
-                loadAction();
-                selectAction(Buttons.IndexOf(clickedLabel));
-                this.Size = new Eto.Drawing.Size(-1, -1);
-                this.Invalidate(true);
-                this.TriggerStyleChanged();
+                // Get the original key from the button text
+                string originalKey = loadOncePanels.FirstOrDefault(x =>
+                    TranslationHelper.Translate(x.Item3, x.Item1, Program.lang) == clickedLabel.Text).Item1;
+
+                if (!string.IsNullOrEmpty(originalKey))
+                {
+                    LoadPanelContent(clickedLabel.Text, CurrentPanel, ROD);
+                    selectAction(Buttons.IndexOf(clickedLabel));
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate(true);
+                    this.TriggerStyleChanged();
+                }
             };
 
             button.KeyUp += (e, a) =>
             {
                 RoundedLabel clickedLabel = ((RoundedLabel)e);
-                loadAction();
-                selectAction(Buttons.IndexOf(clickedLabel));
-                this.Size = new Eto.Drawing.Size(-1, -1);
-                this.Invalidate(true);
-                this.TriggerStyleChanged();
+                // Get the original key from the button text
+                string originalKey = loadOncePanels.FirstOrDefault(x =>
+                    TranslationHelper.Translate(x.Item3, x.Item1, Program.lang) == clickedLabel.Text).Item1;
+
+                if (!string.IsNullOrEmpty(originalKey))
+                {
+                    LoadPanelContent(clickedLabel.Text, CurrentPanel, ROD);
+                    selectAction(Buttons.IndexOf(clickedLabel));
+                    this.Size = new Eto.Drawing.Size(-1, -1);
+                    this.Invalidate(true);
+                    this.TriggerStyleChanged();
+                }
             };
 
             return button;
         }
 
-        private void LoadPanelContent(string panelKey, Panel currentPanel, IReadOnlyDictionary<string, object> panels)
+        private void LoadPanelContent(string translatedPanelKey, Panel currentPanel, IReadOnlyDictionary<string, object> panels)
         {
-            currentPanel.Content = (Control)
-                (
-                    (ILoadOncePanel<object>)
-                        panels.GetValueOrDefault<string, object?>(
-                            panelKey,
-                            null
-                        )
-                ).GetInnerAsObject();
+            // Find the original key that matches the translated key
+            string originalKey = loadOncePanels.FirstOrDefault(x =>
+                TranslationHelper.Translate(x.Item3, x.Item1, Program.lang) == translatedPanelKey).Item1;
+
+            if (!string.IsNullOrEmpty(originalKey))
+            {
+                currentPanel.Content = (Control)
+                    (
+                        (ILoadOncePanel<object>)
+                            panels.GetValueOrDefault<string, object?>(originalKey, null)
+                    ).GetInnerAsObject();
+            }
         }
 
         private void UpdateButtonStyles(List<RoundedLabel> buttons, int selectedIndex)
