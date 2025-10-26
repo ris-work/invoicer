@@ -13,6 +13,7 @@ using MySkiaApp;
 //using Rv.InvNew.Common;
 using RV.InvNew.Common;
 using Terminal.Gui;
+using System.IO;
 
 Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
 Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
