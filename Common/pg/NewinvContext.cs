@@ -766,6 +766,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.PointsId)
                 .HasDefaultValueSql("nextval('loyality_points_points_id_seq'::regclass)")
                 .HasColumnName("points_id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CustId).HasColumnName("cust_id");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
             entity.Property(e => e.ValidFrom)
@@ -784,6 +785,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CustId).HasColumnName("cust_id");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.LoyalityPointsId).HasColumnName("loyality_points_id");
+            entity.Property(e => e.RedeemedFor)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("redeemed_for");
             entity.Property(e => e.TimeIssued)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("time with time zone")
@@ -956,6 +961,10 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address).HasColumnName("address");
+            entity.Property(e => e.DiscountRateAdditivePercentage).HasColumnName("discount_rate_additive_percentage");
+            entity.Property(e => e.DiscountRateMultiplicativePercentage)
+                .HasDefaultValueSql("1")
+                .HasColumnName("discount_rate_multiplicative_percentage");
             entity.Property(e => e.Email).HasColumnName("email");
             entity.Property(e => e.Fax).HasColumnName("fax");
             entity.Property(e => e.Gender)
@@ -965,6 +974,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IsCompany)
                 .HasDefaultValue(false)
                 .HasColumnName("is_company");
+            entity.Property(e => e.LoyaltyPointsRateAdditivePercentage).HasColumnName("loyalty_points_rate_additive_percentage");
+            entity.Property(e => e.LoyaltyPointsRateMultiplicativePercentage)
+                .HasDefaultValueSql("1")
+                .HasColumnName("loyalty_points_rate_multiplicative_percentage");
             entity.Property(e => e.Mobile).HasColumnName("mobile");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Sip).HasColumnName("SIP");

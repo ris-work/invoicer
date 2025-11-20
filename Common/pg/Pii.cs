@@ -28,4 +28,12 @@ public partial class Pii
     public string? Sip { get; set; }
 
     public string? Gender { get; set; }
+
+    public double DiscountRateAdditivePercentage { get; set; }
+
+    public double DiscountRateMultiplicativePercentage { get; set; }
+
+    public double LoyaltyPointsRateMultiplicativePercentage { get; set; }
+
+    public double LoyaltyPointsRateAdditivePercentage { get; set; }
 }

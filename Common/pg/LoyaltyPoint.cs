@@ -14,4 +14,6 @@ public partial class LoyaltyPoint
     public DateTime ValidUntil { get; set; }
 
     public long CustId { get; set; }
+
+    public double Amount { get; set; }
 }

@@ -14,4 +14,8 @@ public partial class LoyaltyPointsRedemption
     public double Amount { get; set; }
 
     public DateTimeOffset TimeIssued { get; set; }
+
+    public long LoyalityPointsId { get; set; }
+
+    public string RedeemedFor { get; set; } = null!;
 }
