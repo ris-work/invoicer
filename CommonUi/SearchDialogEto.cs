@@ -178,11 +178,14 @@ namespace CommonUi
         }
         public int SelectedOrder = -1;
         public bool ReverseSelection = false;
+        public bool Cancelled = false;
         public List<string[]> OutputList
         {
             get => _OutputList;
         }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
+        // REPORT BUTTON: Used like Facebook Report button, something that should be reported to the manager, or the law enforcement and NOT GENERAL SUCCESSFUL ENTRY.
+        // For that, use the normal Selected and OutputList instead, they are guaranteed to be valid, and null in case nothing is selected.
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
         public string ReportSelectedButtonText = "Report Selected";
         private static readonly object _searchLock = new object();

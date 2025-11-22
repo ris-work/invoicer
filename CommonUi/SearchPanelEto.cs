@@ -133,6 +133,9 @@ namespace CommonUi
         }
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
+        public bool Cancelled = false;
+        // REPORT BUTTON: Used like Facebook Report button, something that should be reported to the manager, or the law enforcement and NOT GENERAL SUCCESSFUL ENTRY.
+        // For that, use the normal Selected and OutputList instead, they are guaranteed to be valid, and null in case nothing is selected.
         public string ReportSelectedButtonText = TranslationHelper.Translate(
             "ReportSelected",
             "Report Selected",
@@ -142,6 +145,10 @@ namespace CommonUi
         // Add these new methods at the class level (before the constructor)
         private static ConcurrentDictionary<string, string> _normalizationCache = new ConcurrentDictionary<string, string>();
         private static readonly object _searchLock = new object();
+
+        public Action<int> OnUpdateTitle = null;
+        public Action SearchNow = null;
+        //private static readonly object _searchLock = new object();
 
         public SearchPanelEto(
             List<(string[] SearchText, Eto.Drawing.Color?, Eto.Drawing.Color?)> SearchCatalogue,
@@ -572,6 +579,7 @@ namespace CommonUi
                 Results.UpdateLayout();
 
                 this.Invalidate();
+                OnUpdateTitle?.Invoke(FilteredCount);
                 //this.Title = $"Found {FilteredCount} ";
             };
             EventHandler<MouseEventArgs> SendSelected = (e, a) =>
@@ -661,110 +669,111 @@ namespace CommonUi
                     SendSelectedOnEnter(e, a);
             };
 
+            // Replace the Search method with this optimized version
             var Search = () =>
             {
                 if (SearchBox.Text.Length > -1 && SC.Count > 0 && searching != true)
                 {
-                    var len = SearchBox.Text.Length;
-                    var SelectedArrayIndex = SelectedSearchIndex;
-                    var searchString = SearchBox.Text.ToLowerInvariant();
-                    var SearchCaseSensitiveSetting = SearchCaseSensitive;
-                    var SearchContainsSetting = SearchContains;
-                    var SearchNormalizeSpelling = NormalizeSpelling;
-                    int SearchSortBy = SortBy;
-                    bool SearchAnythingAnywhere = AnythingAnywhere;
-                    bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
-                    //MessageBox.Show($"{SelectedArrayIndex}, {SC[0].Item1.Length}, SAMPLE: {String.Join(",", SC[0].Item1)}");
-                    searching = true;
-                    (
-                        new Thread(() =>
-                        {
-                            if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
-                            {
-                                //MessageBox.Show(SelectedArrayIndex.ToString(), "SelectedArrayIndex", MessageBoxType.Information);
-                                var FilteredBeforeCountingAndSorting = OptimizedCatalogue
-                                    .AsParallel()
-                                    .Where(
-                                        (x) =>
-                                            x
-                                                .Item1.Last()
-                                                .FilterAccordingly(
-                                                    searchString,
-                                                    !SearchCaseSensitiveSetting,
-                                                    SearchContainsSetting,
-                                                    SearchNormalizeSpelling,
-                                                    SearchAnythingAnywhere
-                                                )
-                                    )
-                                    .AsSequential();
-                                var FilteredBeforeCounting = ReverseSort
-                                    ? (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => x.Item1[SearchSortBy]
-                                            )
-                                    )
-                                    : (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                x.Item1[SearchSortBy]
-                                            )
-                                    );
-                                FilteredUnlim = FilteredBeforeCountingAndSorting;
-                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                                FilteredCount = FilteredBeforeCounting.Count();
-                            }
-                            else
-                            {
-                                var FilteredBeforeCountingAndSorting = SC.AsParallel()
-                                    .Where(
-                                        (x) =>
-                                            x.Item1[SelectedSearchIndex]
-                                                .FilterAccordingly(
-                                                    searchString,
-                                                    !SearchCaseSensitiveSetting,
-                                                    SearchContainsSetting,
-                                                    SearchNormalizeSpelling,
-                                                    SearchAnythingAnywhere
-                                                )
-                                    )
-                                    .AsSequential();
-                                var FilteredBeforeCounting = ReverseSort
-                                    ? (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => x.Item1[SearchSortBy]
-                                            )
-                                    )
-                                    : (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                long.Parse(x.Item1[SearchSortBy])
-                                            )
-                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                x.Item1[SearchSortBy]
-                                            )
-                                    );
-                                FilteredUnlim = FilteredBeforeCountingAndSorting;
-                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                                FilteredCount = FilteredBeforeCounting.Count();
-                            }
+                    // Lock to prevent multiple searches at once
+                    if (!Monitor.TryEnter(_searchLock, 0))
+                        return;
 
-                            searching = false;
-                            Application.Instance.Invoke(UpdateView);
-                        })
-                    ).Start();
+                    try
+                    {
+                        var len = SearchBox.Text.Length;
+                        var SelectedArrayIndex = SelectedSearchIndex;
+                        var searchString = SearchBox.Text.ToLowerInvariant();
+                        var SearchCaseSensitiveSetting = SearchCaseSensitive;
+                        var SearchContainsSetting = SearchContains;
+                        var SearchNormalizeSpelling = NormalizeSpelling;
+                        int SearchSortBy = SortBy;
+                        bool SearchAnythingAnywhere = AnythingAnywhere;
+                        bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
+
+                        searching = true;
+
+                        // Use Task.Run instead of Thread for better thread pool utilization
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                // Pre-normalize the search string if needed
+                                var normalizedSearchString = SearchNormalizeSpelling ?
+                                    searchString.NormalizeSpelling() : searchString;
+
+                                IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredBeforeCountingAndSorting;
+
+                                if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
+                                {
+                                    // For omnibox search, pre-compute normalized strings
+                                    var precomputed = OptimizedCatalogue.AsParallel()
+                                        .Select(x => (
+                                            x,
+                                            normalized: SearchNormalizeSpelling ?
+                                                x.Item1.Last().NormalizeSpelling() : x.Item1.Last()
+                                        ));
+
+                                    FilteredBeforeCountingAndSorting = precomputed
+                                        .Where(x =>
+                                            FilterString(x.normalized, normalizedSearchString,
+                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
+                                                SearchAnythingAnywhere))
+                                        .Select(x => x.x);
+                                }
+                                else
+                                {
+                                    // For column-specific search, pre-compute normalized strings
+                                    var precomputed = SC.AsParallel()
+                                        .Select(x => (
+                                            x,
+                                            normalized: SearchNormalizeSpelling ?
+                                                x.Item1[SelectedSearchIndex].NormalizeSpelling() :
+                                                x.Item1[SelectedSearchIndex]
+                                        ));
+
+                                    FilteredBeforeCountingAndSorting = precomputed
+                                        .Where(x =>
+                                            FilterString(x.normalized, normalizedSearchString,
+                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
+                                                SearchAnythingAnywhere))
+                                        .Select(x => x.x);
+                                }
+
+                                // Apply sorting
+                                var FilteredBeforeCounting = ReverseSort
+                                    ? (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
+                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
+                                                x => x.Item1[SearchSortBy])
+                                    )
+                                    : (
+                                        SortingIsNumeric
+                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
+                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
+                                                x.Item1[SearchSortBy])
+                                    );
+
+                                FilteredUnlim = FilteredBeforeCountingAndSorting;
+                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
+                                FilteredCount = FilteredBeforeCounting.Count();
+                            }
+                            finally
+                            {
+                                searching = false;
+                                Application.Instance.Invoke(UpdateView);
+                            }
+                        });
+                    }
+                    finally
+                    {
+                        Monitor.Exit(_searchLock);
+                    }
                 }
             };
+            SearchNow = Search;
             var ResultsContainer = new StackLayout()
             {
                 Items = { Results },
@@ -1059,6 +1068,24 @@ namespace CommonUi
             }
             this.KeyDown += ProcessKeyDown;
             Search();
+        }
+        // Helper method for filtering strings
+        private static bool FilterString(string source, string search, bool caseInsensitive,
+            bool contains, bool anythingAnywhere)
+        {
+            if (caseInsensitive)
+            {
+                source = source.ToLowerInvariant();
+                search = search.ToLowerInvariant();
+            }
+
+            if (anythingAnywhere)
+            {
+                return search.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .All(seg => source.Contains(seg));
+            }
+
+            return contains ? source.Contains(search) : source.StartsWith(search);
         }
     }
 }
