@@ -106,7 +106,7 @@ namespace EtoFE
                 // Reset to initial state
                 if (CurrentPanel.Content is Panel contentPanel && contentPanel.Content is ILoadOncePanel<object> loadOncePanel)
                 {
-                    loadOncePanel.Destroy();
+                    loadOncePanel.Detach();
                 }
                 CurrentPanel.Content = null;
                 SelectedButtonIndex = -1;
@@ -381,6 +381,15 @@ namespace EtoFE
                 TextColor = ColorSettings.ForegroundColor,
                 Width = Program.ControlWidth ?? 100,
             };
+            Button PanelManagerButton = new Button()
+            {
+                Text = TranslationHelper.Translate("Panel Manager"),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                MinimumSize = new Eto.Drawing.Size(30, 30),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
+            };
             EnableAccessibilityButton.DisableHoverBackgroundChange(ColorSettings.BackgroundColor);
             EnableAccessibilityButton.ConfigureForPlatform();
             //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
@@ -399,14 +408,14 @@ namespace EtoFE
                         // Check if the content of the panel implements ILoadOncePanel
                         if (contentPanel.Content is ILoadOncePanel<object> loadOncePanel)
                         {
-                            loadOncePanel.Destroy();
-                            Console.WriteLine("Destroying the current panel.");
+                            loadOncePanel.Detach();
+                            Console.WriteLine("Detaching the current panel.");
                         }
                         // Alternative approach: try to find Destroy method via reflection
                         else if (contentPanel.Content != null)
                         {
                             var contentType = contentPanel.Content.GetType();
-                            var destroyMethod = contentType.GetMethod("Destroy");
+                            var destroyMethod = contentType.GetMethod("Detach");
                             if (destroyMethod != null)
                             {
                                 destroyMethod.Invoke(contentPanel.Content, null);
@@ -423,13 +432,13 @@ namespace EtoFE
                     else
                     {
                         Console.WriteLine(
-                            $"Unable to destroy panel - CurrentPanel.Content is not a Panel: {CurrentPanel.Content?.GetType()}"
+                            $"Unable to detach panel - CurrentPanel.Content is not a Panel: {CurrentPanel.Content?.GetType()}"
                         );
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error destroying panel: {ex.Message}");
+                    Console.WriteLine($"Error detaching panel: {ex.Message}");
                     // Still try to reset the UI
                     CurrentPanel.Content = null;
                     ResetCurrentPanel();  // This now works because it's a lambda in scope
@@ -462,7 +471,7 @@ namespace EtoFE
                             if (ROD.TryGetValue(panelName, out object panelObj) && panelObj is ILoadOncePanel<object> loadOncePanel)
                             {
                                 // Destroy the LoadOncePanel before moving the content
-                                loadOncePanel.Destroy();
+                                loadOncePanel.Detach();
                             }
                         }
 
@@ -488,6 +497,17 @@ namespace EtoFE
                 {
                     Console.WriteLine($"Error popping out panel: {ex.Message}");
                 }
+            };
+
+            PanelManagerButton.Click += (sender, e) =>
+            {
+                var managerWindow = new Form()
+                {
+                    Title = TranslationHelper.Translate("Panel Manager"),
+                    Size = new Eto.Drawing.Size(800, 600),
+                    Content = new PanelManagerPanel()
+                };
+                managerWindow.Show();
             };
             this.SuspendLayout();
             var Inner = new StackLayout(
@@ -537,6 +557,7 @@ namespace EtoFE
                 EnableAccessibilityButton,
                 null,
                 null,
+                PanelManagerButton,
                 RequestLogViewerButton,
                 PopOutButton,
                 QuitCurrentPanelButton
