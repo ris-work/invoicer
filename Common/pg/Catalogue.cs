@@ -56,4 +56,16 @@ public partial class Catalogue
     public bool AllowPriceSuggestions { get; set; }
 
     public string Remarks { get; set; } = null!;
+
+    public double QuotaPerQuotaPeriod { get; set; }
+
+    public bool TimeBasedQuotaEnabled { get; set; }
+
+    public double QuotaPerInvoice { get; set; }
+
+    public bool PerInvoiceQuotaEnabled { get; set; }
+
+    public bool DiscountMethodIsMaximum { get; set; }
+
+    public bool IsLossLeader { get; set; }
 }

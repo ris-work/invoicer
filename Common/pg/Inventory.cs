@@ -39,4 +39,10 @@ public partial class Inventory
     public DateTime LastCountedAt { get; set; }
 
     public string Remarks { get; set; } = null!;
+
+    public double MinPrice { get; set; }
+
+    public double MultiplicativeDiscountPercentage { get; set; }
+
+    public double AdditiveDiscountPercentage { get; set; }
 }

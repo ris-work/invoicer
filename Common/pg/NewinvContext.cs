@@ -93,6 +93,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Purchase> Purchases { get; set; }
 
+    public virtual DbSet<QuotaUsagePerUserItemcode> QuotaUsagePerUserItemcodes { get; set; }
+
     public virtual DbSet<Receipt> Receipts { get; set; }
 
     public virtual DbSet<ReceivedInvoice> ReceivedInvoices { get; set; }
@@ -327,6 +329,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.DescriptionsOtherLanguages)
                 .HasDefaultValue(0L)
                 .HasColumnName("descriptions_other_languages");
+            entity.Property(e => e.DiscountMethodIsMaximum)
+                .HasDefaultValue(false)
+                .HasColumnName("discount_method_is_maximum");
             entity.Property(e => e.EnforceAboveCost)
                 .HasDefaultValue(true)
                 .HasColumnName("enforce_above_cost");
@@ -334,6 +339,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("expiry_tracking_enabled");
             entity.Property(e => e.HeightM).HasColumnName("height_m");
+            entity.Property(e => e.IsLossLeader)
+                .HasDefaultValue(false)
+                .HasColumnName("is_loss_leader");
             entity.Property(e => e.LengthM).HasColumnName("length_m");
             entity.Property(e => e.MaxPerInvoice)
                 .HasDefaultValueSql("1000000")
@@ -342,6 +350,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("1000000")
                 .HasColumnName("max_per_person");
             entity.Property(e => e.MinPerInvoice).HasColumnName("min_per_invoice");
+            entity.Property(e => e.PerInvoiceQuotaEnabled)
+                .HasDefaultValue(false)
+                .HasColumnName("per_invoice_quota_enabled");
             entity.Property(e => e.PermissionsCategory)
                 .HasDefaultValue(0L)
                 .HasColumnName("permissions_category");
@@ -351,9 +362,14 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ProcessDiscounts)
                 .HasDefaultValue(true)
                 .HasColumnName("process_discounts");
+            entity.Property(e => e.QuotaPerInvoice).HasColumnName("quota_per_invoice");
+            entity.Property(e => e.QuotaPerQuotaPeriod).HasColumnName("quota_per_quota_period");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("remarks");
+            entity.Property(e => e.TimeBasedQuotaEnabled)
+                .HasDefaultValue(false)
+                .HasColumnName("time_based_quota_enabled");
             entity.Property(e => e.VatCategoryAdjustable)
                 .HasDefaultValue(false)
                 .HasColumnName("vat_category_adjustable");
@@ -567,6 +583,7 @@ public partial class NewinvContext : DbContext
             entity.ToTable("inventory", tb => tb.HasComment("Internal inventory management functions"));
 
             entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.AdditiveDiscountPercentage).HasColumnName("additive_discount_percentage");
             entity.Property(e => e.BatchEnabled)
                 .HasDefaultValue(true)
                 .HasColumnName("batch_enabled");
@@ -585,6 +602,8 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.MfgDate)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("mfg_date");
+            entity.Property(e => e.MinPrice).HasColumnName("min_price");
+            entity.Property(e => e.MultiplicativeDiscountPercentage).HasColumnName("multiplicative_discount_percentage");
             entity.Property(e => e.PackedSize)
                 .HasDefaultValueSql("1")
                 .HasColumnName("packed_size");
@@ -1061,6 +1080,23 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("VAT_category_name");
             entity.Property(e => e.VatPercentage).HasColumnName("VAT_percentage");
+        });
+
+        modelBuilder.Entity<QuotaUsagePerUserItemcode>(entity =>
+        {
+            entity.HasKey(e => e.QuotaId).HasName("quota_usage_per_user_itemcode_pkey");
+
+            entity.ToTable("quota_usage_per_user_itemcode");
+
+            entity.Property(e => e.QuotaId).HasColumnName("quota_id");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Pii).HasColumnName("pii");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.ValidFrom)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("valid_from");
+            entity.Property(e => e.ValidUntil).HasColumnName("valid_until");
         });
 
         modelBuilder.Entity<Receipt>(entity =>
