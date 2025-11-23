@@ -20,14 +20,20 @@ namespace CommonUi
     {
         //interface IContravariant<in T>;
         T _Inner;
+        bool _isDestroyed = false;
+
         public object Inner
         {
             get
             {
-                _Inner ??= new T();
+                if (_isDestroyed || _Inner == null)
+                {
+                    _Inner = new T();
+                    _isDestroyed = false;
+                }
                 return _Inner;
             }
-            set { Inner = value; }
+            set { _Inner = (T)value; }
         }
 
         public T GetInner()
@@ -49,7 +55,8 @@ namespace CommonUi
 
         public void Destroy()
         {
-            _Inner = new T();
+            _isDestroyed = true;
+            _Inner = default(T);
         }
 
         public static explicit operator LoadOncePanel<object>(LoadOncePanel<T> instance)

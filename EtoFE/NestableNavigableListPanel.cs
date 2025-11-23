@@ -20,6 +20,7 @@ namespace EtoFE
             List<(string Title, object InnerPanel, string Name)> loadOncePanels
         )
         {
+
             CurrentPanelName = $"RV InvNew Inventory Manager";
             var EmptyPanel = new Panel()
             {
@@ -98,6 +99,36 @@ namespace EtoFE
             List<Panel> ButtonsContainer = new();
             int i = 0;
             int SelectedItemIndex = 0;
+
+            // INSERT HERE - After variable declarations but before button event handlers
+            Action ResetCurrentPanel = () =>
+            {
+                // Reset to initial state
+                if (CurrentPanel.Content is Panel contentPanel && contentPanel.Content is ILoadOncePanel<object> loadOncePanel)
+                {
+                    loadOncePanel.Destroy();
+                }
+                CurrentPanel.Content = null;
+                SelectedButtonIndex = -1;
+                CurrentPanelName = "RV InvNew Inventory Manager";
+
+                // Reset button styles
+                foreach (Button button in Buttons)
+                {
+                    button.TextColor = ColorSettings.ForegroundColor;
+                    button.BackgroundColor = ColorSettings.BackgroundColor;
+                    button.Invalidate(true);
+                }
+
+                foreach (Panel panel in ButtonsContainer)
+                {
+                    panel.BackgroundColor = ColorSettings.BackgroundColor;
+                    panel.Invalidate(true);
+                }
+
+                UpdateTheme();
+                this.Invalidate(true);
+            };
             foreach ((string, object, string) LoadOncePanel in loadOncePanels)
             {
                 Button B = new Button()
@@ -310,6 +341,7 @@ namespace EtoFE
                 this.UpdateLayout();
             };
             LB.DisableLines();
+
             //LB.DisableGridViewEnterKey();
             BackgroundColor = ColorSettings.RotateAllToPanelSettings(0).BackgroundColor;
             Padding = 10;
@@ -330,6 +362,25 @@ namespace EtoFE
                 BackgroundColor = ColorSettings.SelectedColumnColor,
                 TextColor = ColorSettings.ForegroundColor,
             };
+            Button RequestLogViewerButton = new Button()
+            {
+                Text = TranslationHelper.Translate("R"),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                MinimumSize = new Eto.Drawing.Size(30, 30),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
+            };
+
+            Button PopOutButton = new Button()
+            {
+                Text = TranslationHelper.Translate("P"),
+                Font = new Eto.Drawing.Font(Program.UIFont, 10),
+                MinimumSize = new Eto.Drawing.Size(30, 30),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                Width = Program.ControlWidth ?? 100,
+            };
             EnableAccessibilityButton.DisableHoverBackgroundChange(ColorSettings.BackgroundColor);
             EnableAccessibilityButton.ConfigureForPlatform();
             //QuitCurrentPanelButton.DisableHoverBackgroundChange(Eto.Drawing.Colors.Red);
@@ -337,21 +388,105 @@ namespace EtoFE
             {
                 (new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
             };
+            // Replace the existing QuitCurrentPanelButton.Click event handler with this:
+            // REPLACE THE EXISTING QuitCurrentPanelButton.Click EVENT HANDLER WITH THIS:
             QuitCurrentPanelButton.Click += (sender, e) =>
             {
-                //(new ListPanelOptionsAsButtons(loadOncePanels.ToArray())).Show();
-                //this.Content = new Panel() { };
-                if (CurrentPanel.Content is ILoadOncePanel<Panel> P)
+                try
                 {
-                    P.Destroy();
-                    CurrentPanel = new Panel() { };
-                    Console.WriteLine("Destroying the current panel.");
+                    if (CurrentPanel.Content is Panel contentPanel)
+                    {
+                        // Check if the content of the panel implements ILoadOncePanel
+                        if (contentPanel.Content is ILoadOncePanel<object> loadOncePanel)
+                        {
+                            loadOncePanel.Destroy();
+                            Console.WriteLine("Destroying the current panel.");
+                        }
+                        // Alternative approach: try to find Destroy method via reflection
+                        else if (contentPanel.Content != null)
+                        {
+                            var contentType = contentPanel.Content.GetType();
+                            var destroyMethod = contentType.GetMethod("Destroy");
+                            if (destroyMethod != null)
+                            {
+                                destroyMethod.Invoke(contentPanel.Content, null);
+                                Console.WriteLine("Destroying the current panel via reflection.");
+                            }
+                        }
+
+                        // Clear the content
+                        CurrentPanel.Content = null;
+
+                        // Reset to initial state
+                        ResetCurrentPanel();  // This now works because it's a lambda in scope
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            $"Unable to destroy panel - CurrentPanel.Content is not a Panel: {CurrentPanel.Content?.GetType()}"
+                        );
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine(
-                        $"Unable to destroy panel of type: {CurrentPanel.GetType()}, {CurrentPanel.Content.GetType()}"
-                    );
+                    Console.WriteLine($"Error destroying panel: {ex.Message}");
+                    // Still try to reset the UI
+                    CurrentPanel.Content = null;
+                    ResetCurrentPanel();  // This now works because it's a lambda in scope
+                }
+            };
+
+            // Request Log Viewer button click handler
+            RequestLogViewerButton.Click += (sender, e) =>
+            {
+                var logWindow = new Form()
+                {
+                    Title = TranslationHelper.Translate("Request Log Viewer"),
+                    Size = new Eto.Drawing.Size(900, 600),
+                    Content = new RequestLogViewerPanel()
+                };
+                logWindow.Show();
+            };
+
+            // Pop Out button click handler
+            PopOutButton.Click += (sender, e) =>
+            {
+                try
+                {
+                    if (CurrentPanel.Content is Panel contentPanel && contentPanel.Content != null)
+                    {
+                        // Find the corresponding LoadOncePanel using the SelectedButtonIndex
+                        if (SelectedButtonIndex >= 0 && SelectedButtonIndex < Buttons.Count)
+                        {
+                            string panelName = Buttons[SelectedButtonIndex].Text;
+                            if (ROD.TryGetValue(panelName, out object panelObj) && panelObj is ILoadOncePanel<object> loadOncePanel)
+                            {
+                                // Destroy the LoadOncePanel before moving the content
+                                loadOncePanel.Destroy();
+                            }
+                        }
+
+                        var popOutWindow = new Form()
+                        {
+                            Title = CurrentPanelName,
+                            Size = new Eto.Drawing.Size(900, 700),
+                            Content = contentPanel.Content
+                        };
+                        popOutWindow.Show();
+
+                        // Reset the current panel to its initial state
+                        ResetCurrentPanel();
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            $"Unable to pop out panel - CurrentPanel.Content is not a Panel or has no content: {CurrentPanel.Content?.GetType()}"
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error popping out panel: {ex.Message}");
                 }
             };
             this.SuspendLayout();
@@ -402,6 +537,8 @@ namespace EtoFE
                 EnableAccessibilityButton,
                 null,
                 null,
+                RequestLogViewerButton,
+                PopOutButton,
                 QuitCurrentPanelButton
             )
             {
@@ -431,5 +568,7 @@ namespace EtoFE
             Padding = 10;
             //Position
         }
+
+
     }
 }

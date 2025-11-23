@@ -85,7 +85,14 @@ namespace CommonUi
             Control owner,
             bool debug = false,
             PanelSettings? localColors = null,
-            string[]? order = null
+            string[]? order = null,
+                                        bool showExportOptions = true,
+    bool showSearchLocationInString = true,
+    bool showSearchLocation = true,
+    bool showSearchNormalization = true,
+    bool showSearchCaseSensitivity = true,
+    bool showPrintOptions = true,
+    bool showReportButton = true
         )
         {
             System.Console.WriteLine($"SearchDialog creation called, Pre-Check, items: {items}");
@@ -98,8 +105,16 @@ namespace CommonUi
                 System.Console.WriteLine($"SearchDialog creation called, EXCEPTION, items: {items}");
             }
             var generated = new Dialog<string[]?>();
+            Console.WriteLine($"{System.Reflection.MethodBase.GetCurrentMethod().Name}: showExportOptions={showExportOptions}, showSearchLocationInString={showSearchLocationInString}, showSearchLocation={showSearchLocation}, showSearchNormalization={showSearchNormalization}, showSearchCaseSensitivity={showSearchCaseSensitivity}, showPrintOptions={showPrintOptions}, showReportButton={showReportButton}");
 
-            var searchPanel = GenerateSearchPanel(items, debug, localColors, order);
+            var searchPanel = GenerateSearchPanel(items, debug, localColors, order,
+                showExportOptions: showExportOptions,
+showSearchLocationInString: showSearchLocationInString,
+showSearchLocation: showSearchLocation,
+showSearchNormalization: showSearchNormalization,
+showSearchCaseSensitivity: showSearchCaseSensitivity,
+showPrintOptions: showPrintOptions,
+showReportButton: showReportButton);
             generated.Content = searchPanel;
             searchPanel.OnSelectionMade += () =>
             {
@@ -125,7 +140,14 @@ namespace CommonUi
             List<T> items,
             bool debug = true,
             PanelSettings? localColors = null,
-            string[]? order = null
+            string[]? order = null,
+                            bool showExportOptions = false,
+    bool showSearchLocationInString = true,
+    bool showSearchLocation = true,
+    bool showSearchNormalization = false,
+    bool showSearchCaseSensitivity = false,
+    bool showPrintOptions = false,
+    bool showReportButton = false
         )
         {
             System.Console.WriteLine($"SearchPanel creation called, Type: {items.GetType().ToString()}, Count: {items.Count}, InnerType: {typeof(T)}");
@@ -193,8 +215,15 @@ namespace CommonUi
                 cells.Add(jsonText);
                 searchCatalogue.Add((cells.ToArray(), null, null));
             }
+            Console.WriteLine($"{System.Reflection.MethodBase.GetCurrentMethod().Name}: showExportOptions={showExportOptions}, showSearchLocationInString={showSearchLocationInString}, showSearchLocation={showSearchLocation}, showSearchNormalization={showSearchNormalization}, showSearchCaseSensitivity={showSearchCaseSensitivity}, showPrintOptions={showPrintOptions}, showReportButton={showReportButton}");
 
-            return new SearchPanelEto(searchCatalogue, headerEntries, debug, localColors);
+            return new SearchPanelEto(searchCatalogue, headerEntries, debug, localColors, showExportOptions: showExportOptions,
+showSearchLocationInString: showSearchLocationInString,
+showSearchLocation: showSearchLocation,
+showSearchNormalization: showSearchNormalization,
+showSearchCaseSensitivity: showSearchCaseSensitivity,
+showPrintOptions: showPrintOptions,
+showReportButton: showReportButton);
         }
 
         /// <summary>

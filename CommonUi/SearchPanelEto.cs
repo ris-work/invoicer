@@ -121,6 +121,7 @@ namespace CommonUi
         public bool ShowSearchNormalization = false;
         public bool ShowSearchCaseSensitivity = false;
         public bool ShowPrintOptions = false;
+        public bool ShowReportButton = false;
         public string[] Selected
         {
             get => _Selected;
@@ -156,9 +157,25 @@ namespace CommonUi
             bool Debug = true,
             PanelSettings? LocalColors = null,
             int GWW = 600,
-            int GWH = 300
+            int GWH = 300,
+                bool showExportOptions = false,
+    bool showSearchLocationInString = true,
+    bool showSearchLocation = true,
+    bool showSearchNormalization = false,
+    bool showSearchCaseSensitivity = false,
+    bool showPrintOptions = false,
+    bool showReportButton = false
         )
         {
+            ShowExportOptions = showExportOptions;
+            ShowSearchLocationInString = showSearchLocationInString;
+            ShowSearchLocation = showSearchLocation;
+            ShowSearchNormalization = showSearchNormalization;
+            ShowSearchCaseSensitivity = showSearchCaseSensitivity;
+            ShowPrintOptions = showPrintOptions;
+            ShowReportButton = showReportButton;
+            Console.WriteLine($"showExportOptions parameter: {showExportOptions}");
+            Console.WriteLine($"showPrintOptions parameter: {showPrintOptions}");
             var SC = SearchCatalogue;
             var Colors = new PanelSettings()
             {
@@ -1068,6 +1085,28 @@ namespace CommonUi
             }
             this.KeyDown += ProcessKeyDown;
             Search();
+            // Add these debug statements
+            Console.WriteLine($"ShowExportOptions: {ShowExportOptions}");
+            Console.WriteLine($"ShowSearchLocationInString: {ShowSearchLocationInString}");
+            Console.WriteLine($"ShowSearchLocation: {ShowSearchLocation}");
+            Console.WriteLine($"ShowSearchNormalization: {ShowSearchNormalization}");
+            Console.WriteLine($"ShowSearchCaseSensitivity: {ShowSearchCaseSensitivity}");
+            Console.WriteLine($"ShowPrintOptions: {ShowPrintOptions}");
+            Console.WriteLine($"ShowReportButton: {ShowReportButton}");
+            Console.WriteLine($"GBExportOptions created: {GBExportOptions != null}");
+            Console.WriteLine($"GBPrintOptions created: {GBPrintOptions != null}");
+            // Add these debug statements
+            Console.WriteLine($"OthersContainer.Items.Count: {OthersContainer.Items.Count}");
+            Console.WriteLine($"ShowExportOptions in OthersContainer: {ShowExportOptions}");
+            Console.WriteLine($"ShowPrintOptions in OthersContainer: {ShowPrintOptions}");
+            if (ShowExportOptions)
+            {
+                Console.WriteLine($"GBExportOptions is null: {GBExportOptions == null}");
+            }
+            if (ShowPrintOptions)
+            {
+                Console.WriteLine($"GBPrintOptions is null: {GBPrintOptions == null}");
+            }
         }
         // Helper method for filtering strings
         private static bool FilterString(string source, string search, bool caseInsensitive,

@@ -186,11 +186,20 @@ namespace CommonUi
         public delegate void SendTextBoxAndSelectedCallback(string message, string[] selected);
         // REPORT BUTTON: Used like Facebook Report button, something that should be reported to the manager, or the law enforcement and NOT GENERAL SUCCESSFUL ENTRY.
         // For that, use the normal Selected and OutputList instead, they are guaranteed to be valid, and null in case nothing is selected.
-        public SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
+        public SearchPanelEto.SendTextBoxAndSelectedCallback CallbackWhenReportButtonIsClicked = null;
         public string ReportSelectedButtonText = "Report Selected";
         private static readonly object _searchLock = new object();
 
-        
+
+
+        // Add a field to hold the SearchPanelEto instance
+        private SearchPanelEto _searchPanel;
+
+        // Add a public method to trigger search using the delegate
+        public void TriggerSearch()
+        {
+            _searchPanel.SearchNow?.Invoke();
+        }
 
         public SearchDialogEto(
             List<(
@@ -202,685 +211,79 @@ namespace CommonUi
             bool Debug = false
         )
         {
-            IEnumerable<(
-                string[] SearchItems,
-                Eto.Drawing.Color? BackgroundColor,
-                Eto.Drawing.Color? ForegroundColor
-            )> OptimizedCatalogue;
-            OptimizedCatalogue = SC.Select(e =>
-                    (
-                        e.Item1.ToList()
-                            .Concat(new List<string> { String.Join(",", e.Item1) })
-                            .ToArray(),
-                        e.Item2,
-                        e.Item3
-                    )
-                )
-                .ToArray();
-            TableLayout TL = new TableLayout();
-            Label SL = new Label() { Text = "Search for: " };
-            Label LabelResults = new Label() { Text = "Results: " };
-            GridView Results = new GridView();
-            RadioButtonList RBLSearchCriteria = new RadioButtonList()
-            {
-                Orientation = Eto.Forms.Orientation.Vertical,
-                Padding = 5,
-            };
-            RadioButtonList RBLSearchCaseSensitivity = new RadioButtonList()
-            {
-                Orientation = Eto.Forms.Orientation.Vertical,
-                Padding = 5,
-            };
-            RadioButtonList RBLSearchPosition = new RadioButtonList()
-            {
-                Orientation = Eto.Forms.Orientation.Vertical,
-                Padding = 5,
-            };
-            RBLSearchCaseSensitivity.Items.Add("Case-insensitive [F1]");
-            RBLSearchCaseSensitivity.Items.Add("Case-sensitive [F2]");
-            RBLSearchPosition.Items.Add("Contains [F3]");
-            RBLSearchPosition.Items.Add("StartsWith [F4]");
-            bool SearchCaseSensitive = false;
-            bool SearchContains = true;
-            CheckBox CBNormalizeSpelling = new CheckBox() { Text = "Normalize spelling [END]" };
-            CheckBox CBAnythingAnywhere = new CheckBox() { Text = "Anything Anywhere [BRK]" };
-            bool NormalizeSpelling = false;
-            bool AnythingAnywhere = false;
-            bool ReverseSort = false;
-            RBLSearchCaseSensitivity
-                .Children.Where(
-                    (r) =>
-                    {
-                        r.Height = ColorSettings.ControlHeight ?? 30;
-                        return true;
-                    }
-                )
-                .ToList();
-
-            CBNormalizeSpelling.CheckedChanged += (e, a) =>
-            {
-                NormalizeSpelling = CBNormalizeSpelling.Checked ?? false;
-            };
-            CBAnythingAnywhere.CheckedChanged += (e, a) =>
-            {
-                AnythingAnywhere = CBAnythingAnywhere.Checked ?? false;
-            };
-
-            GroupBox SearchCriteria = new() { Text = "Search in...", Content = RBLSearchCriteria };
-            GroupBox SearchCaseSensitivity = new()
-            {
-                Text = "Case sensitivity setting",
-                Content = RBLSearchCaseSensitivity,
-            };
-            GroupBox SearchCasePosition = new()
-            {
-                Text = "Search Position",
-                Content = RBLSearchPosition,
-            };
-            GroupBox SearchSpellingNormalization = new()
-            {
-                Text = "Advanced...",
-                Content = new StackLayout(CBNormalizeSpelling, CBAnythingAnywhere)
-                {
-                    Orientation = Eto.Forms.Orientation.Vertical,
-                },
-            };
-
-            StackLayout SearchOptions = new StackLayout()
-            {
-                Items =
-                {
-                    SearchCaseSensitivity,
-                    SearchCasePosition,
-                    SearchCriteria,
-                    SearchSpellingNormalization,
-                },
-                Orientation = Eto.Forms.Orientation.Vertical,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Padding = 5,
-            };
-
-            Button ExportAllResultsAsCsv = new Button() { Text = "Export Results..." };
-            Button ExportAllAsCsv = new Button() { Text = "Export Everything..." };
-            Button ExportShownAsCsv = new Button() { Text = "Export Displayed..." };
-            Button ReportSelectedAndSearch = new Button() { Text = ReportSelectedButtonText };
-
-            StackLayout ExportOptions = new StackLayout()
-            {
-                Items =
-                {
-                    ExportAllAsCsv,
-                    ExportAllResultsAsCsv,
-                    ExportShownAsCsv,
-                    ReportSelectedAndSearch,
-                },
-                Orientation = Eto.Forms.Orientation.Vertical,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Padding = 5,
-            };
-
-            GroupBox GBExportOptions = new GroupBox()
-            {
-                Text = "Export options...",
-                Content = ExportOptions,
-            };
-
-            Button PrintAllDisplayed = new Button() { Text = "Print Displayed Results..." };
-
-            StackLayout PrintOptions = new StackLayout()
-            {
-                Items = { PrintAllDisplayed },
-                Orientation = Eto.Forms.Orientation.Vertical,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Padding = 5,
-            };
-
-            GroupBox GBPrintOptions = new GroupBox()
-            {
-                Text = "Printing options...",
-                Content = PrintOptions,
-            };
-
-            int SelectedSearchIndex = SC[0].Item1.Length;
-            RBLSearchCriteria.SelectedIndexChanged += (e, a) =>
-            {
-                SelectedSearchIndex = RBLSearchCriteria.SelectedIndex;
-                //MessageBox.Show(SelectedSearchIndex.ToString(), "SelectedSearchIndex");
-            };
-            RBLSearchCaseSensitivity.SelectedIndexChanged += (e, a) =>
-            {
-                SearchCaseSensitive = RBLSearchCaseSensitivity.SelectedIndex == 1;
-            };
-            RBLSearchPosition.SelectedIndexChanged += (e, a) =>
-            {
-                SearchContains = RBLSearchPosition.SelectedIndex == 0;
-            };
-            TextAlignment[] Alignments = new TextAlignment[HeaderEntries.Count];
-            Alignments = HeaderEntries.Select((x) => x.Item2).ToArray();
-            int ic = 0;
-            int fnKey = 0;
-            int SortBy = 0;
-            foreach (var Header in HeaderEntries)
-            {
-                var HI = new GridColumn
-                {
-                    HeaderText = Header.Item1,
-                    DataCell = new TextBoxCell(ic) { TextAlignment = Header.Item2 },
-                    HeaderTextAlignment = Header.Item2,
-                    Sortable = true,
-                    MinWidth = 40,
-                };
-
-                Results.Columns.Add(HI);
-
-                ic++;
-                fnKey = 4 + ic;
-                RBLSearchCriteria.Items.Add(Header.Item1 + $" [F{fnKey}]");
-            }
-
-            Results.Enabled = true;
-            Results.BackgroundColor = Eto.Drawing.Colors.Wheat;
-            Results.Size = new Size(600, 700);
-            (Eto.Drawing.Color?, Eto.Drawing.Color?)[] ColorMat = Array.Empty<(
-                Eto.Drawing.Color?,
-                Eto.Drawing.Color?
-            )>();
-            Results.CellFormatting += (e, a) =>
-            {
-                //Colour the column first
-                if (a.Column.DisplayIndex % 2 == 1)
-                {
-                    a.BackgroundColor = Eto.Drawing.Colors.LightGreen;
-                    a.ForegroundColor = ColorSettings.BackgroundColor;
-                }
-                //Override with row colours
-                if (a.Row % 2 == 0)
-                {
-                    a.BackgroundColor = Eto.Drawing.Colors.Turquoise;
-                    a.ForegroundColor = ColorSettings.BackgroundColor;
-                }
-                //Use color matrix now!
-                if (
-                    ColorMat != null
-                    && Results.DataStore != null
-                    && Results.DataStore.Count() <= ColorMat.Length
-                )
-                {
-                    if (ColorMat[a.Row].Item1 != null)
-                        a.BackgroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item1!;
-                    if (ColorMat[a.Row].Item2 != null)
-                        a.ForegroundColor = (Eto.Drawing.Color)ColorMat[a.Row].Item2!;
-                }
-                ;
-                //Override everything with the currently sorted column
-                if (a.Column.DisplayIndex == SortBy)
-                {
-                    a.Column.AutoSize = true;
-                    a.BackgroundColor = ReverseSort
-                        ? Eto.Drawing.Colors.LightGoldenrodYellow
-                        : Eto.Drawing.Colors.BlueViolet;
-                    a.ForegroundColor = ReverseSort
-                        ? Eto.Drawing.Colors.BlueViolet
-                        : Eto.Drawing.Colors.LightGoldenrodYellow;
-                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
-                }
-                if (a.Row == Results.SelectedRow)
-                {
-                    a.Column.AutoSize = true;
-                    a.BackgroundColor = Eto.Drawing.Colors.DarkOliveGreen;
-                    a.ForegroundColor = Eto.Drawing.Colors.LightCoral;
-                    a.Font = Eto.Drawing.Fonts.Monospace(10, FontStyle.Bold);
-                }
-            };
-
-            RBLSearchCriteria.Items.Add($"Omnibox [F{fnKey + 1}]");
-            TextBox SearchBox = new TextBox();
-            if (Debug)
-                MessageBox.Show($"PC: {SC.Count()}");
-            bool searching = false;
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Filtered =
-                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredUnlim =
-                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-            List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredTemp =
-                new List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-
-            if (Debug)
-                MessageBox.Show($"Last: {SC.Last().Item1[0]} Desc: {SC.Last().Item1[1]}");
-            TL.Padding = 10;
-            TL.Spacing = new Eto.Drawing.Size(10, 10);
-            int FilteredCount = 0;
-            Results.Border = BorderType.None;
-            Results.GridLines = GridLines.Both;
-            var UpdateView = () =>
-            {
-                Filtered = FilteredTemp;
-                var ColorMatTemp = new List<(Eto.Drawing.Color?, Eto.Drawing.Color?)>();
-                List<GridItem> GI = new List<GridItem>();
-                Filtered = FilteredTemp;
-                foreach (var item in Filtered)
-                {
-                    GI.Add(new GridItem(item.Item1));
-                    ColorMatTemp.Add((item.Item2, item.Item3));
-                }
-                ColorMat = ColorMatTemp.ToArray();
-                //MessageBox.Show(GI.Count().ToString());
-                Results.DataStore = GI;
-                Results.Invalidate(true);
-                Results.UpdateLayout();
-
-                this.Invalidate();
-                this.Title = $"Found {FilteredCount} ";
-            };
-            EventHandler<Eto.Forms.MouseEventArgs> SendSelected = (e, a) =>
-            {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                _OutputList = Filtered.Select(a => a.Item1).ToList();
-                if (Results.SelectedItem != null)
-                {
-                    this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                    this.Close();
-                }
-                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                {
-                    this._Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                    this.Close();
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
-                        "Error",
-                        MessageBoxType.Warning
-                    );
-                }
-            };
-            var SendSelectedWithoutDefaults = () =>
-            {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                _OutputList = Filtered.Select(a => a.Item1).ToList();
-                if (Results.SelectedItem != null)
-                {
-                    this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                    this.Close();
-                }
-                else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                {
-                    this._Selected = (string[])((GridItem)Results.DataStore.First()).Values;
-                    this.Close();
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
-                        "Error",
-                        MessageBoxType.Warning
-                    );
-                }
-
-                return;
-            };
-            Results.MouseDoubleClick += SendSelected;
-
-            // Replace the Search method with this optimized version
-            var Search = () =>
-            {
-                if (SearchBox.Text.Length > -1 && SC.Count > 0 && searching != true)
-                {
-                    // Lock to prevent multiple searches at once
-                    if (!Monitor.TryEnter(_searchLock, 0))
-                        return;
-
-                    try
-                    {
-                        var len = SearchBox.Text.Length;
-                        var SelectedArrayIndex = SelectedSearchIndex;
-                        var searchString = SearchBox.Text.ToLowerInvariant();
-                        var SearchCaseSensitiveSetting = SearchCaseSensitive;
-                        var SearchContainsSetting = SearchContains;
-                        var SearchNormalizeSpelling = NormalizeSpelling;
-                        int SearchSortBy = SortBy;
-                        bool SearchAnythingAnywhere = AnythingAnywhere;
-                        bool SortingIsNumeric = HeaderEntries[SearchSortBy].Item3;
-
-                        searching = true;
-
-                        // Use Task.Run instead of Thread for better thread pool utilization
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                // Pre-normalize the search string if needed
-                                var normalizedSearchString = SearchNormalizeSpelling ?
-                                    searchString.NormalizeSpelling() : searchString;
-
-                                IEnumerable<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> FilteredBeforeCountingAndSorting;
-
-                                if (SelectedArrayIndex >= SC[0].Item1.Length - 1)
-                                {
-                                    // For omnibox search, pre-compute normalized strings
-                                    var precomputed = OptimizedCatalogue.AsParallel()
-                                        .Select(x => (
-                                            x,
-                                            normalized: SearchNormalizeSpelling ?
-                                                x.Item1.Last().NormalizeSpelling() : x.Item1.Last()
-                                        ));
-
-                                    FilteredBeforeCountingAndSorting = precomputed
-                                        .Where(x =>
-                                            FilterString(x.normalized, normalizedSearchString,
-                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
-                                                SearchAnythingAnywhere))
-                                        .Select(x => x.x);
-                                }
-                                else
-                                {
-                                    // For column-specific search, pre-compute normalized strings
-                                    var precomputed = SC.AsParallel()
-                                        .Select(x => (
-                                            x,
-                                            normalized: SearchNormalizeSpelling ?
-                                                x.Item1[SelectedSearchIndex].NormalizeSpelling() :
-                                                x.Item1[SelectedSearchIndex]
-                                        ));
-
-                                    FilteredBeforeCountingAndSorting = precomputed
-                                        .Where(x =>
-                                            FilterString(x.normalized, normalizedSearchString,
-                                                !SearchCaseSensitiveSetting, SearchContainsSetting,
-                                                SearchAnythingAnywhere))
-                                        .Select(x => x.x);
-                                }
-
-                                // Apply sorting
-                                var FilteredBeforeCounting = ReverseSort
-                                    ? (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
-                                            : FilteredBeforeCountingAndSorting.OrderByDescending(
-                                                x => x.Item1[SearchSortBy])
-                                    )
-                                    : (
-                                        SortingIsNumeric
-                                            ? FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                long.TryParse(x.Item1[SearchSortBy], out var num) ? num : 0)
-                                            : FilteredBeforeCountingAndSorting.OrderBy(x =>
-                                                x.Item1[SearchSortBy])
-                                    );
-
-                                FilteredUnlim = FilteredBeforeCountingAndSorting;
-                                FilteredTemp = FilteredBeforeCounting.Take(500).ToList();
-                                FilteredCount = FilteredBeforeCounting.Count();
-                            }
-                            finally
-                            {
-                                searching = false;
-                                Application.Instance.Invoke(UpdateView);
-                            }
-                        });
-                    }
-                    finally
-                    {
-                        Monitor.Exit(_searchLock);
-                    }
-                }
-            };
-
-            var ResultsContainer = new StackLayout()
-            {
-                Items = { Results },
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                VerticalContentAlignment = VerticalAlignment.Stretch,
-            };
-            var OthersContainer = new StackLayout()
-            {
-                Items = { SearchOptions, GBExportOptions, GBPrintOptions },
-                Orientation = Eto.Forms.Orientation.Vertical,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            };
-            TL.Rows.Add(new TableRow(SearchBox));
-            TL.Rows.Add(new TableRow(LabelResults));
-            TL.Rows.Add(
-                new TableRow(new TableCell(ResultsContainer) { ScaleWidth = true }, OthersContainer)
-                {
-                    ScaleHeight = true,
-                }
-            );
-            Content = TL;
-            RBLSearchCriteria.SelectedIndex = RBLSearchCriteria.Items.Count - 1;
-            RBLSearchCaseSensitivity.SelectedIndex = 0;
-            RBLSearchPosition.SelectedIndex = 0;
+            // Set dialog properties
             Title = "Search...";
             Resizable = true;
             Maximizable = true;
-            Results.ColumnHeaderClick += (e, a) =>
-            {
-                //MessageBox.Show(a.Column.DisplayIndex.ToString(), "Header was clicked!");
-                if (SortBy == a.Column.DisplayIndex)
-                    ReverseSort = !ReverseSort;
-                SortBy = a.Column.DisplayIndex;
-                Search();
-            };
-            SearchBox.TextChanged += (_, _) => Search();
-            SearchBox.KeyDown += (_, e) =>
-            {
-                if (e.Key == Keys.Down)
-                {
-                    Results.Focus();
-                }
-            };
-            SearchBox.DisableTextBoxDownArrow(() =>
-            {
-                if (Results.DataStore.Count() > Results.SelectedRow + 1)
-                    Results.SelectedRow++;
-            });
 
-            this.SizeChanged += (_, _) =>
-            {
-                if (this.Height > 200)
-                {
-                    Results.Height = (int)Math.Floor(this.Height * 0.85);
-                }
+            // Create the SearchPanelEto with appropriate settings
+            _searchPanel = new SearchPanelEto(
+                SC,
+                HeaderEntries,
+                Debug,
+                null, // Use default colors
+                600,  // GWW - same as in SearchDialogEto
+                700,   // GWH - same as in SearchDialogEto
+                        showExportOptions: true,
+        showSearchLocationInString: true,
+        showSearchLocation: true,
+        showSearchNormalization: true,
+        showSearchCaseSensitivity: true,
+        showPrintOptions: true,
+        showReportButton: true
+            );
+
+            // Ensure all features are visible to match SearchDialogEto behavior
+            _searchPanel.ShowExportOptions = true;
+            _searchPanel.ShowSearchLocationInString = true;
+            _searchPanel.ShowSearchLocation = true;
+            _searchPanel.ShowSearchNormalization = true;
+            _searchPanel.ShowSearchCaseSensitivity = true;
+            _searchPanel.ShowPrintOptions = true;
+
+            // Set the report button text
+            _searchPanel.ReportSelectedButtonText = ReportSelectedButtonText;
+
+            // Set the callback to update the title
+            _searchPanel.OnUpdateTitle = (count) => {
+                Title = $"Found {count} ";
             };
-            var WriteCsv = (
-                List<(string[], Eto.Drawing.Color?, Eto.Drawing.Color?)> Entries,
-                List<(string, TextAlignment, bool)> Headers,
-                string FileName
-            ) =>
+
+            // Handle selection to close the dialog and set results
+            _searchPanel.OnSelectionMade = () =>
             {
-                using (StreamWriter SW = new StreamWriter(FileName))
-                {
-                    using (
-                        CsvWriter CSW = new CsvWriter(
-                            SW,
-                            System.Globalization.CultureInfo.InvariantCulture
-                        )
-                    )
-                    {
-                        var HeaderLabels = (HeaderEntries.Select(x => x.Item1).ToArray());
-                        foreach (var HeaderLabel in HeaderLabels)
-                        {
-                            CSW.WriteField(HeaderLabel);
-                        }
-                        CSW.NextRecord();
-                        var ArrOut = Entries.Select(x => x.Item1).ToArray();
-                        foreach (var entry in ArrOut)
-                        {
-                            foreach (var EntryCell in entry)
-                            {
-                                CSW.WriteField(entry);
-                            }
-                            CSW.NextRecord();
-                        }
-                    }
-                }
+                _Selected = _searchPanel.Selected;
+                _OutputList = _searchPanel.OutputList;
+                SelectedOrder = _searchPanel.SelectedOrder;
+                ReverseSelection = _searchPanel.ReverseSelection;
+
+                // Close the dialog
+                this.Close();
             };
-            ExportAllAsCsv.Click += (_, _) =>
+
+            // Set the callback for the report button
+            _searchPanel.CallbackWhenReportButtonIsClicked = CallbackWhenReportButtonIsClicked;
+
+            // Handle key events to close on Escape
+            KeyDown += (sender, e) =>
             {
-                var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(
-                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
-                );
-                SFD.ShowDialog(Application.Instance.MainForm);
-                if (SFD.FileName != null)
+                if (e.Key == Keys.Escape)
                 {
-                    WriteCsv(SC, HeaderEntries, SFD.FileName);
-                }
-            };
-            ExportAllResultsAsCsv.Click += (_, _) =>
-            {
-                var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(
-                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
-                );
-                SFD.ShowDialog(Application.Instance.MainForm);
-                if (SFD.FileName != null)
-                {
-                    WriteCsv(FilteredUnlim.ToList(), HeaderEntries, SFD.FileName);
+                    Cancelled = true;
+                    Close();
                 }
             };
 
-            ExportShownAsCsv.Click += (_, _) =>
-            {
-                var SFD = new SaveFileDialog() { Title = "Save as..." };
-                SFD.Filters.Add(
-                    new FileFilter() { Extensions = ["*.csv"], Name = "Comma-Separated Values" }
-                );
-                SFD.ShowDialog(Application.Instance.MainForm);
-                if (SFD.FileName != null)
-                {
-                    WriteCsv(FilteredTemp, HeaderEntries, SFD.FileName);
-                }
-            };
+            // Set the content to be the search panel
+            Content = _searchPanel;
 
-            PrintAllDisplayed.Click += (_, _) =>
-            {
-                var WhetherToPrint = MessageBox.Show(
-                    $"{FilteredTemp.Count} lines, would you still like to print?",
-                    "List might be too long",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxType.Question
-                );
+            // Set initial size
+            Size = new Size(800, 800);
 
-                if (WhetherToPrint == DialogResult.Yes)
-                {
-                    var RP = new ReceiptPrinter(
-                        FilteredTemp.Select(e => e.Item1).Reverse().Skip(2).Reverse().ToList(),
-                        (IReadOnlyDictionary<string, object>)(new Dictionary<string, object>())
-                    );
-                    RP.PrintReceipt();
-                }
-            };
-
-            if (ReportSelectedAndSearch != null)
-            {
-                ReportSelectedAndSearch.Click += (_, _) =>
-                {
-                    string[] SelectedList = new string[0];
-                    if (Results.SelectedItem != null)
-                    {
-                        SelectedList = (string[])((GridItem)Results.SelectedItem).Values;
-                    }
-                    string SearchBoxText = SearchBox.Text;
-                    if (CallbackWhenReportButtonIsClicked != null)
-                        CallbackWhenReportButtonIsClicked(SearchBoxText, SelectedList);
-                };
-            }
-            Results.DisableGridViewEnterKey(SendSelectedWithoutDefaults);
-            EventHandler<Eto.Forms.KeyEventArgs> ProcessKeyDown = (_, ea) =>
-            {
-                ReverseSelection = ReverseSort;
-                SelectedOrder = SortBy;
-                KeyEventArgs a = (KeyEventArgs)ea;
-                switch (a.Key)
-                {
-                    case Keys.F1:
-                        RBLSearchCaseSensitivity.SelectedIndex = 0;
-                        break;
-                    case Keys.F2:
-                        RBLSearchCaseSensitivity.SelectedIndex = 1;
-                        break;
-                    case Keys.F3:
-                        RBLSearchPosition.SelectedIndex = 0;
-                        break;
-                    case Keys.F4:
-                        RBLSearchPosition.SelectedIndex = 1;
-                        break;
-                    case Keys.F5:
-                        if (RBLSearchCriteria.Items.Count >= 1)
-                            RBLSearchCriteria.SelectedIndex = 0;
-                        break;
-                    case Keys.F6:
-                        if (RBLSearchCriteria.Items.Count >= 2)
-                            RBLSearchCriteria.SelectedIndex = 1;
-                        break;
-                    case Keys.F7:
-                        if (RBLSearchCriteria.Items.Count >= 3)
-                            RBLSearchCriteria.SelectedIndex = 2;
-                        break;
-                    case Keys.F8:
-                        if (RBLSearchCriteria.Items.Count >= 4)
-                            RBLSearchCriteria.SelectedIndex = 3;
-                        break;
-                    case Keys.F9:
-                        if (RBLSearchCriteria.Items.Count >= 5)
-                            RBLSearchCriteria.SelectedIndex = 4;
-                        break;
-                    case Keys.F10:
-                        if (RBLSearchCriteria.Items.Count >= 6)
-                            RBLSearchCriteria.SelectedIndex = 5;
-                        break;
-                    case Keys.F11:
-                        if (RBLSearchCriteria.Items.Count >= 7)
-                            RBLSearchCriteria.SelectedIndex = 6;
-                        break;
-                    case Keys.End:
-                        CBNormalizeSpelling.Checked = !(CBNormalizeSpelling.Checked ?? false);
-                        break;
-                    case Keys.Pause:
-                        CBAnythingAnywhere.Checked = !(CBAnythingAnywhere.Checked ?? false);
-                        break;
-                    case Keys.Enter:
-                        if (!searching)
-                        {
-                            if (Results.SelectedItem != null)
-                            {
-                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this._Selected = (string[])((GridItem)Results.SelectedItem).Values;
-                                this.Close();
-                            }
-                            else if (Results.DataStore != null && Results.DataStore.Count() != 0)
-                            {
-                                this._OutputList = Filtered.Select(a => a.Item1).ToList();
-                                this._Selected = (string[])
-                                    ((GridItem)Results.DataStore.First()).Values;
-                                this.Close();
-                            }
-                            else
-                            {
-                                MessageBox.Show(
-                                    "Nothing displayed, nothing selected; [Esc] to exit the search dialog",
-                                    "Error",
-                                    MessageBoxType.Warning
-                                );
-                            }
-                        }
-
-                        break;
-                    case Keys.Escape:
-                        this.Close();
-                        break;
-                    default:
-                        break;
-                }
-                //MessageBox.Show($"{RBLSearchCriteria.SelectedIndex.ToString()}", "SelectedIndex");
-            };
-
-            this.KeyDown += ProcessKeyDown;
+            // Initial search
+            TriggerSearch();
         }
+
         // Helper method for filtering strings
         private static bool FilterString(string source, string search, bool caseInsensitive,
             bool contains, bool anythingAnywhere)
