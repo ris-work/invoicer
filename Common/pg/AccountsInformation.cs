@@ -36,4 +36,6 @@ public partial class AccountsInformation
     public bool IsDefaultCashRegister { get; set; }
 
     public long AccountNo { get; set; }
+
+    public double LoyaltyBaseMultiplicativePointsPercentage { get; set; }
 }

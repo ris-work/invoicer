@@ -739,21 +739,61 @@ namespace EtoFE.Panels
     Func<long, string> lookupFunc)
         {
             Log($"HandleNASearch called for {nameof(textBox)}");
-            var sel = searchFunc(this);
-            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
+
+            // Store state BEFORE search
+            string originalText = textBox.Text;
+
+            // Perform the lookup (this opens modal dialog)
+            bool lookupSuccess = DoLookup(textBox, label, searchFunc, lookupFunc);
+            Log($"HandleNASearch: After search - Success: {lookupSuccess}, Text: '{textBox.Text}'");
+
+            // Check validity AFTER search
+            bool isValidAfter = IsNAFieldValid(textBox, label);
+            Log($"HandleNASearch: After search - Valid: {isValidAfter}");
+
+            // Decide focus based on the result
+            if (lookupSuccess && isValidAfter)
             {
-                Log($"HandleNASearch: Selected ID {id}");
-                textBox.Text = id.ToString();
-                label.Text = lookupFunc(id) ?? "";
-
-                // If this is the item search, mark as changed
-                if (textBox == tbItem)
-                {
-                    itemCodeChanged = true;
-                }
-
+                Log("HandleNASearch: Lookup successful and valid - moving to next NA field");
                 MoveToNextNAField(textBox);
             }
+            else if (!lookupSuccess)
+            {
+                Log("HandleNASearch: Lookup failed - focusing textbox");
+                textBox.Focus();
+            }
+            else if (!isValidAfter)
+            {
+                Log("HandleNASearch: Lookup successful but invalid - focusing textbox");
+                textBox.Focus();
+            }
+            else
+            {
+                Log("HandleNASearch: No action taken");
+            }
+        }
+
+        // Helper method to check if an NA field is valid
+        private bool IsNAFieldValid(TextBox textBox, Label humanLabel)
+        {
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+                return false;
+
+            string humanText = humanLabel.Text ?? "";
+            return !humanText.ToLowerInvariant().Contains("unknown");
+        }
+
+        // Helper method to perform the lookup
+        bool DoLookup(TextBox tb, Label human, Func<Control, string[]> search, Func<long, string> lookup)
+        {
+            var sel = search(this);
+            if (sel?.Length > 0 && long.TryParse(sel[0], out var id))
+            {
+                tb.Text = id.ToString();
+                human.Text = lookup(id) ?? "";
+                return true; // Lookup successful
+            }
+            return false; // Lookup failed or cancelled
         }
 
         // First, let's see what properties are available on the batch object
@@ -923,25 +963,34 @@ namespace EtoFE.Panels
                 {
                     isProcessingKey = true;
 
+                    // Smart NA field navigation
                     if (lastFocused is TextBox focusedTextBox && naFieldMap.TryGetValue(focusedTextBox, out var associatedButton))
                     {
+                        Console.WriteLine($"KeyDown: TextBox -> Button focus: {focusedTextBox.ID} -> {associatedButton.Text}");
                         associatedButton.Focus();
+                        e.Handled = true;
                     }
                     else if (lastFocused is Button focusedButton && naButtonToTextBoxMap.TryGetValue(focusedButton, out var naTextBox))
                     {
+                        Console.WriteLine($"KeyDown: Button click triggered: {focusedButton.Text} for {naTextBox.ID}");
+                        // Don't use AsyncInvoke here - trigger immediately
                         focusedButton.PerformClick();
+                        e.Handled = true;
                     }
-                    else if (lastFocused is RadioButtonList)
+                    else if (lastFocused is TextBox && naFieldIndex.ContainsKey(lastFocused as TextBox))
                     {
-                        // Handle Enter on RadioButtonList - move to next control
-                        MoveToNextEssentialControl();
+                        // If we're on an NA field textbox but not the one that triggered the button
+                        Console.WriteLine("KeyDown: Moving to next NA field");
+                        MoveToNextNAField(lastFocused as TextBox);
+                        e.Handled = true;
                     }
                     else
                     {
+                        Console.WriteLine("KeyDown: Regular field navigation");
                         MoveToNextEssentialControl();
+                        e.Handled = true;
                     }
 
-                    e.Handled = true;
                     isProcessingKey = false;
                 }
             };
@@ -1003,23 +1052,42 @@ namespace EtoFE.Panels
             };
         }
 
-        void MoveToNextNAField(Control currentField)
+        private void MoveToNextNAField(TextBox currentField)
         {
             if (!naFieldIndex.TryGetValue(currentField, out int currentIndex))
+            {
+                Console.WriteLine($"MoveToNextNAField: Current field not found in NA fields list");
                 return;
+            }
 
             int nextIndex = (currentIndex + 1) % naFieldsInOrder.Count;
             var nextField = naFieldsInOrder[nextIndex];
+
+            Console.WriteLine($"MoveToNextNAField: Moving from {currentField.ID} to {nextField.ID}");
             nextField.Focus();
         }
 
-        void MoveToNextEssentialControl()
+        private void MoveToNextEssentialControl()
         {
             var currentIndex = essentialControls.IndexOf(lastFocused);
-            if (currentIndex >= 0 && currentIndex < essentialControls.Count - 1)
+            Console.WriteLine($"MoveToNextEssentialControl: currentIndex = {currentIndex}, lastFocused = {lastFocused?.GetType().Name}");
+
+            if (currentIndex > -1 && currentIndex < essentialControls.Count - 1)
             {
                 var nextControl = essentialControls[currentIndex + 1];
+                Console.WriteLine($"MoveToNextEssentialControl: Next control = {nextControl?.GetType().Name}");
                 nextControl.Focus();
+            }
+            else if (currentIndex == essentialControls.Count - 1)
+            {
+                Console.WriteLine("MoveToNextEssentialControl: Already at last control");
+                // Stay on Save button or wrap around to first
+                essentialControls[0].Focus();
+            }
+            else
+            {
+                Console.WriteLine("MoveToNextEssentialControl: Current control not in list, focusing first");
+                essentialControls[0].Focus();
             }
         }
 

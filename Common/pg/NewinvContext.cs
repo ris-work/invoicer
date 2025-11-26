@@ -201,6 +201,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IsReserve)
                 .HasDefaultValue(false)
                 .HasColumnName("is_reserve");
+            entity.Property(e => e.LoyaltyBaseMultiplicativePointsPercentage).HasColumnName("loyalty_base_multiplicative_points_percentage");
         });
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
