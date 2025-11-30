@@ -8,9 +8,322 @@ using RV.InvNew.Common;
 using EtoFE.Validation;
 using EtoFE.Search;
 using CommonUi;
+using System.ComponentModel.DataAnnotations;
 
 namespace EtoFE.Panels
 {
+    public class InvoiceDto
+    {
+        // Invoice header information
+        public DateTime InvoiceTime { get; set; } = DateTime.Now;
+        public long? Customer { get; set; }
+        public long SalesPersonId { get; set; }
+        public string? CurrencyCode { get; set; }
+        public string? InvoiceHumanFriendly { get; set; }
+
+        // Calculated totals
+        public double SubTotal { get; set; }
+        public double DiscountTotal { get; set; }
+        public double EffectiveDiscountPercentage { get; set; }
+        public double TaxTotal { get; set; }
+        public double GrandTotal { get; set; }
+
+        // Customer information for validation
+        public Pii? CustomerInfo { get; set; }
+
+        // Default account for loyalty points calculation
+        public AccountsInformation? DefaultCashAccount { get; set; }
+
+        // Sale line items - using the existing Sale EF Core entity
+        public List<Sale> SaleItems { get; set; } = new List<Sale>();
+
+        // Payment information - using the existing Payment EF Core entity
+        public List<Payment> Payments { get; set; } = new List<Payment>();
+
+        // Loyalty points to be issued - using the existing LoyaltyPoint EF Core entity
+        public List<LoyaltyPoint> LoyaltyPointsToIssue { get; set; } = new List<LoyaltyPoint>();
+
+        // Loyalty points to be redeemed - using the existing LoyaltyPointsRedemption EF Core entity
+        public List<LoyaltyPointsRedemption> LoyaltyPointsToRedeem { get; set; } = new List<LoyaltyPointsRedemption>();
+
+        // Validation methods that can be used both client and server side
+        public List<ValidationResult> Validate()
+        {
+            var results = new List<ValidationResult>();
+
+            // Validate invoice header
+            if (SalesPersonId <= 0)
+            {
+                results.Add(new ValidationResult("Sales person ID is required"));
+            }
+
+            // Validate sale items
+            foreach (var item in SaleItems)
+            {
+                // Basic validation for each sale item
+                if (item.Itemcode <= 0)
+                {
+                    results.Add(new ValidationResult("Invalid item code in sale items"));
+                }
+
+                if (item.Quantity <= 0)
+                {
+                    results.Add(new ValidationResult("Quantity must be greater than 0"));
+                }
+
+                if (item.SellingPrice < 0)
+                {
+                    results.Add(new ValidationResult("Selling price cannot be negative"));
+                }
+            }
+
+            // Validate payments
+            if (Payments.Count == 0)
+            {
+                results.Add(new ValidationResult("At least one payment method is required"));
+            }
+
+            double totalPayments = Payments.Sum(p => p.Amount);
+            if (Math.Abs(totalPayments - GrandTotal) > 0.01) // Allow for small rounding differences
+            {
+                results.Add(new ValidationResult($"Payment total ({totalPayments}) does not match invoice total ({GrandTotal})"));
+            }
+
+            // Validate loyalty points
+            foreach (var point in LoyaltyPointsToIssue)
+            {
+                if (point.Amount <= 0)
+                {
+                    results.Add(new ValidationResult("Loyalty points to issue must be greater than 0"));
+                }
+            }
+
+            foreach (var redemption in LoyaltyPointsToRedeem)
+            {
+                if (redemption.Amount <= 0)
+                {
+                    results.Add(new ValidationResult("Loyalty points to redeem must be greater than 0"));
+                }
+            }
+
+            return results;
+        }
+
+        // Calculate totals and discounts
+        public void CalculateTotals()
+        {
+            // Calculate subtotal
+            SubTotal = SaleItems.Sum(item => item.Quantity * item.SellingPrice);
+
+            // Calculate discounts
+            DiscountTotal = SaleItems.Sum(item => item.Discount);
+            EffectiveDiscountPercentage = SubTotal > 0 ? (DiscountTotal / SubTotal) * 100 : 0;
+
+            // Calculate tax
+            TaxTotal = SaleItems.Sum(item => item.VatAsCharged);
+
+            // Calculate grand total
+            GrandTotal = SubTotal - DiscountTotal + TaxTotal;
+
+            // Calculate loyalty points for each item
+            foreach (var item in SaleItems)
+            {
+                CalculateLoyaltyPointsForItem(item);
+            }
+        }
+
+        // Calculate loyalty points for a specific sale item
+        private void CalculateLoyaltyPointsForItem(Sale item)
+        {
+            // Use customer's loyalty rate if available, otherwise use default cash account's rate
+            double loyaltyRate = 0;
+
+            if (CustomerInfo != null)
+            {
+                loyaltyRate = CustomerInfo.LoyaltyPointsRateMultiplicativePercentage +
+                              CustomerInfo.LoyaltyPointsRateAdditivePercentage;
+            }
+            else if (DefaultCashAccount != null)
+            {
+                loyaltyRate = DefaultCashAccount.LoyaltyBaseMultiplicativePointsPercentage;
+            }
+
+            item.LoyalityPointsPercentage = loyaltyRate;
+            item.LoyalityPointsIssued = item.TotalEffectiveSellingPrice * (loyaltyRate / 100);
+        }
+    }
+    // Add this new class to handle after-sales inventory
+    public class AfterSalesCache
+    {
+        private readonly Dictionary<long, Dictionary<long, double>> _cache;
+        private readonly List<Inventory> _originalInventory;
+        private readonly List<Sale> _currentSales;
+
+        public AfterSalesCache(List<Inventory> inventory, List<Sale> currentSales)
+        {
+            _originalInventory = new List<Inventory>(inventory);
+            _currentSales = new List<Sale>(currentSales);
+            _cache = new Dictionary<long, Dictionary<long, double>>();
+            RebuildCache();
+            Log($"AfterSalesCache initialized with {_originalInventory.Count} inventory items and {_currentSales.Count} sales");
+        }
+
+        private void RebuildCache()
+        {
+            Log("Rebuilding AfterSalesCache...");
+            _cache.Clear();
+
+            // Initialize cache with original inventory
+            foreach (var item in _originalInventory)
+            {
+                if (!_cache.ContainsKey(item.Itemcode))
+                {
+                    _cache[item.Itemcode] = new Dictionary<long, double>();
+                }
+                _cache[item.Itemcode][item.Batchcode] = item.Units;
+                Log($"  Added item {item.Itemcode}, batch {item.Batchcode} with {item.Units} units");
+            }
+            Log($"  Initialized cache with {_cache.Count} item types");
+
+            // Reduce inventory based on current sales
+            foreach (var sale in _currentSales)
+            {
+                if (_cache.ContainsKey(sale.Itemcode) && _cache[sale.Itemcode].ContainsKey(sale.Batchcode))
+                {
+                    var previousAmount = _cache[sale.Itemcode][sale.Batchcode];
+                    _cache[sale.Itemcode][sale.Batchcode] -= sale.Quantity;
+                    Log($"  Reduced item {sale.Itemcode}, batch {sale.Batchcode} by {sale.Quantity} units: {previousAmount} -> {_cache[sale.Itemcode][sale.Batchcode]}");
+                }
+            }
+
+            Log("AfterSalesCache rebuild complete");
+            LogCacheContents();
+        }
+
+        public double GetAvailableUnits(long itemcode, long batchcode)
+        {
+            // First check in the cache
+            if (_cache.ContainsKey(itemcode) && _cache[itemcode].ContainsKey(batchcode))
+            {
+                Log($"Cache HIT: Item {itemcode}, Batch {batchcode} has {_cache[itemcode][batchcode]} units available");
+                return _cache[itemcode][batchcode];
+            }
+
+            // If not found in cache, check original inventory
+            var originalItem = _originalInventory.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == batchcode);
+            if (originalItem != null)
+            {
+                Log($"Cache MISS: Item {itemcode}, Batch {batchcode} found in original inventory with {originalItem.Units} units");
+                return originalItem.Units;
+            }
+
+            Log($"Cache MISS: Item {itemcode}, Batch {batchcode} not found anywhere");
+            return 0;
+        }
+
+        public List<Inventory> GetAvailableBatches(long itemcode)
+        {
+            Log($"Getting available batches for item {itemcode}");
+            var availableBatches = new List<Inventory>();
+
+            // First check in the cache
+            if (_cache.ContainsKey(itemcode))
+            {
+                Log($"  Found {_cache[itemcode].Count} batches in cache for item {itemcode}");
+                foreach (var kvp in _cache[itemcode])
+                {
+                    if (kvp.Value > 0)
+                    {
+                        var originalItem = _originalInventory.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == kvp.Key);
+                        if (originalItem != null)
+                        {
+                            var itemCopy = new Inventory
+                            {
+                                Itemcode = originalItem.Itemcode,
+                                Batchcode = originalItem.Batchcode,
+                                BatchEnabled = originalItem.BatchEnabled,
+                                MfgDate = originalItem.MfgDate,
+                                ExpDate = originalItem.ExpDate,
+                                PackedSize = originalItem.PackedSize,
+                                Units = kvp.Value, // Use cached value
+                                MeasurementUnit = originalItem.MeasurementUnit,
+                                MarkedPrice = originalItem.MarkedPrice,
+                                SellingPrice = originalItem.SellingPrice,
+                                CostPrice = originalItem.CostPrice,
+                                VolumeDiscounts = originalItem.VolumeDiscounts,
+                                Suppliercode = originalItem.Suppliercode,
+                                UserDiscounts = originalItem.UserDiscounts,
+                                LastCountedAt = originalItem.LastCountedAt,
+                                Remarks = originalItem.Remarks,
+                                MinPrice = originalItem.MinPrice,
+                                MultiplicativeDiscountPercentage = originalItem.MultiplicativeDiscountPercentage,
+                                AdditiveDiscountPercentage = originalItem.AdditiveDiscountPercentage
+                            };
+                            availableBatches.Add(itemCopy);
+                            Log($"    Added batch {kvp.Key} with {kvp.Value} units available");
+                        }
+                    }
+                    else
+                    {
+                        Log($"    Skipped batch {kvp.Key} with 0 units available");
+                    }
+                }
+            }
+            else
+            {
+                Log($"  No batches found in cache for item {itemcode}");
+            }
+
+            // If no batches found in cache, return original inventory
+            if (availableBatches.Count == 0)
+            {
+                Log($"  Falling back to original inventory for item {itemcode}");
+                availableBatches.AddRange(_originalInventory.Where(i => i.Itemcode == itemcode && i.Units > 0));
+                foreach (var batch in availableBatches)
+                {
+                    Log($"    Added original batch {batch.Batchcode} with {batch.Units} units");
+                }
+            }
+
+            Log($"Returning {availableBatches.Count} available batches for item {itemcode}");
+            return availableBatches;
+        }
+
+        public void UpdateSales(List<Sale> sales)
+        {
+            Log($"Updating AfterSalesCache with {sales.Count} sales");
+            _currentSales.Clear();
+            _currentSales.AddRange(sales);
+            RebuildCache();
+        }
+
+        public void Clear()
+        {
+            Log("Clearing AfterSalesCache");
+            _cache.Clear();
+            _currentSales.Clear();
+            Log("AfterSalesCache cleared");
+        }
+
+        private void LogCacheContents()
+        {
+            Log("Current AfterSalesCache contents:");
+            foreach (var itemKvp in _cache)
+            {
+                Log($"  Item {itemKvp.Key}:");
+                foreach (var batchKvp in itemKvp.Value)
+                {
+                    Log($"    Batch {batchKvp.Key}: {batchKvp.Value} units");
+                }
+            }
+        }
+
+        private void Log(string message)
+        {
+            Console.WriteLine($"[AfterSalesCache] {DateTime.Now}: {message}");
+        }
+    }
+
     public class SalesPanel : Scrollable
     {
         // Constants for field dimensions
@@ -22,7 +335,6 @@ namespace EtoFE.Panels
         private bool itemCodeChanged = false;
         // Add this flag at class level
         private bool autoAddWithBatchPrices = false;
-
 
         // Payment type constants
         private class PaymentType
@@ -61,6 +373,7 @@ namespace EtoFE.Panels
         List<Receipt> receipts;
         IssuedInvoice invoice;
         List<SelectedBatch> selectedBatchesForCurrentItem;
+        AfterSalesCache afterSalesCache; // NEW: After-sales cache
 
         // UI Controls - Invoice Information
         TextBox tbCustomer;
@@ -75,7 +388,6 @@ namespace EtoFE.Panels
         TextArea taRemarks;
 
         // UI Controls - Sales Items
-        // UI Controls - Sales Items
         GridView saleGrid;
         GridView selectedBatchesGrid; // New grid for selected batches
         Label lblBatchSufficiency; // NEW: Label to show if batches are sufficient
@@ -84,7 +396,7 @@ namespace EtoFE.Panels
         Label lblItemName;
         TextBox tbQty;
         TextBox tbPrice;
-        TextBox tbDisc;
+        TextBox tbDisc; // Made read-only
         Button btnSaveSale;
         Button btnResetSale;
 
@@ -92,6 +404,7 @@ namespace EtoFE.Panels
         Label lblQtyTot;
         Label lblSubTot;
         Label lblTaxTot;
+        Label lblLoyaltyPoints; // NEW: Label to show loyalty points accrued
         TextBox tbPaid;
         Label lblChange;
 
@@ -156,6 +469,9 @@ namespace EtoFE.Panels
             receipts = new List<Receipt>();
             invoice = new IssuedInvoice();
             selectedBatchesForCurrentItem = new List<SelectedBatch>();
+
+            // Initialize the after-sales cache
+            afterSalesCache = new AfterSalesCache(GlobalState.BAT.Inv, sales);
 
             GlobalState.RefreshBAT();
             GlobalState.RefreshPR();
@@ -296,6 +612,7 @@ namespace EtoFE.Panels
             tbQty = NewTextBox("Quantity");
             tbPrice = NewTextBox("Price");
             tbDisc = NewTextBox("Discount %");
+            tbDisc.ReadOnly = true; // Make discount read-only
 
             btnSaveSale = new Button
             {
@@ -314,6 +631,15 @@ namespace EtoFE.Panels
             lblQtyTot = new Label();
             lblSubTot = new Label();
             lblTaxTot = new Label();
+
+            // Add loyalty points label
+            lblLoyaltyPoints = new Label
+            {
+                Text = "Loyalty Points: 0",
+                TextColor = Colors.Blue,
+                Font = SystemFonts.Default(10f)
+            };
+
             tbPaid = NewTextBox("Paid");
             lblChange = new Label();
 
@@ -427,7 +753,6 @@ namespace EtoFE.Panels
 
         void BuildLayout()
         {
-            
             // Create button panel
             var buttonPanel = new StackLayout
             {
@@ -495,7 +820,7 @@ namespace EtoFE.Panels
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 20,
-                Items = { lblQtyTot, lblSubTot, lblTaxTot },
+                Items = { lblQtyTot, lblSubTot, lblTaxTot, lblLoyaltyPoints },
             };
 
             // Create payment panel
@@ -559,18 +884,18 @@ namespace EtoFE.Panels
                         Content = new StackLayout
                         {
                             Spacing = 5,
-                            Items = { 
-                                saleGrid, 
+                            Items = {
+                                saleGrid,
                                 new StackLayout
                                 {
                                     Orientation = Orientation.Vertical,
                                     Spacing = 5,
                                     Items = {
                                         new GroupBox { Text = "Selected Batches for Item", Content = selectedBatchesGrid },
-                                        lblBatchSufficiency  // NEW: Add the sufficiency label
+                                        lblBatchSufficiency
                                     }
-                                }, 
-                                saleForm 
+                                },
+                                saleForm
                             }
                         },
                     },
@@ -666,8 +991,8 @@ namespace EtoFE.Panels
                         btnRcptAcctSearch.Enabled = true;
                     }
                 }
-            
-         };
+
+            };
 
             // NA search button clicks
             btnCustomerSearch.Click += (_, __) => HandleNASearch(tbCustomer, lblCustomerName,
@@ -893,13 +1218,6 @@ namespace EtoFE.Panels
             Log("AutoSelectPrice called - END");
         }
 
-
-
-
-
-
-
-
         void HandleItemCodeChange()
         {
             var itemCode = ParseLong(tbItem.Text);
@@ -907,7 +1225,6 @@ namespace EtoFE.Panels
 
             PopulateSelectedBatchesGrid(itemCode);
         }
-
 
         void PopulateSelectedBatchesGrid(long itemCode)
         {
@@ -922,7 +1239,8 @@ namespace EtoFE.Panels
                 return;
             }
 
-            var availableBatches = GlobalState.BAT.Inv.Where(b => b.Itemcode == itemCode && b.Units > 0).ToList();
+            // Use AfterSalesCache to get available batches
+            var availableBatches = afterSalesCache.GetAvailableBatches(itemCode);
             Log($"Found {availableBatches.Count} available batches for item {itemCode}");
 
             if (availableBatches.Count == 0)
@@ -949,7 +1267,7 @@ namespace EtoFE.Panels
             {
                 Log("Multiple batches available, showing selection dialog");
                 // Multiple batches, show selection dialog
-                SelectBatchesWithSearchDialog(itemCode);
+                SelectBatchesWithSearchDialog(itemCode, availableBatches);
             }
         }
 
@@ -1203,6 +1521,9 @@ namespace EtoFE.Panels
             }
             else
             {
+                // Update the after-sales cache with the new sales
+                afterSalesCache.UpdateSales(sales);
+
                 RefreshSalesGrid();
                 RecalculateAll();
                 ResetSaleForm();
@@ -1211,34 +1532,32 @@ namespace EtoFE.Panels
             autoAddWithBatchPrices = false; // Reset the flag
         }
 
-
-        void SelectBatchesWithSearchDialog(long itemCode)
+        void SelectBatchesWithSearchDialog(long itemCode, List<Inventory> availableBatches)
         {
             Log($"SelectBatchesWithSearchDialog called for item {itemCode}");
 
-            var batches = GlobalState.BAT.Inv.Where(b => b.Itemcode == itemCode && b.Units > 0).ToList();
-            Log($"Preparing dialog with {batches.Count} batches");
+            Log($"Preparing dialog with {availableBatches.Count} batches");
 
-            // Prepare data for SearchDialogEto - ADD PRICE COLUMN
-            var searchItems = batches.Select(b => new[]
+            // Prepare data for SearchDialogEto
+            var searchItems = availableBatches.Select(b => new[]
             {
-        b.Itemcode.ToString(),
-        b.Batchcode.ToString(),
-        b.Units.ToString("F2"),
-        b.SellingPrice.ToString("F2"), // Add price
-        b.MfgDate?.ToString("yyyy-MM-dd") ?? "",
-        b.ExpDate?.ToString("yyyy-MM-dd") ?? "",
-    }).ToList();
+                b.Itemcode.ToString(),
+                b.Batchcode.ToString(),
+                b.Units.ToString("F2"),
+                b.SellingPrice.ToString("F2"),
+                b.MfgDate?.ToString("yyyy-MM-dd") ?? "",
+                b.ExpDate?.ToString("yyyy-MM-dd") ?? "",
+            }).ToList();
 
             var headerEntries = new List<(string Title, TextAlignment Alignment, bool)>
-    {
-        ("Itemcode", TextAlignment.Left, true),
-        ("Batchcode", TextAlignment.Left, true),
-        ("Units", TextAlignment.Right, true),
-        ("Price", TextAlignment.Right, true), // Add price header
-        ("MFG Date", TextAlignment.Left, false),
-        ("Expiry Date", TextAlignment.Left, true),
-    };
+            {
+                ("Itemcode", TextAlignment.Left, true),
+                ("Batchcode", TextAlignment.Left, true),
+                ("Units", TextAlignment.Right, true),
+                ("Price", TextAlignment.Right, true),
+                ("MFG Date", TextAlignment.Left, false),
+                ("Expiry Date", TextAlignment.Left, true),
+            };
             var searchItemsWithColors = searchItems
                 .Select(row => (Data: row, ForegroundColor: (Eto.Drawing.Color?)null, BackgroundColor: (Eto.Drawing.Color?)null))
                 .ToList();
@@ -1272,8 +1591,8 @@ namespace EtoFE.Panels
                         {
                             Batchcode = long.Parse(row[1]),
                             AvailableUnits = double.Parse(row[2]),
-                            MfgDate = row[4], // Mfg date is now at index 4
-                            ExpDate = row[5]  // Exp date is now at index 5
+                            MfgDate = row[4],
+                            ExpDate = row[5]
                         });
                         Log($"Added batch {row[1]} with {row[2]} units and price {row[3]}");
                     }
@@ -1288,7 +1607,7 @@ namespace EtoFE.Panels
                     Log($"Processing selection from dialog.Selected");
                     // Convert single selection to full batch info
                     var batchCode = long.Parse(dialog.Selected[1]); // Assuming batchcode is at index 1
-                    var batch = batches.FirstOrDefault(b => b.Batchcode == batchCode);
+                    var batch = availableBatches.FirstOrDefault(b => b.Batchcode == batchCode);
                     if (batch != null)
                     {
                         selectedBatchesForCurrentItem.Clear();
@@ -1348,11 +1667,6 @@ namespace EtoFE.Panels
             }
         }
 
-        // Also add to tbQty.TextChanged
-
-
-
-
         bool ValidateSaleForm()
         {
             Log($"ValidateSaleForm called");
@@ -1402,10 +1716,12 @@ namespace EtoFE.Panels
                 return false;
             }
 
-            if (!double.TryParse(tbDisc.Text, out double disc) || disc < 0 || disc > 100)
+            // Discount is computed and read-only, so no validation needed
+            // Just ensure it's a valid number
+            if (!string.IsNullOrEmpty(tbDisc.Text) && !double.TryParse(tbDisc.Text, out _))
             {
-                Log("Validation failed: Invalid discount");
-                MessageBox.Show(this, "Please enter a valid discount (0-100)", "Validation Error", MessageBoxType.Error);
+                Log("Validation failed: Invalid discount format");
+                MessageBox.Show(this, "Invalid discount format", "Validation Error", MessageBoxType.Error);
                 tbDisc.Focus();
                 return false;
             }
@@ -1533,6 +1849,11 @@ namespace EtoFE.Panels
             lblQtyTot.Text = $"{TranslationHelper.Translate("Qty")}: {sales.Where(s => s.Itemcode > 0).Sum(x => x.Quantity):F2}";
             lblSubTot.Text = $"{TranslationHelper.Translate("Sub")}: {invoice.SubTotal:C}";
             lblTaxTot.Text = $"{TranslationHelper.Translate("Tax")}: {invoice.TaxTotal:C}";
+
+            // Calculate and display loyalty points
+            double totalLoyaltyPoints = sales.Where(s => s.Itemcode > 0).Sum(x => x.LoyalityPointsIssued);
+            lblLoyaltyPoints.Text = $"Loyalty Points: {totalLoyaltyPoints:F2}";
+
             lblRcptTot.Text = $"{TranslationHelper.Translate("Rcpt")}: {receipts.Sum(r => r.Amount):C}";
 
             // Update paid field to match total receipts
@@ -1584,7 +1905,7 @@ namespace EtoFE.Panels
             tbItem.ReadOnly = false;
             tbQty.ReadOnly = false;
             tbPrice.ReadOnly = false;
-            tbDisc.ReadOnly = false;
+            // tbDisc remains read-only
             btnSaveSale.Enabled = true;
 
             tbRcptAcct.ReadOnly = false;
@@ -1626,11 +1947,12 @@ namespace EtoFE.Panels
                 }
             }
 
+            // Create InvoiceDto from current form data
+            var invoiceDto = CreateInvoiceDto();
+
             var data = new SalesData
             {
-                Invoice = invoice,
-                Sales = sales,
-                Receipts = receipts,
+                Invoice = invoiceDto
             };
 
             var opts = new JsonSerializerOptions { WriteIndented = true };
@@ -1641,6 +1963,64 @@ namespace EtoFE.Panels
             MessageBox.Show(this, json, TranslationHelper.Translate("Invoice Data"), MessageBoxType.Information);
         }
 
+        // New method to create InvoiceDto from current form data
+        // Update the CreateInvoiceDto method in SalesPanel
+        private InvoiceDto CreateInvoiceDto()
+        {
+            var invoiceDto = new InvoiceDto
+            {
+                InvoiceTime = invoice.InvoiceTime,
+                Customer = invoice.Customer,
+                SalesPersonId = invoice.SalesPersonId,
+                CurrencyCode = invoice.CurrencyCode,
+                InvoiceHumanFriendly = invoice.InvoiceHumanFriendly,
+                SubTotal = invoice.SubTotal,
+                DiscountTotal = invoice.DiscountTotal,
+                EffectiveDiscountPercentage = invoice.EffectiveDiscountPercentage,
+                TaxTotal = invoice.TaxTotal,
+                GrandTotal = invoice.GrandTotal
+            };
+
+            // Add sale items - using the existing Sale EF Core entity
+            invoiceDto.SaleItems.AddRange(sales);
+
+            // Add payments - using the existing Payment EF Core entity
+            foreach (var receipt in receipts)
+            {
+                var payment = new Payment
+                {
+                    DebitAccountId = receipt.AccountId,
+                    CreditAccountId = invoice.Customer ?? 0,
+                    Amount = receipt.Amount,
+                    PaymentMethod = GetPaymentTypeFromAccount(receipt.AccountId),
+                    Currency = invoice.CurrencyCode ?? "USD",
+                    PaymentDate = DateOnly.FromDateTime(receipt.TimeReceived.DateTime),
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = invoice.SalesPersonId
+                };
+
+                invoiceDto.Payments.Add(payment);
+            }
+
+            // Add loyalty points - using the existing LoyaltyPoint EF Core entity
+            double totalLoyaltyPoints = sales.Sum(s => s.LoyalityPointsIssued);
+            if (totalLoyaltyPoints > 0 && invoice.Customer.HasValue)
+            {
+                var loyaltyPoint = new LoyaltyPoint
+                {
+                    CustId = invoice.Customer.Value,
+                    Amount = totalLoyaltyPoints,
+                    ValidFrom = DateTime.Now,
+                    ValidUntil = DateTime.Now.AddYears(1),
+                    InvoiceId = invoice.InvoiceId
+                };
+
+                invoiceDto.LoyaltyPointsToIssue.Add(loyaltyPoint);
+            }
+
+            return invoiceDto;
+        }
+
         void CancelForm()
         {
             ResetForm();
@@ -1648,6 +2028,8 @@ namespace EtoFE.Panels
 
         void ResetForm()
         {
+            Log("ResetForm called - clearing AfterSalesCache");
+
             invoice = new IssuedInvoice();
 
             tbCustomer.Text = tbSalesPerson.Text = tbCurrency.Text = "";
@@ -1665,9 +2047,13 @@ namespace EtoFE.Panels
             RefreshReceiptsGrid();
             ResetRcptForm();
 
+            // Reset the after-sales cache
+            afterSalesCache.Clear();
+            afterSalesCache.UpdateSales(sales);
+
             RecalculateAll();
 
-            Log("Form reset");
+            Log("Form reset complete");
         }
 
         // Also need to handle the case where user enters price manually after batches are selected
@@ -1705,6 +2091,7 @@ namespace EtoFE.Panels
         {
             Console.WriteLine($"[SalesPanel] {DateTime.Now}: {message}");
         }
+
         void TempSaveForm()
         {
             var (isValid, errors) = ValidateForTempSave();
@@ -1715,11 +2102,12 @@ namespace EtoFE.Panels
                 return;
             }
 
+            // Create InvoiceDto from current form data
+            var invoiceDto = CreateInvoiceDto();
+
             var data = new SalesData
             {
-                Invoice = invoice,
-                Sales = sales,
-                Receipts = receipts,
+                Invoice = invoiceDto
             };
 
             var opts = new JsonSerializerOptions { WriteIndented = true };
@@ -1751,10 +2139,9 @@ namespace EtoFE.Panels
         }
     }
 
+    // Update the SalesData class to use InvoiceDto
     public class SalesData
     {
-        public IssuedInvoice Invoice { get; set; }
-        public List<Sale> Sales { get; set; }
-        public List<Receipt> Receipts { get; set; }
+        public InvoiceDto Invoice { get; set; }
     }
 }
