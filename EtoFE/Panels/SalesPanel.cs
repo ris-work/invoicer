@@ -153,68 +153,69 @@ namespace EtoFE.Panels
         }
     }
     // Add this new class to handle after-sales inventory
+    // Add this new class to handle after-sales inventory
     public class AfterSalesCache
     {
-        private readonly Dictionary<long, Dictionary<long, double>> _cache;
-        private readonly List<Inventory> _originalInventory;
+        private readonly Dictionary<long, Dictionary<long, double>> _itemModifications;
         private readonly List<Sale> _currentSales;
 
-        public AfterSalesCache(List<Inventory> inventory, List<Sale> currentSales)
+        public AfterSalesCache(List<Sale> currentSales)
         {
-            _originalInventory = new List<Inventory>(inventory);
+            _itemModifications = new Dictionary<long, Dictionary<long, double>>();
             _currentSales = new List<Sale>(currentSales);
-            _cache = new Dictionary<long, Dictionary<long, double>>();
             RebuildCache();
-            Log($"AfterSalesCache initialized with {_originalInventory.Count} inventory items and {_currentSales.Count} sales");
+            Log($"AfterSalesCache initialized with {_currentSales.Count} sales");
         }
 
         private void RebuildCache()
         {
             Log("Rebuilding AfterSalesCache...");
-            _cache.Clear();
+            _itemModifications.Clear();
 
-            // Initialize cache with original inventory
-            foreach (var item in _originalInventory)
-            {
-                if (!_cache.ContainsKey(item.Itemcode))
-                {
-                    _cache[item.Itemcode] = new Dictionary<long, double>();
-                }
-                _cache[item.Itemcode][item.Batchcode] = item.Units;
-                Log($"  Added item {item.Itemcode}, batch {item.Batchcode} with {item.Units} units");
-            }
-            Log($"  Initialized cache with {_cache.Count} item types");
-
-            // Reduce inventory based on current sales
+            // Only track items that are in the current sales
             foreach (var sale in _currentSales)
             {
-                if (_cache.ContainsKey(sale.Itemcode) && _cache[sale.Itemcode].ContainsKey(sale.Batchcode))
+                if (!_itemModifications.ContainsKey(sale.Itemcode))
                 {
-                    var previousAmount = _cache[sale.Itemcode][sale.Batchcode];
-                    _cache[sale.Itemcode][sale.Batchcode] -= sale.Quantity;
-                    Log($"  Reduced item {sale.Itemcode}, batch {sale.Batchcode} by {sale.Quantity} units: {previousAmount} -> {_cache[sale.Itemcode][sale.Batchcode]}");
+                    _itemModifications[sale.Itemcode] = new Dictionary<long, double>();
                 }
+
+                if (_itemModifications[sale.Itemcode].ContainsKey(sale.Batchcode))
+                {
+                    _itemModifications[sale.Itemcode][sale.Batchcode] += sale.Quantity;
+                }
+                else
+                {
+                    _itemModifications[sale.Itemcode][sale.Batchcode] = sale.Quantity;
+                }
+
+                Log($"  Tracking item {sale.Itemcode}, batch {sale.Batchcode} with {sale.Quantity} units");
             }
 
-            Log("AfterSalesCache rebuild complete");
-            LogCacheContents();
+            Log($"  Now tracking {_itemModifications.Count} item types in the cache");
         }
 
         public double GetAvailableUnits(long itemcode, long batchcode)
         {
-            // First check in the cache
-            if (_cache.ContainsKey(itemcode) && _cache[itemcode].ContainsKey(batchcode))
+            // Check if this item is being tracked in the cache
+            if (_itemModifications.ContainsKey(itemcode) && _itemModifications[itemcode].ContainsKey(batchcode))
             {
-                Log($"Cache HIT: Item {itemcode}, Batch {batchcode} has {_cache[itemcode][batchcode]} units available");
-                return _cache[itemcode][batchcode];
+                // Get the original inventory item
+                var originalItem = GlobalState.BAT.Inv.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == batchcode);
+                if (originalItem != null)
+                {
+                    double available = originalItem.Units - _itemModifications[itemcode][batchcode];
+                    Log($"Cache HIT: Item {itemcode}, Batch {batchcode} has {available} units available (original: {originalItem.Units}, allocated: {_itemModifications[itemcode][batchcode]})");
+                    return available;
+                }
             }
 
-            // If not found in cache, check original inventory
-            var originalItem = _originalInventory.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == batchcode);
-            if (originalItem != null)
+            // If not in cache, get from original inventory
+            var originalItem2 = GlobalState.BAT.Inv.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == batchcode);
+            if (originalItem2 != null)
             {
-                Log($"Cache MISS: Item {itemcode}, Batch {batchcode} found in original inventory with {originalItem.Units} units");
-                return originalItem.Units;
+                Log($"Cache MISS: Item {itemcode}, Batch {batchcode} found in original inventory with {originalItem2.Units} units");
+                return originalItem2.Units;
             }
 
             Log($"Cache MISS: Item {itemcode}, Batch {batchcode} not found anywhere");
@@ -226,62 +227,53 @@ namespace EtoFE.Panels
             Log($"Getting available batches for item {itemcode}");
             var availableBatches = new List<Inventory>();
 
-            // First check in the cache
-            if (_cache.ContainsKey(itemcode))
-            {
-                Log($"  Found {_cache[itemcode].Count} batches in cache for item {itemcode}");
-                foreach (var kvp in _cache[itemcode])
-                {
-                    if (kvp.Value > 0)
-                    {
-                        var originalItem = _originalInventory.FirstOrDefault(i => i.Itemcode == itemcode && i.Batchcode == kvp.Key);
-                        if (originalItem != null)
-                        {
-                            var itemCopy = new Inventory
-                            {
-                                Itemcode = originalItem.Itemcode,
-                                Batchcode = originalItem.Batchcode,
-                                BatchEnabled = originalItem.BatchEnabled,
-                                MfgDate = originalItem.MfgDate,
-                                ExpDate = originalItem.ExpDate,
-                                PackedSize = originalItem.PackedSize,
-                                Units = kvp.Value, // Use cached value
-                                MeasurementUnit = originalItem.MeasurementUnit,
-                                MarkedPrice = originalItem.MarkedPrice,
-                                SellingPrice = originalItem.SellingPrice,
-                                CostPrice = originalItem.CostPrice,
-                                VolumeDiscounts = originalItem.VolumeDiscounts,
-                                Suppliercode = originalItem.Suppliercode,
-                                UserDiscounts = originalItem.UserDiscounts,
-                                LastCountedAt = originalItem.LastCountedAt,
-                                Remarks = originalItem.Remarks,
-                                MinPrice = originalItem.MinPrice,
-                                MultiplicativeDiscountPercentage = originalItem.MultiplicativeDiscountPercentage,
-                                AdditiveDiscountPercentage = originalItem.AdditiveDiscountPercentage
-                            };
-                            availableBatches.Add(itemCopy);
-                            Log($"    Added batch {kvp.Key} with {kvp.Value} units available");
-                        }
-                    }
-                    else
-                    {
-                        Log($"    Skipped batch {kvp.Key} with 0 units available");
-                    }
-                }
-            }
-            else
-            {
-                Log($"  No batches found in cache for item {itemcode}");
-            }
+            // Get all batches for this item from the original inventory
+            var originalBatches = GlobalState.BAT.Inv.Where(i => i.Itemcode == itemcode).ToList();
 
-            // If no batches found in cache, return original inventory
-            if (availableBatches.Count == 0)
+            foreach (var batch in originalBatches)
             {
-                Log($"  Falling back to original inventory for item {itemcode}");
-                availableBatches.AddRange(_originalInventory.Where(i => i.Itemcode == itemcode && i.Units > 0));
-                foreach (var batch in availableBatches)
+                double allocatedUnits = 0;
+
+                // Check if this batch is being tracked in the cache
+                if (_itemModifications.ContainsKey(itemcode) && _itemModifications[itemcode].ContainsKey(batch.Batchcode))
                 {
-                    Log($"    Added original batch {batch.Batchcode} with {batch.Units} units");
+                    allocatedUnits = _itemModifications[itemcode][batch.Batchcode];
+                }
+
+                double availableUnits = batch.Units - allocatedUnits;
+
+                if (availableUnits > 0)
+                {
+                    // Create a copy with the adjusted available units
+                    var adjustedBatch = new Inventory
+                    {
+                        Itemcode = batch.Itemcode,
+                        Batchcode = batch.Batchcode,
+                        BatchEnabled = batch.BatchEnabled,
+                        MfgDate = batch.MfgDate,
+                        ExpDate = batch.ExpDate,
+                        PackedSize = batch.PackedSize,
+                        Units = availableUnits, // Use the adjusted value
+                        MeasurementUnit = batch.MeasurementUnit,
+                        MarkedPrice = batch.MarkedPrice,
+                        SellingPrice = batch.SellingPrice,
+                        CostPrice = batch.CostPrice,
+                        VolumeDiscounts = batch.VolumeDiscounts,
+                        Suppliercode = batch.Suppliercode,
+                        UserDiscounts = batch.UserDiscounts,
+                        LastCountedAt = batch.LastCountedAt,
+                        Remarks = batch.Remarks,
+                        MinPrice = batch.MinPrice,
+                        MultiplicativeDiscountPercentage = batch.MultiplicativeDiscountPercentage,
+                        AdditiveDiscountPercentage = batch.AdditiveDiscountPercentage
+                    };
+
+                    availableBatches.Add(adjustedBatch);
+                    Log($"    Added batch {batch.Batchcode} with {availableUnits} units available (original: {batch.Units}, allocated: {allocatedUnits})");
+                }
+                else
+                {
+                    Log($"    Skipped batch {batch.Batchcode} with 0 units available (original: {batch.Units}, allocated: {allocatedUnits})");
                 }
             }
 
@@ -300,22 +292,9 @@ namespace EtoFE.Panels
         public void Clear()
         {
             Log("Clearing AfterSalesCache");
-            _cache.Clear();
+            _itemModifications.Clear();
             _currentSales.Clear();
             Log("AfterSalesCache cleared");
-        }
-
-        private void LogCacheContents()
-        {
-            Log("Current AfterSalesCache contents:");
-            foreach (var itemKvp in _cache)
-            {
-                Log($"  Item {itemKvp.Key}:");
-                foreach (var batchKvp in itemKvp.Value)
-                {
-                    Log($"    Batch {batchKvp.Key}: {batchKvp.Value} units");
-                }
-            }
         }
 
         private void Log(string message)
@@ -323,7 +302,6 @@ namespace EtoFE.Panels
             Console.WriteLine($"[AfterSalesCache] {DateTime.Now}: {message}");
         }
     }
-
     public class SalesPanel : Scrollable
     {
         // Constants for field dimensions
@@ -430,8 +408,9 @@ namespace EtoFE.Panels
 
         // Navigation helpers
         List<Control> essentialControls;
-        List<Control> naFieldsInOrder;
-        Dictionary<Control, int> naFieldIndex;
+        // First, fix the naFieldsInOrder to only include TextBoxes (not Controls)
+        List<TextBox> naFieldsInOrder;
+        Dictionary<TextBox, int> naFieldIndex;
         Dictionary<TextBox, Button> naFieldMap;
         Dictionary<Button, TextBox> naButtonToTextBoxMap;
         Control lastFocused;
@@ -465,13 +444,15 @@ namespace EtoFE.Panels
 
         void InitializeData()
         {
+            GlobalState.RefreshBAT();
+            GlobalState.RefreshPR();
             sales = new List<Sale>();
             receipts = new List<Receipt>();
             invoice = new IssuedInvoice();
             selectedBatchesForCurrentItem = new List<SelectedBatch>();
 
             // Initialize the after-sales cache
-            afterSalesCache = new AfterSalesCache(GlobalState.BAT.Inv, sales);
+            afterSalesCache = new AfterSalesCache(sales);
 
             GlobalState.RefreshBAT();
             GlobalState.RefreshPR();
@@ -718,37 +699,39 @@ namespace EtoFE.Panels
             SetupNavigation();
         }
 
+        // In SetupNavigation, update naFieldsInOrder to include tbItem:
         void SetupNavigation()
         {
-            // Include RadioButtonList in navigation
-            naFieldsInOrder = new List<Control>
-            {
-                tbCustomer, btnCustomerSearch, tbSalesPerson, btnSalesPersonSearch, rblPaymentType,
-                tbRcptAcct, btnRcptAcctSearch
-            };
+            // Include tbItem in the NA fields list
+            naFieldsInOrder = new List<TextBox>
+    {
+        tbCustomer, tbSalesPerson, tbItem, tbRcptAcct
+    };
 
             naFieldIndex = naFieldsInOrder.Select((field, index) => new { field, index })
                 .ToDictionary(x => x.field, x => x.index);
 
+            // Add tbItem to the naFieldMap
             naFieldMap = new Dictionary<TextBox, Button>
-            {
-                { tbCustomer, btnCustomerSearch },
-                { tbSalesPerson, btnSalesPersonSearch },
-                { tbRcptAcct, btnRcptAcctSearch }
-            };
+    {
+        { tbCustomer, btnCustomerSearch },
+        { tbSalesPerson, btnSalesPersonSearch },
+        { tbItem, btnItemSearch },  // ADD THIS LINE
+        { tbRcptAcct, btnRcptAcctSearch }
+    };
 
             naButtonToTextBoxMap = naFieldMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
 
             // Define essential controls for Enter key navigation
             essentialControls = new List<Control>
-            {
-                tbCustomer, btnCustomerSearch, tbSalesPerson, btnSalesPersonSearch,
-                tbCurrency, dpInvoiceDate, cbIsPosted, taRemarks,
-                tbItem, btnItemSearch,
-                tbQty, tbPrice, tbDisc, btnSaveSale, btnResetSale,
-                tbPaid, rblPaymentType, tbRcptAcct, btnRcptAcctSearch, tbRcptAmt, btnSaveRcpt, btnResetRcpt,
-                btnNew, btnLoad, btnEdit, btnSave, btnCancel, btnReset
-            };
+    {
+        tbCustomer, btnCustomerSearch, tbSalesPerson, btnSalesPersonSearch,
+        tbCurrency, dpInvoiceDate, cbIsPosted, taRemarks,
+        tbItem, btnItemSearch,
+        tbQty, tbPrice, tbDisc, btnSaveSale, btnResetSale,
+        tbPaid, rblPaymentType, tbRcptAcct, btnRcptAcctSearch, tbRcptAmt, btnSaveRcpt, btnResetRcpt,
+        btnNew, btnLoad, btnEdit, btnSave, btnCancel, btnReset
+    };
         }
 
         void BuildLayout()
@@ -1020,27 +1003,24 @@ namespace EtoFE.Panels
             };
             //tbItem.LostFocus += (_, __) => HandleItemCodeComplete();
             // Add TextChanged for tbItem to track when item code changes
-            tbItem.TextChanged += (_, __) =>
-            {
-                Log($"tbItem.TextChanged: New value = '{tbItem.Text}'");
-                itemCodeChanged = true;
-            };
+            // In WireEvents, replace the tbItem event handlers with these:
+tbItem.TextChanged += (_, __) =>
+{
+    Log($"tbItem.TextChanged: New value = '{tbItem.Text}'");
+    itemCodeChanged = true;
+};
             tbPrice.TextChanged += (_, __) =>
             {
                 Log($"tbPrice.TextChanged: New value = '{tbPrice.Text}'");
                 tbPrice_TextChanged(_, __);
             };
             // Add LostFocus for item code
-            tbItem.LostFocus += (_, __) =>
-            {
-                Log($"tbItem.LostFocus triggered. Current value: '{tbItem.Text}', isProcessingBatchSelection: {isProcessingBatchSelection}, itemCodeChanged: {itemCodeChanged}");
-
-                // Only process if we're not in the middle of batch selection and item code has actually changed
-                if (!isProcessingBatchSelection && itemCodeChanged)
-                {
-                    HandleItemCodeComplete();
-                    itemCodeChanged = false; // Reset the flag
-                }
+            // Add a new handler for the item search button click:
+            btnItemSearch.Click += (_, __) => {
+                Log("btnItemSearch.Click: Starting item search");
+                HandleNASearch(tbItem, lblItemName,
+                    BackOfficeAccounting.SearchItems, BackOfficeAccounting.LookupItem);
+                HandleItemCodeComplete(); // Trigger now instead of on every change
             };
             tbRcptAcct.TextChanged += (_, __) =>
             {
@@ -1060,13 +1040,16 @@ namespace EtoFE.Panels
             }
         }
 
+        // Update the HandleNASearch method to match HandleNAButtonAction:
         void HandleNASearch(TextBox textBox, Label label, Func<Control, string[]> searchFunc,
-    Func<long, string> lookupFunc)
+            Func<long, string> lookupFunc)
         {
             Log($"HandleNASearch called for {nameof(textBox)}");
 
             // Store state BEFORE search
             string originalText = textBox.Text;
+            bool wasValidBefore = IsNAFieldValid(textBox, label);
+            Log($"HandleNASearch: Before search - Text: '{originalText}', Valid: {wasValidBefore}");
 
             // Perform the lookup (this opens modal dialog)
             bool lookupSuccess = DoLookup(textBox, label, searchFunc, lookupFunc);
@@ -1099,6 +1082,7 @@ namespace EtoFE.Panels
         }
 
         // Helper method to check if an NA field is valid
+        // Add the IsNAFieldValid method if it doesn't exist:
         private bool IsNAFieldValid(TextBox textBox, Label humanLabel)
         {
             if (string.IsNullOrWhiteSpace(textBox.Text))
@@ -1124,6 +1108,7 @@ namespace EtoFE.Panels
         // First, let's see what properties are available on the batch object
         // Assuming GlobalState.BAT.Inv contains batch objects with price info
 
+        // Modify the HandleItemCodeComplete method:
         void HandleItemCodeComplete()
         {
             Log($"HandleItemCodeComplete called with tbItem.Text = '{tbItem.Text}'");
@@ -1155,6 +1140,12 @@ namespace EtoFE.Panels
             {
                 isProcessingBatchSelection = false;
                 Log($"Resetting isProcessingBatchSelection = false");
+            }
+
+            // Set focus to quantity after item selection
+            if (itemCode > 0)
+            {
+                tbQty.Focus();
             }
         }
 
@@ -1317,25 +1308,18 @@ namespace EtoFE.Panels
             {
                 if (isProcessingKey) return;
 
-                Control keyControl = lastFocused;
-                if (lastFocused is Button && lastFocused.Parent is StackLayout sl)
-                {
-                    keyControl = sl.Items.Select(i => i.Control).OfType<TextBox>().FirstOrDefault();
-                }
-
                 if (new[] { Keys.F1, Keys.F2, Keys.F3, Keys.F4 }.Contains(e.Key))
                 {
-                    if (keyControl is TextBox textBox)
+                    if (lastFocused is TextBox textBox && naFieldMap.ContainsKey(textBox))
                     {
                         isProcessingKey = true;
                         Application.Instance.AsyncInvoke(() =>
                         {
-                            if (naFieldMap.TryGetValue(textBox, out var btn))
-                                btn.PerformClick();
+                            naFieldMap[textBox].PerformClick();
                             isProcessingKey = false;
                         });
+                        e.Handled = true;
                     }
-                    e.Handled = true;
                 }
                 else if (new[] { Keys.F9, Keys.F10, Keys.F11, Keys.F12 }.Contains(e.Key))
                 {
@@ -1369,6 +1353,7 @@ namespace EtoFE.Panels
                 }
             };
         }
+
 
         private void MoveToNextNAField(TextBox currentField)
         {
