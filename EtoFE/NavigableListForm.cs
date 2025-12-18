@@ -280,6 +280,7 @@ namespace EtoFE
                             {
                                 ("🏦 Chart of Accounts", new LoadOncePanel<AllAccountsTypes>(), "AccountTypes"),
                                 ("📖 Recent Journal", new LoadOncePanel<AllJournalEntries>(), "AllJournalEntries"),
+                                ("📖 Recent Live Journal", new LoadOncePanel<AccountingLiveView>(), "AllJournalEntries"),
                                 ("📅 Journal by Date", new LoadOncePanel<AllJournalEntriesInTimePeriod>(), "AllJournalEntries"),
                                 ("✏️ New Journal Entry", new LoadOncePanel<JournalEntriesPanel>(), "JournalEntry"),
                                 ("⚖️ Account Balances", new LoadOncePanel<AllAccountsBalances>(), "AllAccountBalances"),

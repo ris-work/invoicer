@@ -73,6 +73,19 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            app.AddEndpointWithBearerAuth<string>(
+    "GetNJournalEntries",
+    (AS, LoginInfo) =>
+    {
+        List<AccountsJournalEntry> AccJEList;
+        using (var ctx = new NewinvContext())
+        {
+            AccJEList = ctx.AccountsJournalEntries.OrderByDescending(e => e.TimeTai).Take(100).ToList();
+        }
+        return AccJEList;
+    },
+    "Refresh"
+    );
             app.AddEndpointWithBearerAuth<TimePeriod>(
                 "GetAllJournalEntriesWithinTimePeriod",
                 (AS, LoginInfo) =>

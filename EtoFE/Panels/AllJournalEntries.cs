@@ -48,6 +48,7 @@ namespace EtoFE.Panels
                     "Amount",
                     "JournalNo",
                     "PrincipalName",
+
                 ]
             );
         }
