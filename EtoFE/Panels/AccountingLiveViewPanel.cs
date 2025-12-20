@@ -12,7 +12,7 @@ namespace EtoFE.Panels
 {
     public class AccountingLiveView : Panel
     {
-        private readonly int refreshIntervalSeconds = 30; // Configurable refresh interval
+        private readonly int refreshIntervalSeconds = 3; // Configurable refresh interval
         private Timer refreshTimer;
         private Control gridView;
         private StackLayout mainLayout;
