@@ -75,6 +75,11 @@ namespace CommonUi
                     (string[] mappings, TextBox? _) =>
                         new PhoneNumberLookupPanel(mappings: mappings)
                 },
+                {
+                    "TagsPanel",
+                    (string[] mappings, TextBox? _) =>
+                        new TagEntryPanel(mappings: mappings)
+                },
             };
         }
     }
