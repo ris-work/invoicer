@@ -230,7 +230,7 @@ namespace CommonUi
             suggestionLabel = new Label
             {
                 Text = currentSuggestion,
-                TextColor = ColorSettings.LesserForegroundColor,
+                TextColor = true ? Colors.DarkGreen: ColorSettings.LesserForegroundColor,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Width = ColorSettings.ControlWidth ?? 200
             };
