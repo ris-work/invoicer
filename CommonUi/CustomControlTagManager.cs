@@ -179,12 +179,12 @@ namespace CommonUi
             string currentSuggestion = suggestionLabel?.Text ?? "";
 
             // Create a new TableLayout for the tags container
-            var tagsContainer = new TableLayout
+            var tagsContainer = new TableLayout()
             {
                 Spacing = new Size(5, 5),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Width = ColorSettings.ControlWidth ?? 300,
-                Height = 100
+                Height = 230,
             };
 
             // Determine how many columns to use based on available width
@@ -200,7 +200,7 @@ namespace CommonUi
                 // Ensure we have enough rows
                 while (tagsContainer.Rows.Count <= row)
                 {
-                    tagsContainer.Rows.Add(new TableRow());
+                    tagsContainer.Rows.Add(new TableRow() {ScaleHeight = false });
                 }
 
                 // Create tag panel for this specific tag
