@@ -14,7 +14,6 @@ namespace CommonUi
     /// </summary>
     public class TagEntryPanel : Panel, ILookupSupportedChildPanel
     {
-        private TableLayout tagsContainer;
         private TextBox newTagTextBox;
         private Label suggestionLabel;
         private Button addTagButton;
@@ -26,7 +25,7 @@ namespace CommonUi
         private Action? moveNext;
         private Action? GlobalChangeHandler = null;
 
-        private HashSet<string> tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private List<string> tags = new List<string>();
 
         // Autocomplete suggestions
         public static string[] Autocomplete = new[]
@@ -37,141 +36,22 @@ namespace CommonUi
             "Azithromycin", "Sertraline", "Gabapentin", "Hydrochlorothiazide", "Losartan",
             "Alprazolam", "Zolpidem", "Furosemide", "Tramadol", "Trazodone",
             "Warfarin", "Prednisone", "Hydrocodone", "Atorvastatin", "Fluoxetine",
-            "Citalopram", "Cephalexin", "Metronidazole", "Glyburide", "Glipizide",
-            "Acetaminophen", "Ciprofloxacin", "Lisinopril", "Ondansetron", "Pantoprazole",
-            "Amoxicillin-clavulanate", "Cephalexin", "Ciprofloxacin", "Clindamycin",
+            "Citalopram", "Cephalexin", "Ciprofloxacin", "Clindamycin",
             "Doxycycline", "Metronidazole", "Nitrofurantoin", "Sulfamethoxazole-trimethoprim"
         };
 
         public TagEntryPanel(string[]? mappings = null)
         {
-            InitializeUI();
-
             if (mappings != null)
             {
                 MapLookupValues(mappings);
                 MapSetValues(mappings);
             }
 
+            Console.WriteLine($"[TagEntryPanel] Constructor: Initial tags count: {tags.Count}");
+
             // Initial refresh of tags display
-            RefreshTagsDisplay();
-        }
-
-        private void InitializeUI()
-        {
-            // Container for displaying tags using TableLayout
-            tagsContainer = new TableLayout
-            {
-                Spacing = new Size(5, 5),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                Width = ColorSettings.ControlWidth ?? 300,
-                Height = 100
-            };
-
-            // Input for new tags
-            newTagTextBox = new TextBox
-            {
-                PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or click Add"),
-                BackgroundColor = ColorSettings.LesserBackgroundColor,
-                TextColor = ColorSettings.LesserForegroundColor,
-                Width = ColorSettings.ControlWidth ?? 200
-            };
-
-            // Suggestion label for autocomplete
-            suggestionLabel = new Label
-            {
-                Text = "",
-                TextColor = ColorSettings.LesserForegroundColor,
-                BackgroundColor = ColorSettings.BackgroundColor,
-                Width = ColorSettings.ControlWidth ?? 200
-            };
-
-            // Button to add new tags
-            addTagButton = new Button
-            {
-                Text = TranslationHelper.Translate("Add Tag"),
-                BackgroundColor = ColorSettings.BackgroundColor,
-                TextColor = ColorSettings.ForegroundColor,
-                Width = ColorSettings.ControlWidth ?? 100
-            };
-
-            // Handle text changes in the textbox
-            newTagTextBox.TextChanged += (sender, e) => UpdateSuggestion();
-
-            // Handle key events in the textbox
-            newTagTextBox.KeyDown += (sender, e) =>
-            {
-                if (e.Key == Keys.Enter)
-                {
-                    // If there's a suggestion, use it
-                    if (!string.IsNullOrEmpty(suggestionLabel.Text))
-                    {
-                        newTagTextBox.Text = suggestionLabel.Text;
-                        suggestionLabel.Text = "";
-                        e.Handled = true;
-                    }
-                    else
-                    {
-                        // Otherwise, add the tag
-                        AddNewTag();
-                        e.Handled = true;
-                    }
-                }
-                else if (e.Key == Keys.Tab)
-                {
-                    // Move to next control when Tab is pressed
-                    moveNext?.Invoke();
-                    e.Handled = true;
-                }
-            };
-
-            // Handle click on suggestion label
-            suggestionLabel.MouseUp += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(suggestionLabel.Text))
-                {
-                    newTagTextBox.Text = suggestionLabel.Text;
-                    suggestionLabel.Text = "";
-                    newTagTextBox.Focus();
-                }
-            };
-
-            // Add tag when button is clicked
-            addTagButton.Click += (sender, e) =>
-            {
-                // If there's a suggestion, use it
-                if (!string.IsNullOrEmpty(suggestionLabel.Text))
-                {
-                    newTagTextBox.Text = suggestionLabel.Text;
-                    suggestionLabel.Text = "";
-                }
-                // Add the tag
-                AddNewTag();
-            };
-
-            // Layout the controls
-            Content = new TableLayout
-            {
-                Spacing = new Size(5, 5),
-                Rows =
-                {
-                    new TableRow(new Label {
-                        Text = TranslationHelper.Translate("Tags:"),
-                        TextColor = ColorSettings.ForegroundColor
-                    }),
-                    new TableRow(tagsContainer) { ScaleHeight = true },
-                    new TableRow(newTagTextBox),
-                    new TableRow(suggestionLabel),
-                    new TableRow(
-                        new StackLayout
-                        {
-                            Orientation = Orientation.Horizontal,
-                            Spacing = 5,
-                            Items = { addTagButton }
-                        }
-                    )
-                }
-            };
+            Changed();
         }
 
         private void UpdateSuggestion()
@@ -241,12 +121,17 @@ namespace CommonUi
         {
             string tagText = newTagTextBox.Text?.Trim();
 
+            Console.WriteLine($"[TagEntryPanel] AddNewTag called with input: '{tagText}'");
+
             if (string.IsNullOrEmpty(tagText))
+            {
+                Console.WriteLine("[TagEntryPanel] Empty tag, returning");
                 return;
+            }
 
             if (tagText.Contains("|"))
             {
-                MessageBox.Show(TranslationHelper.Translate("Tags cannot contain the pipe (|) character"),
+                MessageBox.Show(TranslationHelper.Translate("Tags cannot containen pipe (|) character"),
                                 TranslationHelper.Translate("Invalid Tag"),
                                 MessageBoxType.Warning);
                 return;
@@ -264,31 +149,50 @@ namespace CommonUi
                 return;
             }
 
-            // Add the tag
+            // Add to tags collection
             tags.Add(normalizedTag);
-            newTagTextBox.Text = "";
-            suggestionLabel.Text = "";
+            Console.WriteLine($"[TagEntryPanel] Added tag '{normalizedTag}'");
 
-            // Refresh the UI
-            RefreshTagsDisplay();
-
-            // Notify of change
-            GlobalChangeHandler?.Invoke();
+            // Update UI
+            Changed();
         }
 
-        private void RefreshTagsDisplay()
+        private void RemoveTag(string tag)
         {
-            // Clear existing tag controls
-            tagsContainer.Rows.Clear();
+            Console.WriteLine($"[TagEntryPanel] RemoveTag called for '{tag}'");
+
+            // Remove from tags collection
+            bool removed = tags.Remove(tag);
+            Console.WriteLine($"[TagEntryPanel] Tag '{tag}' removed: {removed}");
+
+            // Update UI
+            Changed();
+        }
+
+        private void Changed()
+        {
+            Console.WriteLine($"[TagEntryPanel] Changed() called with {tags.Count} tags");
+            Console.WriteLine($"[TagEntryPanel] Tags in collection: {string.Join(", ", tags)}");
+
+            // Save current textbox text and suggestion
+            string currentText = newTagTextBox?.Text ?? "";
+            string currentSuggestion = suggestionLabel?.Text ?? "";
+
+            // Create a new TableLayout for the tags container
+            var tagsContainer = new TableLayout
+            {
+                Spacing = new Size(5, 5),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                Width = ColorSettings.ControlWidth ?? 300,
+                Height = 100
+            };
 
             // Determine how many columns to use based on available width
-            int columns = Math.Max(1, (int)(( 300) / 120)); // Approximate width per tag
-
-            // Create a list of tags to display
-            var tagsList = tags.ToList();
+            int columns = Math.Max(1, (int)((300 / 120))); // Approximate width per tag
+            Console.WriteLine($"[TagEntryPanel] Using {columns} columns for tag display");
 
             // Create rows with tags
-            for (int i = 0; i < tagsList.Count; i++)
+            for (int i = 0; i < tags.Count; i++)
             {
                 int row = i / columns;
                 int col = i % columns;
@@ -300,7 +204,7 @@ namespace CommonUi
                 }
 
                 // Create tag panel for this specific tag
-                string currentTag = tagsList[i]; // Capture the tag in a local variable
+                string currentTag = tags[i]; // Capture tag in a local variable
                 var tagPanel = CreateTagPanel(currentTag);
 
                 // Create a table cell for this tag
@@ -308,11 +212,120 @@ namespace CommonUi
 
                 // Add to the appropriate row
                 tagsContainer.Rows[row].Cells.Add(cell);
+                Console.WriteLine($"[TagEntryPanel] Added tag '{currentTag}' at row {row}, column {col}");
             }
+
+            Console.WriteLine($"[TagEntryPanel] Final tag container row count: {tagsContainer.Rows.Count}");
+
+            // Create new controls for input
+            newTagTextBox = new TextBox
+            {
+                Text = currentText,
+                PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or click Add"),
+                BackgroundColor = ColorSettings.LesserBackgroundColor,
+                TextColor = ColorSettings.LesserForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 200
+            };
+
+            suggestionLabel = new Label
+            {
+                Text = currentSuggestion,
+                TextColor = ColorSettings.LesserForegroundColor,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                Width = ColorSettings.ControlWidth ?? 200
+            };
+
+            addTagButton = new Button
+            {
+                Text = TranslationHelper.Translate("Add Tag"),
+                BackgroundColor = ColorSettings.BackgroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                Width = ColorSettings.ControlWidth ?? 100
+            };
+
+            // Wire up event handlers
+            newTagTextBox.TextChanged += (sender, e) => UpdateSuggestion();
+
+            newTagTextBox.KeyDown += (sender, e) =>
+            {
+                if (e.Key == Keys.Enter)
+                {
+                    // If there's a suggestion, use it
+                    if (!string.IsNullOrEmpty(suggestionLabel.Text))
+                    {
+                        newTagTextBox.Text = suggestionLabel.Text;
+                        suggestionLabel.Text = "";
+                        e.Handled = true;
+                    }
+                    else
+                    {
+                        // Otherwise, add to tag
+                        AddNewTag();
+                        e.Handled = true;
+                    }
+                }
+                else if (e.Key == Keys.Tab)
+                {
+                    // Move to next control when Tab is pressed
+                    moveNext?.Invoke();
+                    e.Handled = true;
+                }
+            };
+
+            suggestionLabel.MouseUp += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(suggestionLabel.Text))
+                {
+                    newTagTextBox.Text = suggestionLabel.Text;
+                    suggestionLabel.Text = "";
+                    newTagTextBox.Focus();
+                }
+            };
+
+            addTagButton.Click += (sender, e) =>
+            {
+                // If there's a suggestion, use it
+                if (!string.IsNullOrEmpty(suggestionLabel.Text))
+                {
+                    newTagTextBox.Text = suggestionLabel.Text;
+                    suggestionLabel.Text = "";
+                }
+                // Add to tag
+                AddNewTag();
+            };
+
+            // Replace the entire content
+            Content = new TableLayout
+            {
+                Spacing = new Size(5, 5),
+                Rows =
+                {
+                    new TableRow(new Label {
+                        Text = TranslationHelper.Translate("Tags:"),
+                        TextColor = ColorSettings.ForegroundColor
+                    }),
+                    new TableRow(tagsContainer) { ScaleHeight = true },
+                    new TableRow(newTagTextBox),
+                    new TableRow(suggestionLabel),
+                    new TableRow(
+                        new StackLayout
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 5,
+                            Items = { addTagButton }
+                        }
+                    )
+                }
+            };
+
+            // Notify of change
+            GlobalChangeHandler?.Invoke();
         }
 
         private StackLayout CreateTagPanel(string tag)
         {
+            Console.WriteLine($"[TagEntryPanel] CreateTagPanel called for '{tag}'");
+
             var tagPanel = new StackLayout
             {
                 Orientation = Orientation.Horizontal,
@@ -342,9 +355,8 @@ namespace CommonUi
             string tagToRemove = tag;
             removeButton.Click += (sender, e) =>
             {
-                tags.Remove(tagToRemove);
-                RefreshTagsDisplay();
-                GlobalChangeHandler?.Invoke();
+                Console.WriteLine($"[TagEntryPanel] Remove button clicked for '{tagToRemove}'");
+                RemoveTag(tagToRemove);
             };
 
             tagPanel.Items.Add(tagLabel);
@@ -355,7 +367,7 @@ namespace CommonUi
 
         public void MapLookupValues(string[] fieldNames)
         {
-            // Map the serialized tag string
+            // Map to serialized tag string
             actionsMap.Add(fieldNames[0], () => string.Join("|", tags));
         }
 
@@ -381,10 +393,12 @@ namespace CommonUi
         {
             if (originalValues.Length > 0 && originalValues[0] is string tagString)
             {
+                Console.WriteLine($"[TagEntryPanel] SetOriginalValues called with '{tagString}'");
+
                 // Clear existing tags
                 tags.Clear();
 
-                // Parse the tag string
+                // Parse tag string
                 if (!string.IsNullOrEmpty(tagString))
                 {
                     string[] tagArray = tagString.Split('|', StringSplitOptions.RemoveEmptyEntries);
@@ -397,8 +411,8 @@ namespace CommonUi
                     }
                 }
 
-                // Refresh the UI
-                RefreshTagsDisplay();
+                // Update UI
+                Changed();
             }
         }
 
@@ -416,10 +430,12 @@ namespace CommonUi
             {
                 if (val is string tagString)
                 {
+                    Console.WriteLine($"[TagEntryPanel] MapSetValues called with '{tagString}'");
+
                     // Clear existing tags
                     tags.Clear();
 
-                    // Parse the tag string
+                    // Parse tag string
                     if (!string.IsNullOrEmpty(tagString))
                     {
                         string[] tagArray = tagString.Split('|', StringSplitOptions.RemoveEmptyEntries);
@@ -432,8 +448,8 @@ namespace CommonUi
                         }
                     }
 
-                    // Refresh the UI
-                    RefreshTagsDisplay();
+                    // Update UI
+                    Changed();
                 }
             });
         }
@@ -443,6 +459,6 @@ namespace CommonUi
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
 
-        public int RowSpan() => 4; // Increased to accommodate the suggestion label
+        public int RowSpan() => 4; // Increased to accommodate suggestion label
     }
 }
