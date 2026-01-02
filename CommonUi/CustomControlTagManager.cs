@@ -11,11 +11,17 @@ namespace CommonUi
     /// A panel for adding and removing multiple tags with autocomplete support.
     /// Tags are serialized as a string with pipe (|) delimiter.
     /// Example: "amoxicillin|clavulanate|antibiotic"
+    /// 
+    /// Usage:
+    /// - Enter: Add the suggested tag (if available) or the typed tag
+    /// - Shift+Enter: Add the typed tag as-is, ignoring suggestions
+    /// - Tab: Move to next control
     /// </summary>
     public class TagEntryPanel : Panel, ILookupSupportedChildPanel
     {
         private TextBox newTagTextBox;
         private Label suggestionLabel;
+        private Label instructionsLabel;
         private Button addTagButton;
 
         private readonly Dictionary<string, Func<object>> actionsMap =
@@ -117,11 +123,11 @@ namespace CommonUi
             return matrix[s1.Length, s2.Length];
         }
 
-        private void AddNewTag()
+        private void AddNewTag(bool useSuggestion = true)
         {
             string tagText = newTagTextBox.Text?.Trim();
 
-            Console.WriteLine($"[TagEntryPanel] AddNewTag called with input: '{tagText}'");
+            Console.WriteLine($"[TagEntryPanel] AddNewTag called with input: '{tagText}', useSuggestion: {useSuggestion}");
 
             if (string.IsNullOrEmpty(tagText))
             {
@@ -131,10 +137,17 @@ namespace CommonUi
 
             if (tagText.Contains("|"))
             {
-                MessageBox.Show(TranslationHelper.Translate("Tags cannot containen pipe (|) character"),
+                MessageBox.Show(TranslationHelper.Translate("Tags cannot contain pipe (|) character"),
                                 TranslationHelper.Translate("Invalid Tag"),
                                 MessageBoxType.Warning);
                 return;
+            }
+
+            // Use suggestion if available and requested
+            if (useSuggestion && !string.IsNullOrEmpty(suggestionLabel.Text))
+            {
+                tagText = suggestionLabel.Text;
+                Console.WriteLine($"[TagEntryPanel] Using suggestion: '{tagText}'");
             }
 
             // Convert to lowercase for consistency
@@ -152,6 +165,10 @@ namespace CommonUi
             // Add to tags collection
             tags.Add(normalizedTag);
             Console.WriteLine($"[TagEntryPanel] Added tag '{normalizedTag}'");
+
+            // Clear input and suggestion
+            newTagTextBox.Text = "";
+            suggestionLabel.Text = "";
 
             // Update UI
             Changed();
@@ -200,7 +217,7 @@ namespace CommonUi
                 // Ensure we have enough rows
                 while (tagsContainer.Rows.Count <= row)
                 {
-                    tagsContainer.Rows.Add(new TableRow() {ScaleHeight = false });
+                    tagsContainer.Rows.Add(new TableRow() { ScaleHeight = false });
                 }
 
                 // Create tag panel for this specific tag
@@ -221,19 +238,25 @@ namespace CommonUi
             newTagTextBox = new TextBox
             {
                 Text = currentText,
-                PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or click Add"),
+                PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or Shift+Enter"),
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.LesserForegroundColor,
                 Width = ColorSettings.ControlWidth ?? 200
             };
 
+            // Add tooltip to the textbox
+            newTagTextBox.ToolTip = TranslationHelper.Translate("Enter: Add suggested tag\nShift+Enter: Add tag as-is\nTab: Move to next field");
+
             suggestionLabel = new Label
             {
                 Text = currentSuggestion,
-                TextColor = true ? Colors.DarkGreen: ColorSettings.LesserForegroundColor,
+                TextColor = Colors.DarkGreen,
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Width = ColorSettings.ControlWidth ?? 200
             };
+
+            // Add tooltip to the suggestion label
+            suggestionLabel.ToolTip = TranslationHelper.Translate("Click to use this suggestion");
 
             addTagButton = new Button
             {
@@ -243,6 +266,18 @@ namespace CommonUi
                 Width = ColorSettings.ControlWidth ?? 100
             };
 
+            // Add tooltip to the button
+            addTagButton.ToolTip = TranslationHelper.Translate("Click to add the suggested tag (if available) or the typed tag");
+
+            // Create instruction label
+            instructionsLabel = new Label
+            {
+                Text = TranslationHelper.Translate("Enter: Add suggested | Shift+Enter: Add as-is | Click suggestion to use it"),
+                TextColor = ColorSettings.LesserForegroundColor,
+                BackgroundColor = ColorSettings.BackgroundColor,
+                Font = new Font(ColorSettings.UIFont ?? FontFamilies.Sans, 9)
+            };
+
             // Wire up event handlers
             newTagTextBox.TextChanged += (sender, e) => UpdateSuggestion();
 
@@ -250,17 +285,16 @@ namespace CommonUi
             {
                 if (e.Key == Keys.Enter)
                 {
-                    // If there's a suggestion, use it
-                    if (!string.IsNullOrEmpty(suggestionLabel.Text))
+                    if (e.Shift)
                     {
-                        newTagTextBox.Text = suggestionLabel.Text;
-                        suggestionLabel.Text = "";
+                        // Shift+Enter: Add tag as-is, ignoring suggestions
+                        AddNewTag(false);
                         e.Handled = true;
                     }
                     else
                     {
-                        // Otherwise, add to tag
-                        AddNewTag();
+                        // Regular Enter: Add suggested tag if available, otherwise add typed tag
+                        AddNewTag(true);
                         e.Handled = true;
                     }
                 }
@@ -284,14 +318,8 @@ namespace CommonUi
 
             addTagButton.Click += (sender, e) =>
             {
-                // If there's a suggestion, use it
-                if (!string.IsNullOrEmpty(suggestionLabel.Text))
-                {
-                    newTagTextBox.Text = suggestionLabel.Text;
-                    suggestionLabel.Text = "";
-                }
-                // Add to tag
-                AddNewTag();
+                // Add to tag using suggestion if available
+                AddNewTag(true);
             };
 
             // Replace the entire content
@@ -307,6 +335,7 @@ namespace CommonUi
                     new TableRow(tagsContainer) { ScaleHeight = true },
                     new TableRow(newTagTextBox),
                     new TableRow(suggestionLabel),
+                    new TableRow(instructionsLabel),
                     new TableRow(
                         new StackLayout
                         {
@@ -349,6 +378,9 @@ namespace CommonUi
                 BackgroundColor = Colors.Red,
                 TextColor = Colors.White
             };
+
+            // Add tooltip to the remove button
+            removeButton.ToolTip = TranslationHelper.Translate("Remove this tag");
 
             // Remove tag when button is clicked
             // Use a local variable to ensure the correct tag is captured in the closure
@@ -459,6 +491,6 @@ namespace CommonUi
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
 
-        public int RowSpan() => 4; // Increased to accommodate suggestion label
+        public int RowSpan() => 5; // Increased to accommodate instruction label
     }
 }
