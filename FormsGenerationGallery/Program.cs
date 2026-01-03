@@ -735,6 +735,8 @@ var GeneratedEtoUISample = new GenEtoUI(
     },
     ["tags", "name", "price"]
 );
+var OuterGeneratedEtoUISample = new Panel() { Content = GeneratedEtoUISample };
+GeneratedEtoUISample._onNewPanelRequested = (e) => { OuterGeneratedEtoUISample.Content = e(); OuterGeneratedEtoUISample.Invalidate(true); };
 var ExternalCalculateButton = new Eto.Forms.Button() { Text = "Run external calculation" };
 ExternalCalculateButton.Click += (_, _) =>
 {
@@ -754,7 +756,7 @@ AC.Run(
         Content = new Eto.Forms.Scrollable()
         {
             Content = new Eto.Forms.StackLayout(
-                GeneratedEtoUISample,
+                OuterGeneratedEtoUISample,
                 new Eto.Forms.StackLayout(
                     new StackLayoutItem(null, true),
                     new StackLayoutItem(imagePanel, false),

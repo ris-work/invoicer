@@ -8,8 +8,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
-using Microsoft.Maui.Graphics.Text;
-using Microsoft.Maui.Platform;
 using MyAOTFriendlyExtensions;
 using Tomlyn;
 
@@ -17,6 +15,7 @@ namespace CommonUi
 {
     public delegate long? ShowAndGetValue();
     public delegate string? LookupValue(long ValueToLookUp);
+    public delegate Func<Panel> NewPanelFactoryHandler(bool shouldCopyValues);
 
     public interface EtoValueSelector
     {
@@ -69,6 +68,7 @@ namespace CommonUi
         Dictionary<string, ILookupSupportedChildPanel> FieldsHandlerMapping = new();
         List<List<(Eto.Forms.Control? LabelControl, Eto.Forms.Control MainControl)>> AllRows =
             new();
+        public Label NewOrEdit;
         int nColumns = 3;
         public OrderedDictionary<string, (string ControlName, object Value, string?)> _Inputs;
         public string Identity = "";
@@ -84,6 +84,23 @@ namespace CommonUi
         private readonly Dictionary<string, Func<object>> _valueGetters = new();
         private readonly Dictionary<string, Action<object>> _valueSetters = new();
         private readonly Dictionary<Type, Func<string, object>> _parsers = new();
+
+        // Class fields with concrete types
+        private readonly IReadOnlyDictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)> _suppliedInputs;
+        private readonly SaveHandler _suppliedSaveNewHandler;
+        private readonly SaveHandler _suppliedSaveExistingHandler;
+        private readonly IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> _suppliedInputHandler;
+        private readonly string? _suppliedIdentityColumn;
+        private readonly bool _suppliedChangesOnly;
+        private readonly string[]? _suppliedDenyList;
+        private readonly PanelSettings _suppliedPanelColours;
+        private readonly IReadOnlyDictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>>? _suppliedPanelGenerators;
+        private readonly IReadOnlyDictionary<string[], (string ControlName, string? ParentField)>? _suppliedFieldsListHandledByGeneratedPanels;
+        private readonly string[]? _suppliedOrder;
+        private readonly bool _suppliedIsNew;
+        private readonly NewPanelFactoryHandler? _suppliedNewPanelFactory;
+        public delegate void NewPanelRequestedHandler(Func<Panel> panelFactory);
+        public NewPanelRequestedHandler? _onNewPanelRequested;  // NEW - callback to parent
 
         IReadOnlyDictionary<
                 string[],
@@ -279,7 +296,42 @@ namespace CommonUi
 
             return JsonSerializer.Serialize(_LocalDict, options);
         }
+        public Dictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)> GenerateDict()
+        {
+            var result = new Dictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)>();
 
+            foreach (var kvp in _suppliedInputs)
+            {
+                string fieldName = kvp.Key;
+
+                // Get current value from UI controls
+                object currentValue;
+
+                // Try _valueGetters first (for standard inputs)
+                if (_valueGetters.TryGetValue(fieldName, out var getter))
+                {
+                    currentValue = getter();
+                }
+                // Try CustomPanelInputRetrievalFunctions (for custom panels)
+                else if (CustomPanelInputRetrievalFunctions.TryGetValue(fieldName, out var customGetter))
+                {
+                    currentValue = customGetter();
+                }
+                // Fallback to original value if no getter found
+                else
+                {
+                    currentValue = kvp.Value.Value;
+                }
+
+                result[fieldName] = (
+                    ControlName: kvp.Value.ControlName,
+                    Value: currentValue,
+                    LookupFunctionCallback: kvp.Value.LookupFunctionCallback
+                );
+            }
+
+            return result;
+        }
 
         // Optimize ConvertInputs method
         public void ConvertInputs()
@@ -385,9 +437,28 @@ namespace CommonUi
                 string[],
                 (string ControlName, string? ParentField)
             >? FieldsListHandledByGeneratedPanels = null,
-            string[]? order = null
+            string[]? order = null,
+            bool isNew = false,
+                    NewPanelRequestedHandler? OnNewPanelRequested = null  // NEW
         )
         {
+            if (isNew) { NewOrEdit = new Label() { Text = "NEW", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height=ColorSettings.ControlHeight??30 }; }
+            else { NewOrEdit = new Label() { Text = "EDT", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment=VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
+                _new = isNew;
+            _suppliedInputs = Inputs;
+            _suppliedSaveNewHandler = SaveNewHandler;
+            _suppliedSaveExistingHandler = SaveExistingHandler;
+            _suppliedInputHandler = InputHandler;
+            _suppliedIdentityColumn = IdentityColumn;
+            _suppliedChangesOnly = ChangesOnly;
+            _suppliedDenyList = DenyList;
+            _suppliedPanelColours = PanelColours;
+            _suppliedPanelGenerators = PanelGenerators;
+            _suppliedFieldsListHandledByGeneratedPanels = FieldsListHandledByGeneratedPanels;
+            _suppliedOrder = order;
+            _suppliedIsNew = isNew;
+            _onNewPanelRequested = OnNewPanelRequested;  // NEW
+
             this.SuspendLayout();
             this.FieldsListHandledByGeneratedPanels = FieldsListHandledByGeneratedPanels;
             this.InputHandler = InputHandler;
@@ -398,6 +469,7 @@ namespace CommonUi
                 (string ControlName, object Value, string? LookupFunctionCallback)
             > InputsOrdered = new();
             var InputsUnordered = Inputs.ToDictionary();
+            
             if (order != null)
             {
                 foreach (var element in order)
@@ -411,6 +483,15 @@ namespace CommonUi
                 InputsOrdered.Add(UnorderedInput.Key, UnorderedInput.Value);
             }
             _Inputs = InputsOrdered;
+            if ((IdentityColumn != null) && (IdentityColumn != ""))
+            {
+                if (isNew)
+                {
+                    Type IType = Inputs[IdentityColumn].Value.GetType();
+                    _Inputs[IdentityColumn] = 
+                        (_Inputs[IdentityColumn].ControlName, Activator.CreateInstance(IType), _Inputs[IdentityColumn].Item3);
+                }
+            }
             List<string> NotInNormalFlow = new();
             int rowSpanFromCustomPanels = 0;
             if (FieldsListHandledByGeneratedPanels != null)
@@ -586,14 +667,36 @@ namespace CommonUi
 
             NewButton.Click += (_, _) =>
             {
-                if (ValidateInputs())
-                    ConvertInputs();
-                else
-                    MessageBox.Show(
-                        $"An input has been of the wrong type{Environment.NewLine}Field names with errors are highlighted",
-                        "Wrong type",
-                        MessageBoxType.Error
-                    );
+                // First confirmation: Do they want to create a new item?
+                var createNew = MessageBox.Show(
+                    "Do you want to create a new item?",
+                    "Confirm New",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxType.Question
+                );
+
+                if (createNew != DialogResult.Yes)
+                    return;
+
+                // Second confirmation: Do they want to copy current values?
+                var copyValues = MessageBox.Show(
+                    "Do you want to copy the current values to the new item?",
+                    "Copy Values",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxType.Question
+                );
+
+                // Get the factory function (use supplied or create instance fallback)
+                Func<Panel> panelFactory;
+
+
+                panelFactory = CreateNewPanelFactory(copyValues == DialogResult.Yes);
+                Console.WriteLine($"Got DialogResult for context: {copyValues}");
+
+                // Call parent callback with the factory function
+                _onNewPanelRequested?.Invoke(panelFactory);
+
+                // Also notify NewButtonPressed if provided
             };
             SaveButton.Click += (_, _) =>
             {
@@ -640,6 +743,7 @@ namespace CommonUi
                 SaveButton,
                 ViewButton,
                 CancelButton,
+                NewOrEdit,
                 null
             )
             {
@@ -736,6 +840,122 @@ namespace CommonUi
             return label;
         }
 
+        private static object GetDefaultForType(object value)
+        {
+            if (value == null) return null!;
+
+            return value switch
+            {
+                int => 0,
+                long => 0L,
+                double => 0.0,
+                float => 0f,
+                decimal => 0m,
+                bool => false,
+                DateTime => default(DateTime),
+                Guid => default(Guid),
+                string => string.Empty,
+                _ => value.GetType().IsValueType
+                    ? Activator.CreateInstance(value.GetType())!
+                    : null!
+            };
+        }
+        private Panel CreateNewPanel(bool copyValues)
+        {
+            // Create a dictionary to pass to the new panel
+            var newInputs = new Dictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)>();
+
+            foreach (var kvp in _suppliedInputs)
+            {
+                if (copyValues)
+                {
+                    // Copy the current value
+                    newInputs[kvp.Key] = (
+                        ControlName: kvp.Value.ControlName,
+                        Value: kvp.Value.Value,
+                        LookupFunctionCallback: kvp.Value.LookupFunctionCallback
+                    );
+                }
+                else
+                {
+                    // Use default values based on type
+                    var defaultValue = GetDefaultForType(kvp.Value.Value);
+                    newInputs[kvp.Key] = (
+                        ControlName: kvp.Value.ControlName,
+                        Value: defaultValue,
+                        LookupFunctionCallback: kvp.Value.LookupFunctionCallback
+                    );
+                }
+            }
+
+            // Create new panel with same parameters but isNew = true
+            return new GenEtoUI(
+                Inputs: newInputs,
+                SaveNewHandler: _suppliedSaveNewHandler,
+                SaveExistingHandler: _suppliedSaveExistingHandler,
+                InputHandler: _suppliedInputHandler,
+                IdentityColumn: _suppliedIdentityColumn,
+                ChangesOnly: _suppliedChangesOnly,
+                DenyList: _suppliedDenyList,
+                PanelColours: _suppliedPanelColours,
+                PanelGenerators: _suppliedPanelGenerators,
+                FieldsListHandledByGeneratedPanels: _suppliedFieldsListHandledByGeneratedPanels,
+                order: _suppliedOrder,
+                isNew: true,
+                                        OnNewPanelRequested: _onNewPanelRequested
+            );
+        }
+        private Func<Panel> CreateNewPanelFactory(bool copyValues)
+        {
+            // Capture current values from UI at factory creation time
+            var currentInputs = copyValues
+                ? GenerateDict()  // Get all current values from UI
+                : null;           // Will use defaults below
+
+            return () =>
+            {
+                var newInputs = new Dictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)>();
+
+                foreach (var kvp in _suppliedInputs)
+                {
+                    if (copyValues && currentInputs != null && currentInputs.TryGetValue(kvp.Key, out var currentEntry))
+                    {
+                        // Copy the current UI value
+                        newInputs[kvp.Key] = (
+                            ControlName: currentEntry.ControlName,
+                            Value: currentEntry.Value,
+                            LookupFunctionCallback: currentEntry.LookupFunctionCallback
+                        );
+                    }
+                    else
+                    {
+                        // Use default value
+                        var defaultValue = GetDefaultForType(kvp.Value.Value);
+                        newInputs[kvp.Key] = (
+                            ControlName: kvp.Value.ControlName,
+                            Value: defaultValue,
+                            LookupFunctionCallback: kvp.Value.LookupFunctionCallback
+                        );
+                    }
+                }
+
+                return new GenEtoUI(
+                    Inputs: newInputs,
+                    SaveNewHandler: _suppliedSaveNewHandler,
+                    SaveExistingHandler: _suppliedSaveExistingHandler,
+                    InputHandler: _suppliedInputHandler,
+                    IdentityColumn: _suppliedIdentityColumn,
+                    ChangesOnly: _suppliedChangesOnly,
+                    DenyList: _suppliedDenyList,
+                    PanelColours: _suppliedPanelColours,
+                    PanelGenerators: _suppliedPanelGenerators,
+                    FieldsListHandledByGeneratedPanels: _suppliedFieldsListHandledByGeneratedPanels,
+                    order: _suppliedOrder,
+                    isNew: true,
+                    OnNewPanelRequested: _onNewPanelRequested
+                );
+            };
+        }
         private void HandleCustomPanels(
     KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
     List<Eto.Forms.Control> EFocusableList,

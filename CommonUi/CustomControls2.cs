@@ -150,10 +150,17 @@ namespace CommonUi
                 lookupResultTextBox.Text = DateLookupHandler(datePicker?.Value ?? DateTime.Now);
             else
                 lookupResultTextBox.Text = datePicker?.Value.ToString();
-            datePicker.Value = DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")));
-            System.Console.WriteLine(
-                $"DateControl received: {value?.GetType()}, {DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")))}"
-            );
+            if (value != "")
+            {
+                datePicker.Value = DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")));
+                System.Console.WriteLine(
+                    $"DateControl received: {value?.GetType()}, {DateTime.Parse((string)(value ?? DateTime.Now.ToString("O")))}"
+                );
+            }
+            else
+            {
+                datePicker.Value = DateTime.Parse((string)(DateTime.Now.ToString("O")));
+            }
         }
 
         public void MapSetValues(string[] fieldNames)
