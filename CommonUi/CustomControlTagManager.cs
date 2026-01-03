@@ -201,7 +201,7 @@ namespace CommonUi
                 Spacing = new Size(5, 5),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Width = ColorSettings.ControlWidth ?? 300,
-                Height = 230,
+                Height = 4*(ColorSettings.ControlHeight??30),
             };
 
             // Determine how many columns to use based on available width
@@ -332,7 +332,7 @@ namespace CommonUi
                         Text = TranslationHelper.Translate("Tags:"),
                         TextColor = ColorSettings.ForegroundColor
                     }),
-                    new TableRow(tagsContainer) { ScaleHeight = true },
+                    new TableRow(tagsContainer) { ScaleHeight = false },
                     new TableRow(newTagTextBox),
                     new TableRow(suggestionLabel),
                     new TableRow(instructionsLabel),
@@ -360,13 +360,14 @@ namespace CommonUi
                 Orientation = Orientation.Horizontal,
                 Spacing = 3,
                 Padding = new Padding(3),
-                BackgroundColor = ColorSettings.LesserBackgroundColor
+                BackgroundColor = ColorSettings.BackgroundColor
             };
 
             var tagLabel = new Label
             {
                 Text = tag,
-                TextColor = ColorSettings.LesserForegroundColor,
+                TextColor = ColorSettings.ForegroundColor,
+                //BackgroundColor = ColorSettings.BackgroundColor,
                 VerticalAlignment = VerticalAlignment.Center
             };
 
@@ -392,6 +393,7 @@ namespace CommonUi
             };
 
             tagPanel.Items.Add(tagLabel);
+            tagPanel.Items.Add(null);
             tagPanel.Items.Add(removeButton);
 
             return tagPanel;
@@ -491,6 +493,6 @@ namespace CommonUi
             this.GlobalChangeHandler = GlobalChangeHandler;
         }
 
-        public int RowSpan() => 5; // Increased to accommodate instruction label
+        public int RowSpan() => 4; // Increased to accommodate instruction label
     }
 }

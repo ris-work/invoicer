@@ -102,7 +102,7 @@ control_size = "100,40"
 
 [default.Legend]
 background_color = "#FF00FF"
-foreground_color = "#00FF00"
+foreground_color = "#003333"
 background_color_changed = "#FF0000"
 foreground_color_changed = "#00FFFF"
 font_family = "Arial"
