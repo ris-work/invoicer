@@ -224,6 +224,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
     "Refresh"
 );
 app.AddCatalogueDefaultImageEndpoints();
+app.AddCatalogueEditorHandlers();
 app.AddJournalEndpoints();
 app.AddAnalyticsEndpoints();
 app.AddBackOfficeAccountingEndpoints();
