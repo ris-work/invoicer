@@ -526,6 +526,7 @@ namespace CommonUi
                 var LegendCSize
             ) = GetThemeForComponent("Legend");
             
+            
             foreach (var kv in E)
             {
                 if (!NotInNormalFlow.Contains(kv.Key))
@@ -671,6 +672,7 @@ namespace CommonUi
                 VerticalContentAlignment = VerticalAlignment.Top,
                 
             };
+            if ((IdentityColumn != null) && (IdentityColumn != "")) { _EChangeTracker[IdentityColumn] = true; };
             this.ResumeLayout();
         }
 
