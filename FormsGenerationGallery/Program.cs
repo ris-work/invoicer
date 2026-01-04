@@ -197,7 +197,7 @@ new Eto.Forms.Application().Run(
 );
 */
 
-var AC = new Eto.Forms.Application();
+var AC = new Eto.Forms.Application(Eto.Platforms.Wpf);
 
 // Instantiate a RoundedC hosting a Button.
 var RC = new RoundedC(new Eto.Forms.Button { Text = "RoundedC Button" })
