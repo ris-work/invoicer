@@ -19,8 +19,10 @@ namespace InvoicerBackend
                 return true;
             });
             app.AddAsyncEndpointWithBearerAuth<string>("EditCatalogueItem", async (o, a) => {
+                Log($"Input: ${(string)o}");
                 Dictionary<string, JsonElement> Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>((string)o);
                 long PatchID = Patch["itemcode"].GetInt64();
+                Log($"EditCatalogueItem: ${Patch["Itemcode"]}");
                 using (var ctx = new NewinvContext())
                 {
                     var ToBePatched = ctx.Catalogues.Where(x => x.Itemcode == PatchID).First();

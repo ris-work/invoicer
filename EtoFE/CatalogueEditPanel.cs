@@ -343,7 +343,7 @@ namespace EtoFE
                         {
                             // Save handler
                             var catalogue = JsonSerializer.Deserialize<Catalogue>(JsonSerializer.Serialize(a));
-                            var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "CatalogueSave");
+                            var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "EditCatalogueItem");
                             if (result.Error == false)
                             {
                                 MessageBox.Show(
@@ -369,7 +369,7 @@ namespace EtoFE
                         {
                             // Update handler
                             var catalogue = JsonSerializer.Deserialize<Catalogue>(JsonSerializer.Serialize(e));
-                            var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "CatalogueUpdate");
+                            var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "EditCatalogueItem");
                             if (result.Error == false)
                             {
                                 MessageBox.Show(
