@@ -14,4 +14,6 @@ public partial class Receipt
     public double Amount { get; set; }
 
     public DateTimeOffset TimeReceived { get; set; }
+
+    public string? ExtraData { get; set; }
 }

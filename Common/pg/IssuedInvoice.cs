@@ -41,4 +41,6 @@ public partial class IssuedInvoice
     public string? CurrencyCode { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public string ExtraData { get; set; } = null!;
 }

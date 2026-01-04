@@ -963,6 +963,14 @@ namespace CommonUi
     ref int rowSpanFromCustomPanels,
     Action<Control> GoToNextFromPanel)
         {
+            // Create a delegate for field change notification
+            Action notifyFieldChanged = () => {
+                if (ShouldUpdateField(kv.Key))
+                {
+                    AnythingChanged([kv.Key]);
+                    _EChangeTracker.TryAdd(kv.Key, true);
+                }
+            };
             Console.WriteLine($"HandleCustomPanels called for key: {kv.Key}");
 
             ILookupSupportedChildPanel? GeneratedCustom = null;
@@ -1051,6 +1059,7 @@ namespace CommonUi
                             Console.WriteLine($"Adding {kv.Key} to CustomPanelInputRetrievalFunctions");
                             CustomPanelInputRetrievalFunctions.Add(kv.Key, () => GeneratedCustom.LookupValue(kv.Key));
                         }
+                        GeneratedCustom.SetGlobalChangeWatcher(() => { notifyFieldChanged(); });
                     }
                 }
             }

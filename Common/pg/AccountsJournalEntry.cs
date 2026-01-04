@@ -38,4 +38,6 @@ public partial class AccountsJournalEntry
     public string CreditAccountName { get; set; } = null!;
 
     public string? InternalReference { get; set; }
+
+    public string? ExtraData { get; set; }
 }

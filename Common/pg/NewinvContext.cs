@@ -99,6 +99,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<ReceivedInvoice> ReceivedInvoices { get; set; }
 
+    public virtual DbSet<RefDoc> RefDocs { get; set; }
+
     public virtual DbSet<Request> Requests { get; set; }
 
     public virtual DbSet<RequestsBad> RequestsBads { get; set; }
@@ -225,6 +227,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.DebitAccountNo).HasColumnName("debit_account_no");
             entity.Property(e => e.DebitAccountType).HasColumnName("debit_account_type");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
             entity.Property(e => e.InternalReference)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("internal_reference");
@@ -339,6 +342,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ExpiryTrackingEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("expiry_tracking_enabled");
+            entity.Property(e => e.ExtraStructured)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("extra_structured");
             entity.Property(e => e.HeightM).HasColumnName("height_m");
             entity.Property(e => e.IsLossLeader)
                 .HasDefaultValue(false)
@@ -365,9 +371,15 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("process_discounts");
             entity.Property(e => e.QuotaPerInvoice).HasColumnName("quota_per_invoice");
             entity.Property(e => e.QuotaPerQuotaPeriod).HasColumnName("quota_per_quota_period");
+            entity.Property(e => e.RefDocs)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_docs");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("remarks");
+            entity.Property(e => e.Tags)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("tags");
             entity.Property(e => e.TimeBasedQuotaEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("time_based_quota_enabled");
@@ -589,7 +601,13 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(true)
                 .HasColumnName("batch_enabled");
             entity.Property(e => e.CostPrice).HasColumnName("cost_price");
+            entity.Property(e => e.EnforceMinPrice)
+                .HasDefaultValue(true)
+                .HasColumnName("enforce_min_price");
             entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity.Property(e => e.ExtraStructured)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("extra_structured");
             entity.Property(e => e.Itemcode)
                 .ValueGeneratedOnAdd()
                 .HasColumnName("itemcode");
@@ -608,6 +626,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.PackedSize)
                 .HasDefaultValueSql("1")
                 .HasColumnName("packed_size");
+            entity.Property(e => e.RefDocs)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_docs");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("remarks");
@@ -615,6 +636,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Suppliercode)
                 .HasDefaultValue(0L)
                 .HasColumnName("suppliercode");
+            entity.Property(e => e.Tags)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("tags");
             entity.Property(e => e.Units).HasColumnName("units");
             entity.Property(e => e.UserDiscounts)
                 .HasDefaultValue(false)
@@ -735,6 +759,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Customer).HasColumnName("customer");
             entity.Property(e => e.DiscountTotal).HasColumnName("discount_total");
             entity.Property(e => e.EffectiveDiscountPercentage).HasColumnName("effective_discount_percentage");
+            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
             entity.Property(e => e.GrandTotal).HasColumnName("grand_total");
             entity.Property(e => e.InvoiceHumanFriendly).HasColumnName("invoice_human_friendly");
             entity.Property(e => e.InvoiceTime)
@@ -986,6 +1011,7 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("1")
                 .HasColumnName("discount_rate_multiplicative_percentage");
             entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
             entity.Property(e => e.Fax).HasColumnName("fax");
             entity.Property(e => e.Gender)
                 .HasDefaultValueSql("'unspecified'::text")
@@ -1109,6 +1135,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.ReceiptId).HasColumnName("receipt_id");
             entity.Property(e => e.AccountId).HasColumnName("account_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
             entity.Property(e => e.TimeReceived)
                 .HasDefaultValueSql("now()")
@@ -1138,6 +1165,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.EffectiveDiscountPercentageFromEnteredItems).HasColumnName("effective_discount_percentage_from_entered_items");
             entity.Property(e => e.EffectiveDiscountPercentageTotal).HasColumnName("effective_discount_percentage_total");
             entity.Property(e => e.EffectiveVatPercentage).HasColumnName("effective_vat_percentage");
+            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
             entity.Property(e => e.InvoiceTime)
                 .HasDefaultValueSql("now()")
@@ -1165,6 +1193,31 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VatTotal).HasColumnName("vat_total");
             entity.Property(e => e.WholeInvoiceDiscountAbsolute).HasColumnName("whole_invoice_discount_absolute");
             entity.Property(e => e.WholeInvoiceDiscountPercentage).HasColumnName("whole_invoice_discount_percentage");
+        });
+
+        modelBuilder.Entity<RefDoc>(entity =>
+        {
+            entity.HasKey(e => e.RefId).HasName("ref_docs_pkey");
+
+            entity.ToTable("ref_docs");
+
+            entity.Property(e => e.RefId).HasColumnName("ref_id");
+            entity.Property(e => e.AuthoredBy).HasColumnName("authored_by");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.RefExtraData)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_extra_data");
+            entity.Property(e => e.RefImage)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_image");
+            entity.Property(e => e.RefText)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_text");
+            entity.Property(e => e.RefUrl)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_url");
         });
 
         modelBuilder.Entity<Request>(entity =>

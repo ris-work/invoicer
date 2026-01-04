@@ -8,6 +8,7 @@ using CommonUi;
 using Eto.Forms;
 using RV.InvNew;
 using RV.InvNew.Common;
+using YourApp.Extensions;
 
 namespace EtoFE
 {
@@ -17,7 +18,7 @@ namespace EtoFE
         private SearchPanelEto _searchBox;
         private InventoryImageEditorPanel _imageEditPanel;
         private Panel _imageEditPanelContainer;
-        private Panel _scrollableLower;
+        private Scrollable _scrollableLower;
         private List<PosCatalogue> _catalogueItems = new();
 
         public CatalogueEditPanel()
@@ -199,6 +200,11 @@ namespace EtoFE
                 new Dictionary<string, (CommonUi.ShowAndGetValue, CommonUi.LookupValue)>(),
                 "Itemcode",
                 true,
+                PanelGenerators: PanelGenerators.Defaults(),
+                FieldsListHandledByGeneratedPanels: new Dictionary<string[], (string, string)>
+                {
+                    { ["Tags"], ("TagsPanel", null) },
+                },
                 PanelColours: LocalColor
             );
 
@@ -252,7 +258,7 @@ namespace EtoFE
                 }
             };
 
-            _scrollableLower = new Panel()
+            _scrollableLower = new Scrollable()
             {
                 Content = _catalogueForm,
                 Height = Program.InnerEditorHeight ?? -1,
@@ -266,7 +272,7 @@ namespace EtoFE
                 },
                 new StackLayoutItem(
                     new StackLayout(
-                        new StackLayoutItem(_scrollableLower, true),
+                        new StackLayoutItem(_scrollableLower.WrapInCustomScrollbars(), true),
                         _imageEditPanelContainer
                     )
                     {
@@ -388,7 +394,12 @@ namespace EtoFE
                         new Dictionary<string, (CommonUi.ShowAndGetValue, CommonUi.LookupValue)>(),
                         "Itemcode",
                         true,
-                        PanelColours: ColorSettings.RotateAllToPanelSettings(0)
+                        PanelColours: ColorSettings.RotateAllToPanelSettings(0),
+                        PanelGenerators: PanelGenerators.Defaults(),
+                FieldsListHandledByGeneratedPanels: new Dictionary<string[], (string, string)>
+                {
+                    { ["Tags"], ("TagsPanel", null) },
+                }
                     );
 
                     // Setup reactive updates for the new form

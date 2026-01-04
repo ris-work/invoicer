@@ -45,4 +45,12 @@ public partial class Inventory
     public double MultiplicativeDiscountPercentage { get; set; }
 
     public double AdditiveDiscountPercentage { get; set; }
+
+    public bool EnforceMinPrice { get; set; }
+
+    public string Tags { get; set; } = null!;
+
+    public string ExtraStructured { get; set; } = null!;
+
+    public string RefDocs { get; set; } = null!;
 }

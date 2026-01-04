@@ -68,4 +68,10 @@ public partial class Catalogue
     public bool DiscountMethodIsMaximum { get; set; }
 
     public bool IsLossLeader { get; set; }
+
+    public string Tags { get; set; } = null!;
+
+    public string ExtraStructured { get; set; } = null!;
+
+    public string RefDocs { get; set; } = null!;
 }

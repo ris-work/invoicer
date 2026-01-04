@@ -723,7 +723,7 @@ var GeneratedEtoUISample = new GenEtoUI(
     },
     ActionsMap,
     null,
-    false,
+    true,
     ["localName"],
     null,
     PanelGenerators.Defaults(),

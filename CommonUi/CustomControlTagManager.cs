@@ -190,6 +190,7 @@ namespace CommonUi
         {
             Console.WriteLine($"[TagEntryPanel] Changed() called with {tags.Count} tags");
             Console.WriteLine($"[TagEntryPanel] Tags in collection: {string.Join(", ", tags)}");
+            if (GlobalChangeHandler != null) { GlobalChangeHandler(); }
 
             // Save current textbox text and suggestion
             string currentText = newTagTextBox?.Text ?? "";

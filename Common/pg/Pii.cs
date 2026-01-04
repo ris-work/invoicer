@@ -36,4 +36,6 @@ public partial class Pii
     public double LoyaltyPointsRateMultiplicativePercentage { get; set; }
 
     public double LoyaltyPointsRateAdditivePercentage { get; set; }
+
+    public string? ExtraData { get; set; }
 }

@@ -54,4 +54,6 @@ public partial class ReceivedInvoice
     public double TotalAmountDue { get; set; }
 
     public DateTime InvoiceTime { get; set; }
+
+    public string? ExtraData { get; set; }
 }
