@@ -17,16 +17,16 @@ namespace InvoicerBackend
                     await ctx.SaveChangesAsync();
                 }
                 return true;
-            });
-            app.AddAsyncEndpointWithBearerAuth<string>("EditCatalogueItem", async (o, a) => {
-                Log($"Input: ${(string)o}");
-                Dictionary<string, JsonElement> Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>((string)o);
-                long PatchID = Patch["itemcode"].GetInt64();
+            }, "Refresh");
+            app.AddAsyncPatchEndpointWithBearerAuth<Catalogue>("EditCatalogueItem", async (o, a) => {
+                Log($"Input: ${((string)o)}");
+                Dictionary<string, JsonElement> Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(((string)o));
+                long PatchID = Patch["Itemcode"].GetInt64();
                 Log($"EditCatalogueItem: ${Patch["Itemcode"]}");
                 using (var ctx = new NewinvContext())
                 {
                     var ToBePatched = ctx.Catalogues.Where(x => x.Itemcode == PatchID).First();
-                    var Patched = ToBePatched.ApplyChangesExceptFilteredFromJson(["itemcode"], (string)o);
+                    var Patched = ToBePatched.ApplyChangesExceptFilteredFromJson(["Itemcode"], (string)o);
                     Log($"EditCatalogueItem: Patching: Original: {JsonSerializer.Serialize(ToBePatched)}, Patch: {(string)o}, Patched: {Patched}");
                     ctx.Entry(ToBePatched).CurrentValues.SetValues(Patched);
                     await ctx.SaveChangesAsync();
@@ -34,7 +34,7 @@ namespace InvoicerBackend
                     Log($"EditCatalogueItem: Post-update: {JsonSerializer.Serialize(post)}");
                 }
                 return true;
-            });
+            }, [], "Refresh");
             return app;
         }
 

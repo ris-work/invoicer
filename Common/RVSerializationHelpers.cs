@@ -617,6 +617,8 @@ namespace MyAOTFriendlyExtensions
             Logger? logger = null
         )
         {
+            //if (fieldNames.Length == 0) fieldNames = ["dummyDont"];
+            if (fieldNames == null || fieldNames.Length == 0) return json;
             if (string.IsNullOrWhiteSpace(json))
                 throw new ArgumentException(
                     "Input JSON must not be null or whitespace.",
