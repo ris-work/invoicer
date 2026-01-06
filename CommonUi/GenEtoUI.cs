@@ -69,6 +69,7 @@ namespace CommonUi
         List<List<(Eto.Forms.Control? LabelControl, Eto.Forms.Control MainControl)>> AllRows =
             new();
         public Label NewOrEdit;
+        public Label ChangesOrFull;
         int nColumns = 3;
         public OrderedDictionary<string, (string ControlName, object Value, string?)> _Inputs;
         public string Identity = "";
@@ -376,10 +377,10 @@ namespace CommonUi
         }
 
         private void CreateControlsForInput(
-    KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
-    List<Eto.Forms.Control> EFocusableList,
-    string[] DenyList,
-    string? IdentityColumn)
+            KeyValuePair<string, (string ControlName, object Value, string? LookupFunctionCallback)> kv,
+            List<Eto.Forms.Control> EFocusableList,
+            string[] DenyList,
+            string? IdentityColumn)
         {
             Console.WriteLine($"CreateControlsForInput called for key: {kv.Key}");
             Console.WriteLine($"CreateControlsForInput: controlName='{kv.Value.ControlName}', value='{kv.Value.Value}'");
@@ -419,10 +420,7 @@ namespace CommonUi
 
 
         public GenEtoUI(
-            IReadOnlyDictionary<
-                string,
-                (string ControlName, object Value, string? LookupFunctionCallback)
-            > Inputs,
+            IReadOnlyDictionary<string, (string ControlName, object Value, string? LookupFunctionCallback)> Inputs,
             SaveHandler SaveNewHandler,
             SaveHandler SaveExistingHandler,
             IReadOnlyDictionary<string, (ShowAndGetValue, LookupValue)> InputHandler,
@@ -430,21 +428,17 @@ namespace CommonUi
             bool ChangesOnly = false,
             string[]? DenyList = null,
             PanelSettings PanelColours = null,
-            IReadOnlyDictionary<
-                string,
-                Func<string[], TextBox?, ILookupSupportedChildPanel>
-            >? PanelGenerators = null,
-            IReadOnlyDictionary<
-                string[],
-                (string ControlName, string? ParentField)
-            >? FieldsListHandledByGeneratedPanels = null,
+            IReadOnlyDictionary<string, Func<string[], TextBox?, ILookupSupportedChildPanel>>? PanelGenerators = null,
+            IReadOnlyDictionary<string[], (string ControlName, string? ParentField)>? FieldsListHandledByGeneratedPanels = null,
             string[]? order = null,
             bool isNew = false,
                     NewPanelRequestedHandler? OnNewPanelRequested = null  // NEW
         )
         {
-            if (isNew) { NewOrEdit = new Label() { Text = "NEW", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
-            else { NewOrEdit = new Label() { Text = "EDT", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
+            if (isNew) { NewOrEdit = new Label() { Text = "NEW", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30, Width = 60 }; }
+            else { NewOrEdit = new Label() { Text = "EDT", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30, Width = 60 }; }
+            if (ChangesOnly) { ChangesOrFull = new Label() { Text = "CHG", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30, Width = 60 }; }
+            else { ChangesOrFull = new Label() { Text = "ORI", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30, Width = 60 }; }
             _new = isNew;
             _suppliedInputs = Inputs;
             _suppliedSaveNewHandler = SaveNewHandler;
@@ -740,17 +734,19 @@ namespace CommonUi
             };
             var ActionButtons = new StackLayout(
                 null,
+                NewOrEdit,
                 NewButton,
                 SaveButton,
                 ViewButton,
                 CancelButton,
-                NewOrEdit,
+                ChangesOrFull,
                 null
             )
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
                 Height = ColorSettings.ControlHeight ?? -1,
             };
 
@@ -759,17 +755,17 @@ namespace CommonUi
 
 
             Content = new StackLayout(
-    ActionButtons,
-    new StackLayoutItem(
-        new Scrollable()
-        {
-            Content = tableLayout,
-            Border = BorderType.None,
-            ExpandContentHeight = ColorSettings.ExpandContentHeight,
-            ExpandContentWidth = ColorSettings.ExpandContentWidth,
-        },
-        false
-    ), null
+            ActionButtons,
+            new StackLayoutItem(
+                new Scrollable()
+                {
+                    Content = tableLayout,
+                    Border = BorderType.None,
+                    ExpandContentHeight = ColorSettings.ExpandContentHeight,
+                    ExpandContentWidth = ColorSettings.ExpandContentWidth,
+                },
+                false
+            ), null
 )
             {
                 Orientation = Orientation.Vertical,

@@ -148,6 +148,7 @@ namespace EtoFE
                 (a) =>
                 {
                     // Save handler
+                    MessageBox.Show($"{a}");
                     var catalogue = JsonSerializer.Deserialize<Catalogue>(JsonSerializer.Serialize(a));
                     var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "CatalogueSave");
                     if (result.Error == false)
@@ -174,8 +175,9 @@ namespace EtoFE
                 (e) =>
                 {
                     // Update handler
+                    MessageBox.Show($"{e}");
                     var catalogue = JsonSerializer.Deserialize<string>(JsonSerializer.Serialize(e));
-                    var result = SendAuthenticatedRequest<string, long>.Send(JsonSerializer.Serialize(e), "CatalogueUpdate");
+                    var result = SendAuthenticatedRequestRaw<long>.Send(JsonSerializer.Serialize(e), "CatalogueUpdate");
                     if (result.Error == false)
                     {
                         MessageBox.Show(
@@ -342,6 +344,7 @@ namespace EtoFE
                         (a) =>
                         {
                             // Save handler
+                            MessageBox.Show($"{JsonSerializer.Serialize(a)}");
                             var catalogue = JsonSerializer.Deserialize<Catalogue>(JsonSerializer.Serialize(a));
                             var result = SendAuthenticatedRequest<string, long>.Send(JsonSerializer.Serialize(a), "EditCatalogueItem");
                             if (result.Error == false)
@@ -368,8 +371,9 @@ namespace EtoFE
                         (e) =>
                         {
                             // Update handler
+                            MessageBox.Show($"{JsonSerializer.Serialize(e)}");
                             var catalogue = JsonSerializer.Deserialize<Catalogue>(JsonSerializer.Serialize(e));
-                            var result = SendAuthenticatedRequest<Catalogue, long>.Send(catalogue, "EditCatalogueItem");
+                            var result = SendAuthenticatedRequestRaw<long>.Send(JsonSerializer.Serialize(e), "EditCatalogueItem");
                             if (result.Error == false)
                             {
                                 MessageBox.Show(

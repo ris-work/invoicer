@@ -104,6 +104,52 @@ namespace EtoFE
                 Result = result;
             }
         }
+
+
+
+
+        // Add this method to your AuthenticatedRequest class
+        // Add this method to your AuthenticatedRequest class
+        // Replace the existing ReplayRequest method with this:
+        public static (object Out, bool Error) ReplayRequest(RequestLogEntry logEntry, bool retryInteractively = false)
+        {
+            try
+            {
+                // Check if we have the type names
+                if (string.IsNullOrEmpty(logEntry.RequestTypeName) || string.IsNullOrEmpty(logEntry.ResponseTypeName))
+                {
+                    return (null, true);
+                }
+
+                // Get the types from the type names
+                var requestType = Type.GetType(logEntry.RequestTypeName);
+                var responseType = Type.GetType(logEntry.ResponseTypeName);
+
+                if (requestType == null || responseType == null)
+                {
+                    return (null, true);
+                }
+
+                // Deserialize the request
+                var requestJson = logEntry.SerializedRequest;
+                var request = JsonSerializer.Deserialize(requestJson, requestType);
+
+                // Use reflection to call the generic Send method
+                var sendMethod = typeof(SendAuthenticatedRequest<,>).MakeGenericType(requestType, responseType).GetMethod("Send", new[] { typeof(RequestLogEntry), typeof(bool) });
+                var result = sendMethod.Invoke(null, new object[] { logEntry, retryInteractively });
+
+                // Extract the result from the tuple
+                var resultProperty = result.GetType().GetProperty("Out");
+                var errorProperty = result.GetType().GetProperty("Error");
+
+                return (resultProperty.GetValue(result), (bool)errorProperty.GetValue(result));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error replaying request: {ex.Message}");
+                return (null, true);
+            }
+        }
     }
 
     public static class SendAuthenticatedRequest<Ti, To>
@@ -150,27 +196,6 @@ namespace EtoFE
             RequestLogger.SaveRequest(Endpoint, Message, result, success, errorMessage);
             return (result, false);
         }
-
-        public static (To Out, bool Error) Send(
-    RequestLogEntry logEntry,
-    bool RetryInteractively = false
-)
-        {
-            try
-            {
-                Ti message = JsonSerializer.Deserialize<Ti>(logEntry.SerializedRequest);
-                return Send(message, logEntry.Endpoint, RetryInteractively);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error replaying request: {ex.Message}");
-                return (default(To), true);
-            }
-        }
-
-        // Add this method to your AuthenticatedRequest class
-        // Add this method to your AuthenticatedRequest class
-        // Replace the existing ReplayRequest method with this:
         public static (object Out, bool Error) ReplayRequest(RequestLogEntry logEntry, bool retryInteractively = false)
         {
             try
@@ -208,6 +233,87 @@ namespace EtoFE
             {
                 Console.WriteLine($"Error replaying request: {ex.Message}");
                 return (null, true);
+            }
+        }
+
+        public static (To Out, bool Error) Send(
+            RequestLogEntry logEntry,
+            bool RetryInteractively = false
+            )
+        {
+            try
+            {
+                Ti message = JsonSerializer.Deserialize<Ti>(logEntry.SerializedRequest);
+                return Send(message, logEntry.Endpoint, RetryInteractively);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error replaying request: {ex.Message}");
+                return (default(To), true);
+            }
+        }
+
+        
+    }
+    public static class SendAuthenticatedRequestRaw<To>
+    {
+        public static (To Out, bool Error) Send(
+            string Message,
+            string Endpoint,
+            out To Output,
+            out bool ErrorOccured,
+            bool RetryInteractively = false
+        )
+        {
+            var Result = Send(Message, Endpoint, RetryInteractively);
+            Output = Result.Out;
+            ErrorOccured = Result.Error;
+            return Result;
+        }
+
+        public static (To Out, bool Error) Send(
+            string Message,
+            string Endpoint,
+            bool RetryInteractively = false
+        )
+        {
+            bool success = true;
+            string errorMessage = "";
+            var JR = Message;
+            var Request = new HttpRequestMessage()
+            {
+                Content = new StringContent(JR),
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(Program.client.BaseAddress, Endpoint),
+            };
+            Request.Headers.Add(
+                "Authorization",
+                $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(LoginTokens.token)))}"
+            );
+            Console.WriteLine(JR);
+            var Posted = Program.client.SendAsync(Request);
+            var Response = Posted.GetAwaiter().GetResult();
+            Response.EnsureSuccessStatusCode();
+            To result = default(To);
+            result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
+            RequestLogger.SaveRequest(Endpoint, Message, result, success, errorMessage);
+            return (result, false);
+        }
+
+        public static (To Out, bool Error) Send(
+        RequestLogEntry logEntry,
+        bool RetryInteractively = false
+        )
+        {
+            try
+            {
+                string message = logEntry.SerializedRequest;
+                return Send(message, logEntry.Endpoint, RetryInteractively);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error replaying request: {ex.Message}");
+                return (default(To), true);
             }
         }
     }
@@ -382,11 +488,11 @@ namespace EtoFE
         }
 
         public static void SaveRequest<TRequest, TResponse>(
-    string endpoint,
-    TRequest request,
-    TResponse response,
-    bool success,
-    string errorMessage = "")
+            string endpoint,
+            TRequest request,
+            TResponse response,
+            bool success,
+            string errorMessage = "")
         {
             try
             {
