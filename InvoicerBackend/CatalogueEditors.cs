@@ -18,7 +18,7 @@ namespace InvoicerBackend
                 }
                 return true;
             }, "Refresh");
-            app.AddAsyncPatchEndpointWithBearerAuth<Catalogue>("EditCatalogueItem", async (o, a) => {
+            app.AddAsyncPatchEndpointWithBearerAuth<string>("EditCatalogueItem", async (o, a) => {
                 Log($"Input: ${((string)o)}");
                 Dictionary<string, JsonElement> Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(((string)o));
                 long PatchID = Patch["Itemcode"].GetInt64();
@@ -27,7 +27,7 @@ namespace InvoicerBackend
                 {
                     var ToBePatched = ctx.Catalogues.Where(x => x.Itemcode == PatchID).First();
                     var Patched = ToBePatched.ApplyChangesExceptFilteredFromJson(["Itemcode"], (string)o);
-                    Log($"EditCatalogueItem: Patching: Original: {JsonSerializer.Serialize(ToBePatched)}, Patch: {(string)o}, Patched: {Patched}");
+                    Log($"EditCatalogueItem: Patching: Original: {JsonSerializer.Serialize(ToBePatched)}, Patch: {(string)o}, Patched: {JsonSerializer.Serialize(Patched)}");
                     ctx.Entry(ToBePatched).CurrentValues.SetValues(Patched);
                     await ctx.SaveChangesAsync();
                     var post = ctx.Catalogues.Where(e => e.Itemcode == PatchID).First();
