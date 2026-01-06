@@ -109,7 +109,8 @@ namespace CommonUi
         System.EventHandler<Eto.Forms.KeyEventArgs> GoToNext = (
                 object o,
                 Eto.Forms.KeyEventArgs ea
-            ) => { };
+            ) =>
+        { };
 
         Action<Control> GoToNextFromPanel = (_) => { };
 
@@ -442,9 +443,9 @@ namespace CommonUi
                     NewPanelRequestedHandler? OnNewPanelRequested = null  // NEW
         )
         {
-            if (isNew) { NewOrEdit = new Label() { Text = "NEW", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height=ColorSettings.ControlHeight??30 }; }
-            else { NewOrEdit = new Label() { Text = "EDT", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment=VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
-                _new = isNew;
+            if (isNew) { NewOrEdit = new Label() { Text = "NEW", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkGreen, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
+            else { NewOrEdit = new Label() { Text = "EDT", TextAlignment = TextAlignment.Center, TextColor = Colors.DarkRed, VerticalAlignment = VerticalAlignment.Center, Height = ColorSettings.ControlHeight ?? 30 }; }
+            _new = isNew;
             _suppliedInputs = Inputs;
             _suppliedSaveNewHandler = SaveNewHandler;
             _suppliedSaveExistingHandler = SaveExistingHandler;
@@ -469,7 +470,7 @@ namespace CommonUi
                 (string ControlName, object Value, string? LookupFunctionCallback)
             > InputsOrdered = new();
             var InputsUnordered = Inputs.ToDictionary();
-            
+
             if (order != null)
             {
                 foreach (var element in order)
@@ -488,7 +489,7 @@ namespace CommonUi
                 if (isNew)
                 {
                     Type IType = Inputs[IdentityColumn].Value.GetType();
-                    _Inputs[IdentityColumn] = 
+                    _Inputs[IdentityColumn] =
                         (_Inputs[IdentityColumn].ControlName, Activator.CreateInstance(IType), _Inputs[IdentityColumn].Item3);
                 }
             }
@@ -541,7 +542,7 @@ namespace CommonUi
             var ECount = E.Count();
             var EMid = ECount / 2;
             var CurrentNo = 0;
-            
+
             Button SaveButton = new Button()
             {
                 Text = TranslationHelper.Translate("Save", "Save", TranslationHelper.Lang),
@@ -606,8 +607,8 @@ namespace CommonUi
                 var LehendTSize,
                 var LegendCSize
             ) = GetThemeForComponent("Legend");
-            
-            
+
+
             foreach (var kv in E)
             {
                 if (!NotInNormalFlow.Contains(kv.Key))
@@ -753,9 +754,9 @@ namespace CommonUi
                 Height = ColorSettings.ControlHeight ?? -1,
             };
 
-            
 
-            
+
+
 
             Content = new StackLayout(
     ActionButtons,
@@ -774,9 +775,10 @@ namespace CommonUi
                 Orientation = Orientation.Vertical,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Top,
-                
+
             };
-            if ((IdentityColumn != null) && (IdentityColumn != "")) { _EChangeTracker[IdentityColumn] = true; };
+            if ((IdentityColumn != null) && (IdentityColumn != "")) { _EChangeTracker[IdentityColumn] = true; }
+            ;
             this.ResumeLayout();
         }
 
@@ -964,7 +966,8 @@ namespace CommonUi
     Action<Control> GoToNextFromPanel)
         {
             // Create a delegate for field change notification
-            Action notifyFieldChanged = () => {
+            Action notifyFieldChanged = () =>
+            {
                 if (ShouldUpdateField(kv.Key))
                 {
                     AnythingChanged([kv.Key]);
@@ -1114,7 +1117,8 @@ namespace CommonUi
             string[] DenyList, string? IdentityColumn, List<Eto.Forms.Control> EFocusableList)
         {
             // Create a delegate for field change notification
-            Action notifyFieldChanged = () => {
+            Action notifyFieldChanged = () =>
+            {
                 if (ShouldUpdateField(kv.Key))
                 {
                     AnythingChanged([kv.Key]);
@@ -1138,7 +1142,8 @@ namespace CommonUi
                         Size = CSize,
                     };
 
-                    _textBox.TextInput += (sender, e) => {
+                    _textBox.TextInput += (sender, e) =>
+                    {
                         notifyFieldChanged();
                         _textBox.BackgroundColor = BGc;
                         _textBox.TextColor = FGc;
@@ -1163,7 +1168,8 @@ namespace CommonUi
                     if (DenyList.Contains(kv.Key))
                         button.Enabled = false;
 
-                    button.Click += (_, _) => {
+                    button.Click += (_, _) =>
+                    {
                         var lookupResult = InputHandler[kv.Value.Item3].Item1();
                         if (lookupResult.HasValue)
                         {
@@ -1183,7 +1189,8 @@ namespace CommonUi
             {
                 var checkBox = new CheckBox() { Checked = (bool)(kv.Value.Item2 ?? false) };
 
-                checkBox.CheckedChanged += (sender, e) => {
+                checkBox.CheckedChanged += (sender, e) =>
+                {
                     notifyFieldChanged();
                     checkBox.BackgroundColor = BGc;
                     checkBox.TextColor = FGc;
@@ -1205,7 +1212,8 @@ namespace CommonUi
             if (kv.Key == IdentityColumn)
                 textBox.Enabled = false;
 
-            textBox.TextInput += (sender, e) => {
+            textBox.TextInput += (sender, e) =>
+            {
                 notifyFieldChanged();
                 textBox.BackgroundColor = BGc;
                 textBox.TextColor = FGc;
@@ -1405,8 +1413,8 @@ namespace CommonUi
             {
                 Spacing = new Size(2, 2),
                 Padding = new Padding(2),
-                
-                
+
+
             };
 
             // Create a single row with all columns side by side

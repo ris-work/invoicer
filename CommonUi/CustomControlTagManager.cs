@@ -202,7 +202,7 @@ namespace CommonUi
                 Spacing = new Size(5, 5),
                 BackgroundColor = ColorSettings.BackgroundColor,
                 Width = ColorSettings.ControlWidth ?? 300,
-                Height = 4*(ColorSettings.ControlHeight??30),
+                Height = 4 * (ColorSettings.ControlHeight ?? 30),
             };
 
             // Determine how many columns to use based on available width

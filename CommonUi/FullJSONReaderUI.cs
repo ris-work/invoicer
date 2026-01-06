@@ -213,36 +213,36 @@ namespace JsonEditorExample
                     }
 
                 case JsonValueKind.Number:
-                {
-                    // First try to create a long.
-                    if (value.TryGetInt64(out long l))
                     {
-                        Debug.WriteLine(
-                            $"[Build Value] At \"{path}\": Creating TextBox for long: {l}"
-                        );
-                        var tb = new TextBox
+                        // First try to create a long.
+                        if (value.TryGetInt64(out long l))
                         {
-                            Text = l.ToString(),
-                            Tag = path,
-                            Font = Eto.Drawing.Fonts.Monospace(fontSize),
-                        };
-                        return tb;
-                    }
-                    else
-                    {
-                        double d = value.GetDouble();
-                        Debug.WriteLine(
-                            $"[Build Value] At \"{path}\": Creating TextBox for double: {d}"
-                        );
-                        var tb = new TextBox
+                            Debug.WriteLine(
+                                $"[Build Value] At \"{path}\": Creating TextBox for long: {l}"
+                            );
+                            var tb = new TextBox
+                            {
+                                Text = l.ToString(),
+                                Tag = path,
+                                Font = Eto.Drawing.Fonts.Monospace(fontSize),
+                            };
+                            return tb;
+                        }
+                        else
                         {
-                            Text = d.ToString(),
-                            Tag = path,
-                            Font = Eto.Drawing.Fonts.Monospace(fontSize),
-                        };
-                        return tb;
+                            double d = value.GetDouble();
+                            Debug.WriteLine(
+                                $"[Build Value] At \"{path}\": Creating TextBox for double: {d}"
+                            );
+                            var tb = new TextBox
+                            {
+                                Text = d.ToString(),
+                                Tag = path,
+                                Font = Eto.Drawing.Fonts.Monospace(fontSize),
+                            };
+                            return tb;
+                        }
                     }
-                }
 
                 case JsonValueKind.String:
                     Debug.WriteLine(

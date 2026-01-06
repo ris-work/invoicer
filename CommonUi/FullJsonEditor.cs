@@ -920,7 +920,8 @@ namespace JsonEditorExample
             dialog.Content = layout;
 
             // Set up event handlers
-            propertyTypeDropDown.SelectedIndexChanged += (sender, e) => {
+            propertyTypeDropDown.SelectedIndexChanged += (sender, e) =>
+            {
                 // Update placeholder text based on type
                 switch (propertyTypeDropDown.SelectedKey)
                 {
@@ -962,7 +963,8 @@ namespace JsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Click += (sender, e) => {
+            okButton.Click += (sender, e) =>
+            {
                 var name = propertyNameTextBox.Text;
                 var type = propertyTypeDropDown.SelectedKey;
                 var value = propertyValueTextBox.Text;
@@ -981,7 +983,8 @@ namespace JsonEditorExample
                 }
             };
 
-            cancelButton.Click += (sender, e) => {
+            cancelButton.Click += (sender, e) =>
+            {
                 dialog.Close(null);
             };
 
@@ -1253,7 +1256,8 @@ namespace JsonEditorExample
             dialog.Content = layout;
 
             // Set up event handlers
-            itemTypeDropDown.SelectedIndexChanged += (sender, e) => {
+            itemTypeDropDown.SelectedIndexChanged += (sender, e) =>
+            {
                 // Update placeholder text based on type
                 switch (itemTypeDropDown.SelectedKey)
                 {
@@ -1295,14 +1299,16 @@ namespace JsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Click += (sender, e) => {
+            okButton.Click += (sender, e) =>
+            {
                 var type = itemTypeDropDown.SelectedKey;
                 var value = itemValueTextBox.Text;
 
                 dialog.Close($"{type}|{value}");
             };
 
-            cancelButton.Click += (sender, e) => {
+            cancelButton.Click += (sender, e) =>
+            {
                 dialog.Close(null);
             };
 
@@ -1486,7 +1492,8 @@ namespace JsonEditorExample
                     }
 
                     // Handle date changes
-                    datePicker.ValueChanged += (sender, e) => {
+                    datePicker.ValueChanged += (sender, e) =>
+                    {
                         Value = datePicker.Value?.ToString("yyyy-MM-ddTHH:mm:ssZ");
                         RefreshParentContainer();
                     };
@@ -1497,7 +1504,8 @@ namespace JsonEditorExample
 
                     // Add Set/Edit Image button
                     var _imageButton = new Button { Text = "Set/Edit Image" };
-                    _imageButton.Click += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
+                    _imageButton.Click += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) =>
+                    {
                         Value = newValue;
                         RefreshParentContainer();
                     });
@@ -1506,7 +1514,8 @@ namespace JsonEditorExample
 
                     // Add "Add text instead" button
                     var textButton = new Button { Text = "Add text instead" };
-                    textButton.Click += (s, e) => {
+                    textButton.Click += (s, e) =>
+                    {
                         Value = ""; // Reset to empty string
                         RefreshParentContainer();
                     };
@@ -1526,7 +1535,8 @@ namespace JsonEditorExample
 
             // Add text box
             var textBox = new TextBox { Text = Value };
-            textBox.TextChanged += (sender, e) => {
+            textBox.TextChanged += (sender, e) =>
+            {
                 Value = textBox.Text;
                 // Don't refresh on every text change, only when needed
             };
@@ -1537,7 +1547,8 @@ namespace JsonEditorExample
 
             // Add Set/Edit Image button for all text fields
             var imageButton = new Button { Text = "Set/Edit Image" };
-            imageButton.Click  += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) => {
+            imageButton.Click += (s, e) => UploadImageAsBase64(_editorPanel, (newValue) =>
+            {
                 Value = newValue;
                 RefreshParentContainer();
             });
@@ -1598,7 +1609,8 @@ namespace JsonEditorExample
                         Wrap = WrapMode.Word
                     };
 
-                    urlLabel.MouseDoubleClick += (sender, e) => {
+                    urlLabel.MouseDoubleClick += (sender, e) =>
+                    {
                         try
                         {
                             Process.Start(new Uri(Value).ToString());
@@ -1616,7 +1628,8 @@ namespace JsonEditorExample
                 var imageButtonContainer = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5 };
 
                 var textInsteadButton = new Button { Text = "Add text instead" };
-                textInsteadButton.Click += (s, e) => {
+                textInsteadButton.Click += (s, e) =>
+                {
                     Value = ""; // Reset to empty string
                     RefreshParentContainer();
                 };
@@ -1761,7 +1774,8 @@ namespace JsonEditorExample
             dialog.Content = layout;
 
             // Set up event handlers
-            okButton.Click += (sender, e) => {
+            okButton.Click += (sender, e) =>
+            {
                 if (datePicker.Value.HasValue)
                 {
                     Value = datePicker.Value.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -1770,7 +1784,8 @@ namespace JsonEditorExample
                 }
             };
 
-            cancelButton.Click += (sender, e) => {
+            cancelButton.Click += (sender, e) =>
+            {
                 dialog.Close();
             };
 
@@ -1996,7 +2011,8 @@ namespace JsonEditorExample
         public Control CreateControl(FullJsonEditorPanel editorPanel)
         {
             var textBox = new TextBox { Text = Value.ToString() };
-            textBox.TextChanged += (sender, e) => {
+            textBox.TextChanged += (sender, e) =>
+            {
                 if (Value is long || (Value is double && double.TryParse(textBox.Text, out double d)))
                 {
                     if (Value is long)
@@ -2043,7 +2059,8 @@ namespace JsonEditorExample
         public Control CreateControl(FullJsonEditorPanel editorPanel)
         {
             var checkBox = new CheckBox { Checked = Value };
-            checkBox.CheckedChanged += (sender, e) => {
+            checkBox.CheckedChanged += (sender, e) =>
+            {
                 Value = checkBox.Checked ?? false;
             };
             return checkBox;

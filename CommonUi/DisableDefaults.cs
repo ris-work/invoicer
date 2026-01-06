@@ -363,7 +363,8 @@ namespace CommonUi
             }
 #endif
         }
-        public static void DisableAutoSizing(this Eto.Forms.GridView gw) {
+        public static void DisableAutoSizing(this Eto.Forms.GridView gw)
+        {
 #if WINDOWS || WINFORMS
             var platformStr = Eto.Platform.Instance.ToString();
             if (platformStr == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())

@@ -245,7 +245,8 @@ namespace CommonUi
             _searchPanel.ReportSelectedButtonText = ReportSelectedButtonText;
 
             // Set the callback to update the title
-            _searchPanel.OnUpdateTitle = (count) => {
+            _searchPanel.OnUpdateTitle = (count) =>
+            {
                 Title = $"Found {count} ";
             };
 

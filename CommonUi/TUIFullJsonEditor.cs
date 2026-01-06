@@ -397,7 +397,8 @@ namespace TUIJsonEditorExample
             cancelButton.Y = Pos.Bottom(jsonTextView);
 
             // Attach event handlers
-            loadButton.Accept += (s, args) => {
+            loadButton.Accept += (s, args) =>
+            {
                 try
                 {
                     Log($"[Load JSON] New JSON to load: {jsonTextView.Text.ToString()}");
@@ -1023,7 +1024,8 @@ namespace TUIJsonEditorExample
             dialog.Add(nameLabel, propertyNameField, typeLabel, propertyTypeDropDown, valueLabel, propertyValueField, validationLabel, okButton, cancelButton);
 
             // Set up event handlers
-            propertyTypeDropDown.SelectedItemChanged += (sender, e) => {
+            propertyTypeDropDown.SelectedItemChanged += (sender, e) =>
+            {
                 // Update placeholder text based on type
                 switch (propertyTypeDropDown.Source.ToList()[propertyTypeDropDown.SelectedItem])
                 {
@@ -1065,7 +1067,8 @@ namespace TUIJsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Accept += (sender, e) => {
+            okButton.Accept += (sender, e) =>
+            {
                 var name = propertyNameField.Text.ToString();
                 var type = propertyTypeDropDown.Source.ToList()[propertyTypeDropDown.SelectedItem];
                 var value = propertyValueField.Text.ToString();
@@ -1100,7 +1103,8 @@ namespace TUIJsonEditorExample
                 e.Handled = true;
             };
 
-            cancelButton.Accept += (sender, e) => {
+            cancelButton.Accept += (sender, e) =>
+            {
                 Application.RequestStop();
                 e.Handled = true;
             };
@@ -1389,7 +1393,8 @@ namespace TUIJsonEditorExample
             dialog.Add(typeLabel, itemTypeDropDown, valueLabel, itemValueField, validationLabel, okButton, cancelButton);
 
             // Set up event handlers
-            itemTypeDropDown.SelectedItemChanged += (sender, e) => {
+            itemTypeDropDown.SelectedItemChanged += (sender, e) =>
+            {
                 // Update placeholder text based on type
                 switch (itemTypeDropDown.Source.ToList()[itemTypeDropDown.SelectedItem])
                 {
@@ -1431,7 +1436,8 @@ namespace TUIJsonEditorExample
                 validationLabel.Text = "";
             };
 
-            okButton.Accept += (sender, e) => {
+            okButton.Accept += (sender, e) =>
+            {
                 var type = itemTypeDropDown.Source.ToList()[itemTypeDropDown.SelectedItem];
                 var value = itemValueField.Text.ToString();
 
@@ -1454,7 +1460,8 @@ namespace TUIJsonEditorExample
                 e.Handled = true;
             };
 
-            cancelButton.Accept += (sender, e) => {
+            cancelButton.Accept += (sender, e) =>
+            {
                 Application.RequestStop();
                 e.Handled = true;
             };
@@ -1621,7 +1628,8 @@ namespace TUIJsonEditorExample
                     }
 
                     // Handle date changes
-                    dateField.TextChanged += (sender, e) => {
+                    dateField.TextChanged += (sender, e) =>
+                    {
                         if (DateTime.TryParse(dateField.Text.ToString(), out DateTime newDate))
                         {
                             Value = newDate.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -1682,7 +1690,8 @@ namespace TUIJsonEditorExample
             textField.X = 0;
             textField.Y = 0;
             textField.Width = Dim.Fill();
-            textField.TextChanged += (sender, e) => {
+            textField.TextChanged += (sender, e) =>
+            {
                 Value = textField.Text.ToString();
                 // Don't refresh on every text change, only when needed
             };
@@ -1901,7 +1910,8 @@ namespace TUIJsonEditorExample
             dialog.Add(label, dateField, okButton, cancelButton);
 
             // Set up event handlers
-            okButton.Accept += (sender, e) => {
+            okButton.Accept += (sender, e) =>
+            {
                 if (DateTime.TryParse(dateField.Text.ToString(), out DateTime date))
                 {
                     Value = date.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -1915,7 +1925,8 @@ namespace TUIJsonEditorExample
                 e.Handled = true;
             };
 
-            cancelButton.Accept += (sender, e) => {
+            cancelButton.Accept += (sender, e) =>
+            {
                 Application.RequestStop();
                 e.Handled = true;
             };
@@ -2111,7 +2122,8 @@ namespace TUIJsonEditorExample
             dialog.Add(label, pathField, okButton, cancelButton);
 
             // Set up event handlers
-            okButton.Accept += (sender, e) => {
+            okButton.Accept += (sender, e) =>
+            {
                 try
                 {
                     string path = pathField.Text.ToString();
@@ -2149,7 +2161,8 @@ namespace TUIJsonEditorExample
                 e.Handled = true;
             };
 
-            cancelButton.Accept += (sender, e) => {
+            cancelButton.Accept += (sender, e) =>
+            {
                 TUIFullJsonEditorPanel.Log("[Upload Image] User cancelled image selection");
                 Application.RequestStop();
                 e.Handled = true;
@@ -2174,7 +2187,8 @@ namespace TUIJsonEditorExample
             textField.Y = 0;
             textField.Width = Dim.Fill();
 
-            textField.TextChanged += (sender, e) => {
+            textField.TextChanged += (sender, e) =>
+            {
                 if (Value is long || (Value is double && double.TryParse(textField.Text.ToString(), out double d)))
                 {
                     if (Value is long)
@@ -2226,7 +2240,8 @@ namespace TUIJsonEditorExample
             checkBox.Y = 0;
             checkBox.CheckedState = Value ? CheckState.Checked : CheckState.UnChecked;
 
-            checkBox.CheckedStateChanging += (sender, e) => {
+            checkBox.CheckedStateChanging += (sender, e) =>
+            {
                 Value = checkBox.CheckedState == CheckState.Checked;
             };
 
