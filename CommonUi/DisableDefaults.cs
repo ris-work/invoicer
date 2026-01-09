@@ -1273,5 +1273,82 @@ namespace CommonUi
                 }
             }
         }
+
+        /// <summary>
+        /// Launches a dropdown for the specified ComboBox control on the current Eto backend.
+        /// Evaluates the provided variable P against the current Eto backend.
+        /// </summary>
+        /// <param name="comboBox">The Eto.Forms.ComboBox to configure.</param>
+        public static void LaunchDropDown(this Eto.Forms.ComboBox comboBox)
+        {
+            var P = Eto.Platform.Instance.ToString();
+
+#if WINDOWS || WINFORMS
+            if (Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.ComboBox nativeComboBox =  comboBox.ControlObject as System.Windows.Forms.ComboBox;
+                nativeComboBox.DroppedDown = true;
+                
+            }
+#endif
+
+#if WINDOWS
+            if (Eto.Platform.Get(Eto.Platforms.Wpf) != null && P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                System.Windows.Controls.ComboBox nativeComboBox = (System.Windows.Controls.ComboBox)Eto.Forms.WpfHelpers.ToNative(comboBox);
+                nativeComboBox.IsDropDownOpen = true;
+            }
+#endif
+
+#if GTK
+            if (Eto.Platform.Get(Eto.Platforms.Gtk) != null && P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                Gtk.ComboBox nativeComboBox = (Gtk.ComboBox)Eto.Forms.Gtk3Helpers.ToNative(comboBox);
+                nativeComboBox.Popup();
+            }
+#endif
+
+#if MAC64
+            // TODO: Implement for Mac platform
+#endif
+        }
+
+        /// <summary>
+        /// Closes a dropdown for the specified ComboBox control on the current Eto backend.
+        /// Evaluates the provided variable P against the current Eto backend.
+        /// </summary>
+        /// <param name="comboBox">The Eto.Forms.ComboBox to configure.</param>
+        public static void UnlaunchDropDown(this Eto.Forms.ComboBox comboBox)
+        {
+            var P = Eto.Platform.Instance.ToString();
+
+#if WINDOWS || WINFORMS
+            if (Eto.Platform.Get(Eto.Platforms.WinForms) != null && P == Eto.Platform.Get(Eto.Platforms.WinForms).ToString())
+            {
+                System.Windows.Forms.ComboBox nativeComboBox = comboBox.ControlObject as System.Windows.Forms.ComboBox;
+                nativeComboBox.DroppedDown = false;
+            }
+#endif
+
+#if WINDOWS
+            if (Eto.Platform.Get(Eto.Platforms.Wpf) != null && P == Eto.Platform.Get(Eto.Platforms.Wpf).ToString())
+            {
+                System.Windows.Controls.ComboBox nativeComboBox = (System.Windows.Controls.ComboBox)Eto.Forms.WpfHelpers.ToNative(comboBox);
+                nativeComboBox.IsDropDownOpen = false;
+            }
+#endif
+
+#if GTK
+            if (Eto.Platform.Get(Eto.Platforms.Gtk) != null && P == Eto.Platform.Get(Eto.Platforms.Gtk).ToString())
+            {
+                Gtk.ComboBox nativeComboBox = (Gtk.ComboBox)Eto.Forms.Gtk3Helpers.ToNative(comboBox);
+                nativeComboBox.Popdown();
+            }
+#endif
+
+#if MAC64
+            // TODO: Implement for Mac platform
+#endif
+        }
     }
 }

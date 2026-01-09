@@ -19,7 +19,7 @@ namespace CommonUi
     /// </summary>
     public class TagEntryPanel : Panel, ILookupSupportedChildPanel
     {
-        private TextBox newTagTextBox;
+        private ComboBox newTagComboBox;
         private Label suggestionLabel;
         private Label instructionsLabel;
         private Button addTagButton;
@@ -62,19 +62,54 @@ namespace CommonUi
 
         private void UpdateSuggestion()
         {
-            string input = newTagTextBox.Text?.Trim() ?? "";
+            string input = newTagComboBox.Text?.Trim() ?? "";
 
             if (string.IsNullOrEmpty(input))
             {
                 suggestionLabel.Text = "";
+                newTagComboBox.Items.Clear();
                 return;
             }
 
-            // Find the closest match that starts with the input
+            // Find all matches that start with the input
             var matches = Autocomplete
                 .Where(s => s.StartsWith(input, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(s => s.Length) // Prefer shorter matches
                 .ToList();
+
+            // If no prefix matches, find closest matches using Levenshtein distance
+            if (matches.Count == 0)
+            {
+                matches = Autocomplete
+                    .OrderBy(s => LevenshteinDistance(input.ToLowerInvariant(), s.ToLowerInvariant()))
+                    .Take(10) // Take top 10 closest matches
+                    .Where(s => LevenshteinDistance(input.ToLowerInvariant(), s.ToLowerInvariant()) < 4)
+                    .ToList();
+            }
+            else
+            {
+                // Add some closest matches even when there are prefix matches
+                var closestMatches = Autocomplete
+                    .OrderBy(s => LevenshteinDistance(input.ToLowerInvariant(), s.ToLowerInvariant()))
+                    .Take(5)
+                    .Where(s => LevenshteinDistance(input.ToLowerInvariant(), s.ToLowerInvariant()) < 3)
+                    .ToList();
+
+                foreach (var match in closestMatches)
+                {
+                    if (!matches.Contains(match))
+                    {
+                        matches.Add(match);
+                    }
+                }
+            }
+
+            // Update the combobox with suggestions
+            newTagComboBox.Items.Clear();
+            foreach (var match in matches)
+            {
+                newTagComboBox.Items.Add(match);
+            }
 
             if (matches.Count > 0)
             {
@@ -82,19 +117,7 @@ namespace CommonUi
             }
             else
             {
-                // If no exact prefix match, find the closest match using Levenshtein distance
-                var closestMatch = Autocomplete
-                    .OrderBy(s => LevenshteinDistance(input.ToLowerInvariant(), s.ToLowerInvariant()))
-                    .FirstOrDefault();
-
-                if (closestMatch != null && LevenshteinDistance(input.ToLowerInvariant(), closestMatch.ToLowerInvariant()) < 3)
-                {
-                    suggestionLabel.Text = closestMatch;
-                }
-                else
-                {
-                    suggestionLabel.Text = "";
-                }
+                suggestionLabel.Text = "";
             }
         }
 
@@ -125,7 +148,7 @@ namespace CommonUi
 
         private void AddNewTag(bool useSuggestion = true)
         {
-            string tagText = newTagTextBox.Text?.Trim();
+            string tagText = newTagComboBox.Text?.Trim();
 
             Console.WriteLine($"[TagEntryPanel] AddNewTag called with input: '{tagText}', useSuggestion: {useSuggestion}");
 
@@ -167,7 +190,8 @@ namespace CommonUi
             Console.WriteLine($"[TagEntryPanel] Added tag '{normalizedTag}'");
 
             // Clear input and suggestion
-            newTagTextBox.Text = "";
+            newTagComboBox.Text = "";
+            newTagComboBox.Items.Clear();
             suggestionLabel.Text = "";
 
             // Update UI
@@ -192,8 +216,8 @@ namespace CommonUi
             Console.WriteLine($"[TagEntryPanel] Tags in collection: {string.Join(", ", tags)}");
             if (GlobalChangeHandler != null) { GlobalChangeHandler(); }
 
-            // Save current textbox text and suggestion
-            string currentText = newTagTextBox?.Text ?? "";
+            // Save current combobox text and suggestion
+            string currentText = newTagComboBox?.Text ?? "";
             string currentSuggestion = suggestionLabel?.Text ?? "";
 
             // Create a new TableLayout for the tags container
@@ -236,17 +260,35 @@ namespace CommonUi
             Console.WriteLine($"[TagEntryPanel] Final tag container row count: {tagsContainer.Rows.Count}");
 
             // Create new controls for input
-            newTagTextBox = new TextBox
+            newTagComboBox = new ComboBox
             {
                 Text = currentText,
-                PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or Shift+Enter"),
+                //PlaceholderText = TranslationHelper.Translate("Enter tag and press Enter or Shift+Enter"),
                 BackgroundColor = ColorSettings.LesserBackgroundColor,
                 TextColor = ColorSettings.LesserForegroundColor,
                 Width = ColorSettings.ControlWidth ?? 200
             };
 
-            // Add tooltip to the textbox
-            newTagTextBox.ToolTip = TranslationHelper.Translate("Enter: Add suggested tag\nShift+Enter: Add tag as-is\nTab: Move to next field");
+            newTagComboBox.GotFocus += (sender, e) =>
+            {
+                System.Console.WriteLine($"ComboBox, count: {newTagComboBox.Items.Count}");
+                /*if (e.Key == Keys.Enter ||
+                    e.Key == Keys.Escape || e.Key == Keys.Shift ||
+                    e.Key == Keys.Control || e.Key == Keys.Alt)
+                {
+                    // Close dropdown for control/modifier keys
+                        newTagComboBox.UnlaunchDropDown();
+                    return;
+                }
+
+                // Only launch dropdown when there are multiple items
+                if (newTagComboBox.Items.Count > 1)
+                {*/
+                    newTagComboBox.LaunchDropDown();
+                //}
+            };
+            // Add tooltip to the combobox
+            newTagComboBox.ToolTip = TranslationHelper.Translate("Enter: Add suggested tag\nShift+Enter: Add tag as-is\nTab: Move to next field");
 
             suggestionLabel = new Label
             {
@@ -280,9 +322,9 @@ namespace CommonUi
             };
 
             // Wire up event handlers
-            newTagTextBox.TextChanged += (sender, e) => UpdateSuggestion();
+            newTagComboBox.TextChanged += (sender, e) => UpdateSuggestion();
 
-            newTagTextBox.KeyDown += (sender, e) =>
+            newTagComboBox.KeyDown += (sender, e) =>
             {
                 if (e.Key == Keys.Enter)
                 {
@@ -311,9 +353,10 @@ namespace CommonUi
             {
                 if (!string.IsNullOrEmpty(suggestionLabel.Text))
                 {
-                    newTagTextBox.Text = suggestionLabel.Text;
+                    newTagComboBox.Text = suggestionLabel.Text;
+                    newTagComboBox.Items.Clear();
                     suggestionLabel.Text = "";
-                    newTagTextBox.Focus();
+                    newTagComboBox.Focus();
                 }
             };
 
@@ -334,7 +377,7 @@ namespace CommonUi
                         TextColor = ColorSettings.ForegroundColor
                     }),
                     new TableRow(tagsContainer) { ScaleHeight = false },
-                    new TableRow(newTagTextBox),
+                    new TableRow(newTagComboBox),
                     new TableRow(suggestionLabel),
                     new TableRow(instructionsLabel),
                     new TableRow(
@@ -418,11 +461,11 @@ namespace CommonUi
         public void SetMoveNext(Action moveNext) => this.moveNext = moveNext;
 
         public List<Control> GetFocusableControls() =>
-            new List<Control> { newTagTextBox, addTagButton };
+            new List<Control> { newTagComboBox, addTagButton };
 
         public (bool isValid, string errorDescription) Validate() => (true, string.Empty);
 
-        public void FocusChild() => newTagTextBox.Focus();
+        public void FocusChild() => newTagComboBox.Focus();
 
         public void SetOriginalValues(object[] originalValues)
         {
