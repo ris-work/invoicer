@@ -17,6 +17,7 @@
 	<PropertyGroup>
 		<!-- stop implicitly referencing the Windows desktop shared framework -->
 		<!--<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>-->
+		<NoWarn>$(NoWarn);CA1416;CS0436</NoWarn>
 	</PropertyGroup>
     <PropertyGroup Condition="'$(IsWindowsTarget)'=='true'">
         <UseWPF>true</UseWPF>
@@ -156,10 +157,10 @@
         <PackageReference Include="ScottPlot" Version="5.0.55" />
         <PackageReference Include="ScottPlot.Eto" Version="5.0.55" />
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
-        <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+        <!--<PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
+        </PackageReference>-->
         <PackageReference Include="Tomlyn" Version="0.19.0" />
         <PackageReference Include="Wiry.Base32" Version="1.1.1" />
     </ItemGroup>
@@ -170,6 +171,7 @@
 		<!--<PackageReference Include="System.Text.Json" Version="9.0.9" />-->
 		<!--<PackageReference Include="System.Net.Http.Json" Version="9.0.9" />-->
 		<!--<PackageReference Include="System.Text.Encodings.Web" Version="9.0.9" />-->
+		
 	</ItemGroup>
     <!-- On Windows, include Windows and WPF platforms -->
     <ItemGroup Condition="'$(IsWindowsTarget)' == 'true'">
@@ -187,8 +189,9 @@
     </ItemGroup>
     <ItemGroup Condition="('$(UseExperimentalCoreSWF)' == 'true') Or ('$(IsWindowsTarget)' == 'false')    ">
         <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
-		
-		<ProjectReference Include="..\..\source\repos\Core.System.Windows.Forms\System.Windows.Forms\System.Windows.Forms.csproj" />
+
+		<PackageReference Include="Rishi.Core.System.Windows.Forms" Version="1.0.3-alpha1" />
+		<PackageReference Include="Rishi.Eto.Platform.Core.WinForms" Version="2.8.3-dev" />
     </ItemGroup>
     <PropertyGroup Condition="('$(UseExperimentalCoreSWF)' != 'true') And ('$(IsWindowsTarget)' == 'true')    ">
         <!-- tells the WindowsDesktop SDK to add WinForms references -->
@@ -208,8 +211,10 @@
     <!-- On non-Windows platforms, include only the GTK platform -->
     <ItemGroup Condition="'$(IsWindowsTarget)' != 'true'">
         <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
-		<ProjectReference Include="..\..\source\repos\Core.System.Windows.Forms\System.Windows.Forms\System.Windows.Forms.csproj" />
+		<PackageReference Include="Rishi.Core.System.Windows.Forms" Version="1.0.3-alpha1" />
         <PackageReference Include="Eto.Platform.Gtk" Version="2.9.0" />
+		<PackageReference Include="Rishi.Eto.Platform.Core.WinForms" Version="2.8.3-dev" />
+		
         <!--<PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->
         <!--<PackageReference Include="Eto.Platform.Windows" Version="2.9.0" />-->

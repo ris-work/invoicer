@@ -2,14 +2,15 @@
     <PropertyGroup>
         <OutputType>Library</OutputType>
         <!--<TargetFrameworks>net9.0-windows10.0.17763.0;net9.0</TargetFrameworks>-->
-        <TargetFrameworks>net9.0-windows;net9.0</TargetFrameworks>
+        <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <!-- Define a property that evaluates if '-windows' is found -->
         <IsWindowsTarget>$([System.Text.RegularExpressions.Regex]::IsMatch($(TargetFramework),'-windows'))</IsWindowsTarget>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+        <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
+		<PackageReference Include="Rishi.Core.System.Windows.Forms" Version="1.0.3-alpha1" />
         <PackageReference Include="CsvHelper" Version="33.0.1" />
         <PackageReference Include="Eto.Forms" Version="2.9.0" />
         <PackageReference Include="GtkSharp" Version="3.24.24.117-develop" />

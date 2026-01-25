@@ -143,7 +143,7 @@ namespace CommonUi
                 WpfGW.CellStyle = null;
                 //WpfGW.Columns.First().CellStyle = null;
                 Setter setter = new Setter(
-                    DataGridCell.BorderBrushProperty,
+                    System.Windows.Controls.DataGridCell.BorderBrushProperty,
                     System.Windows.Media.Brushes.Transparent
                 );
                 WpfGW.Style = null;

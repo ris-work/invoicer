@@ -380,8 +380,15 @@ public class Program
             CurrentUI = Eto.Platforms.Wpf;
 
         bool EnableTUI = (bool)ConfigDict.GetValueOrDefault("EnableTUI", false);
-
-        (new Application(CurrentUI)).Run(new MyForm());
+        try
+        {
+            (new Application(CurrentUI)).Run(new MyForm());
+        }
+        catch(Exception E)
+        {
+            Console.WriteLine($"Exception thrown: {E.StackTrace}");
+        }
+        System.Console.WriteLine("Run() exited");
 
         if (EnableTUI)
         {
@@ -744,7 +751,7 @@ public class MyForm : Form
             }
             ;
         };
-
+        System.Console.WriteLine("Configuring [attempt 1]");
         //LoginButton.ConfigureForPlatformForFlatBorders();
         LoginButton.ConfigureForPlatform();
         layout.Rows.Add(
@@ -814,6 +821,7 @@ public class MyForm : Form
         }
         //System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/DynamicAero2;component/Brushes/Dark.xaml", UriKind.RelativeOrAbsolute) });
 #endif
+        System.Console.WriteLine("Configured [attempt 1]");
         Shown += (_, _) =>
         {
             this.Invalidate(true);
@@ -839,4 +847,5 @@ public class MyForm : Form
 
         this.Invalidate(true);
     }
+    
 }
