@@ -46,6 +46,11 @@ builder.Services.AddHttpLogging();
 var app = builder.Build();
 app.UseResponseCompression();
 
+using (var ctx = new NewinvContext())
+{
+    LoyaltyPointsManager.TestLoyaltyPoints();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
