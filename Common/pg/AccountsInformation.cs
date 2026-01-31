@@ -38,4 +38,8 @@ public partial class AccountsInformation
     public long AccountNo { get; set; }
 
     public double LoyaltyBaseMultiplicativePointsPercentage { get; set; }
+
+    public double AccountSurchargesMultiplicativePercentage { get; set; }
+
+    public double AccountSurchargesAdditiveFee { get; set; }
 }

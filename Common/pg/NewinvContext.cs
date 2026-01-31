@@ -177,6 +177,8 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("account_min");
             entity.Property(e => e.AccountName).HasColumnName("account_name");
             entity.Property(e => e.AccountPii).HasColumnName("account_pii");
+            entity.Property(e => e.AccountSurchargesAdditiveFee).HasColumnName("account_surcharges_additive_fee");
+            entity.Property(e => e.AccountSurchargesMultiplicativePercentage).HasColumnName("account_surcharges_multiplicative_percentage");
             entity.Property(e => e.AccountType).HasColumnName("account_type");
             entity.Property(e => e.AllowCreditOnPos)
                 .HasDefaultValue(false)
