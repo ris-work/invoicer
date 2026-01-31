@@ -253,5 +253,113 @@ namespace RV.InvNew.Common
             var pay = result.Payments.First();
             Console.WriteLine($"Payment: {pay.Amount}, Fee: {pay.FeeAmount}, Net: {pay.NetAmount}");
         }
+
+        public static void TestAllBranchesApplyDiscountsAndSurcharges()
+        {
+            // Branch Variables Arrays
+            bool[] flags = { false, true };
+            double[] z10 = { 0.0, 10.0 };
+            double[] z05 = { 0.0, 5.0 };
+            double[] z02 = { 0.0, 2.0 };
+            double[] z01 = { 0.0, 1.0 };
+            double[] z150 = { 0.0, 150.0 }; // Used for LP Cap test
+
+            Console.WriteLine("Vol\tInvM\tInvA\tPii\tPiiM\tPiiA\tPiiL\tDef\tDefL\tMin\tCap\tPayM\tPayA\tNet\tDisc");
+
+            foreach (var v in flags) // Has Volume Discount
+            {
+                foreach (var im in z10) // Inventory Mult %
+                {
+                    foreach (var ia in z05) // Inventory Add %
+                    {
+                        foreach (var p in flags) // Has Pii (Customer)
+                        {
+                            foreach (var pm in z05) // Pii Mult %
+                            {
+                                foreach (var pa in z02) // Pii Add %
+                                {
+                                    foreach (var pl in z10) // Pii Loyalty % (Normal)
+                                    {
+                                        foreach (var d in flags) // Has Default Cash Account
+                                        {
+                                            foreach (var dl in z01) // Default Loyalty %
+                                            {
+                                                foreach (var m in flags) // Min Price Scenario (Forces Clamp)
+                                                {
+                                                    foreach (var c in flags) // LP Cap Scenario (Forces Cap)
+                                                    {
+                                                        foreach (var pym in z02) // Pay Surcharge Mult %
+                                                        {
+                                                            foreach (var pya in z01) // Pay Surcharge Add Fee
+                                                            {
+                                                                // Apply Logic Masks
+                                                                double pM_val = p ? pm : 0.0;
+                                                                double pA_val = p ? pa : 0.0;
+                                                                double pL_val = p ? (c ? 150.0 : pl) : 0.0; // If Cap, force 150
+                                                                double dL_val = d ? dl : 0.0;
+
+                                                                // Setup Entities
+                                                                var inv = new List<Inventory> {
+                                                                    new Inventory {
+                                                                        Itemcode = 1, Batchcode = 1, SellingPrice = 100,
+                                                                        MinPrice = m ? 900 : 0, // High MinPrice to trigger clamp if discounts are high
+                                                                        MultiplicativeDiscountPercentage = im,
+                                                                        AdditiveDiscountPercentage = ia
+                                                                    }
+                                                                };
+                                                                var cat = new List<Catalogue> { new Catalogue { Itemcode = 1 } };
+                                                                var vol = v ? new List<VolumeDiscount> { new VolumeDiscount { Itemcode = 1, StartFrom = 1, DiscountPerUnit = 10 } } : new List<VolumeDiscount>();
+                                                                var pii = p ? new List<Pii> {
+                                                                    new Pii {
+                                                                        Id = 1,
+                                                                        DiscountRateMultiplicativePercentage = pM_val,
+                                                                        DiscountRateAdditivePercentage = pA_val,
+                                                                        LoyaltyPointsRateMultiplicativePercentage = pL_val
+                                                                    }
+                                                                } : new List<Pii>();
+                                                                var def = d ? new AccountsInformation { AccountNo = 1, LoyaltyBaseMultiplicativePointsPercentage = dL_val } : null;
+                                                                var acc = new List<AccountsInformation> {
+                                                                    new AccountsInformation {
+                                                                        AccountNo = 2,
+                                                                        AccountSurchargesMultiplicativePercentage = pym,
+                                                                        AccountSurchargesAdditiveFee = pya
+                                                                    }
+                                                                };
+
+                                                                var dto = new InvoiceDto
+                                                                {
+                                                                    DefaultCashAccount = def,
+                                                                    SaleItems = new List<Sale> {
+                                                                        new Sale {
+                                                                            Itemcode = 1, Batchcode = 1, Quantity = 10,
+                                                                            SellingPrice = 100, VatRatePercentage = 0
+                                                                        }
+                                                                    },
+                                                                    Payments = new List<Payment> {
+                                                                        new Payment { DebitAccountId = 2, Amount = 1000 }
+                                                                    }
+                                                                };
+
+                                                                // Execute
+                                                                var res = dto.ApplyDiscounts(inv.AsQueryable(), cat.AsQueryable(), vol.AsQueryable(), pii.AsQueryable(), acc.AsQueryable());
+                                                                var s = res.SaleItems.First();
+                                                                var pay = res.Payments.First();
+
+                                                                // Output
+                                                                Console.WriteLine($"{(v ? "Y" : "N")}\t{im}\t{ia}\t{(p ? "Y" : "N")}\t{pM_val}\t{pA_val}\t{pL_val}\t{(d ? "Y" : "N")}\t{dL_val}\t{(m ? "Y" : "N")}\t{(c ? "Y" : "N")}\t{pym}\t{pya}\t{s.TotalEffectiveSellingPrice:F1}\t{s.Discount:F1}");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

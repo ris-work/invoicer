@@ -50,6 +50,7 @@ using (var ctx = new NewinvContext())
 {
     LoyaltyPointsManager.TestLoyaltyPoints();
 }
+SalesProcessor.TestAllBranchesApplyDiscountsAndSurcharges();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

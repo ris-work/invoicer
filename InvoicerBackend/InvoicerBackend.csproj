@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <OutputType>Exe</OutputType>
@@ -31,7 +31,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<!-- Only treat .cshtml files in Slices directory as Razor Slices -->
-		<RazorSlice Include="Slices\**\*.cshtml" Exclude="Slices\**\_Layout.cshtml;Slices\**\_ViewImports.cshtml" />
+		<RazorSlice Include="Slices\**\*.cshtml" />
 	</ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Common\common.csproj" />
