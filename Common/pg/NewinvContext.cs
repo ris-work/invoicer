@@ -71,6 +71,10 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<LoyaltyPointsRedemption> LoyaltyPointsRedemptions { get; set; }
 
+    public virtual DbSet<MappedLocation> MappedLocations { get; set; }
+
+    public virtual DbSet<MappedLocationItemPlacedIn> MappedLocationItemPlacedIns { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<NotificationServicerType> NotificationServicerTypes { get; set; }
@@ -86,6 +90,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<PermissionsListCategoriesName> PermissionsListCategoriesNames { get; set; }
 
     public virtual DbSet<PermissionsListUsersCategory> PermissionsListUsersCategories { get; set; }
+
+    public virtual DbSet<PhysicalMap> PhysicalMaps { get; set; }
 
     public virtual DbSet<Pii> Piis { get; set; }
 
@@ -842,6 +848,30 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("time_issued");
         });
 
+        modelBuilder.Entity<MappedLocation>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("mapped_locations_pkey");
+
+            entity.ToTable("mapped_locations");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.HorizontalSection).HasColumnName("horizontal_section");
+            entity.Property(e => e.MapId).HasColumnName("map_id");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.VerticalSection).HasColumnName("vertical_section");
+        });
+
+        modelBuilder.Entity<MappedLocationItemPlacedIn>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("mapped_location_item_placed_in_pkey");
+
+            entity.ToTable("mapped_location_item_placed_in");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.MappedLocationId).HasColumnName("mapped_location_id");
+        });
+
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.NotifId).HasName("notifications_pkey");
@@ -998,6 +1028,22 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Categories)
                 .HasDefaultValue(0L)
                 .HasColumnName("categories");
+        });
+
+        modelBuilder.Entity<PhysicalMap>(entity =>
+        {
+            entity.HasKey(e => e.MapId).HasName("physical_maps_pkey");
+
+            entity.ToTable("physical_maps");
+
+            entity.Property(e => e.MapId).HasColumnName("map_id");
+            entity.Property(e => e.HorizontalGridlines).HasColumnName("horizontal_gridlines");
+            entity.Property(e => e.Map).HasColumnName("map");
+            entity.Property(e => e.MapName).HasColumnName("map_name");
+            entity.Property(e => e.MapType)
+                .HasDefaultValueSql("'BMP'::text")
+                .HasColumnName("map_type");
+            entity.Property(e => e.VerticalGridlines).HasColumnName("vertical_gridlines");
         });
 
         modelBuilder.Entity<Pii>(entity =>

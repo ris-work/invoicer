@@ -250,6 +250,7 @@ namespace EtoFE
                             {
                                 ("✏️ Item Editor", new LoadOncePanel<CatalogueEditPanel>(), "Editor"),
                                 ("📝 Batch Editor", new LoadOncePanel<Panel>(), "BatchEditor"),
+                                ("🗺 Map Editor", new LoadOncePanel<PhysicalMapEditorPanel>(), "PhysicalMapEditor"),
                                 ("⚙️ Adjustments", new LoadOncePanel<InventoryAdjustmentPanel>(), "Adjustments"),
                                 ("📦 All Items", new LoadOncePanel<Panel>(), "Items"),
                                 ("📈 Stock Status", new LoadOncePanel<Panel>(), "StockOverview"),

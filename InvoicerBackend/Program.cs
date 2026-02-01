@@ -30,13 +30,14 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
 });
-
+builder.Services.AddOpenApi(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1; });
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
 });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen( o => { o.SwaggerDoc("v3", new Microsoft.OpenApi.OpenApiInfo { Title = "RVPos", Version = "v3" }); } );
+
 builder.Services.AddHttpLogging(o =>
 {
     //o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
@@ -50,15 +51,16 @@ using (var ctx = new NewinvContext())
 {
     LoyaltyPointsManager.TestLoyaltyPoints();
 }
-SalesProcessor.TestAllBranchesApplyDiscountsAndSurcharges();
+//SalesProcessor.TestAllBranchesApplyDiscountsAndSurcharges();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0; });
+    app.UseSwaggerUI(o => {  });
     app.UseHttpLogging();
 }
+
 
 app.AddEarlierDesignedEndpoints();
 app.AddNotificationsHandler();
@@ -236,6 +238,7 @@ app.AddAnalyticsEndpoints();
 app.AddBackOfficeAccountingEndpoints();
 app.AddCycleCountEndpoints();
 app.AddRequestsEndpoints();
+app.AddPhysicalMapEndpoints();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();

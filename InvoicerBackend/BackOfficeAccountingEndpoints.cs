@@ -43,6 +43,8 @@ namespace InvoicerBackend
                     BAT.PersonalInfo = ctx.Piis.ToList();
                     BAT.PersonalImages = ctx.PiiImages.ToList();
                     BAT.InvImages = ctx.InventoryImages.ToList();
+                    BAT.Map = ctx.PhysicalMaps.ToList();
+                    BAT.Locations = ctx.MappedLocations.ToList();
                 }
                 //Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
                 return BAT;

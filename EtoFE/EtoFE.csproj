@@ -190,8 +190,8 @@
     <ItemGroup Condition="('$(UseExperimentalCoreSWF)' == 'true') Or ('$(IsWindowsTarget)' == 'false')    ">
         <!--<PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />-->
 
-		<PackageReference Include="Rishi.Core.System.Windows.Forms" Version="1.0.3-alpha1" />
-		<PackageReference Include="Rishi.Eto.Platform.Core.WinForms" Version="2.8.3-dev" />
+		<PackageReference Include="Rishi.Core.System.Windows.Forms" Version="1.0.6-alpha1" />
+		<PackageReference Include="Rishi.Eto.Platform.Core.WinForms" Version="2.8.6-dev" />
     </ItemGroup>
     <PropertyGroup Condition="('$(UseExperimentalCoreSWF)' != 'true') And ('$(IsWindowsTarget)' == 'true')    ">
         <!-- tells the WindowsDesktop SDK to add WinForms references -->

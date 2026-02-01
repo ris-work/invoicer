@@ -26,6 +26,8 @@ namespace common
     [JsonSerializable(typeof(List<PiiImage>))]
     [JsonSerializable(typeof(List<InventoryImage>))]
     [JsonSerializable(typeof(List<User>))]
+    [JsonSerializable(typeof(List<MappedLocation>))]
+    [JsonSerializable(typeof(List<PhysicalMap>))]
     [JsonSourceGenerationOptions(IncludeFields = true)]
     public class BackOfficeAccountingDataTransfer
     {
@@ -69,5 +71,22 @@ namespace common
         public List<Pii> PersonalInfo;
         [JsonInclude]
         public List<PiiImage> PersonalImages;
+        [JsonInclude]
+        public List<PhysicalMap> Map { get; set; }
+        [JsonInclude]
+        public List<MappedLocation> Locations { get; set; }
+    }
+
+    /// <summary>
+    /// Data Transfer Object for saving a Physical Map and its associated Locations.
+    /// </summary>
+    [JsonSerializable(typeof(List<MappedLocation>))]
+    [JsonSerializable(typeof(List<PhysicalMap>))]
+    public class MapSaveDto
+    {
+        [JsonInclude]
+        public PhysicalMap Map { get; set; }
+        [JsonInclude]
+        public List<MappedLocation> Locations { get; set; }
     }
 }

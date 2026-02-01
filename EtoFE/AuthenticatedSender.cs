@@ -191,9 +191,21 @@ namespace EtoFE
             var Posted = Program.client.SendAsync(Request);
             var Response = Posted.GetAwaiter().GetResult();
             Response.EnsureSuccessStatusCode();
+            var contentBytes = Response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            long Size = contentBytes.Length;
+            var bufferedContent = new ByteArrayContent(contentBytes);
+            foreach (var header in Response.Content.Headers)
+            {
+                bufferedContent.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+
             To result = default(To);
-            result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
-            RequestLogger.SaveRequest(Endpoint, Message, result, success, errorMessage);
+            result = bufferedContent.ReadAsAsync<To>().GetAwaiter().GetResult();
+            //result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
+            //long Size = 0;
+            //Size = Response.Content.read
+            RequestLogger.SaveRequest(Endpoint, Message, Size > 2000 ? result : default(To), Size, success, errorMessage);
             return (result, false);
         }
         public static (object Out, bool Error) ReplayRequest(RequestLogEntry logEntry, bool retryInteractively = false)
@@ -294,9 +306,18 @@ namespace EtoFE
             var Posted = Program.client.SendAsync(Request);
             var Response = Posted.GetAwaiter().GetResult();
             Response.EnsureSuccessStatusCode();
+            var contentBytes = Response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            long Size = contentBytes.Length;
+            var bufferedContent = new ByteArrayContent(contentBytes);
+            foreach (var header in Response.Content.Headers)
+            {
+                bufferedContent.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+
             To result = default(To);
-            result = Response.Content.ReadAsAsync<To>().GetAwaiter().GetResult();
-            RequestLogger.SaveRequest(Endpoint, Message, result, success, errorMessage);
+            result = bufferedContent.ReadAsAsync<To>().GetAwaiter().GetResult();
+            RequestLogger.SaveRequest(Endpoint, Message, Size > 2000 ? result : default(To), Size, success, errorMessage);
             return (result, false);
         }
 
@@ -491,6 +512,7 @@ namespace EtoFE
             string endpoint,
             TRequest request,
             TResponse response,
+            long Size,
             bool success,
             string errorMessage = "")
         {
@@ -500,7 +522,7 @@ namespace EtoFE
                 {
                     Endpoint = endpoint,
                     SerializedRequest = JsonSerializer.Serialize(request),
-                    SerializedResponse = JsonSerializer.Serialize(response),
+                    SerializedResponse = Size < 1000 ? JsonSerializer.Serialize(response) : "",
                     Success = success,
                     ErrorMessage = errorMessage,
                     RequestType = typeof(TRequest),

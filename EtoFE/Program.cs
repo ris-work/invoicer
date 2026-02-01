@@ -284,6 +284,7 @@ public class Program
             }
             Console.WriteLine($"Extracted {fileName}.");
         }
+        
         var CH = new HttpClientHandler();
         CH.AutomaticDecompression = DecompressionMethods.All;
         client = new HttpClient(CH);
@@ -465,6 +466,8 @@ public class MyForm : Form
     public MyForm()
     {
         this.ConfigureLegacyBehaviour();
+        //this.BackgroundColor = Colors.Transparent;
+        //try { if(this.ControlObject is System.Windows.Forms.Form F){ F.AllowTransparency = true; this.BackgroundColor = Colors.Transparent; } } catch (Exception E) { }
 
         if (Program.UseCustomFonts)
         {
@@ -582,7 +585,7 @@ public class MyForm : Form
         TextBox UsernameBox,
             TerminalBox;
         PasswordBox PasswordBox;
-        BackgroundColor = ColorSettings.BackgroundColor;
+        BackgroundColor = new Color( ColorSettings.BackgroundColor);
 
         var ModelDict = Program.ConfigDict;
         string LogoPath = (string)ModelDict.GetValueOrDefault("LogoPath", "logo.png");
