@@ -1,54 +1,92 @@
 ﻿@page "/Pages/DumpAuth"
 
 @functions {
-    public string FoundToken { get; set; } = "Not Found";
-    public bool IsAuthenticated { get; set; } = false;
+    public string FoundToken { get; set; } = "Checking...";
 
     public void OnGet()
     {
         if (Request.Cookies.ContainsKey("auth-token"))
         {
-            FoundToken = Request.Cookies["auth-token"];
-            IsAuthenticated = true;
+            FoundToken = "Cookie found (see JS Console)";
         }
-    }
-
-    public void OnPostClear()
-    {
-        // Clears the cookie
-        Response.Cookies.Delete("auth-token");
-        FoundToken = "Deleted";
-        IsAuthenticated = false;
+        else
+        {
+            FoundToken = "No cookie found. Go to /LoginWeb to log in.";
+        }
     }
 }
 
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>Dump Auth</h1>
+    <h1>Dump Auth & Test API</h1>
 
-    @if (IsAuthenticated)
-    {
-        <div style="padding: 15px; background: #d1ecf1; border: 1px solid #bee5eb;">
-            <h3>🎉 Authenticated!</h3>
-            <p><strong>Token Value:</strong> @FoundToken</p>
-        </div>
-    }
-    else
-    {
-        <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb;">
-            <h3>🔒 Not Authenticated</h3>
-            <p>No 'auth-token' cookie found.</p>
-        </div>
-    }
+    <p><strong>Server says:</strong> @FoundToken</p>
 
-    <hr />
+    @* Updated button to reflect the specific test we are doing *@
+    <button onclick="testAuthenticatedEcho()">Call /BearerAuthenticatedEcho (POST)</button>
 
-    <h3>Actions</h3>
-    <form method="post" asp-page-handler="Clear">
-        <button type="submit">Clear Token / Log Out</button>
-    </form>
+    <div id="result" style="margin-top:20px; padding:10px; background:#eee; border: 1px solid #ccc; min-height: 50px;">
+        <em>Click button to test...</em>
+    </div>
 
-    <p><a href="/Pages/Authenticate">Go back to Authenticate</a></p>
+    <script>
+        // Helper to read the cookie (from previous step)
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function testAuthenticatedEcho() {
+            const token = getCookie("auth-token");
+            const display = document.getElementById("result");
+
+            if (!token) {
+                display.innerHTML = "Error: No 'auth-token' cookie found. <a href='/LoginWeb'>Login first</a>.";
+                return;
+            }
+
+            display.innerHTML = "Sending POST request to /BearerAuthenticatedEcho...";
+
+            try {
+                // 1. Call the MapPost endpoint
+                const response = await fetch('/BearerAuthenticatedEcho', {
+                    method: 'POST', // POST as requested
+                    headers: {
+                        'Authorization': `Bearer ${token}`, // Bearer token from cookie
+                        'Content-Type': 'application/json'
+                    },
+                    // Sending an empty JSON object as body (common for POSTs without specific payload reqs)
+                    body: JSON.stringify("{}")
+                });
+
+                // 2. Handle Response
+                if (response.ok) {
+                    // Try to parse JSON, if fails treat as text
+                    const contentType = response.headers.get("content-type");
+                    let resultText;
+
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        const data = await response.json();
+                        resultText = JSON.stringify(data, null, 2); // Pretty print JSON
+                    } else {
+                        resultText = await response.text();
+                    }
+
+                    display.innerHTML = `
+                        <div style="color: green;"><strong>Success (200 OK)</strong></div>
+                        <pre>${resultText}</pre>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    display.innerHTML = `<div style="color: red;"><strong>Error ${response.status}</strong><br>${errorText}</div>`;
+                }
+
+            } catch (err) {
+                display.innerHTML = `<div style="color: red;">Network Error: ${err}</div>`;
+            }
+        }
+    </script>
 </body>
 </html>

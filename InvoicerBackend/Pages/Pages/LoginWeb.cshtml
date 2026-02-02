@@ -1,5 +1,4 @@
-﻿@*@page "/Pages/LoginWeb"*@
-@page "/Pages/LoginWeb"
+﻿@page "/Pages/LoginWeb"
 
 @functions {
     // No server-side logic needed here
@@ -39,8 +38,8 @@
 
         <div id="statusMessage" style="margin-top: 15px; font-weight: bold;"></div>
 
-        <!-- Display the raw JSON response here -->
-        <div id="rawOutput" style="margin-top: 15px; padding: 10px; background: #eef; font-family: monospace; white-space: pre-wrap; display: none;"></div>
+        <!-- Display the generated Base64 token for debugging -->
+        <div id="rawOutput" style="margin-top: 15px; padding: 10px; background: #eef; font-family: monospace; word-break: break-all; display: none;"></div>
     </div>
 
     <script>
@@ -75,34 +74,44 @@
 
                 const data = await response.json();
 
-                // 1. SHOW THE FULL OUTPUT (As requested)
-                console.log("Full Response Data:", data);
-                rawDiv.style.display = "block";
-                rawDiv.innerText = JSON.stringify(data, null, 2);
-
-                // 2. CHECK FOR ERRORS (Case Sensitive: data.error)
+                // Check for errors in the JSON response
                 if (!response.ok || data.error) {
                     statusDiv.innerText = "Error: " + (data.error || response.statusText);
                     statusDiv.style.color = "red";
                 } else {
 
-                    // 3. STORE TOKEN (Case Sensitive: data.token)
-                    // If your API uses "SecretToken" for auth, change data.token -> data.secretToken
-                    const tokenToStore = data.token;
+                    // 1. Construct the LoginToken object matching your C# struct
+                    // We use lowercase keys because the response was lowercase,
+                    // but your Common Lib snippet "LoginToken" expects the structure.
+                    // If your server expects PascalCase ("TokenID") in the Base64, change keys below to TokenID, Token, etc.
+                    const loginTokenObject = {
+                        TokenID: data.tokenID,      // Key is PascalCase
+                        Token: data.token,          // Key is PascalCase
+                        SecretToken: data.secretToken,
+                        Error: data.error
+                    };
 
-                    if (tokenToStore) {
-                        document.cookie = `auth-token=${tokenToStore}; path=/`;
+                    // 2. Serialize to JSON
+                    const jsonString = JSON.stringify(loginTokenObject);
 
-                        statusDiv.innerText = "Login Successful! Token stored.";
-                        statusDiv.style.color = "green";
+                    // 3. Convert to Base64 (This matches your Common Lib: Convert.FromBase64String)
+                    // btoa() handles binary-to-ascii encoding (effectively Base64 in browser)
+                    const base64Token = btoa(jsonString);
 
-                        setTimeout(() => {
-                            window.location.href = "/Pages/DumpAuth";
-                        }, 1000);
-                    } else {
-                        statusDiv.innerText = "Login succeeded but no Token found in response.";
-                        statusDiv.style.color = "orange";
-                    }
+                    // Debug: Show the Base64 string
+                    rawDiv.style.display = "block";
+                    rawDiv.innerText = "Generated Bearer Token (Base64):\n" + base64Token;
+
+                    // 4. Store the Base64 string in the cookie
+                    // This is what your server will read as BearerToken
+                    document.cookie = `auth-token=${base64Token}; path=/`;
+
+                    statusDiv.innerText = "Login Successful! Full Token (Base64) stored.";
+                    statusDiv.style.color = "green";
+
+                    setTimeout(() => {
+                        window.location.href = "/Pages/DumpAuth";
+                    }, 1000);
                 }
 
             } catch (err) {

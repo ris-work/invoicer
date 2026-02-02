@@ -412,6 +412,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            app.AddEndpointWithBearerAuth<string>("BearerAuthenticatedEcho", (AS, LoginInfo) => { return (string)AS; }, "Refresh");
         }
     }
 }
