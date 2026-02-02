@@ -1,51 +1,48 @@
 ﻿@page "/Pages/Index"
 
 @functions {
-    public string Text { get; set; }
-    public string Result { get; set; }
+    public string TextContent { get; set; } = "";
+    public string Result { get; set; } = "";
     public static int Count = 0;
 
     public string ActiveHandler { get; set; } = "Initial Load";
 
-    // ONE generic handler to rule them all
-    public void OnPost()
+    // MAGIC: Triggered when URL contains ?handler=Echo
+    public void OnPostEcho()
     {
-        // 1. Grab the handler button value manually from the Form
-        var handler = Request.Form["handler"].ToString();
+        ActiveHandler = "Magic Echo (URL Mode)";
+        TextContent = Request.Form["Text"].ToString();
+        Result = TextContent;
+    }
 
-        // 2. Grab the text box value manually
-        Text = Request.Form["Text"].ToString();
-
-        // 3. Simple manual logic (if/else)
-        if (handler == "Echo")
-        {
-            ActiveHandler = "Manual Echo";
-            Result = Text;
-        }
-        else if (handler == "Increment")
-        {
-            ActiveHandler = "Manual Increment";
-            Count++;
-        }
-        else
-        {
-            ActiveHandler = "Unknown Handler";
-        }
+    // MAGIC: Triggered when URL contains ?handler=Increment
+    public void OnPostIncrement()
+    {
+        ActiveHandler = "Magic Increment (URL Mode)";
+        Count++;
+        // Keep the text box populated
+        TextContent = Request.Form["Text"].ToString();
     }
 }
 
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>Manual Mode (No BindProperty)</h1>
+    <h1>Reliable Magic Mode</h1>
 
-    <form action="" method="post">
+    <form action="/Pages/Index" method="post">
         @Html.AntiForgeryToken()
 
-        <input type="text" name="Text" placeholder="Type something..." value="@Text" />
+        <input type="text" name="Text" placeholder="Type something..." value="@TextContent" />
 
-        <button type="submit" name="handler" value="Echo">Echo Text</button>
-        <button type="submit" name="handler" value="Increment">Increment (@Count)</button>
+        @* 
+           THE FIX:
+           'formaction' overrides the form's action for just this button.
+           It adds ?handler=Echo to the URL, forcing OnPostEcho to run.
+           This is 100% reliable, unlike the form-body convention.
+        *@
+        <button type="submit" formaction="/Pages/Index?handler=Echo">Echo Text</button>
+        <button type="submit" formaction="/Pages/Index?handler=Increment">Increment (@Count)</button>
     </form>
 
     <div style="background: #f0f0f0; padding: 15px; margin-top: 20px; border: 1px solid #ccc;">
@@ -55,21 +52,34 @@
         <p><strong>Result Text:</strong> @Result</p>
     </div>
 
-    @* Optional: Keep the dump to verify we are still reading the raw data correctly *@
-    <div style="background: #ffe6e6; padding: 15px; margin-top: 20px; border: 1px solid red;">
-        <h3>Raw Request Dump:</h3>
-        @if (Request.Method == "POST")
+    @* --- THE COMPREHENSIVE DUMP --- *@
+    <div style="background: #e6f7ff; padding: 15px; margin-top: 20px; border: 1px solid blue;">
+        <h3>Full Request Dump</h3>
+
+        <p><strong>Method:</strong> @Request.Method</p>
+        <p><strong>URL (Query String):</strong> @Request.QueryString</p>
+        <p><strong>Content-Type:</strong> @Request.ContentType</p>
+
+        <h4>Form Body Data:</h4>
+        @if (Request.HasFormContentType)
         {
-            <table border="1" cellpadding="5">
-                <tr><th>Key</th><th>Value</th></tr>
-                @foreach (var key in Request.Form.Keys)
-                {
-                    <tr>
-                        <td>@key</td>
-                        <td>@Request.Form[key]</td>
-                    </tr>
-                }
-            </table>
+            @if (Request.Form.Count > 0)
+            {
+                <ul>
+                    @foreach (var key in Request.Form.Keys)
+                    {
+                        <li><strong>@key:</strong> @Request.Form[key]</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p style="color:red; font-style:italic;">Form is empty (no data found in body)</p>
+            }
+        }
+        else
+        {
+            <p style="color:red; font-style:italic;">Request is not a Form (likely GET)</p>
         }
     </div>
 </body>
