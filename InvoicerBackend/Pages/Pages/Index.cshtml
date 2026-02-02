@@ -1,0 +1,45 @@
+﻿@page "/Pages/Index"
+
+@* 
+   CRITICAL: We need this namespace for [BindProperty] to actually function.
+   Without it, your 'Text' variable will always be empty.
+*@
+@using Microsoft.AspNetCore.Mvc
+
+@functions {
+    // This attribute only works with the namespace above
+    [BindProperty]
+    public string Text { get; set; }
+
+    public string Result { get; set; }
+    public static int Count = 0;
+
+    public void OnPostEcho() => Result = Text;
+    public void OnPostIncrement() => Count++;
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Raw HTML Mode</h1>
+
+    @* 
+       1. action="" ensures we post to the exact same URL we are currently viewing.
+          This avoids 404s if you are accessing via /Pages/Index
+    *@
+    <form action="" method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="text" name="Text" placeholder="Type something..." value="@Text" />
+
+        <button type="submit" name="handler" value="Echo">Echo Text</button>
+        <button type="submit" name="handler" value="Increment">Increment (@Count)</button>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Result))
+    {
+        <p><strong>Last Echo:</strong> @Result</p>
+    }
+</body>
+</html>

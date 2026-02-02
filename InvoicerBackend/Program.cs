@@ -43,6 +43,7 @@ builder.Services.AddHttpLogging(o =>
     //o.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
 });
 builder.Services.AddHttpLogging();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 app.UseResponseCompression();
@@ -60,6 +61,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(o => {  });
     app.UseHttpLogging();
 }
+
+
 
 
 app.AddEarlierDesignedEndpoints();
@@ -239,6 +242,7 @@ app.AddBackOfficeAccountingEndpoints();
 app.AddCycleCountEndpoints();
 app.AddRequestsEndpoints();
 app.AddPhysicalMapEndpoints();
+app.MapRazorPages();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();
