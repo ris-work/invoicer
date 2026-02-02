@@ -1,0 +1,116 @@
+﻿@*@page "/Pages/LoginWeb"*@
+@page "/Pages/LoginWeb"
+
+@functions {
+    // No server-side logic needed here
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Login</h1>
+
+    <div style="max-width: 400px; padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
+
+        <form id="loginForm" onsubmit="doLogin(event)">
+
+            <div style="margin-bottom: 10px;">
+                <label><strong>User:</strong></label><br />
+                <input type="text" id="User" name="User" style="width: 100%;" required />
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label><strong>Password:</strong></label><br />
+                <input type="password" id="Password" name="Password" style="width: 100%;" required />
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label><strong>Terminal:</strong></label><br />
+                <input type="text" id="Terminal" name="Terminal" style="width: 100%;" value="WebClient" />
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label><strong>TOTP (Optional):</strong></label><br />
+                <input type="text" id="TOTP" name="TOTP" style="width: 100%;" placeholder="123456" />
+            </div>
+
+            <button type="submit" style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer;">Login</button>
+        </form>
+
+        <div id="statusMessage" style="margin-top: 15px; font-weight: bold;"></div>
+
+        <!-- Display the raw JSON response here -->
+        <div id="rawOutput" style="margin-top: 15px; padding: 10px; background: #eef; font-family: monospace; white-space: pre-wrap; display: none;"></div>
+    </div>
+
+    <script>
+        async function doLogin(e) {
+            e.preventDefault();
+
+            const user = document.getElementById('User').value;
+            const password = document.getElementById('Password').value;
+            const terminal = document.getElementById('Terminal').value;
+            const totp = document.getElementById('TOTP').value;
+
+            const statusDiv = document.getElementById('statusMessage');
+            const rawDiv = document.getElementById('rawOutput');
+
+            const payload = {
+                User: user,
+                Password: password,
+                Terminal: terminal,
+                TOTP: totp ? totp : null
+            };
+
+            statusDiv.innerText = "Logging in...";
+            statusDiv.style.color = "blue";
+            rawDiv.style.display = "none";
+
+            try {
+                const response = await fetch('/Login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                // 1. SHOW THE FULL OUTPUT (As requested)
+                console.log("Full Response Data:", data);
+                rawDiv.style.display = "block";
+                rawDiv.innerText = JSON.stringify(data, null, 2);
+
+                // 2. CHECK FOR ERRORS (Case Sensitive: data.error)
+                if (!response.ok || data.error) {
+                    statusDiv.innerText = "Error: " + (data.error || response.statusText);
+                    statusDiv.style.color = "red";
+                } else {
+
+                    // 3. STORE TOKEN (Case Sensitive: data.token)
+                    // If your API uses "SecretToken" for auth, change data.token -> data.secretToken
+                    const tokenToStore = data.token;
+
+                    if (tokenToStore) {
+                        document.cookie = `auth-token=${tokenToStore}; path=/`;
+
+                        statusDiv.innerText = "Login Successful! Token stored.";
+                        statusDiv.style.color = "green";
+
+                        setTimeout(() => {
+                            window.location.href = "/Pages/DumpAuth";
+                        }, 1000);
+                    } else {
+                        statusDiv.innerText = "Login succeeded but no Token found in response.";
+                        statusDiv.style.color = "orange";
+                    }
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusDiv.innerText = "Network Error: Could not reach server.";
+                statusDiv.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>

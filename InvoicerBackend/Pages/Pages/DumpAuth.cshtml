@@ -1,0 +1,54 @@
+﻿@page "/Pages/DumpAuth"
+
+@functions {
+    public string FoundToken { get; set; } = "Not Found";
+    public bool IsAuthenticated { get; set; } = false;
+
+    public void OnGet()
+    {
+        if (Request.Cookies.ContainsKey("auth-token"))
+        {
+            FoundToken = Request.Cookies["auth-token"];
+            IsAuthenticated = true;
+        }
+    }
+
+    public void OnPostClear()
+    {
+        // Clears the cookie
+        Response.Cookies.Delete("auth-token");
+        FoundToken = "Deleted";
+        IsAuthenticated = false;
+    }
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Dump Auth</h1>
+
+    @if (IsAuthenticated)
+    {
+        <div style="padding: 15px; background: #d1ecf1; border: 1px solid #bee5eb;">
+            <h3>🎉 Authenticated!</h3>
+            <p><strong>Token Value:</strong> @FoundToken</p>
+        </div>
+    }
+    else
+    {
+        <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb;">
+            <h3>🔒 Not Authenticated</h3>
+            <p>No 'auth-token' cookie found.</p>
+        </div>
+    }
+
+    <hr />
+
+    <h3>Actions</h3>
+    <form method="post" asp-page-handler="Clear">
+        <button type="submit">Clear Token / Log Out</button>
+    </form>
+
+    <p><a href="/Pages/Authenticate">Go back to Authenticate</a></p>
+</body>
+</html>
