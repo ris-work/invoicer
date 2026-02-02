@@ -1,34 +1,45 @@
 ﻿@page "/Pages/Index"
 
-@* 
-   CRITICAL: We need this namespace for [BindProperty] to actually function.
-   Without it, your 'Text' variable will always be empty.
-*@
-@using Microsoft.AspNetCore.Mvc
-
 @functions {
-    // This attribute only works with the namespace above
-    [BindProperty]
     public string Text { get; set; }
-
     public string Result { get; set; }
     public static int Count = 0;
 
-    public void OnPostEcho() => Result = Text;
-    public void OnPostIncrement() => Count++;
+    public string ActiveHandler { get; set; } = "Initial Load";
+
+    // ONE generic handler to rule them all
+    public void OnPost()
+    {
+        // 1. Grab the handler button value manually from the Form
+        var handler = Request.Form["handler"].ToString();
+
+        // 2. Grab the text box value manually
+        Text = Request.Form["Text"].ToString();
+
+        // 3. Simple manual logic (if/else)
+        if (handler == "Echo")
+        {
+            ActiveHandler = "Manual Echo";
+            Result = Text;
+        }
+        else if (handler == "Increment")
+        {
+            ActiveHandler = "Manual Increment";
+            Count++;
+        }
+        else
+        {
+            ActiveHandler = "Unknown Handler";
+        }
+    }
 }
 
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>Raw HTML Mode</h1>
+    <h1>Manual Mode (No BindProperty)</h1>
 
-    @* 
-       1. action="" ensures we post to the exact same URL we are currently viewing.
-          This avoids 404s if you are accessing via /Pages/Index
-    *@
     <form action="" method="post">
-
         @Html.AntiForgeryToken()
 
         <input type="text" name="Text" placeholder="Type something..." value="@Text" />
@@ -37,9 +48,29 @@
         <button type="submit" name="handler" value="Increment">Increment (@Count)</button>
     </form>
 
-    @if (!string.IsNullOrEmpty(Result))
-    {
-        <p><strong>Last Echo:</strong> @Result</p>
-    }
+    <div style="background: #f0f0f0; padding: 15px; margin-top: 20px; border: 1px solid #ccc;">
+        <h3>App State:</h3>
+        <p><strong>Last Handler Run:</strong> @ActiveHandler</p>
+        <p><strong>Current Count:</strong> @Count</p>
+        <p><strong>Result Text:</strong> @Result</p>
+    </div>
+
+    @* Optional: Keep the dump to verify we are still reading the raw data correctly *@
+    <div style="background: #ffe6e6; padding: 15px; margin-top: 20px; border: 1px solid red;">
+        <h3>Raw Request Dump:</h3>
+        @if (Request.Method == "POST")
+        {
+            <table border="1" cellpadding="5">
+                <tr><th>Key</th><th>Value</th></tr>
+                @foreach (var key in Request.Form.Keys)
+                {
+                    <tr>
+                        <td>@key</td>
+                        <td>@Request.Form[key]</td>
+                    </tr>
+                }
+            </table>
+        }
+    </div>
 </body>
 </html>
