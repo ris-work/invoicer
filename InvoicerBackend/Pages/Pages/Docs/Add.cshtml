@@ -212,7 +212,7 @@
                 // 3. Transcribe
                 const transcribePayload = {
                     RefDoc: savedDoc.refId,
-                    TranscriberLlmName: "MOLMO2"
+                    TranscriberLlmName: "z-ai/glm-4.6v"
                 };
 
                 const transRes = await fetch('/ReTranscribeRefDoc', {

@@ -47,7 +47,7 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 app.UseResponseCompression();
-RV.InvNew.Common.TranscriptionService.TestSampleTranscribe().GetAwaiter().GetResult();
+//RV.InvNew.Common.TranscriptionService.TestSampleTranscribe().GetAwaiter().GetResult();
 using (var ctx = new NewinvContext())
 {
     LoyaltyPointsManager.TestLoyaltyPoints();

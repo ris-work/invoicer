@@ -14,7 +14,7 @@ namespace RV.InvNew.Common
     /// </summary>
     public static class TranscriptionService
     {
-        private const string DefaultModel = "allenai/molmo-2-8b"; // Or specific high-reasoning vision model ID
+        private const string DefaultModel = "z-ai/glm-4.6v"; // Or specific high-reasoning vision model ID
         private static readonly HttpClient _httpClient = new HttpClient();
 
         /// <summary>

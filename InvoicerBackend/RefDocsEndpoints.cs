@@ -8,25 +8,26 @@ namespace InvoicerBackend
 {
     public static class RefDocsEndpoints
     {
+        // DTO for requesting transcriptions by ID
+        public class TranscriptionIdRequest
+        {
+            public long RefId { get; set; }
+        }
+
         public static WebApplication AddRefDocsEndpoints(this WebApplication app)
         {
-            // Save RefDoc
+            // Save RefDoc (POST)
             app.AddAsyncEndpointWithBearerAuth<RefDoc>(
                 "SaveRefDoc",
                 async (DataIn, LoginInfo) =>
                 {
                     var doc = (RefDoc)DataIn;
+                    doc.RefId = 0; // Force CLR default
 
-                    // Force CLR default to trigger ValueGeneratedOnAdd (Auto-increment)
-                    doc.RefId = 0;
-
-                    // Constraint: Content must not exceed 8MiB
                     if (!string.IsNullOrEmpty(doc.RefImage))
                     {
-                        if (doc.RefImage.Length > 11184810) // Approx 8MiB Base64 limit
-                        {
+                        if (doc.RefImage.Length > 11184810)
                             throw new ArgumentException("Document image size exceeds the 8MiB limit.");
-                        }
                     }
 
                     doc.AuthoredBy = (long)LoginInfo.UserId;
@@ -43,7 +44,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // ReTranscribe RefDoc
+            // ReTranscribe RefDoc (POST)
             app.AddAsyncEndpointWithBearerAuth<RefDocsTranscription>(
                 "ReTranscribeRefDoc",
                 async (DataIn, LoginInfo) =>
@@ -52,7 +53,6 @@ namespace InvoicerBackend
 
                     using (var ctx = new NewinvContext())
                     {
-                        // Use the common service
                         var result = await TranscriptionService.AITranscribe(req.RefDoc, req.TranscriberLlmName, ctx);
                         return result;
                     }
@@ -60,35 +60,32 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // GetDocuments (Last 100)
-            app.AddEndpointWithBearerAuth<string>(
+            // GetDocuments (POST) - Changed from GET
+            app.AddAsyncEndpointWithBearerAuth<object>(
                 "GetDocuments",
-                (DataIn, LoginInfo) =>
+                async (DataIn, LoginInfo) =>
                 {
                     using (var ctx = new NewinvContext())
                     {
-                        return ctx.RefDocs
+                        return await ctx.RefDocs
                             .OrderByDescending(d => d.CreatedAt)
                             .Take(100)
-                            .ToList();
+                            .ToListAsync();
                     }
                 },
                 "Refresh"
             );
 
-            // SearchDocuments
+            // SearchDocuments (POST)
             app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest>(
                 "SearchDocuments",
                 async (DataIn, LoginInfo) =>
                 {
                     var req = (DocumentSearchRequest)DataIn;
-
-                    // Calculate Time Range (Ensure UTC)
                     var (from, to) = CalculateTimeRange(req.From, req.To);
 
                     using (var ctx = new NewinvContext())
                     {
-                        // Method Syntax: Join RefDocs with RefDocsTranscriptions manually
                         var query = ctx.RefDocs
                             .Join(ctx.RefDocsTranscriptions,
                                   doc => doc.RefId,
@@ -106,7 +103,6 @@ namespace InvoicerBackend
                             );
                         }
 
-                        // Select distinct documents to avoid duplicates if multiple transcriptions match
                         return await query
                             .Select(x => x.doc)
                             .Distinct()
@@ -117,19 +113,16 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // SuggestDocuments (Top 10)
+            // SuggestDocuments (POST)
             app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest>(
                 "SuggestDocuments",
                 async (DataIn, LoginInfo) =>
                 {
                     var req = (DocumentSearchRequest)DataIn;
-
-                    // Calculate Time Range
                     var (from, to) = CalculateTimeRange(req.From, req.To);
 
                     using (var ctx = new NewinvContext())
                     {
-                        // Method Syntax: Join RefDocs with RefDocsTranscriptions manually
                         var query = ctx.RefDocs
                             .Join(ctx.RefDocsTranscriptions,
                                   doc => doc.RefId,
@@ -139,10 +132,7 @@ namespace InvoicerBackend
 
                         if (!string.IsNullOrWhiteSpace(req.Query))
                         {
-                            // Split query by space for OR logic
                             var terms = req.Query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                            // Search for ANY term in the transcription fields
                             query = query.Where(x => x.trans != null && terms.Any(term =>
                                 (x.trans.RefDocTitle != null && x.trans.RefDocTitle.ToLower().Contains(term.ToLower())) ||
                                 (x.trans.TranscribedContent != null && x.trans.TranscribedContent.ToLower().Contains(term.ToLower())) ||
@@ -161,18 +151,18 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // Get Transcriptions for a specific RefDoc
-            app.AddEndpointWithBearerAuth<long>(
+            // GetTranscriptions (POST) - Changed from GET
+            app.AddAsyncEndpointWithBearerAuth<TranscriptionIdRequest>(
                 "GetTranscriptions",
-                (RefIdIn, LoginInfo) =>
+                async (DataIn, LoginInfo) =>
                 {
-                    var refId = (long)RefIdIn;
+                    var req = (TranscriptionIdRequest)DataIn;
                     using (var ctx = new NewinvContext())
                     {
-                        return ctx.RefDocsTranscriptions
-                            .Where(t => t.RefDoc == refId)
+                        return await ctx.RefDocsTranscriptions
+                            .Where(t => t.RefDoc == req.RefId)
                             .OrderByDescending(t => t.TranscribedAt)
-                            .ToList();
+                            .ToListAsync();
                     }
                 },
                 "Refresh"
@@ -181,7 +171,6 @@ namespace InvoicerBackend
             return app;
         }
 
-        // DTO for Search Requests
         public class DocumentSearchRequest
         {
             public string Query { get; set; }
@@ -189,7 +178,6 @@ namespace InvoicerBackend
             public DateTime? To { get; set; }
         }
 
-        // Helper for Time Range Calculation
         private static (DateTime From, DateTime To) CalculateTimeRange(DateTime? from, DateTime? to)
         {
             DateTime now = DateTime.UtcNow;
@@ -197,25 +185,21 @@ namespace InvoicerBackend
 
             if (from.HasValue && to.HasValue)
             {
-                // Both specified
                 rangeFrom = from.Value.Kind == DateTimeKind.Utc ? from.Value : from.Value.ToUniversalTime();
                 rangeTo = to.Value.Kind == DateTimeKind.Utc ? to.Value : to.Value.ToUniversalTime();
             }
             else if (to.HasValue)
             {
-                // Only To specified: From = To - 6 months
                 rangeTo = to.Value.Kind == DateTimeKind.Utc ? to.Value : to.Value.ToUniversalTime();
                 rangeFrom = rangeTo.AddMonths(-6);
             }
             else if (from.HasValue)
             {
-                // Only From specified: To = From + 6 months
                 rangeFrom = from.Value.Kind == DateTimeKind.Utc ? from.Value : from.Value.ToUniversalTime();
                 rangeTo = rangeFrom.AddMonths(6);
             }
             else
             {
-                // None specified: From = Now - 6 months, To = Now
                 rangeTo = now;
                 rangeFrom = now.AddMonths(-6);
             }
