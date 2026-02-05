@@ -43,6 +43,14 @@
             margin-top: 5px;
         }
 
+        .doc-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border: 1px solid #eee;
+            display: block;
+        }
+
         .btn {
             padding: 6px 12px;
             text-decoration: none;
@@ -73,15 +81,15 @@
         .transcription-area {
             margin-top: 10px;
             width: 100%;
-            height: 200px; /* Increased height slightly */
+            height: 200px;
             display: none;
-            font-family: sans-serif; /* Default to sans for readability */
+            font-family: sans-serif;
             font-size: 0.95em;
             padding: 10px;
             border: 1px solid #ccc;
             background: #f9f9f9;
             resize: vertical;
-            white-space: pre-wrap; /* Preserve formatting */
+            white-space: pre-wrap;
         }
 
             .transcription-area.json-mode {
@@ -127,6 +135,9 @@
     </div>
 
     <script>
+        // Store current transcription indices globally
+        window.currentTranscriptionIndices = {};
+
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -141,6 +152,10 @@
                 window.location.href = '/Pages/LoginWeb';
                 return;
             }
+
+            // Check for specific ID in query string
+            const params = new URLSearchParams(window.location.search);
+            const targetId = params.get('id');
 
             try {
                 const response = await fetch('/GetDocuments', {
@@ -161,8 +176,20 @@
                     return;
                 }
 
+                // Logic: If ID is present, show only that doc. Otherwise show list.
+                let docsToRender = docs;
+                if (targetId) {
+                    const found = docs.find(d => d.refId == targetId);
+                    if (found) {
+                        docsToRender = [found];
+                    } else {
+                        listDiv.innerHTML = `<p>Document with ID ${targetId} not found in recent documents.</p>`;
+                        return;
+                    }
+                }
+
                 let html = '';
-                docs.forEach(doc => {
+                docsToRender.forEach(doc => {
                     const date = new Date(doc.createdAt).toLocaleString();
                     const transAreaId = `trans-${doc.refId}`;
                     const transListId = `list-${doc.refId}`;
@@ -179,6 +206,8 @@
                             </div>
                             <div class="doc-meta">ID: ${doc.refId} | Created: ${date}</div>
 
+                            <img src="data:image/jpeg;base64,${doc.refImage}" class="doc-image" alt="Document Image" />
+
                             <div id="${transListId}" class="transcription-list" style="display:none;"></div>
 
                             <div id="${transControlsId}" class="transcription-controls">
@@ -189,6 +218,11 @@
                     `;
                 });
                 listDiv.innerHTML = html;
+
+                // If a specific ID was requested, automatically open its transcriptions
+                if (targetId && docsToRender.length > 0) {
+                    await toggleTranscriptions(parseInt(targetId));
+                }
 
             } catch (err) {
                 listDiv.innerHTML = `<p style="color: red;">Failed to load documents: ${err.message}</p>`;
@@ -201,10 +235,8 @@
             if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
 
             const card = document.getElementById(`card-${refId}`);
-            // Create a specific ID for status to remove it later
             const statusId = `status-${refId}`;
 
-            // Remove existing status if any
             const existingStatus = document.getElementById(statusId);
             if (existingStatus) existingStatus.remove();
 
@@ -237,7 +269,6 @@
 
                 const result = await response.json();
 
-                // Remove status on success
                 const statusEl = document.getElementById(statusId);
                 if (statusEl) statusEl.remove();
 
@@ -330,10 +361,12 @@
             const transcriptions = JSON.parse(listDiv.dataset.jsonData);
             const selected = transcriptions[index];
 
-            // Show controls
-            controlsDiv.style.display = 'flex';
+            window.currentTranscriptionIndices[refId] = index;
 
-            // Default to content mode
+            // FIX: Explicitly show controls and textarea
+            controlsDiv.style.display = 'flex';
+            textArea.style.display = 'block';
+
             textArea.dataset.mode = 'content';
             textArea.classList.remove('json-mode');
             textArea.value = selected.transcribedContent || "No content available.";
@@ -347,46 +380,22 @@
 
             if (!listDiv.dataset.jsonData) return;
 
-            // We need to know which index is currently selected.
-            // Since we don't store the current index explicitly, we can try to find the matching JSON in the list.
-            // However, a simpler way is to store the current index on the textarea or listDiv.
-            // Let's assume the last clicked one is the one we want to toggle.
-            // For simplicity, let's just toggle based on the current mode.
+            const index = window.currentTranscriptionIndices[refId];
+            if (index === undefined) return;
 
             const transcriptions = JSON.parse(listDiv.dataset.jsonData);
+            const selected = transcriptions[index];
 
             if (textArea.dataset.mode === 'content') {
-                // Switch to JSON
-                // Find the transcription that matches the current content (imperfect but works for simple use)
-                // Or better, store the current index in a variable or attribute.
-                // Let's rely on the user having clicked a link recently.
-                // Actually, let's just look for the transcription that has the exact content.
-                const currentContent = textArea.value;
-                const match = transcriptions.find(t => t.transcribedContent === currentContent);
-
-                if (match) {
-                    textArea.value = JSON.stringify(match, null, 2);
-                    textArea.dataset.mode = 'json';
-                    textArea.classList.add('json-mode');
-                    toggleBtn.innerText = "Show Content";
-                }
+                textArea.value = JSON.stringify(selected, null, 2);
+                textArea.dataset.mode = 'json';
+                textArea.classList.add('json-mode');
+                toggleBtn.innerText = "Show Content";
             } else {
-                // Switch back to Content
-                // We need the index. Let's try to match JSON string.
-                const currentJson = textArea.value;
-                // Parse current JSON to find index
-                try {
-                    const currentObj = JSON.parse(currentJson);
-                    const index = transcriptions.findIndex(t => t.id === currentObj.id); // Assuming 'id' exists in RefDocsTranscription
-                    if (index !== -1) {
-                        textArea.value = transcriptions[index].transcribedContent || "No content available.";
-                        textArea.dataset.mode = 'content';
-                        textArea.classList.remove('json-mode');
-                        toggleBtn.innerText = "Show JSON";
-                    }
-                } catch (e) {
-                    console.error("Failed to parse JSON to find content", e);
-                }
+                textArea.value = selected.transcribedContent || "No content available.";
+                textArea.dataset.mode = 'content';
+                textArea.classList.remove('json-mode');
+                toggleBtn.innerText = "Show JSON";
             }
         }
 
