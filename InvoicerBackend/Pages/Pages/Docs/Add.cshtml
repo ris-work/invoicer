@@ -1,0 +1,247 @@
+﻿@page "/Pages/Docs/Add"
+
+@functions {
+    public string StatusMessage { get; set; } = "Ready";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Add Document</h1>
+        <p>@StatusMessage</p>
+
+        <div class="form-group">
+            <label>Take Photo or Upload (Max 4MB)</label>
+            <!-- accept="image/*" allows camera on mobile -->
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+            <img id="preview" alt="Preview" />
+        </div>
+
+        <div class="form-group">
+            <button id="btnUpload">Upload & Transcribe</button>
+        </div>
+
+        <div id="result"></div>
+
+        <div style="margin-top: 20px;">
+            <a href="/Pages/Docs/Index">Back to List</a> |
+            <a href="/Pages/Docs/Search">Search</a>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Helper to convert File (HEIC/PNG/etc) to JPEG using Canvas
+        function convertToJpeg(file, maxWidth = 1920, quality = 0.9) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Resize logic (maintain aspect ratio)
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        // White background for JPEG (transparent becomes black otherwise)
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.fillRect(0, 0, width, height);
+
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Export to JPEG
+                        const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(jpegDataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview');
+            const result = document.getElementById('result');
+
+            result.style.display = 'none';
+            result.innerText = '';
+
+            if (!file) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            // Check Size (4MB)
+            if (file.size > 4 * 1024 * 1024) {
+                alert("File is too large. Max size is 4MB.");
+                this.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+
+            // Show Preview (Read as DataURL directly for preview speed)
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('btnUpload').addEventListener('click', async function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('result');
+            const token = getCookie("auth-token");
+
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
+            if (!file) {
+                alert("Please select a file first.");
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerText = "Processing image (converting to JPEG)...";
+
+            try {
+                // 1. Convert to JPEG using Canvas
+                const jpegDataUrl = await convertToJpeg(file);
+
+                // Strip prefix to get Base64 string
+                const base64Image = jpegDataUrl.split(',')[1];
+
+                resultDiv.innerText = "Uploading...";
+
+                // 2. Save Document
+                const savePayload = {
+                    RefText: file.name,
+                    RefImage: base64Image
+                };
+
+                const saveRes = await fetch('/SaveRefDoc', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(savePayload)
+                });
+
+                if (!saveRes.ok) {
+                    const err = await saveRes.text();
+                    throw new Error(`Save failed: ${saveRes.status} ${err}`);
+                }
+
+                const savedDoc = await saveRes.json();
+                resultDiv.innerText = `Saved! ID: ${savedDoc.refId}. Transcribing...`;
+
+                // 3. Transcribe
+                const transcribePayload = {
+                    RefDoc: savedDoc.refId,
+                    TranscriberLlmName: "MOLMO2"
+                };
+
+                const transRes = await fetch('/ReTranscribeRefDoc', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(transcribePayload)
+                });
+
+                if (!transRes.ok) {
+                    const err = await transRes.text();
+                    throw new Error(`Transcription failed: ${transRes.status} ${err}`);
+                }
+
+                const transcription = await transRes.json();
+
+                resultDiv.innerText = JSON.stringify(transcription, null, 2);
+                alert("Document processed successfully!");
+
+                fileInput.value = '';
+                document.getElementById('preview').style.display = 'none';
+
+            } catch (err) {
+                resultDiv.innerText = "Error: " + err.message;
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -47,12 +47,13 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 app.UseResponseCompression();
-
+RV.InvNew.Common.TranscriptionService.TestSampleTranscribe().GetAwaiter().GetResult();
 using (var ctx = new NewinvContext())
 {
     LoyaltyPointsManager.TestLoyaltyPoints();
 }
 //SalesProcessor.TestAllBranchesApplyDiscountsAndSurcharges();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -242,6 +243,7 @@ app.AddBackOfficeAccountingEndpoints();
 app.AddCycleCountEndpoints();
 app.AddRequestsEndpoints();
 app.AddPhysicalMapEndpoints();
+app.AddRefDocsEndpoints();
 app.MapRazorPages();
 
 System.Console.WriteLine("Done setting up!");

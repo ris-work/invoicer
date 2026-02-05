@@ -25,6 +25,9 @@
         <None Update="InvoicerBackend.http">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="sample_to_transcribe.jpg">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 	<PropertyGroup>
 		<EnableDefaultRazorSlices>false</EnableDefaultRazorSlices>
