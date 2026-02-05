@@ -107,6 +107,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<RefDoc> RefDocs { get; set; }
 
+    public virtual DbSet<RefDocsTranscription> RefDocsTranscriptions { get; set; }
+
     public virtual DbSet<Request> Requests { get; set; }
 
     public virtual DbSet<RequestsBad> RequestsBads { get; set; }
@@ -139,7 +141,10 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=newinv;Username=rishi;Password=eeee");
+    {
+        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
+        optionsBuilder.LogTo(Console.WriteLine);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1266,6 +1271,34 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.RefUrl)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("ref_url");
+        });
+
+        modelBuilder.Entity<RefDocsTranscription>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("ref_docs_transcriptions_pkey");
+
+            entity.ToTable("ref_docs_transcriptions");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.RefDoc).HasColumnName("ref_doc");
+            entity.Property(e => e.RefDocIssuedAt).HasColumnName("ref_doc_issued_at");
+            entity.Property(e => e.RefDocNotValidAfter).HasColumnName("ref_doc_not_valid_after");
+            entity.Property(e => e.RefDocSummary)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_doc_summary");
+            entity.Property(e => e.RefDocTitle)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("ref_doc_title");
+            entity.Property(e => e.RefDocValidFrom).HasColumnName("ref_doc_valid_from");
+            entity.Property(e => e.TranscribedAt).HasColumnName("transcribed_at");
+            entity.Property(e => e.TranscribedContent).HasColumnName("transcribed_content");
+            entity.Property(e => e.TranscriberLlmName).HasColumnName("transcriber_llm_name");
+            entity.Property(e => e.TranscriptionStructureType)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("transcription_structure_type");
+            entity.Property(e => e.TranscriptionStructured)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("transcription_structured");
         });
 
         modelBuilder.Entity<Request>(entity =>
