@@ -2,36 +2,60 @@
 
 @functions {
     public string FoundToken { get; set; } = "Checking...";
-
-    public void OnGet()
-    {
-        if (Request.Cookies.ContainsKey("auth-token"))
-        {
-            FoundToken = "Cookie found (see JS Console)";
-        }
-        else
-        {
-            FoundToken = "No cookie found. Go to /LoginWeb to log in.";
-        }
-    }
 }
 
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Dump Auth & Test API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: #007bff;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+    </style>
+</head>
 <body>
     <h1>Dump Auth & Test API</h1>
 
     <p><strong>Server says:</strong> @FoundToken</p>
 
-    @* Updated button to reflect the specific test we are doing *@
-    <button onclick="testAuthenticatedEcho()">Call /BearerAuthenticatedEcho (POST)</button>
+    <button onclick="testAuthenticatedEcho()" class="btn btn-primary">Call /BearerAuthenticatedEcho (POST)</button>
 
-    <div id="result" style="margin-top:20px; padding:10px; background:#eee; border: 1px solid #ccc; min-height: 50px;">
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #eee; border: 1px solid #ccc; min-height: 50px;">
         <em>Click button to test...</em>
     </div>
 
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <a href="/Pages/Docs/Index" class="btn btn-success">Back to List</a> |
+        <a href="/Pages/Docs/Search" class="btn btn-secondary">Search</a> |
+        <a href="/Pages/Docs/Add" class="btn btn-primary">Add New</a>
+    </div>
+
     <script>
-        // Helper to read the cookie (from previous step)
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -50,26 +74,24 @@
             display.innerHTML = "Sending POST request to /BearerAuthenticatedEcho...";
 
             try {
-                // 1. Call the MapPost endpoint
+                // 1. Call MapPost endpoint
                 const response = await fetch('/BearerAuthenticatedEcho', {
-                    method: 'POST', // POST as requested
+                    method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`, // Bearer token from cookie
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    // Sending an empty JSON object as body (common for POSTs without specific payload reqs)
-                    body: JSON.stringify("{}")
+                    body: JSON.stringify({})
                 });
 
                 // 2. Handle Response
                 if (response.ok) {
-                    // Try to parse JSON, if fails treat as text
                     const contentType = response.headers.get("content-type");
                     let resultText;
 
                     if (contentType && contentType.indexOf("application/json") !== -1) {
                         const data = await response.json();
-                        resultText = JSON.stringify(data, null, 2); // Pretty print JSON
+                        resultText = JSON.stringify(data, null, 2);
                     } else {
                         resultText = await response.text();
                     }

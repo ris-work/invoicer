@@ -167,6 +167,34 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            // GetUntranscribed (Fetches docs where transcription is missing or empty)
+
+            // GetUntranscribed (NEW)
+            // GetUntranscribed (Target of the complaint)
+            // GetUntranscribed
+            app.AddAsyncEndpointWithBearerAuth<object>(
+                "GetUntranscribed",
+                async (DataIn, LoginInfo) =>
+                {
+                    using (var ctx = new NewinvContext())
+                    {
+                        // x.t is IEnumerable<RefDocsTranscription>, so we must check the collection
+                        var query = ctx.RefDocs
+                            .GroupJoin(ctx.RefDocsTranscriptions,
+                                      d => d.RefId,
+                                      t => t.RefDoc,
+                                      (d, t) => new { d, t })
+                            // Logic: No transcriptions exist OR All transcriptions have empty content
+                            .Where(x => !x.t.Any() || x.t.All(trans => string.IsNullOrEmpty(trans.TranscribedContent)))
+                            .Select(x => x.d)
+                            .OrderByDescending(d => d.CreatedAt)
+                            .Take(100);
+
+                        return await query.ToListAsync();
+                    }
+                },
+                "Refresh"
+            );
 
             return app;
         }
