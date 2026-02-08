@@ -56,4 +56,6 @@ public partial class ReceivedInvoice
     public DateTime InvoiceTime { get; set; }
 
     public string? ExtraData { get; set; }
+
+    public long? RefDocId { get; set; }
 }

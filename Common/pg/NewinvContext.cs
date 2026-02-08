@@ -141,10 +141,7 @@ public partial class NewinvContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    {
-        optionsBuilder.UseNpgsql((String)Config.model["ConnString"]);
-        optionsBuilder.LogTo(Console.WriteLine);
-    }
+        => optionsBuilder.UseNpgsql("Host=127.0.0.1;Database=newinv;Username=rishi;Password=eeee");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -384,9 +381,10 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("process_discounts");
             entity.Property(e => e.QuotaPerInvoice).HasColumnName("quota_per_invoice");
             entity.Property(e => e.QuotaPerQuotaPeriod).HasColumnName("quota_per_quota_period");
-            entity.Property(e => e.RefDocs)
+            entity.Property(e => e.RefDocId).HasColumnName("ref_doc_id");
+            entity.Property(e => e.RefLink)
                 .HasDefaultValueSql("''::text")
-                .HasColumnName("ref_docs");
+                .HasColumnName("ref_link");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("remarks");
@@ -639,9 +637,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.PackedSize)
                 .HasDefaultValueSql("1")
                 .HasColumnName("packed_size");
-            entity.Property(e => e.RefDocs)
+            entity.Property(e => e.RefDocId).HasColumnName("ref_doc_id");
+            entity.Property(e => e.RefLink)
                 .HasDefaultValueSql("''::text")
-                .HasColumnName("ref_docs");
+                .HasColumnName("ref_link");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("remarks");
@@ -724,6 +723,9 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("entered_time");
             entity.Property(e => e.ExpDate).HasColumnName("exp_date");
             entity.Property(e => e.FromUnits).HasColumnName("from_units");
+            entity.Property(e => e.IsOneOff)
+                .HasDefaultValue(false)
+                .HasColumnName("is_one_off");
             entity.Property(e => e.Itemcode)
                 .HasDefaultValueSql("nextval('inventory_itemcode_seq'::regclass)")
                 .HasColumnName("itemcode");
@@ -788,6 +790,7 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IsSettled).HasColumnName("is_settled");
             entity.Property(e => e.IssuedValue).HasColumnName("issued_value");
             entity.Property(e => e.PaidValue).HasColumnName("paid_value");
+            entity.Property(e => e.RefDocId).HasColumnName("ref_doc_id");
             entity.Property(e => e.SalesPersonId).HasColumnName("sales_person_id");
             entity.Property(e => e.SubTotal).HasColumnName("sub_total");
             entity.Property(e => e.TaxTotal).HasColumnName("tax_total");
@@ -1122,6 +1125,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.GrossMarkupAbsolute).HasColumnName("gross_markup_absolute");
             entity.Property(e => e.GrossMarkupPercentage).HasColumnName("gross_markup_percentage");
             entity.Property(e => e.GrossTotal).HasColumnName("gross_total");
+            entity.Property(e => e.IsOneOff)
+                .HasDefaultValue(false)
+                .HasColumnName("is_one_off");
             entity.Property(e => e.IsVatADisallowedInputTax)
                 .HasDefaultValue(false)
                 .HasColumnName("is_vat_a_disallowed_input_tax");
@@ -1233,6 +1239,7 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("last_saved_at");
             entity.Property(e => e.PostedAt).HasColumnName("posted_at");
+            entity.Property(e => e.RefDocId).HasColumnName("ref_doc_id");
             entity.Property(e => e.Reference).HasColumnName("reference");
             entity.Property(e => e.Remarks)
                 .HasDefaultValueSql("''::text")
@@ -1259,6 +1266,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsInventoryImage)
+                .HasDefaultValue(false)
+                .HasColumnName("is_inventory_image");
             entity.Property(e => e.RefExtraData)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("ref_extra_data");
@@ -1363,6 +1373,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("entered_at");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.IsOneOff)
+                .HasDefaultValue(false)
+                .HasColumnName("is_one_off");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.LoyalityPointsIssued).HasColumnName("loyality_points_issued");
             entity.Property(e => e.LoyalityPointsPercentage).HasColumnName("loyality_points_percentage");

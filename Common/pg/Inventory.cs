@@ -52,5 +52,7 @@ public partial class Inventory
 
     public string ExtraStructured { get; set; } = null!;
 
-    public string RefDocs { get; set; } = null!;
+    public string RefLink { get; set; } = null!;
+
+    public long? RefDocId { get; set; }
 }

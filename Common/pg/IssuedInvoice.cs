@@ -43,4 +43,6 @@ public partial class IssuedInvoice
     public DateTime CreatedAt { get; set; }
 
     public string ExtraData { get; set; } = null!;
+
+    public long? RefDocId { get; set; }
 }

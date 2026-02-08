@@ -1,42 +1,43 @@
-﻿using InvoicerBackend;
-using Microsoft.EntityFrameworkCore;
-using RV.InvNew.Common;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using InvoicerBackend;
+using Microsoft.EntityFrameworkCore;
+using RV.InvNew.Common;
 
-namespace InvoicerBackend
+namespace RV.InvNew.Common
 {
     public static class Images
     {
-        public static WebApplication AddCatalogueImageEndpoints(this WebApplication app)
+        public static WebApplication AddBatchDefaultImageEndpoints(this WebApplication app)
         {
-            // 1. Catalogue Default Image Get
+            // 3. Batch Default Image Get
             app.AddAsyncEndpointWithBearerAuth<long>(
-                "CatalogueDefaultImageGet",
+                "BatchDefaultImageGet",
                 async (ItemCodeIn, LoginInfo) =>
                 {
                     long itemCode = ((long)ItemCodeIn);
 
                     using (var ctx = new NewinvContext())
                     {
-                        // 1. Get Catalogue Item
-                        var cat = await ctx.Catalogues
-                            .FirstOrDefaultAsync(c => c.Itemcode == itemCode);
+                        // Find Inventory Item
+                        var inv = await ctx.Inventories
+                            .FirstOrDefaultAsync(i => i.Itemcode == itemCode);
 
-                        if (cat == null || cat.RefDocId == null || cat.RefDocId == 0)
+                        if (inv == null || inv.RefDocId == null || inv.RefDocId == 0)
                         {
                             return null; // No item or no image linked
                         }
 
-                        // 2. Get RefDoc
+                        // Find RefDoc
                         var doc = await ctx.RefDocs
-                            .FirstOrDefaultAsync(d => d.RefId == cat.RefDocId);
+                            .FirstOrDefaultAsync(d => d.RefId == inv.RefDocId);
 
                         if (doc == null)
                         {
-                            return null; // Inconsistent state
+                            return null;
                         }
 
                         return new { RefId = doc.RefId, ImageBase64 = doc.RefImage };
@@ -45,17 +46,17 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // 2. Catalogue Default Image Set
-            app.AddAsyncEndpointWithBearerAuth<CatalogueImageRequest>(
-                "CatalogueDefaultImageSet",
+            // 4. Batch Default Image Set
+            app.AddAsyncEndpointWithBearerAuth<InventoryImageRequest>(
+                "BatchDefaultImageSet",
                 async (DataIn, LoginInfo) =>
                 {
-                    var req = (CatalogueImageRequest)DataIn;
+                    var req = (InventoryImageRequest)DataIn;
 
                     // Validate Size (10MB)
                     if (!string.IsNullOrEmpty(req.ImageBase64))
                     {
-                        if (req.ImageBase64.Length > 13981012) // Approx 10MiB Base64 limit
+                        if (req.ImageBase64.Length > 13981012)
                         {
                             throw new ArgumentException("Image size exceeds 10MiB limit.");
                         }
@@ -63,24 +64,26 @@ namespace InvoicerBackend
 
                     using (var ctx = new NewinvContext())
                     {
-                        // Check if Catalogue item exists
-                        var cat = await ctx.Catalogues.FirstOrDefaultAsync(c => c.Itemcode == req.ItemCode);
-                        if (cat == null)
+                        // Find Inventory Item
+                        var inv = await ctx.Inventories
+                            .FirstOrDefaultAsync(i => i.Itemcode == req.Itemcode);
+
+                        if (inv == null)
                         {
-                            throw new ArgumentException("Catalogue item not found.");
+                            throw new ArgumentException("Inventory item not found.");
                         }
 
                         // Check for existing RefDoc
                         RefDoc docToSave;
                         var existingDoc = await ctx.RefDocs
-                            .FirstOrDefaultAsync(d => d.RefId == cat.RefDocId);
+                            .FirstOrDefaultAsync(d => d.RefId == inv.RefDocId);
 
                         if (existingDoc == null)
                         {
                             // Create new RefDoc
                             docToSave = new RefDoc
                             {
-                                RefText = cat.Itemcode.ToString(),
+                                RefText = inv.Itemcode.ToString(),
                                 RefImage = req.ImageBase64,
                                 CreatedAt = DateTime.UtcNow,
                                 AuthoredBy = (long)LoginInfo.UserId
@@ -95,12 +98,12 @@ namespace InvoicerBackend
                             docToSave = existingDoc;
                         }
 
-                        // Link Catalogue to RefDoc
-                        cat.RefDocId = docToSave.RefId;
+                        // Link Inventory to RefDoc
+                        inv.RefDocId = docToSave.RefId;
 
                         await ctx.SaveChangesAsync();
 
-                        // Trigger Transcription (Async)
+                        // Trigger Transcription
                         try
                         {
                             await TranscriptionService.AITranscribe(docToSave.RefId, "z-ai/glm-4.6v", ctx);
@@ -118,12 +121,12 @@ namespace InvoicerBackend
 
             return app;
         }
+    }
 
-        // DTO for Set Request
-        public class CatalogueImageRequest
-        {
-            public long ItemCode { get; set; }
-            public string ImageBase64 { get; set; }
-        }
+    // DTO for Set Request
+    public class InventoryImageRequest
+    {
+        public long Itemcode { get; set; }
+        public string ImageBase64 { get; set; }
     }
 }

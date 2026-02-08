@@ -68,4 +68,6 @@ public partial class Purchase
     public double NetCostPerUnit { get; set; }
 
     public long LineNumber { get; set; }
+
+    public bool IsOneOff { get; set; }
 }

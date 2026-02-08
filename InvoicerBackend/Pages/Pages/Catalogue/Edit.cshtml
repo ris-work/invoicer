@@ -1,0 +1,325 @@
+﻿@page "/Pages/Catalogue/Edit"
+
+@functions {
+    public string ErrorMessage { get; set; } = "";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Catalogue Item</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Catalogue Item</h1>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <p style="color: red;">@ErrorMessage</p>
+        }
+
+        <div class="form-group">
+            <label>Item Code</label>
+            <input type="number" id="itemCode" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="description">
+        </div>
+
+        <div class="form-group">
+            <label>Active Status</label>
+            <select id="active">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="processDiscounts">
+            <label for="processDiscounts" style="margin:0; font-weight:normal;">Process Discounts</label>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="discountMethodMax">
+            <label for="discountMethodMax" style="margin:0; font-weight:normal;">Discount Method is Maximum</label>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="isLossLeader">
+            <label for="isLossLeader" style="margin:0; font-weight:normal;">Is Loss Leader</label>
+        </div>
+
+        <div class="form-group">
+            <label>Tags</label>
+            <input type="text" id="tags">
+        </div>
+
+        <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="remarks" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Update Image (Optional)</label>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+            <img id="preview" alt="Preview" />
+        </div>
+
+        <button id="btnSave">Save Changes</button>
+        <div id="result"></div>
+
+        <div style="margin-top: 20px;">
+            <a href="/Pages/Catalogue/Search">Back to Search</a> |
+            <a href="/Pages/Catalogue/Add">Add New</a>
+        </div>
+    </div>
+
+    <script>
+        let currentItem = null;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+                     async function loadItem() {
+            const token = getCookie("auth-token");
+            const itemCode = new URLSearchParams(window.location.search).get('itemcode');
+            const resultDiv = document.getElementById('result');
+
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
+            if (!itemCode) {
+                resultDiv.innerText = "No item code provided.";
+                return;
+            }
+
+            resultDiv.innerText = "Loading...";
+
+            try {
+                // 1. Get Catalogue Item (Use Get by ID endpoint)
+                // FIX: Parse itemCode to Int to match backend 'long' type
+                const catRes = await fetch('/GetCatalogueItemWeb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ItemCode: parseInt(itemCode) })
+                });
+
+                if (!catRes.ok) throw new Error(`Error ${catRes.status}`);
+                const cat = await catRes.json();
+
+                if (!cat) {
+                    resultDiv.innerText = "Item not found.";
+                    return;
+                }
+
+                currentItem = cat;
+                currentRefDocId = cat.refDocId;
+                document.getElementById('itemCode').value = cat.itemcode;
+                document.getElementById('description').value = cat.description || "";
+                document.getElementById('active').value = cat.active ? "true" : "false";
+                document.getElementById('processDiscounts').checked = cat.processDiscounts;
+                document.getElementById('discountMethodMax').checked = cat.discountMethodIsMaximum;
+                document.getElementById('isLossLeader').checked = cat.isLossLeader;
+                document.getElementById('tags').value = cat.tags || "";
+                document.getElementById('remarks').value = cat.remarks || "";
+
+                // 2. Get RefDoc Image (if exists)
+                if (currentRefDocId && currentRefDocId > 0)
+                {
+                    const refDocRes = await fetch('/CatalogueDefaultImageGet', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ ItemCode: parseInt(itemCode) }) // FIX: Parse here too
+                    });
+
+                    if (refDocRes.ok) {
+                        const refDoc = await refDocRes.json();
+                        if (refDoc && refDoc.imageBase64) {
+                            document.getElementById('preview').src = `data:image/jpeg;base64,${refDoc.imageBase64}`;
+                            document.getElementById('preview').style.display = 'block';
+                        }
+                    }
+                }
+
+            } catch (err) {
+                resultDiv.innerText = "Error: " + err.message;
+                console.error(err);
+            }
+        }
+
+        document.getElementById('btnSave').addEventListener('click', async function() {
+            const token = getCookie("auth-token");
+            const resultDiv = document.getElementById('result');
+
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
+            resultDiv.innerText = "Saving...";
+
+            try {
+                // 1. Patch Metadata
+                const patchPayload = {
+                    Itemcode: parseInt(document.getElementById('itemCode').value),
+                    Description: document.getElementById('description').value,
+                    Active: document.getElementById('active').value === "true",
+                    ProcessDiscounts: document.getElementById('processDiscounts').checked,
+                    DiscountMethodIsMaximum: document.getElementById('discountMethodMax').checked,
+                    IsLossLeader: document.getElementById('isLossLeader').checked,
+                    Tags: document.getElementById('tags').value,
+                    Remarks: document.getElementById('remarks').value
+                };
+
+                const patchRes = await fetch('/EditCatalogueWeb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(patchPayload)
+                });
+
+                if (!patchRes.ok) {
+                    const err = await patchRes.text();
+                    throw new Error(`Save failed: ${patchRes.status} ${err}`);
+                }
+
+                // 2. Handle Image if changed
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput.files.length > 0) {
+                    resultDiv.innerText = "Metadata saved. Updating image...";
+                    const file = fileInput.files[0];
+                    const jpegDataUrl = await convertToJpeg(file);
+                    const base64Image = jpegDataUrl.split(',')[1];
+
+                    const imagePayload = {
+                        ItemCode: parseInt(document.getElementById('itemCode').value),
+                        ImageBase64: base64Image
+                    };
+
+                    const imgRes = await fetch('/CatalogueDefaultImageSet', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(imagePayload)
+                    });
+
+                    if (!imgRes.ok) {
+                        const err = await imgRes.text();
+                        throw new Error(`Image update failed: ${imgRes.status} ${err}`);
+                    }
+                }
+
+                resultDiv.innerText = "Saved successfully!";
+                alert("Item updated successfully!");
+
+                // Reload image in case it changed
+                if (fileInput.files.length > 0) loadItem();
+
+            } catch (err) {
+                resultDiv.innerText = "Error: " + err.message;
+                console.error(err);
+            }
+        });
+
+        function convertToJpeg(file, maxWidth = 1920, quality = 0.9) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(jpegDataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        loadItem();
+    </script>
+</body>
+</html>

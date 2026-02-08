@@ -47,4 +47,6 @@ public partial class Sale
     public double LoyalityPointsIssued { get; set; }
 
     public string ProductName { get; set; } = null!;
+
+    public bool IsOneOff { get; set; }
 }

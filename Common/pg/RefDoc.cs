@@ -18,4 +18,6 @@ public partial class RefDoc
     public string RefExtraData { get; set; } = null!;
 
     public string RefUrl { get; set; } = null!;
+
+    public bool IsInventoryImage { get; set; }
 }

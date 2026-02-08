@@ -1,8 +1,8 @@
 BaseAddress = "http://127.0.0.1:5062"
 Terminal = "10"
 EnableFulLMode = true
-#EtoBackend = "wpf"
-EtoBackend = "WinForms"
+EtoBackend = "wpf"
+#EtoBackend = "WinForms"
 #EtoBackend = "Gtk"
 Language = "en"
 CustomFonts=false

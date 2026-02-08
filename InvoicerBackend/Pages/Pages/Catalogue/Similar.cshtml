@@ -1,0 +1,142 @@
+﻿@page "/Pages/Catalogue/Similar"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Similar Items</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .result-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .result-title {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .result-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Similar Items</h1>
+
+    <div class="form-group">
+        <label>Item Code or Description</label>
+        <input type="text" id="searchQuery" placeholder="Enter Item Code or Description">
+    </div>
+
+    <button id="btnFind">Find Similar</button>
+
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <div style="margin-top: 20px;">
+        <a href="/Pages/Catalogue/Search">Search</a> |
+        <a href="/Pages/Catalogue/Add">Add New</a>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        document.getElementById('btnFind').addEventListener('click', async function() {
+            const token = getCookie("auth-token");
+            const query = document.getElementById('searchQuery').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
+            if (!query) {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            resultsDiv.innerHTML = "Finding...";
+
+            try {
+                // Fixed: Use SuggestCatalogueWeb
+                const suggestRes = await fetch('/SuggestCatalogueWeb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ Query: query })
+                });
+
+                if (!suggestRes.ok) throw new Error(`Error ${suggestRes.status}`);
+                const items = await suggestRes.json();
+
+                if (items.length === 0) {
+                    resultsDiv.innerHTML = "<p>No similar items found.</p>";
+                    return;
+                }
+
+                let html = `<h3>${items.length} Similar Item(s)</h3>`;
+                items.forEach(item => {
+                    const date = new Date(item.createdOn).toLocaleString();
+                    html += `
+                        <div class="result-card">
+                            <div class="result-title">${item.itemcode} - ${item.description || "No Description"}</div>
+                            <div class="result-meta">ID: ${item.itemcode} | Created: ${date}</div>
+                            <a href="/Pages/Catalogue/Edit?itemcode=${item.itemcode}" style="color:#007bff;">Edit</a>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color: red;">Failed: ${err.message}</p>`;
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -235,7 +235,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
     },
     "Refresh"
 );
-app.AddCatalogueDefaultImageEndpoints();
+//app.AddCatalogueDefaultImageEndpoints();
 app.AddCatalogueEditorHandlers();
 app.AddJournalEndpoints();
 app.AddAnalyticsEndpoints();
@@ -244,6 +244,9 @@ app.AddCycleCountEndpoints();
 app.AddRequestsEndpoints();
 app.AddPhysicalMapEndpoints();
 app.AddRefDocsEndpoints();
+app.AddCatalogueImageEndpoints();
+app.AddBatchDefaultImageEndpoints();
+
 app.MapRazorPages();
 
 System.Console.WriteLine("Done setting up!");
