@@ -13,17 +13,17 @@ namespace InvoicerBackend
         public static WebApplication AddCatalogueImageEndpoints(this WebApplication app)
         {
             // 1. Catalogue Default Image Get
-            app.AddAsyncEndpointWithBearerAuth<long>(
+            app.AddAsyncEndpointWithBearerAuth<CatalogueGetRequest>(
                 "CatalogueDefaultImageGet",
                 async (ItemCodeIn, LoginInfo) =>
                 {
-                    long itemCode = ((long)ItemCodeIn);
+                    CatalogueGetRequest itemCode = ((CatalogueGetRequest)ItemCodeIn);
 
                     using (var ctx = new NewinvContext())
                     {
                         // 1. Get Catalogue Item
                         var cat = await ctx.Catalogues
-                            .FirstOrDefaultAsync(c => c.Itemcode == itemCode);
+                            .FirstOrDefaultAsync(c => c.Itemcode == itemCode.ItemCode);
 
                         if (cat == null || cat.RefDocId == null || cat.RefDocId == 0)
                         {
@@ -45,6 +45,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
+            // 2. Catalogue Default Image Set
             // 2. Catalogue Default Image Set
             app.AddAsyncEndpointWithBearerAuth<CatalogueImageRequest>(
                 "CatalogueDefaultImageSet",
@@ -86,6 +87,14 @@ namespace InvoicerBackend
                                 AuthoredBy = (long)LoginInfo.UserId
                             };
                             ctx.RefDocs.Add(docToSave);
+
+                            // 1. Save to generate RefDoc ID
+                            await ctx.SaveChangesAsync();
+
+                            // 2. Update Catalogue with the new RefDoc ID
+                            cat.RefDocId = docToSave.RefId;
+                            ctx.Entry(cat).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                            await ctx.SaveChangesAsync();
                         }
                         else
                         {
@@ -93,12 +102,11 @@ namespace InvoicerBackend
                             existingDoc.RefImage = req.ImageBase64;
                             existingDoc.AuthoredBy = (long)LoginInfo.UserId;
                             docToSave = existingDoc;
+
+                            // cat.RefDocId is already correct (matches existingDoc.RefId)
+                            // Just save the image update
+                            await ctx.SaveChangesAsync();
                         }
-
-                        // Link Catalogue to RefDoc
-                        cat.RefDocId = docToSave.RefId;
-
-                        await ctx.SaveChangesAsync();
 
                         // Trigger Transcription (Async)
                         try

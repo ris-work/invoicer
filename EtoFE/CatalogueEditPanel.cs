@@ -12,6 +12,16 @@ using YourApp.Extensions;
 
 namespace EtoFE
 {
+    public class CatalogueImageRequest
+    {
+        public long ItemCode { get; set; }
+        public string ImageBase64 { get; set; }
+    }
+    public class CatalogueImageResponse
+    {
+        public long RefId { get; set; }
+        public string ImageBase64 { get; set; }
+    }
     public class CatalogueEditPanel : Panel
     {
         private GenEtoUI _catalogueForm;
@@ -86,8 +96,8 @@ namespace EtoFE
                 {
                     if (itemcode != null)
                     {
-                        var IA = SendAuthenticatedRequest<long, InventoryImage>.Send(
-                            (long)itemcode,
+                        var IA = SendAuthenticatedRequest<CatalogueImageRequest, CatalogueImageResponse>.Send(
+                            new CatalogueImageRequest { ItemCode =  (long)itemcode },
                             "CatalogueDefaultImageGet"
                         );
                         return IA.Out?.ImageBase64;
@@ -99,16 +109,16 @@ namespace EtoFE
                 },
                 (itemcode, imageid, imageData) =>
                 {
-                    var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
-                        new InventoryImage()
+                    var IA = SendAuthenticatedRequest<CatalogueImageRequest, CatalogueImageResponse?>.Send(
+                        new CatalogueImageRequest()
                         {
-                            Itemcode = (long)itemcode,
-                            Imageid = imageid,
+                            ItemCode = (long)itemcode,
+                            //Imageid = imageid,
                             ImageBase64 = imageData,
                         },
                         "CatalogueDefaultImageSet"
                     );
-                    return IA.Out;
+                    return IA.Out.RefId;
                 }
             );
 
@@ -305,34 +315,34 @@ namespace EtoFE
                     // Update image editor
                     _imageEditPanel = new InventoryImageEditorPanel(
                         selectedId,
-                        (itemcode, imageid) =>
+                         (itemcode, imageid) =>
+                         {
+                             if (itemcode != null)
+                             {
+                                 var IA = SendAuthenticatedRequest<CatalogueImageRequest, CatalogueImageResponse>.Send(
+                                     new CatalogueImageRequest { ItemCode = (long)itemcode },
+                                     "CatalogueDefaultImageGet"
+                                 );
+                                 return IA.Out?.ImageBase64;
+                             }
+                             else
+                             {
+                                 return null;
+                             }
+                         },
+                (itemcode, imageid, imageData) =>
+                {
+                    var IA = SendAuthenticatedRequest<CatalogueImageRequest, CatalogueImageResponse?>.Send(
+                        new CatalogueImageRequest()
                         {
-                            if (itemcode != null)
-                            {
-                                var IA = SendAuthenticatedRequest<long, InventoryImage>.Send(
-                                    (long)itemcode,
-                                    "CatalogueDefaultImageGet"
-                                );
-                                return IA.Out?.ImageBase64;
-                            }
-                            else
-                            {
-                                return null;
-                            }
+                            ItemCode = (long)itemcode,
+                            //Imageid = imageid,
+                            ImageBase64 = imageData,
                         },
-                        (itemcode, imageid, imageData) =>
-                        {
-                            var IA = SendAuthenticatedRequest<InventoryImage, long?>.Send(
-                                new InventoryImage()
-                                {
-                                    Itemcode = (long)itemcode,
-                                    Imageid = imageid,
-                                    ImageBase64 = imageData,
-                                },
-                                "CatalogueDefaultImageSet"
-                            );
-                            return IA.Out;
-                        }
+                        "CatalogueDefaultImageSet"
+                    );
+                    return IA.Out.RefId;
+                }
                     );
                     _imageEditPanelContainer.Content = _imageEditPanel;
 

@@ -181,25 +181,39 @@
                 document.getElementById('remarks').value = cat.remarks || "";
 
                 // 2. Get RefDoc Image (if exists)
-                if (currentRefDocId && currentRefDocId > 0)
-                {
-                    const refDocRes = await fetch('/CatalogueDefaultImageGet', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ ItemCode: parseInt(itemCode) }) // FIX: Parse here too
-                    });
+                        if (currentRefDocId && currentRefDocId > 0)
+        {
+            const refDocRes = await fetch('/CatalogueDefaultImageGet', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode) })
+            });
 
-                    if (refDocRes.ok) {
-                        const refDoc = await refDocRes.json();
-                        if (refDoc && refDoc.imageBase64) {
-                            document.getElementById('preview').src = `data:image/jpeg;base64,${refDoc.imageBase64}`;
-                            document.getElementById('preview').style.display = 'block';
-                        }
-                    }
+            if (refDocRes.ok) {
+                const refDoc = await refDocRes.json();
+                if (refDoc && refDoc.imageBase64) {
+                    document.getElementById('preview').src = `data:image/jpeg;base64,${refDoc.imageBase64}`;
+                    document.getElementById('preview').style.display = 'block';
+                } else {
+                    // Case: Image ID exists, but image data is missing/null
+                    document.getElementById('preview').style.display = 'none';
+                    console.log("No image data found for RefDoc: " + currentRefDocId);
                 }
+            } else {
+                // Case: Fetch failed
+                const err = await refDocRes.text();
+                console.error("Image fetch error: " + refDocRes.status + " " + err);
+            }
+        }
+        else
+        {
+            // Case: No RefDocId linked to this item (NULL or 0)
+            document.getElementById('preview').style.display = 'none';
+            console.log("No image linked to item. RefDocId is: " + currentRefDocId);
+        }
 
             } catch (err) {
                 resultDiv.innerText = "Error: " + err.message;
