@@ -1,0 +1,99 @@
+﻿@page "/Pages/Accounts/Edit"
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Account</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }</style>
+</head>
+<body>
+    <h2>Edit Account</h2>
+    <div id="status">Loading...</div>
+    <div id="form" style="display:none;">
+        <input type="hidden" id="accNo">
+        <div class="form-group"><label>Name</label><input type="text" id="name"></div>
+        <div class="form-group"><label>Human Friendly ID</label><input type="text" id="hfid"></div>
+        <div class="form-group"><label>Min Limit</label><input type="number" id="min"></div>
+        <div class="form-group"><label>Max Limit</label><input type="number" id="max"></div>
+
+        <h3>POS Settings</h3>
+        <div class="form-group"><label>Allow Credit</label><input type="checkbox" id="allowCredit"></div>
+        <div class="form-group"><label>Allow Debit</label><input type="checkbox" id="allowDebit"></div>
+
+        <button onclick="save()">Save</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const accNo = params.get('id');
+        let original = null;
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function load() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/SearchAccountsWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: accNo })
+            });
+            const list = await res.json();
+            const data = list.find(a => a.accountNo == accNo);
+            if(!data) return;
+            original = data;
+
+            document.getElementById('accNo').value = data.accountNo;
+            document.getElementById('name').value = data.accountName;
+            document.getElementById('hfid').value = data.humanFriendlyId;
+            document.getElementById('min').value = data.accountMin;
+            document.getElementById('max').value = data.accountMax;
+            document.getElementById('allowCredit').checked = data.allowCreditOnPos;
+            document.getElementById('allowDebit').checked = data.allowDebitOnPos;
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        }
+
+        async function save() {
+            const token = getCookie("auth-token");
+            const payload = { AccountNo: parseInt(accNo) };
+
+            if(document.getElementById('name').value !== original.accountName) payload.AccountName = document.getElementById('name').value;
+            if(document.getElementById('hfid').value !== original.humanFriendlyId) payload.HumanFriendlyId = document.getElementById('hfid').value;
+            if(parseFloat(document.getElementById('min').value) !== original.accountMin) payload.AccountMin = parseFloat(document.getElementById('min').value);
+            if(parseFloat(document.getElementById('max').value) !== original.accountMax) payload.AccountMax = parseFloat(document.getElementById('max').value);
+            if(document.getElementById('allowCredit').checked !== original.allowCreditOnPos) payload.AllowCreditOnPos = document.getElementById('allowCredit').checked;
+            if(document.getElementById('allowDebit').checked !== original.allowDebitOnPos) payload.AllowDebitOnPos = document.getElementById('allowDebit').checked;
+
+            if(Object.keys(payload).length <= 1) { alert("No changes"); return; }
+
+            const res = await fetch('/EditAccountWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) { alert("Saved"); location.reload(); }
+            else alert("Error: " + await res.text());
+        }
+        load();
+    </script>
+</body>
+</html>

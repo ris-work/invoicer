@@ -248,6 +248,8 @@ app.AddCatalogueImageEndpoints();
 app.AddBatchDefaultImageEndpoints();
 app.AddBatchEditors();
 app.AddFlowEndpoints();
+app.AddPiiEndpoints();
+app.AddAccountsInformationEndpoints();
 
 app.MapRazorPages();
 

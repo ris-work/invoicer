@@ -1,0 +1,115 @@
+﻿@page "/Pages/Pii/Add"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add PII</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Add Personally Identifiable Information</h2>
+
+    <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="name">
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email">
+    </div>
+    <div class="form-group">
+        <label>Telephone</label>
+        <input type="text" id="telephone">
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <input type="text" id="address">
+    </div>
+    <div class="form-group">
+        <label>Is Company</label>
+        <input type="checkbox" id="isCompany">
+    </div>
+
+    <hr />
+    <div class="form-group">
+        <label>Discount Rate (Additive %)</label>
+        <input type="number" id="discAdd" value="0">
+    </div>
+    <div class="form-group">
+        <label>Discount Rate (Multiplicative %)</label>
+        <input type="number" id="discMult" value="0">
+    </div>
+
+    <hr />
+    <div class="form-group">
+        <input type="checkbox" id="createAccount" onchange="toggleAccountType()">
+        <label style="display:inline; font-weight:normal;">Create Linked Account</label>
+    </div>
+
+    <div id="accountTypeDiv" style="display:none; margin-left: 20px; margin-bottom: 15px;">
+        <label>Account Type</label>
+        <select id="accountType">
+            <option value="0">Asset</option>
+            <option value="1">Liability</option>
+            <option value="2">Income</option>
+            <option value="3">Expense</option>
+        </select>
+    </div>
+
+    <button onclick="savePii()">Save</button>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function toggleAccountType() {
+            document.getElementById('accountTypeDiv').style.display = 
+                document.getElementById('createAccount').checked ? 'block' : 'none';
+        }
+
+        async function savePii() {
+            const token = getCookie("auth-token");
+
+            const payload = {
+                PiiData: {
+                    Name: document.getElementById('name').value,
+                    Email: document.getElementById('email').value,
+                    Telephone: document.getElementById('telephone').value,
+                    Address: document.getElementById('address').value,
+                    IsCompany: document.getElementById('isCompany').checked,
+                    DiscountRateAdditivePercentage: parseFloat(document.getElementById('discAdd').value),
+                    DiscountRateMultiplicativePercentage: parseFloat(document.getElementById('discMult').value)
+                },
+                CreateAccount: document.getElementById('createAccount').checked,
+                AccountType: parseInt(document.getElementById('accountType').value)
+            };
+
+            const res = await fetch('/CreatePiiWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("PII Created!");
+                window.location.href = '/Pages/Pii/Search';
+            } else {
+                alert("Error: " + await res.text());
+            }
+        }
+    </script>
+</body>
+</html>

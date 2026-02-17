@@ -1,0 +1,48 @@
+﻿@page "/Pages/Pii/Search"
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search PII</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }</style>
+</head>
+<body>
+    <h2>Search PII</h2>
+    <input type="text" id="query" placeholder="Name or Email..." oninput="search()">
+    <div id="results"></div>
+    <a href="/Pages/Pii/Add">Add New PII</a>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        async function search() {
+            const token = getCookie("auth-token");
+            const q = document.getElementById('query').value;
+            if(!q) return;
+            const res = await fetch('/SearchPiiWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: q })
+            });
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.map(p => `
+                <div class="card">
+                    <strong>${p.name}</strong> (${p.isCompany ? 'Company' : 'Individual'})<br>
+                    <small>${p.email || 'No Email'}</small>
+                    <br><a href="/Pages/Pii/Edit?id=${p.id}">Edit</a>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+﻿@page "/Pages/Flows/BeginFlowLinkAccount"
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Link Flow</title>
+</head>
+<body>
+    <script>
+        const flowId = 'flow-' + Date.now();
+        // Step 1: Select PII -> Redirect to Link Page
+        const redirTo = '/Pages/Accounts/Link';
+        window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
+        // Note: We are reusing ItemSelect. Ideally, we should have a PiiSelect page.
+        // For now, ItemSelect searches Catalogue. This will fail.
+        // I will create a generic Select page or update ItemSelect to handle types.
+        // Actually, better to just make a specific PiiSelect for this flow.
+
+        // CORRECTION: Redirect to a specific PII Select page
+        window.location.href = '/Pages/SearchAndSelect/PiiSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
+    </script>
+</body>
+</html>

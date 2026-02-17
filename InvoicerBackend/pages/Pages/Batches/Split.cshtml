@@ -1,0 +1,133 @@
+﻿@page "/Pages/Batches/Split"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Split Batch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #ffc107;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Split Batch</h2>
+    <div id="info" class="info">Loading batch info...</div>
+
+    <div id="form" style="display:none;">
+        <p>Enter the quantity to <strong>keep in the original batch</strong>. The remaining quantity will be moved to a new batch.</p>
+
+        <label>Quantity to Keep (Original Batch)</label>
+        <input type="number" id="qtyKeep" placeholder="e.g. 10">
+
+        <p>Result:</p>
+        <ul>
+            <li>Original Batch: <span id="origBatchId">-</span> will have <span id="origQty">-</span> units.</li>
+            <li>New Batch: will have <span id="newQty">-</span> units.</li>
+        </ul>
+
+        <button onclick="executeSplit()">Confirm Split</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const itemCode = params.get('itemCode');
+        const batchCode = params.get('batchCode');
+
+        let currentUnits = 0;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetBatchWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCode) })
+            });
+            const batch = await res.json();
+
+            currentUnits = batch.units;
+            document.getElementById('info').innerText = `Item: ${batch.itemcode} | Batch: ${batch.batchcode} | Current Total Units: ${currentUnits}`;
+            document.getElementById('origBatchId').innerText = batch.batchcode;
+
+            document.getElementById('form').style.display = 'block';
+        }
+
+        document.getElementById('qtyKeep').addEventListener('input', function() {
+            const keep = parseFloat(this.value) || 0;
+            const remain = currentUnits - keep;
+
+            document.getElementById('origQty').innerText = keep;
+            document.getElementById('newQty').innerText = remain >= 0 ? remain : 0;
+        });
+
+        async function executeSplit() {
+            const token = getCookie("auth-token");
+            const keep = parseFloat(document.getElementById('qtyKeep').value);
+
+            if (keep <= 0 || keep >= currentUnits) {
+                alert("Invalid quantity.");
+                return;
+            }
+
+            const res = await fetch('/SplitBatchWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ItemCode: parseInt(itemCode),
+                    BatchCode: parseInt(batchCode),
+                    NewQuantityForOriginal: keep
+                })
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                alert(`Success! New Batch #${result.newBatchCode} created with ${result.newUnits} units.`);
+                window.location.href = '/Pages/Batches/Edit?flowId=' + flowId;
+            } else {
+                alert("Split failed.");
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

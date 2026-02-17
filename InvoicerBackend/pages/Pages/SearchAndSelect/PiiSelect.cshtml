@@ -1,0 +1,65 @@
+﻿@page "/Pages/SearchAndSelect/PiiSelect"
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select PII</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+            .card:hover {
+                background: #f0f0f0;
+            }</style>
+</head>
+<body>
+    <h2>Select PII</h2>
+    <input type="text" id="query" placeholder="Search Name..." oninput="search()">
+    <div id="results"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const redirTo = params.get('redirTo');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function search() {
+            const token = getCookie("auth-token");
+            const q = document.getElementById('query').value;
+            const res = await fetch('/SearchPiiWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: q })
+            });
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.map(p => `
+                <div class="card" onclick="select(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
+                    <strong>${p.name}</strong><br><small>${p.email || ''}</small>
+                </div>
+            `).join('');
+        }
+
+        async function select(id, name) {
+            const token = getCookie("auth-token");
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId", Value: id.toString() })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiName", Value: name })
+            });
+            window.location.href = redirTo + "?flowId=" + flowId;
+        }
+    </script>
+</body>
+</html>

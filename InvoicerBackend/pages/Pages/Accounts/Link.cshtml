@@ -1,0 +1,92 @@
+﻿@page "/Pages/Accounts/Link"
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Link Account</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }</style>
+</head>
+<body>
+    <h2>Link Account to PII</h2>
+    <div id="status">Loading Flow...</div>
+    <div id="content" style="display:none;">
+        <p>Selected PII: <strong id="piiName"></strong></p>
+        <p>Please select an Account to link:</p>
+
+        <input type="text" id="accQuery" placeholder="Search Account..." oninput="searchAcc()">
+        <div id="accResults"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        let piiId = null;
+
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId" })
+            });
+            const data = await res.json();
+            if(!data.value) { document.getElementById('status').innerText = "Flow Error: No PII selected."; return; }
+
+            piiId = data.value;
+            const nameRes = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiName" })
+            });
+            const nameData = await nameRes.json();
+
+            document.getElementById('piiName').innerText = nameData.value || piiId;
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        async function searchAcc() {
+            const token = getCookie("auth-token");
+            const q = document.getElementById('accQuery').value;
+            const res = await fetch('/SearchAccountsWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: q })
+            });
+            const data = await res.json();
+            document.getElementById('accResults').innerHTML = data.map(a => `
+                <div class="card">
+                    <strong>${a.accountName}</strong> (ID: ${a.accountNo})<br>
+                    <button onclick="link(${a.accountNo})">Link This Account</button>
+                </div>
+            `).join('');
+        }
+
+        async function link(accNo) {
+            const token = getCookie("auth-token");
+            const res = await fetch('/LinkAccountPiiWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ AccountNo: accNo, PiiId: parseInt(piiId) })
+            });
+            if(res.ok) {
+                alert("Account Linked!");
+                window.location.href = '/Pages/Accounts/Search';
+            } else {
+                alert("Error: " + await res.text());
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

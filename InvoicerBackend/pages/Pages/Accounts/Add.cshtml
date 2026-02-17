@@ -1,0 +1,70 @@
+﻿@page "/Pages/Accounts/Add"
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Account</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }</style>
+</head>
+<body>
+    <h2>Add Account</h2>
+    <div class="form-group"><label>Name</label><input type="text" id="name"></div>
+    <div class="form-group">
+        <label>Type</label>
+        <select id="type">
+            <option value="0">Asset</option>
+            <option value="1">Liability</option>
+            <option value="2">Income</option>
+            <option value="3">Expense</option>
+        </select>
+    </div>
+    <div class="form-group"><label>Human Friendly ID</label><input type="text" id="hfid"></div>
+
+    <h3>Limits</h3>
+    <div class="form-group"><label>Min Limit</label><input type="number" id="min" value="-1000000000"></div>
+    <div class="form-group"><label>Max Limit</label><input type="number" id="max" value="1000000000"></div>
+
+    <button onclick="save()">Create</button>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        async function save() {
+            const token = getCookie("auth-token");
+            const payload = {
+                AccountName: document.getElementById('name').value,
+                AccountType: parseInt(document.getElementById('type').value),
+                HumanFriendlyId: document.getElementById('hfid').value,
+                AccountMin: parseFloat(document.getElementById('min').value),
+                AccountMax: parseFloat(document.getElementById('max').value)
+            };
+            const res = await fetch('/CreateAccountWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) { alert("Created!"); window.location.href = '/Pages/Accounts/Search'; }
+            else alert("Error: " + await res.text());
+        }
+    </script>
+</body>
+</html>

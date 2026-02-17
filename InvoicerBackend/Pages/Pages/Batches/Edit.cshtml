@@ -43,7 +43,41 @@
             border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 5px;
+        }
+
+        .batch-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85em;
+            text-decoration: none;
+            color: white;
+            border-radius: 3px;
+            border: none;
+            display: inline-block;
             cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #007bff;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
         }
     </style>
 </head>
@@ -52,11 +86,15 @@
     <div id="status">Checking flow...</div>
 
     <div id="batchList" style="display:none;">
-        <h3>Select Batch to Edit</h3>
+        <div style="margin-bottom: 10px;">
+            <a href="/Pages/Adjustments/Index" class="btn-sm btn-secondary">View All Adjustments</a>
+        </div>
+        <h3>Select Batch</h3>
         <div id="listContent"></div>
     </div>
 
     <div id="editForm" style="display:none;">
+        <!-- ... Keep existing Edit Form HTML here ... -->
         <div class="form-group">
             <label>Item Code</label>
             <input type="text" id="itemCode" readonly>
@@ -101,7 +139,7 @@
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
         let selectedItemCode = null;
-        let initialBatchData = null; // Store initial state here
+        let initialBatchData = null;
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -118,7 +156,6 @@
                 return;
             }
 
-            // 1. Get Flow Data
             const res = await fetch('/GetFlowData', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -127,14 +164,13 @@
 
             const data = await res.json();
             if (!data.value) {
-                statusDiv.innerText = "Flow Broken: No Item selected. Go back to Item Selection.";
+                statusDiv.innerText = "Flow Broken: No Item selected.";
                 return;
             }
 
             selectedItemCode = data.value;
             statusDiv.style.display = 'none';
 
-            // 2. Check if BatchCode is in URL
             const batchCodeParam = params.get('batchCode');
             if (batchCodeParam) {
                 await loadBatch(selectedItemCode, batchCodeParam);
@@ -158,13 +194,18 @@
             listDiv.style.display = 'block';
 
             if (batches.length === 0) {
-                listContent.innerHTML = "<p>No batches found for this item.</p>";
+                listContent.innerHTML = "<p>No batches found.</p>";
                 return;
             }
 
             listContent.innerHTML = batches.map(b => `
-                <div class="batch-item" onclick="window.location.href=window.location.href + '&batchCode=${b.batchcode}'">
-                    Batch: ${b.batchcode} | Exp: ${b.expDate ? new Date(b.expDate).toLocaleDateString() : 'N/A'}
+                <div class="batch-item">
+                    <div><strong>Batch: ${b.batchcode}</strong> | Qty: ${b.units} | Exp: ${b.expDate ? new Date(b.expDate).toLocaleDateString() : 'N/A'}</div>
+                    <div class="batch-actions">
+                        <a href="?flowId=${flowId}&batchCode=${b.batchcode}" class="btn-sm btn-primary">Edit</a>
+                        <a href="/Pages/Batches/Split?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-warning">Split</a>
+                        <a href="/Pages/Batches/Adjust?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-danger">Adjustment</a>
+                    </div>
                 </div>
             `).join('');
         }
@@ -172,6 +213,10 @@
         async function loadBatch(itemCode, batchCode) {
             const token = getCookie("auth-token");
             const editForm = document.getElementById('editForm');
+            const batchList = document.getElementById('batchList');
+
+            batchList.style.display = 'none';
+            editForm.style.display = 'block';
 
             const res = await fetch('/GetBatchWeb', {
                 method: 'POST',
@@ -182,18 +227,12 @@
             const batch = await res.json();
             if (!batch) { alert("Batch not found"); return; }
 
-            // Store initial state for comparison
             initialBatchData = batch;
-
-            editForm.style.display = 'block';
 
             document.getElementById('itemCode').value = batch.itemcode;
             document.getElementById('batchCode').value = batch.batchcode;
-
-            // Dates need formatting for input type="date"
             document.getElementById('mfgDate').value = batch.mfgDate ? new Date(batch.mfgDate).toISOString().split('T')[0] : "";
             document.getElementById('expDate').value = batch.expDate ? new Date(batch.expDate).toISOString().split('T')[0] : "";
-
             document.getElementById('remarks').value = batch.remarks || "";
             document.getElementById('tags').value = batch.tags || "";
             document.getElementById('volDisc').checked = batch.volumeDiscounts;
@@ -203,65 +242,28 @@
         async function saveBatch() {
             const token = getCookie("auth-token");
 
-            // Base payload with IDs
             const payload = {
                 Itemcode: parseInt(document.getElementById('itemCode').value),
-                Batchcode: parseInt(document.getElementById('batchCode').value)
+                Batchcode: parseInt(document.getElementById('batchCode').value),
+                MfgDate: document.getElementById('mfgDate').value ? new Date(document.getElementById('mfgDate').value).toISOString() : null,
+                ExpDate: document.getElementById('expDate').value ? new Date(document.getElementById('expDate').value).toISOString() : null,
+                Remarks: document.getElementById('remarks').value,
+                Tags: document.getElementById('tags').value,
+                VolumeDiscounts: document.getElementById('volDisc').checked,
+                UserDiscounts: document.getElementById('userDisc').checked
             };
 
-            let changed = false;
+            const res = await fetch('/EditBatchWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-            // Helper to compare and add if changed
-            const addIfChanged = (key, currentVal, originalVal) => {
-                // Normalize null/undefined/empty string for comparison
-                const normCurrent = (currentVal === "" || currentVal === null) ? null : currentVal;
-                const normOriginal = (originalVal === "" || originalVal === null) ? null : originalVal;
-
-                if (normCurrent !== normOriginal) {
-                    payload[key] = currentVal; // Send the raw current value
-                    changed = true;
-                }
-            };
-
-            // Compare Dates (Input returns yyyy-MM-dd, API returns ISO string)
-            const mfgInput = document.getElementById('mfgDate').value;
-            const mfgOriginal = initialBatchData.mfgDate ? new Date(initialBatchData.mfgDate).toISOString().split('T')[0] : null;
-            addIfChanged("MfgDate", mfgInput ? new Date(mfgInput).toISOString() : null, mfgOriginal ? new Date(mfgOriginal).toISOString() : null);
-
-            const expInput = document.getElementById('expDate').value;
-            const expOriginal = initialBatchData.expDate ? new Date(initialBatchData.expDate).toISOString().split('T')[0] : null;
-            addIfChanged("ExpDate", expInput ? new Date(expInput).toISOString() : null, expOriginal ? new Date(expOriginal).toISOString() : null);
-
-            // Compare Strings
-            addIfChanged("Remarks", document.getElementById('remarks').value, initialBatchData.remarks);
-            addIfChanged("Tags", document.getElementById('tags').value, initialBatchData.tags);
-
-            // Compare Booleans
-            addIfChanged("VolumeDiscounts", document.getElementById('volDisc').checked, initialBatchData.volumeDiscounts);
-            addIfChanged("UserDiscounts", document.getElementById('userDisc').checked, initialBatchData.userDiscounts);
-
-            if (!changed) {
-                alert("No changes detected.");
-                return;
-            }
-
-            try {
-                const res = await fetch('/EditBatchWeb', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    alert("Batch updated successfully!");
-                    // Update initial data to reflect saved state
-                    initialBatchData = { ...initialBatchData, ...payload };
-                } else {
-                    const err = await res.text();
-                    alert("Error: " + err);
-                }
-            } catch (err) {
-                alert("Network Error: " + err.message);
+            if (res.ok) {
+                alert("Batch updated!");
+                initialBatchData = { ...initialBatchData, ...payload };
+            } else {
+                alert("Error updating.");
             }
         }
 

@@ -1,0 +1,112 @@
+﻿@page "/Pages/Pii/Edit"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit PII</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }</style>
+</head>
+<body>
+    <h2>Edit PII</h2>
+    <div id="status">Loading...</div>
+    <div id="form" style="display:none;">
+        <input type="hidden" id="id">
+        <div class="form-group"><label>Name</label><input type="text" id="name"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="email"></div>
+        <div class="form-group"><label>Telephone</label><input type="text" id="telephone"></div>
+        <div class="form-group"><label>Address</label><input type="text" id="address"></div>
+        <div class="form-group"><label>Is Company</label><input type="checkbox" id="isCompany"></div>
+        <hr />
+        <div class="form-group"><label>Discount Rate (Additive %)</label><input type="number" id="discAdd"></div>
+        <div class="form-group"><label>Discount Rate (Multiplicative %)</label><input type="number" id="discMult"></div>
+        <button onclick="saveChanges()">Save Changes</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const piiId = params.get('id');
+        let originalData = null;
+
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function load() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/SearchPiiWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: piiId }) // Assuming search by ID works or we need a GetById
+            });
+            // Note: Ideally we should have a GetById endpoint. Using Search for now.
+            const list = await res.json();
+            const data = list.find(x => x.id == piiId);
+            if(!data) { document.getElementById('status').innerText = "Not found"; return; }
+
+            originalData = data;
+            document.getElementById('id').value = data.id;
+            document.getElementById('name').value = data.name;
+            document.getElementById('email').value = data.email || "";
+            document.getElementById('telephone').value = data.telephone || "";
+            document.getElementById('address').value = data.address || "";
+            document.getElementById('isCompany').checked = data.isCompany;
+            document.getElementById('discAdd').value = data.discountRateAdditivePercentage;
+            document.getElementById('discMult').value = data.discountRateMultiplicativePercentage;
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        }
+
+        async function saveChanges() {
+            const token = getCookie("auth-token");
+            const payload = { Id: parseInt(piiId) };
+
+            // Track changes
+            if(document.getElementById('name').value !== originalData.name) payload.Name = document.getElementById('name').value;
+            if(document.getElementById('email').value !== (originalData.email || "")) payload.Email = document.getElementById('email').value;
+            if(document.getElementById('telephone').value !== (originalData.telephone || "")) payload.Telephone = document.getElementById('telephone').value;
+            if(document.getElementById('address').value !== (originalData.address || "")) payload.Address = document.getElementById('address').value;
+            if(document.getElementById('isCompany').checked !== originalData.isCompany) payload.IsCompany = document.getElementById('isCompany').checked;
+
+            const discAdd = parseFloat(document.getElementById('discAdd').value);
+            const discMult = parseFloat(document.getElementById('discMult').value);
+            if(discAdd !== originalData.discountRateAdditivePercentage) payload.DiscountRateAdditivePercentage = discAdd;
+            if(discMult !== originalData.discountRateMultiplicativePercentage) payload.DiscountRateMultiplicativePercentage = discMult;
+
+            if(Object.keys(payload).length <= 1) { alert("No changes."); return; }
+
+            const res = await fetch('/EditPiiWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) { alert("Saved!"); location.reload(); }
+            else alert("Error: " + await res.text());
+        }
+
+        load();
+    </script>
+</body>
+</html>

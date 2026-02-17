@@ -34,4 +34,33 @@ namespace InvoicerBackend
             }
         }
     }
+
+    public static class FlowRequestEndpoints
+    {
+        public static WebApplication AddFlowEndpoints(this WebApplication app)
+        {
+            app.AddAsyncEndpointWithBearerAuth<FlowRequest>(
+            "SetFlowData",
+            async (DataIn, LoginInfo) =>
+            {
+                var req = (FlowRequest)DataIn;
+                FlowService.Set(req.FlowId, req.Key, req.Value);
+                return true;
+            },
+                "Refresh"
+            );
+
+            app.AddAsyncEndpointWithBearerAuth<FlowRequest>(
+                "GetFlowData",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (FlowRequest)DataIn;
+                    var val = FlowService.Get(req.FlowId, req.Key);
+                    return new { Value = val };
+                },
+                "Refresh"
+            );
+            return app;
+        }
+    }
 }

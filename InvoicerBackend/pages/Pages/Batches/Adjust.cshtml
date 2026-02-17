@@ -1,0 +1,224 @@
+﻿@page "/Pages/Batches/Adjust"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adjust Batch Inventory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            margin-right: 10px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .warning {
+            color: #856404;
+            background: #fff3cd;
+            padding: 10px;
+            border: 1px solid #ffeeba;
+            margin-bottom: 15px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+            .row > div {
+                flex: 1;
+            }
+    </style>
+</head>
+<body>
+    <h2>Adjust Batch Inventory</h2>
+    <div class="warning">
+        <strong>Warning:</strong> Adjustments affect stock levels, Bin Cards, and Accounting.
+    </div>
+
+    <div id="info" class="info">Loading batch info...</div>
+
+    <div id="form" style="display:none;">
+        <div class="form-group">
+            <label>Document Number (User Generated)</label>
+            <input type="text" id="docNumber" placeholder="e.g. ADJ-001">
+        </div>
+
+        <div class="form-group">
+            <label>Current Quantity (System)</label>
+            <input type="number" id="currentQty" readonly>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label>New Quantity (Count)</label>
+                <input type="number" id="newQty" placeholder="Enter physical count">
+            </div>
+            <div class="form-group">
+                <label>Difference (+/-)</label>
+                <input type="number" id="difference" placeholder="e.g. -3 for missing">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Reason for Adjustment</label>
+            <textarea id="reason" rows="3" placeholder="Mandatory explanation"></textarea>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button class="btn btn-danger" onclick="executeAdjust()">Post Immediately</button>
+            <button class="btn btn-secondary" onclick="saveUnposted()">Save Unposted</button>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const itemCode = params.get('itemCode');
+        const batchCode = params.get('batchCode');
+
+        let currentQty = 0;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetBatchWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCode) })
+            });
+            const batch = await res.json();
+
+            currentQty = batch.units;
+            document.getElementById('info').innerText = `Item: ${batch.itemcode} | Batch: ${batch.batchcode} | Cost: ${batch.costPrice}`;
+            document.getElementById('currentQty').value = currentQty;
+
+            document.getElementById('form').style.display = 'block';
+        }
+
+        document.getElementById('newQty').addEventListener('input', function(e) {
+            const val = parseFloat(e.target.value) || 0;
+            const diff = val - currentQty;
+            document.getElementById('difference').value = diff.toFixed(2);
+        });
+
+        document.getElementById('difference').addEventListener('input', function(e) {
+            const diff = parseFloat(e.target.value) || 0;
+            const newQ = currentQty + diff;
+            document.getElementById('newQty').value = newQ.toFixed(2);
+        });
+
+        async function executeAdjust() {
+            const token = getCookie("auth-token");
+            const diff = parseFloat(document.getElementById('difference').value);
+            const reason = document.getElementById('reason').value;
+            const docNum = document.getElementById('docNumber').value;
+
+            if (!docNum) { alert("Document Number is required."); return; }
+            if (!reason) { alert("Reason is required."); return; }
+            if (isNaN(diff) || diff === 0) { alert("Difference cannot be zero."); return; }
+
+            if (!confirm(`Confirm POST adjustment of ${diff} units? This will immediately affect accounting.`)) return;
+
+            const res = await fetch('/AdjustmentAddToBatch', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ItemCode: parseInt(itemCode),
+                    BatchCode: parseInt(batchCode),
+                    Difference: diff,
+                    Reason: reason,
+                    DocumentNumber: docNum
+                })
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                alert(`Success! Posted. New Quantity: ${result.newQuantity}`);
+                window.location.href = '/Pages/Batches/Edit?flowId=' + flowId;
+            } else {
+                const err = await res.text();
+                alert("Failed: " + err);
+            }
+        }
+
+        async function saveUnposted() {
+            const token = getCookie("auth-token");
+            const diff = parseFloat(document.getElementById('difference').value);
+            const reason = document.getElementById('reason').value;
+            const docNum = document.getElementById('docNumber').value;
+
+            if (!docNum) { alert("Document Number is required."); return; }
+            if (!reason) { alert("Reason is required."); return; }
+            if (isNaN(diff) || diff === 0) { alert("Difference cannot be zero."); return; }
+
+            if (!confirm(`Save UNPOSTED adjustment of ${diff} units?`)) return;
+
+            const res = await fetch('/CreateUnpostedAdjustment', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ItemCode: parseInt(itemCode),
+                    BatchCode: parseInt(batchCode),
+                    Difference: diff,
+                    Reason: reason,
+                    DocumentNumber: docNum
+                })
+            });
+
+            if (res.ok) {
+                alert("Saved as Unposted. A supervisor must approve this.");
+                window.location.href = '/Pages/Batches/Edit?flowId=' + flowId;
+            } else {
+                const err = await res.text();
+                alert("Failed: " + err);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
