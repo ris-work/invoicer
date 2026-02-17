@@ -1,0 +1,120 @@
+﻿@page "/Pages/SearchAndSelect/ItemSelect"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Item</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .result-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+            .result-card:hover {
+                background: #f0f0f0;
+            }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select an Item</h2>
+    <div id="errorBox" class="error" style="display:none;"></div>
+
+    <div id="content" style="display:none;">
+        <input type="text" id="searchQuery" placeholder="Search catalogue...">
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const redirTo = params.get('redirTo');
+
+        // Strict Check: Flow must be initialized
+        if (!flowId || !redirTo) {
+            document.getElementById('errorBox').innerText = "Error: Invalid Flow. No Flow ID or Redirect target specified.";
+            document.getElementById('errorBox').style.display = 'block';
+        } else {
+            document.getElementById('content').style.display = 'block';
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        document.getElementById('searchQuery').addEventListener('input', async function() {
+            const token = getCookie("auth-token");
+            const query = this.value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!query) { resultsDiv.innerHTML = ""; return; }
+
+            try {
+                const res = await fetch('/SearchCatalogueWeb', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: query })
+                });
+
+                if (!res.ok) return;
+                const items = await res.json();
+
+                resultsDiv.innerHTML = items.map(i => `
+                    <div class="result-card" onclick="selectItem(${i.itemcode})">
+                        <strong>${i.itemcode}</strong>: ${i.description || 'No Desc'}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function selectItem(itemCode) {
+            const token = getCookie("auth-token");
+
+            try {
+                // 1. Set Flow Data
+                const setRes = await fetch('/SetFlowData', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: itemCode.toString() })
+                });
+
+                if (!setRes.ok) {
+                    alert("Failed to save selection.");
+                    return;
+                }
+
+                // 2. Redirect
+                window.location.href = redirTo + "?flowId=" + flowId;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

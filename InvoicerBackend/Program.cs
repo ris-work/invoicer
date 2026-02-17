@@ -246,6 +246,8 @@ app.AddPhysicalMapEndpoints();
 app.AddRefDocsEndpoints();
 app.AddCatalogueImageEndpoints();
 app.AddBatchDefaultImageEndpoints();
+app.AddBatchEditors();
+app.AddFlowEndpoints();
 
 app.MapRazorPages();
 

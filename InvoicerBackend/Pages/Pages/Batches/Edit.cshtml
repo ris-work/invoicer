@@ -1,0 +1,271 @@
+﻿@page "/Pages/Batches/Edit"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Batch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #batchList {
+            margin-bottom: 20px;
+        }
+
+        .batch-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Edit Batch</h2>
+    <div id="status">Checking flow...</div>
+
+    <div id="batchList" style="display:none;">
+        <h3>Select Batch to Edit</h3>
+        <div id="listContent"></div>
+    </div>
+
+    <div id="editForm" style="display:none;">
+        <div class="form-group">
+            <label>Item Code</label>
+            <input type="text" id="itemCode" readonly>
+        </div>
+        <div class="form-group">
+            <label>Batch Code</label>
+            <input type="text" id="batchCode" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Mfg Date</label>
+            <input type="date" id="mfgDate">
+        </div>
+        <div class="form-group">
+            <label>Exp Date</label>
+            <input type="date" id="expDate">
+        </div>
+
+        <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="remarks" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Tags</label>
+            <input type="text" id="tags">
+        </div>
+
+        <div class="form-group">
+            <label>Volume Discounts Enabled</label>
+            <input type="checkbox" id="volDisc">
+        </div>
+        <div class="form-group">
+            <label>User Discounts Enabled</label>
+            <input type="checkbox" id="userDisc">
+        </div>
+
+        <button onclick="saveBatch()">Save Changes</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        let selectedItemCode = null;
+        let initialBatchData = null; // Store initial state here
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const statusDiv = document.getElementById('status');
+
+            if (!flowId) {
+                statusDiv.innerText = "Error: No Flow ID provided.";
+                return;
+            }
+
+            // 1. Get Flow Data
+            const res = await fetch('/GetFlowData', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+
+            const data = await res.json();
+            if (!data.value) {
+                statusDiv.innerText = "Flow Broken: No Item selected. Go back to Item Selection.";
+                return;
+            }
+
+            selectedItemCode = data.value;
+            statusDiv.style.display = 'none';
+
+            // 2. Check if BatchCode is in URL
+            const batchCodeParam = params.get('batchCode');
+            if (batchCodeParam) {
+                await loadBatch(selectedItemCode, batchCodeParam);
+            } else {
+                await loadBatchList(selectedItemCode);
+            }
+        }
+
+        async function loadBatchList(itemCode) {
+            const token = getCookie("auth-token");
+            const listDiv = document.getElementById('batchList');
+            const listContent = document.getElementById('listContent');
+
+            const res = await fetch('/SearchBatchesWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode) })
+            });
+
+            const batches = await res.json();
+            listDiv.style.display = 'block';
+
+            if (batches.length === 0) {
+                listContent.innerHTML = "<p>No batches found for this item.</p>";
+                return;
+            }
+
+            listContent.innerHTML = batches.map(b => `
+                <div class="batch-item" onclick="window.location.href=window.location.href + '&batchCode=${b.batchcode}'">
+                    Batch: ${b.batchcode} | Exp: ${b.expDate ? new Date(b.expDate).toLocaleDateString() : 'N/A'}
+                </div>
+            `).join('');
+        }
+
+        async function loadBatch(itemCode, batchCode) {
+            const token = getCookie("auth-token");
+            const editForm = document.getElementById('editForm');
+
+            const res = await fetch('/GetBatchWeb', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCode) })
+            });
+
+            const batch = await res.json();
+            if (!batch) { alert("Batch not found"); return; }
+
+            // Store initial state for comparison
+            initialBatchData = batch;
+
+            editForm.style.display = 'block';
+
+            document.getElementById('itemCode').value = batch.itemcode;
+            document.getElementById('batchCode').value = batch.batchcode;
+
+            // Dates need formatting for input type="date"
+            document.getElementById('mfgDate').value = batch.mfgDate ? new Date(batch.mfgDate).toISOString().split('T')[0] : "";
+            document.getElementById('expDate').value = batch.expDate ? new Date(batch.expDate).toISOString().split('T')[0] : "";
+
+            document.getElementById('remarks').value = batch.remarks || "";
+            document.getElementById('tags').value = batch.tags || "";
+            document.getElementById('volDisc').checked = batch.volumeDiscounts;
+            document.getElementById('userDisc').checked = batch.userDiscounts;
+        }
+
+        async function saveBatch() {
+            const token = getCookie("auth-token");
+
+            // Base payload with IDs
+            const payload = {
+                Itemcode: parseInt(document.getElementById('itemCode').value),
+                Batchcode: parseInt(document.getElementById('batchCode').value)
+            };
+
+            let changed = false;
+
+            // Helper to compare and add if changed
+            const addIfChanged = (key, currentVal, originalVal) => {
+                // Normalize null/undefined/empty string for comparison
+                const normCurrent = (currentVal === "" || currentVal === null) ? null : currentVal;
+                const normOriginal = (originalVal === "" || originalVal === null) ? null : originalVal;
+
+                if (normCurrent !== normOriginal) {
+                    payload[key] = currentVal; // Send the raw current value
+                    changed = true;
+                }
+            };
+
+            // Compare Dates (Input returns yyyy-MM-dd, API returns ISO string)
+            const mfgInput = document.getElementById('mfgDate').value;
+            const mfgOriginal = initialBatchData.mfgDate ? new Date(initialBatchData.mfgDate).toISOString().split('T')[0] : null;
+            addIfChanged("MfgDate", mfgInput ? new Date(mfgInput).toISOString() : null, mfgOriginal ? new Date(mfgOriginal).toISOString() : null);
+
+            const expInput = document.getElementById('expDate').value;
+            const expOriginal = initialBatchData.expDate ? new Date(initialBatchData.expDate).toISOString().split('T')[0] : null;
+            addIfChanged("ExpDate", expInput ? new Date(expInput).toISOString() : null, expOriginal ? new Date(expOriginal).toISOString() : null);
+
+            // Compare Strings
+            addIfChanged("Remarks", document.getElementById('remarks').value, initialBatchData.remarks);
+            addIfChanged("Tags", document.getElementById('tags').value, initialBatchData.tags);
+
+            // Compare Booleans
+            addIfChanged("VolumeDiscounts", document.getElementById('volDisc').checked, initialBatchData.volumeDiscounts);
+            addIfChanged("UserDiscounts", document.getElementById('userDisc').checked, initialBatchData.userDiscounts);
+
+            if (!changed) {
+                alert("No changes detected.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/EditBatchWeb', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Batch updated successfully!");
+                    // Update initial data to reflect saved state
+                    initialBatchData = { ...initialBatchData, ...payload };
+                } else {
+                    const err = await res.text();
+                    alert("Error: " + err);
+                }
+            } catch (err) {
+                alert("Network Error: " + err.message);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
