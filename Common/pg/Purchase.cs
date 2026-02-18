@@ -70,4 +70,6 @@ public partial class Purchase
     public long LineNumber { get; set; }
 
     public bool IsOneOff { get; set; }
+
+    public bool CreatesNewBatch { get; set; }
 }

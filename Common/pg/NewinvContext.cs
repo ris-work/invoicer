@@ -25,9 +25,15 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<AccountsType> AccountsTypes { get; set; }
 
+    public virtual DbSet<AllTag> AllTags { get; set; }
+
     public virtual DbSet<ApiAuthorization> ApiAuthorizations { get; set; }
 
     public virtual DbSet<AuthorizedTerminal> AuthorizedTerminals { get; set; }
+
+    public virtual DbSet<Barcode> Barcodes { get; set; }
+
+    public virtual DbSet<BarcodesResolved> BarcodesResolveds { get; set; }
 
     public virtual DbSet<BundledPricing> BundledPricings { get; set; }
 
@@ -40,6 +46,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<CodesBatch> CodesBatches { get; set; }
 
     public virtual DbSet<CodesCatalogue> CodesCatalogues { get; set; }
+
+    public virtual DbSet<ComputedTag> ComputedTags { get; set; }
 
     public virtual DbSet<Credential> Credentials { get; set; }
 
@@ -124,6 +132,10 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<SihCurrent> SihCurrents { get; set; }
 
     public virtual DbSet<SuggestedPrice> SuggestedPrices { get; set; }
+
+    public virtual DbSet<TagsImply> TagsImplies { get; set; }
+
+    public virtual DbSet<TagsTransitiveClosure> TagsTransitiveClosures { get; set; }
 
     public virtual DbSet<TieredDiscount> TieredDiscounts { get; set; }
 
@@ -276,6 +288,15 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.AccountTypeName).HasColumnName("account_type_name");
         });
 
+        modelBuilder.Entity<AllTag>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("all_tags");
+
+            entity.Property(e => e.Tag).HasColumnName("tag");
+        });
+
         modelBuilder.Entity<ApiAuthorization>(entity =>
         {
             entity.HasKey(e => new { e.Userid, e.Authorization }).HasName("api_authorization_pkey");
@@ -297,6 +318,34 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Userid)
                 .ValueGeneratedOnAdd()
                 .HasColumnName("userid");
+        });
+
+        modelBuilder.Entity<Barcode>(entity =>
+        {
+            entity.HasKey(e => e.Code).HasName("barcodes_pkey");
+
+            entity.ToTable("barcodes");
+
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ModifiedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("modified_at");
+            entity.Property(e => e.Remarks).HasColumnName("remarks");
+        });
+
+        modelBuilder.Entity<BarcodesResolved>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("barcodes_resolved");
+
+            entity.Property(e => e.Barcode).HasColumnName("barcode");
+            entity.Property(e => e.Reference).HasColumnName("reference");
         });
 
         modelBuilder.Entity<BundledPricing>(entity =>
@@ -475,6 +524,16 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Enabled)
                 .HasDefaultValue(true)
                 .HasColumnName("enabled");
+        });
+
+        modelBuilder.Entity<ComputedTag>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("computed_tags");
+
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Tag).HasColumnName("tag");
         });
 
         modelBuilder.Entity<Credential>(entity =>
@@ -1112,6 +1171,9 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("added_date");
             entity.Property(e => e.CostPerPack).HasColumnName("cost_per_pack");
             entity.Property(e => e.CostPerUnit).HasColumnName("cost_per_unit");
+            entity.Property(e => e.CreatesNewBatch)
+                .HasDefaultValue(false)
+                .HasColumnName("creates_new_batch");
             entity.Property(e => e.DiscountAbsolute).HasColumnName("discount_absolute");
             entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
             entity.Property(e => e.ExpiryDate)
@@ -1602,6 +1664,31 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Price).HasColumnName("price");
+        });
+
+        modelBuilder.Entity<TagsImply>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("tags_implies_pkey");
+
+            entity.ToTable("tags_implies");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Implies).HasColumnName("implies");
+            entity.Property(e => e.RecordedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("recorded_at");
+            entity.Property(e => e.Tag).HasColumnName("tag");
+        });
+
+        modelBuilder.Entity<TagsTransitiveClosure>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("tags_transitive_closure");
+
+            entity.Property(e => e.Implication).HasColumnName("implication");
+            entity.Property(e => e.RuleChain).HasColumnName("rule_chain");
+            entity.Property(e => e.Tag).HasColumnName("tag");
         });
 
         modelBuilder.Entity<TieredDiscount>(entity =>
