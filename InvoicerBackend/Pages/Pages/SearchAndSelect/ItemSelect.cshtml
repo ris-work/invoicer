@@ -43,7 +43,7 @@
     <div id="errorBox" class="error" style="display:none;"></div>
 
     <div id="content" style="display:none;">
-        <input type="text" id="searchQuery" placeholder="Search catalogue...">
+        <input type="text" id="searchQuery" placeholder="Search name or scan barcode...">
         <div id="results"></div>
     </div>
 
@@ -66,38 +66,85 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
-        document.getElementById('searchQuery').addEventListener('input', async function() {
+        let debounceTimer;
+        document.getElementById('searchQuery').addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            const query = e.target.value;
+
+            // Debounce to prevent searching while scanning
+            debounceTimer = setTimeout(() => {
+                handleInput(query);
+            }, 300);
+        });
+
+        async function handleInput(query) {
             const token = getCookie("auth-token");
-            const query = this.value;
             const resultsDiv = document.getElementById('results');
 
             if (!query) { resultsDiv.innerHTML = ""; return; }
+            resultsDiv.innerHTML = "Checking...";
 
             try {
-                const res = await fetch('/SearchCatalogueWeb', {
+                // 1. Try to resolve as Barcode
+                const barcodeRes = await fetch('/ResolveBarcode', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(query)
+                });
+
+                if (barcodeRes.ok) {
+                    const barcodeData = await barcodeRes.json();
+
+                    if (barcodeData.found && barcodeData.itemCode) {
+                        resultsDiv.innerHTML = "<p>Barcode found! Redirecting...</p>";
+
+                        // Set Flow Data
+                        await fetch('/SetFlowData', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: barcodeData.itemCode.toString() })
+                        });
+
+                        // Redirect Logic
+                        // If redirTo is Batch Edit AND we have a specific batch code, go directly to it
+                        if (barcodeData.batchCode && redirTo.includes("Batches/Edit")) {
+                            window.location.href = redirTo + "?flowId=" + flowId + "&batchCode=" + barcodeData.batchCode;
+                        } else {
+                            // Otherwise just go to the default redirect (e.g. Batch List for Item)
+                            window.location.href = redirTo + "?flowId=" + flowId;
+                        }
+                        return; // Stop execution here
+                    }
+                }
+
+                // 2. Fallback to Catalogue Search
+                resultsDiv.innerHTML = "Searching...";
+                const searchRes = await fetch('/SearchCatalogueWeb', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Query: query })
                 });
 
-                if (!res.ok) return;
-                const items = await res.json();
+                if (!searchRes.ok) return;
+                const items = await searchRes.json();
 
                 resultsDiv.innerHTML = items.map(i => `
                     <div class="result-card" onclick="selectItem(${i.itemcode})">
                         <strong>${i.itemcode}</strong>: ${i.description || 'No Desc'}
                     </div>
                 `).join('');
+
             } catch (err) {
                 console.error(err);
+                resultsDiv.innerHTML = "Error searching.";
             }
-        });
+        }
 
         async function selectItem(itemCode) {
             const token = getCookie("auth-token");
 
             try {
-                // 1. Set Flow Data
+                // Set Flow Data
                 const setRes = await fetch('/SetFlowData', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -109,7 +156,7 @@
                     return;
                 }
 
-                // 2. Redirect
+                // Redirect
                 window.location.href = redirTo + "?flowId=" + flowId;
             } catch (err) {
                 console.error(err);

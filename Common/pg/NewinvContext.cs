@@ -1664,6 +1664,10 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.AddedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("added_at");
+            entity.Property(e => e.AddedBy).HasColumnName("added_by");
         });
 
         modelBuilder.Entity<TagsImply>(entity =>
