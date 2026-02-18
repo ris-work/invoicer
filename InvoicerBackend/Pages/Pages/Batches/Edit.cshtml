@@ -35,49 +35,28 @@
             cursor: pointer;
         }
 
-        #batchList {
-            margin-bottom: 20px;
+        /* Barcode Styles */
+        .barcode-section {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
         }
 
-        .batch-item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 5px;
-        }
-
-        .batch-actions {
-            margin-top: 8px;
+        .barcode-input-group {
             display: flex;
             gap: 5px;
-            flex-wrap: wrap;
         }
 
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 0.85em;
-            text-decoration: none;
-            color: white;
+        .barcode-list {
+            margin-top: 10px;
+        }
+
+        .barcode-item {
+            background: #f8f9fa;
+            padding: 8px;
+            margin-bottom: 5px;
             border-radius: 3px;
-            border: none;
-            display: inline-block;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: #007bff;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
+            border: 1px solid #e9ecef;
         }
     </style>
 </head>
@@ -85,16 +64,7 @@
     <h2>Edit Batch</h2>
     <div id="status">Checking flow...</div>
 
-    <div id="batchList" style="display:none;">
-        <div style="margin-bottom: 10px;">
-            <a href="/Pages/Adjustments/Index" class="btn-sm btn-secondary">View All Adjustments</a>
-        </div>
-        <h3>Select Batch</h3>
-        <div id="listContent"></div>
-    </div>
-
     <div id="editForm" style="display:none;">
-        <!-- ... Keep existing Edit Form HTML here ... -->
         <div class="form-group">
             <label>Item Code</label>
             <input type="text" id="itemCode" readonly>
@@ -118,28 +88,29 @@
             <textarea id="remarks" rows="3"></textarea>
         </div>
 
-        <div class="form-group">
-            <label>Tags</label>
-            <input type="text" id="tags">
+        <!-- Barcode Section -->
+        <div class="barcode-section">
+            <h3>Barcodes</h3>
+            <div class="form-group">
+                <div class="barcode-input-group">
+                    <input type="text" id="newBarcode" placeholder="Scan or enter barcode">
+                    <button onclick="addBarcode()">Add</button>
+                </div>
+            </div>
+            <div id="barcodeList" class="barcode-list"></div>
         </div>
 
-        <div class="form-group">
-            <label>Volume Discounts Enabled</label>
-            <input type="checkbox" id="volDisc">
+        <div style="margin-top: 20px;">
+            <button onclick="saveBatch()">Save Changes</button>
         </div>
-        <div class="form-group">
-            <label>User Discounts Enabled</label>
-            <input type="checkbox" id="userDisc">
-        </div>
-
-        <button onclick="saveBatch()">Save Changes</button>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        let selectedItemCode = null;
-        let initialBatchData = null;
+        const batchCodeParam = params.get('batchCode');
+
+        let currentBatch = null;
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -149,122 +120,96 @@
 
         async function init() {
             const token = getCookie("auth-token");
-            const statusDiv = document.getElementById('status');
 
-            if (!flowId) {
-                statusDiv.innerText = "Error: No Flow ID provided.";
-                return;
-            }
-
-            const res = await fetch('/GetFlowData', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            // 1. Flow Logic
+            const flowRes = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
             });
+            const flowData = await flowRes.json();
+            const itemCode = flowData.value;
 
-            const data = await res.json();
-            if (!data.value) {
-                statusDiv.innerText = "Flow Broken: No Item selected.";
-                return;
-            }
+            if (!itemCode || !batchCodeParam) { document.getElementById('status').innerText = "Error: Missing context."; return; }
 
-            selectedItemCode = data.value;
-            statusDiv.style.display = 'none';
+            // 2. Load Batch
+            const res = await fetch('/GetBatchWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCodeParam) })
+            });
+            currentBatch = await res.json();
 
-            const batchCodeParam = params.get('batchCode');
-            if (batchCodeParam) {
-                await loadBatch(selectedItemCode, batchCodeParam);
-            } else {
-                await loadBatchList(selectedItemCode);
-            }
+            document.getElementById('itemCode').value = currentBatch.itemcode;
+            document.getElementById('batchCode').value = currentBatch.batchcode;
+            document.getElementById('mfgDate').value = currentBatch.mfgDate ? new Date(currentBatch.mfgDate).toISOString().split('T')[0] : "";
+            document.getElementById('expDate').value = currentBatch.expDate ? new Date(currentBatch.expDate).toISOString().split('T')[0] : "";
+            document.getElementById('remarks').value = currentBatch.remarks || "";
+
+            // 3. Load Barcodes
+            await loadBarcodes(token);
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('editForm').style.display = 'block';
         }
 
-        async function loadBatchList(itemCode) {
-            const token = getCookie("auth-token");
-            const listDiv = document.getElementById('batchList');
-            const listContent = document.getElementById('listContent');
-
-            const res = await fetch('/SearchBatchesWeb', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ItemCode: parseInt(itemCode) })
+        async function loadBarcodes(token) {
+            const res = await fetch('/GetBarcodes', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Batchcode: parseInt(currentBatch.batchcode) })
             });
-
-            const batches = await res.json();
-            listDiv.style.display = 'block';
-
-            if (batches.length === 0) {
-                listContent.innerHTML = "<p>No batches found.</p>";
-                return;
-            }
-
-            listContent.innerHTML = batches.map(b => `
-                <div class="batch-item">
-                    <div><strong>Batch: ${b.batchcode}</strong> | Qty: ${b.units} | Exp: ${b.expDate ? new Date(b.expDate).toLocaleDateString() : 'N/A'}</div>
-                    <div class="batch-actions">
-                        <a href="?flowId=${flowId}&batchCode=${b.batchcode}" class="btn-sm btn-primary">Edit</a>
-                        <a href="/Pages/Batches/Split?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-warning">Split</a>
-                        <a href="/Pages/Batches/Adjust?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-danger">Adjustment</a>
-                    </div>
+            const codes = await res.json();
+            const list = document.getElementById('barcodeList');
+            list.innerHTML = codes.map(b => `
+                <div class="barcode-item">
+                    <strong>${b.code}</strong>
                 </div>
             `).join('');
         }
 
-        async function loadBatch(itemCode, batchCode) {
+        async function addBarcode() {
             const token = getCookie("auth-token");
-            const editForm = document.getElementById('editForm');
-            const batchList = document.getElementById('batchList');
+            const code = document.getElementById('newBarcode').value;
+            if (!code) return;
 
-            batchList.style.display = 'none';
-            editForm.style.display = 'block';
-
-            const res = await fetch('/GetBatchWeb', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCode) })
+            const res = await fetch('/AssignBarcode', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    Code: code,
+                    Itemcode: parseInt(currentBatch.itemcode),
+                    Batchcode: parseInt(currentBatch.batchcode)
+                })
             });
 
-            const batch = await res.json();
-            if (!batch) { alert("Batch not found"); return; }
-
-            initialBatchData = batch;
-
-            document.getElementById('itemCode').value = batch.itemcode;
-            document.getElementById('batchCode').value = batch.batchcode;
-            document.getElementById('mfgDate').value = batch.mfgDate ? new Date(batch.mfgDate).toISOString().split('T')[0] : "";
-            document.getElementById('expDate').value = batch.expDate ? new Date(batch.expDate).toISOString().split('T')[0] : "";
-            document.getElementById('remarks').value = batch.remarks || "";
-            document.getElementById('tags').value = batch.tags || "";
-            document.getElementById('volDisc').checked = batch.volumeDiscounts;
-            document.getElementById('userDisc').checked = batch.userDiscounts;
+            if (res.ok) {
+                document.getElementById('newBarcode').value = "";
+                await loadBarcodes(token);
+            } else {
+                alert("Error adding barcode");
+            }
         }
 
         async function saveBatch() {
             const token = getCookie("auth-token");
-
             const payload = {
-                Itemcode: parseInt(document.getElementById('itemCode').value),
-                Batchcode: parseInt(document.getElementById('batchCode').value),
-                MfgDate: document.getElementById('mfgDate').value ? new Date(document.getElementById('mfgDate').value).toISOString() : null,
-                ExpDate: document.getElementById('expDate').value ? new Date(document.getElementById('expDate').value).toISOString() : null,
-                Remarks: document.getElementById('remarks').value,
-                Tags: document.getElementById('tags').value,
-                VolumeDiscounts: document.getElementById('volDisc').checked,
-                UserDiscounts: document.getElementById('userDisc').checked
+                Itemcode: parseInt(currentBatch.itemcode),
+                Batchcode: parseInt(currentBatch.batchcode)
             };
 
+            // Track Changes
+            const newMfg = document.getElementById('mfgDate').value;
+            const newExp = document.getElementById('expDate').value;
+            const newRem = document.getElementById('remarks').value;
+
+            if (newMfg) payload.MfgDate = new Date(newMfg).toISOString();
+            if (newExp) payload.ExpDate = new Date(newExp).toISOString();
+            payload.Remarks = newRem;
+
             const res = await fetch('/EditBatchWeb', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            if (res.ok) {
-                alert("Batch updated!");
-                initialBatchData = { ...initialBatchData, ...payload };
-            } else {
-                alert("Error updating.");
-            }
+            if (res.ok) { alert("Batch updated!"); location.reload(); }
+            else alert("Error updating batch.");
         }
 
         init();

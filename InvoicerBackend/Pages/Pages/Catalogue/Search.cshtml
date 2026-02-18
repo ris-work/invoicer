@@ -63,8 +63,8 @@
     <h1>Search Catalogue</h1>
 
     <div class="form-group">
-        <label>Search Query</label>
-        <input type="text" id="searchQuery" placeholder="Keywords (e.g. 'invoice receipt')">
+        <label>Search or Scan Barcode</label>
+        <input type="text" id="searchQuery" placeholder="Type description or scan barcode...">
     </div>
 
     <button id="btnSearch">Search</button>
@@ -82,7 +82,7 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
-        document.getElementById('btnSearch').addEventListener('click', async function() {
+        async function handleSearch() {
             const token = getCookie("auth-token");
             const query = document.getElementById('searchQuery').value;
             const resultsDiv = document.getElementById('results');
@@ -97,10 +97,50 @@
                 return;
             }
 
-            resultsDiv.innerHTML = "Searching...";
+            resultsDiv.innerHTML = "Checking...";
 
             try {
-                // Fixed: Use SearchCatalogueWeb
+                // 1. Check if it is a barcode first
+                const barcodeRes = await fetch('/ResolveBarcode', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(query) // Send raw string
+                });
+
+                if (barcodeRes.ok) {
+                    const barcodeData = await barcodeRes.json();
+
+                    if (barcodeData.found) {
+                        resultsDiv.innerHTML = "<p>Barcode found! Redirecting...</p>";
+
+                        if (barcodeData.batchCode) {
+                            // Redirect to Batch Edit
+                            // We need to create a flow for this
+                            const flowId = 'flow-' + Date.now();
+                            // Set Flow Data
+                            await fetch('/SetFlowData', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: barcodeData.itemCode.toString() })
+                            });
+
+                            window.location.href = `/Pages/Batches/Edit?flowId=${flowId}&batchCode=${barcodeData.batchCode}`;
+                            return;
+                        }
+                        else if (barcodeData.itemCode) {
+                            // Redirect to Item Edit
+                            window.location.href = `/Pages/Catalogue/Edit?itemcode=${barcodeData.itemCode}`;
+                            return;
+                        }
+                    }
+                }
+
+                // 2. If not a barcode, do normal search
+                resultsDiv.innerHTML = "Searching...";
+
                 const searchRes = await fetch('/SearchCatalogueWeb', {
                     method: 'POST',
                     headers: {
@@ -135,6 +175,13 @@
                 resultsDiv.innerHTML = `<p style="color: red;">Search failed: ${err.message}</p>`;
                 console.error(err);
             }
+        }
+
+        document.getElementById('btnSearch').addEventListener('click', handleSearch);
+
+        // Optional: Auto-search on Enter key
+        document.getElementById('searchQuery').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleSearch();
         });
     </script>
 </body>

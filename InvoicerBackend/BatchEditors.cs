@@ -37,6 +37,24 @@ namespace InvoicerBackend
         public double NewQuantityForOriginal { get; set; } // The amount to LEAVE in the original batch
     }
 
+    // --- Barcode Endpoints ---
+
+    // 1. Assign/Update Barcode
+    public class AssignBarcodeRequest
+    {
+        public string Code { get; set; }
+        public long? Itemcode { get; set; }
+        public long? Batchcode { get; set; }
+        public string Remarks { get; set; }
+    }
+
+
+    // 2. Get Barcodes for Item
+    public class GetBarcodesRequest
+    {
+        public long? Itemcode { get; set; }
+        public long? Batchcode { get; set; }
+    }
     public static class BatchEditors
     {
         public static WebApplication AddBatchEditors(this WebApplication app)
@@ -181,6 +199,86 @@ namespace InvoicerBackend
                         await ctx.SaveChangesAsync();
 
                         return new { NewBatchCode = newBatch.Batchcode, NewUnits = newBatch.Units };
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<string>(
+                "ResolveBarcode",
+                async (CodeIn, LoginInfo) =>
+                {
+                    string code = (string)CodeIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        var barcode = await ctx.Barcodes.FirstOrDefaultAsync(b => b.Code == code);
+                        if (barcode == null) return new { Found = false };
+
+                        return new
+                        {
+                            Found = true,
+                            ItemCode = barcode.Itemcode,
+                            BatchCode = barcode.Batchcode
+                        };
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<AssignBarcodeRequest>(
+                "AssignBarcode",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (AssignBarcodeRequest)DataIn;
+
+                    using (var ctx = new NewinvContext())
+                    {
+                        // Check if barcode exists
+                        var existing = await ctx.Barcodes.FirstOrDefaultAsync(b => b.Code == req.Code);
+
+                        if (existing != null)
+                        {
+                            // Update existing
+                            existing.Itemcode = req.Itemcode;
+                            existing.Batchcode = req.Batchcode;
+                            existing.Remarks = req.Remarks;
+                            existing.ModifiedAt = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            // Create new
+                            var newBarcode = new Barcode
+                            {
+                                Code = req.Code,
+                                Itemcode = req.Itemcode,
+                                Batchcode = req.Batchcode,
+                                Remarks = req.Remarks,
+                                CreatedAt = DateTime.UtcNow,
+                                ModifiedAt = DateTime.UtcNow
+                            };
+                            ctx.Barcodes.Add(newBarcode);
+                        }
+
+                        await ctx.SaveChangesAsync();
+                        return true;
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<GetBarcodesRequest>(
+                "GetBarcodes",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (GetBarcodesRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        var query = ctx.Barcodes.AsQueryable();
+
+                        if (req.Itemcode.HasValue)
+                            query = query.Where(b => b.Itemcode == req.Itemcode);
+
+                        if (req.Batchcode.HasValue)
+                            query = query.Where(b => b.Batchcode == req.Batchcode);
+
+                        return await query.OrderBy(b => b.Code).ToListAsync();
                     }
                 },
                 "Refresh"
