@@ -1,0 +1,83 @@
+﻿@page "/Pages/Flows/BeginFlowScheduledPayment"
+
+@*
+  ====================================================================
+  PORTABLE FLOW NAVIGATION SYSTEM DOCUMENTATION
+  ====================================================================
+
+  This system allows multi-page flows (wizards) to be defined dynamically
+  without hardcoding redirects in individual pages.
+
+  HOW IT WORKS:
+  1. INITIALIZATION:
+     The "BeginFlow" page defines a JSON array of URLs called 'FlowSteps'.
+     Example: ["/Step1", "/Step2", "/Step3"]
+     It also initializes 'FlowStepIndex' to 0.
+
+  2. NAVIGATION:
+     Each step page (e.g., Step1) calls `navigateNext(defaultUrl)`.
+     This function:
+       a. Fetches 'FlowSteps' and 'FlowStepIndex' from the session.
+       b. Increments 'FlowStepIndex'.
+       c. If the index is valid within 'FlowSteps', redirects to that URL.
+       d. If not (or if FlowSteps is missing), falls back to 'defaultUrl'.
+
+  3. BACKWARDS COMPATIBILITY:
+     If a page is accessed without a Flow (e.g., directly), 'FlowSteps' is null.
+     The system automatically uses the hardcoded 'defaultUrl', preserving old behavior.
+
+  4. DATA PERSISTENCE:
+     Data collected in steps is stored in the same session using 'SetFlowData'.
+     Keys should be unique per flow (e.g., "selectedJournalNo").
+
+  ====================================================================
+*@
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Scheduled Payment</title>
+</head>
+<body>
+    <p>Initializing Scheduled Payment Flow...</p>
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const flowId = 'flow-' + Date.now();
+            const token = getCookie("auth-token");
+
+            // Define Steps: Start with Journal Selection
+            const steps = [
+                "/Pages/Journal/SelectJournal",
+                "/Pages/Journal/SelectDebitAccount",
+                "/Pages/Journal/SelectCreditAccount",
+                "/Pages/Scheduled/EnterDetails"
+            ];
+
+            // Set Flow Data
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps", Value: JSON.stringify(steps) })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "0" })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "flowType", Value: "Payment" })
+            });
+
+            window.location.href = steps[0] + "?flowId=" + flowId;
+        }
+        init();
+    </script>
+</body>
+</html>

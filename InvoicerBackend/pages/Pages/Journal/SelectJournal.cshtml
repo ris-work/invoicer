@@ -1,11 +1,10 @@
 ﻿@page "/Pages/Journal/SelectJournal"
 
 @*
-  FLOW: Add Journal Entry
-  STEP: 2 (Selector)
+  FLOW: Add Journal Entry (Step 2)
   SETS: selectedJournalNo
-  READS: flowId
-  REDIRECTS: /Pages/Journal/SelectDebitAccount
+  READS: flowId, FlowSteps (optional)
+  REDIRECTS: Dynamic or Default (/Pages/Journal/SelectDebitAccount)
 *@
 
 @functions {
@@ -55,12 +54,57 @@
 
         async function select(id) {
             const token = getCookie("auth-token");
+
+            // Set Data
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo", Value: id.toString() })
             });
-            window.location.href = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
+
+            // Determine Next Step
+            const defaultNext = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
+            await navigateNext(defaultNext);
         }
+
+        async function navigateNext(defaultUrl) {
+            const token = getCookie("auth-token");
+
+            // Try to get custom navigation list
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
+            });
+            const data = await res.json();
+
+            if (data.value) {
+                const steps = JSON.parse(data.value);
+                let currentIndex = parseInt(await getCurrentStepIndex(token));
+
+                currentIndex++;
+                if (currentIndex < steps.length) {
+                    // Save new index
+                    await fetch('/SetFlowData', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: currentIndex.toString() })
+                    });
+                    window.location.href = steps[currentIndex] + "?flowId=" + flowId;
+                    return;
+                }
+            }
+
+            // Fallback
+            window.location.href = defaultUrl;
+        }
+
+        async function getCurrentStepIndex(token) {
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex" })
+            });
+            const data = await res.json();
+            return data.value || "0";
+        }
+
         render();
     </script>
 </body>

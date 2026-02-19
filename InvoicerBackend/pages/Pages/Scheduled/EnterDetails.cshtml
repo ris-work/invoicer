@@ -1,0 +1,189 @@
+﻿@page "/Pages/Scheduled/EnterDetails"
+
+@*
+  FLOW: Scheduled Entry (Terminal)
+  SETS: N/A
+  READS: selectedJournalNo, selectedDebitAccountNo, selectedCreditAccountNo, flowType
+  REDIRECTS: /Pages/Accounts/LiveViewFuture
+*@
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schedule Entry</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+
+        .summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Schedule <span id="dispType">Entry</span></h2>
+    <div id="status">Loading Flow...</div>
+
+    <div id="form" style="display:none;">
+        <div class="summary">
+            <p><strong>Journal:</strong> <span id="dispJournal"></span></p>
+            <p><strong>Debit:</strong> <span id="dispDebitName"></span> (ID: <span id="dispDebitNo"></span>)</p>
+            <p><strong>Credit:</strong> <span id="dispCreditName"></span> (ID: <span id="dispCreditNo"></span>)</p>
+        </div>
+
+        <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="amount" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="description">
+        </div>
+        <div class="form-group">
+            <label>Payment Method</label>
+            <select id="paymentMethod">
+                <option value="Manual">Manual</option>
+                <option value="BankTransfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Card">Card</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Next Run Date</label>
+            <input type="date" id="nextRunDate">
+        </div>
+        <div class="form-group">
+            <label>Frequency</label>
+            <select id="frequency">
+                <option value="Once">Once</option>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" id="isAutomatic"> Automatic Clear</label>
+        </div>
+
+        <button onclick="submit()">Schedule Entry</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const journalNames = ["", "General", "Purchase", "Sales", "Cash Receipts", "Cash Payments", "Purchase Returns", "Sales Returns", "Adjusting", "Reversing", "Closing"];
+
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            const loadKey = async (key) => {
+                const res = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: key })
+                });
+                return (await res.json()).value;
+            };
+
+            const type = await loadKey("flowType") || "Payment";
+            const jNo = await loadKey("selectedJournalNo");
+            const dNo = await loadKey("selectedDebitAccountNo");
+            const dName = await loadKey("selectedDebitAccountName");
+            const cNo = await loadKey("selectedCreditAccountNo");
+            const cName = await loadKey("selectedCreditAccountName");
+
+            if (!jNo || !dNo || !cNo) {
+                document.getElementById('status').innerText = "Flow Broken: Missing Data (Journal, Debit, or Credit).";
+                return;
+            }
+
+            document.getElementById('dispType').innerText = type;
+            document.getElementById('dispJournal').innerText = `${journalNames[parseInt(jNo)]} (${jNo})`;
+            document.getElementById('dispDebitName').innerText = dName;
+            document.getElementById('dispDebitNo').innerText = dNo;
+            document.getElementById('dispCreditName').innerText = cName;
+            document.getElementById('dispCreditNo').innerText = cNo;
+
+            document.getElementById('nextRunDate').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        }
+
+        async function submit() {
+            const token = getCookie("auth-token");
+            const btn = document.querySelector("button");
+            btn.disabled = true;
+
+            // Extract Journal No from text "Name (ID)"
+            const journalText = document.getElementById('dispJournal').innerText;
+            const journalNoMatch = journalText.match(/\((\d+)\)/);
+            const journalNo = journalNoMatch ? parseInt(journalNoMatch[1]) : 1;
+
+            const payload = {
+                Type: document.getElementById('dispType').innerText,
+                JournalNo: journalNo,
+                DebitAccountId: parseInt(document.getElementById('dispDebitNo').innerText),
+                CreditAccountId: parseInt(document.getElementById('dispCreditNo').innerText),
+                Amount: parseFloat(document.getElementById('amount').value),
+                Description: document.getElementById('description').value,
+                PaymentMethod: document.getElementById('paymentMethod').value,
+                NextRunDate: document.getElementById('nextRunDate').value,
+                Frequency: document.getElementById('frequency').value,
+                IsAutomatic: document.getElementById('isAutomatic').checked
+            };
+
+            try {
+                const res = await fetch('/AddScheduledEntryWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+
+                alert("Scheduled Entry Created!");
+                window.location.href = '/Pages/Accounts/LiveViewFuture';
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.disabled = false;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -28,6 +28,22 @@ namespace InvoicerBackend
             public long AccountNo { get; set; }
             public DateOnly? UntilDate { get; set; } // Optional filter
         }
+
+        // DTO Update
+        public class AddScheduledEntryRequest
+        {
+            public string Type { get; set; } // "Payment" or "Receipt"
+            public long DebitAccountId { get; set; }
+            public long CreditAccountId { get; set; }
+            public double Amount { get; set; }
+            public string Description { get; set; }
+            public string Frequency { get; set; } // "Once", "Daily", "Weekly", "Monthly"
+            public DateOnly NextRunDate { get; set; }
+            public bool IsAutomatic { get; set; }
+            public string PaymentMethod { get; set; } // Added
+            public int JournalNo { get; set; } // Added
+        }
+
         public static WebApplication AddSchedulerEndpoints(this WebApplication app)
         {
             // 1. Get Future Journal Overview (All Pending Scheduled Items)
@@ -97,11 +113,23 @@ namespace InvoicerBackend
                         var today = DateOnly.FromDateTime(DateTime.UtcNow);
                         var results = new List<FutureEntryDto>();
 
-                        // 1. History (Last 50 Journal Entries)
-                        var history = await ctx.AccountsJournalEntries
-                            .Where(j => j.CreditAccountNo == req.AccountNo || j.DebitAccountNo == req.AccountNo)
+                        // Determine the cutoff date (Either the filter or MaxValue)
+                        var cutoffDate = req.UntilDate ?? DateOnly.MaxValue;
+                        var cutoffDateTime = cutoffDate.ToDateTime(TimeOnly.MaxValue);
+
+                        // 1. History (Journal Entries)
+                        var historyQuery = ctx.AccountsJournalEntries
+                            .Where(j => j.CreditAccountNo == req.AccountNo || j.DebitAccountNo == req.AccountNo);
+
+                        if (req.UntilDate.HasValue)
+                        {
+                            // If filter is set, filter by date
+                            historyQuery = historyQuery.Where(j => j.TimeTai <= cutoffDateTime);
+                        }
+
+                        var history = await historyQuery
                             .OrderByDescending(j => j.TimeTai)
-                            .Take(50)
+                            .Take(50) // Keep reasonable limit
                             .ToListAsync();
 
                         foreach (var h in history)
@@ -115,14 +143,21 @@ namespace InvoicerBackend
                                 DebitAccountName = h.DebitAccountName,
                                 CreditAccountName = h.CreditAccountName,
                                 Description = h.Description,
-                                IsAutomatic = false, // Journal entries are posted acts
+                                IsAutomatic = false,
                                 ReferenceId = h.JournalUnivSeq
                             });
                         }
 
-                        // 2. Scheduled Payments (Pending)
-                        var payments = await ctx.ScheduledPayments
-                            .Where(p => p.IsPending && (p.DebitAccountId == req.AccountNo || p.CreditAccountId == req.AccountNo))
+                        // 2. Scheduled Payments
+                        var paymentsQuery = ctx.ScheduledPayments
+                            .Where(p => p.IsPending && (p.DebitAccountId == req.AccountNo || p.CreditAccountId == req.AccountNo));
+
+                        if (req.UntilDate.HasValue)
+                        {
+                            paymentsQuery = paymentsQuery.Where(p => p.NextRunDate <= cutoffDate);
+                        }
+
+                        var payments = await paymentsQuery
                             .Join(ctx.AccountsInformations, p => p.DebitAccountId, a => a.AccountNo, (p, a) => new { p, DebitName = a.AccountName })
                             .Join(ctx.AccountsInformations, x => x.p.CreditAccountId, a => a.AccountNo, (x, a) => new FutureEntryDto
                             {
@@ -136,9 +171,16 @@ namespace InvoicerBackend
                                 ReferenceId = x.p.Id
                             }).ToListAsync();
 
-                        // 3. Scheduled Receipts (Pending)
-                        var receipts = await ctx.ScheduledReceipts
-                            .Where(r => r.IsPending && (r.DebitAccountId == req.AccountNo || r.CreditAccountId == req.AccountNo))
+                        // 3. Scheduled Receipts
+                        var receiptsQuery = ctx.ScheduledReceipts
+                            .Where(r => r.IsPending && (r.DebitAccountId == req.AccountNo || r.CreditAccountId == req.AccountNo));
+
+                        if (req.UntilDate.HasValue)
+                        {
+                            receiptsQuery = receiptsQuery.Where(r => r.NextRunDate <= cutoffDate);
+                        }
+
+                        var receipts = await receiptsQuery
                             .Join(ctx.AccountsInformations, r => r.DebitAccountId, a => a.AccountNo, (r, a) => new { r, DebitName = a.AccountName })
                             .Join(ctx.AccountsInformations, x => x.r.CreditAccountId, a => a.AccountNo, (x, a) => new FutureEntryDto
                             {
@@ -154,7 +196,7 @@ namespace InvoicerBackend
 
                         var scheduled = payments.Concat(receipts).ToList();
 
-                        // Determine Status for Scheduled
+                        // Determine Status
                         foreach (var item in scheduled)
                         {
                             var runDate = DateOnly.FromDateTime(item.Date);
@@ -163,10 +205,68 @@ namespace InvoicerBackend
                             else item.Status = "Scheduled";
                         }
 
-                        // Combine and Sort (All Ascending for Timeline view)
                         results.AddRange(scheduled);
-
                         return results.OrderBy(x => x.Date).ToList();
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<AddScheduledEntryRequest>(
+                "AddScheduledEntryWeb",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (AddScheduledEntryRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        if (req.Type == "Payment")
+                        {
+                            var entry = new ScheduledPayment
+                            {
+                                DebitAccountId = req.DebitAccountId,
+                                CreditAccountId = req.CreditAccountId,
+                                Amount = req.Amount,
+                                Description = req.Description,
+                                Frequency = req.Frequency,
+                                NextRunDate = req.NextRunDate,
+                                IsAutomaticClear = req.IsAutomatic,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedBy = (long)LoginInfo.UserId,
+                                CompanyId = 1,
+                                PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
+                                Currency = "LKR",
+                                ExchangeRate = 1.0,
+                                PaymentMethod = req.PaymentMethod ?? "Manual", // Fix for NULL constraint
+                                JournalNo = req.JournalNo
+                            };
+                            ctx.ScheduledPayments.Add(entry);
+                        }
+                        else
+                        {
+                            var entry = new ScheduledReceipt
+                            {
+                                DebitAccountId = req.DebitAccountId,
+                                CreditAccountId = req.CreditAccountId,
+                                Amount = req.Amount,
+                                Description = req.Description,
+                                Frequency = req.Frequency,
+                                NextRunDate = req.NextRunDate,
+                                IsAutomaticClear = req.IsAutomatic,
+                                IsPending = true,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedBy = (long)LoginInfo.UserId,
+                                CompanyId = 1,
+                                PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
+                                Currency = "LKR",
+                                ExchangeRate = 1.0,
+                                PaymentMethod = req.PaymentMethod ?? "Manual", // Fix for NULL constraint
+                                JournalNo = req.JournalNo
+                            };
+                            ctx.ScheduledReceipts.Add(entry);
+                        }
+
+                        await ctx.SaveChangesAsync();
+                        return true;
                     }
                 },
                 "Refresh"

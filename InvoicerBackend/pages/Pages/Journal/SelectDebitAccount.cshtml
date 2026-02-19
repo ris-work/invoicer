@@ -1,11 +1,10 @@
 ﻿@page "/Pages/Journal/SelectDebitAccount"
 
 @*
-  FLOW: Add Journal Entry
-  STEP: 3 (Selector)
+  FLOW: Generic Selector (Debit)
   SETS: selectedDebitAccountNo, selectedDebitAccountName
-  READS: flowId
-  REDIRECTS: /Pages/Journal/SelectCreditAccount
+  READS: flowId, FlowSteps (optional)
+  REDIRECTS: Dynamic or Default (/Pages/Journal/SelectCreditAccount)
 *@
 
 @functions {
@@ -60,6 +59,7 @@
 
         async function select(id, name) {
             const token = getCookie("auth-token");
+
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountNo", Value: id.toString() })
@@ -68,7 +68,44 @@
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountName", Value: name })
             });
-            window.location.href = '/Pages/Journal/SelectCreditAccount?flowId=' + flowId;
+
+            const defaultNext = '/Pages/Journal/SelectCreditAccount?flowId=' + flowId;
+            await navigateNext(defaultNext);
+        }
+
+        // Reuse Navigation Logic (Ideally this should be in a shared .js file)
+        async function navigateNext(defaultUrl) {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
+            });
+            const data = await res.json();
+
+            if (data.value) {
+                const steps = JSON.parse(data.value);
+                let currentIndex = parseInt(await getCurrentStepIndex(token));
+
+                currentIndex++;
+                if (currentIndex < steps.length) {
+                    await fetch('/SetFlowData', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: currentIndex.toString() })
+                    });
+                    window.location.href = steps[currentIndex] + "?flowId=" + flowId;
+                    return;
+                }
+            }
+            window.location.href = defaultUrl;
+        }
+
+        async function getCurrentStepIndex(token) {
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex" })
+            });
+            const data = await res.json();
+            return data.value || "0";
         }
     </script>
 </body>
