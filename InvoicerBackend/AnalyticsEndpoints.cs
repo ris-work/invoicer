@@ -45,78 +45,46 @@ namespace InvoicerBackend
                 "Refresh"
             );
             app.AddAsyncEndpointWithBearerAuth<BinCardSearchRequest>(
-                "SearchBinCardWeb",
-                async (DataIn, LoginInfo) =>
-                {
-                    var req = (BinCardSearchRequest)DataIn;
-                    using (var ctx = new NewinvContext())
-                    {
-                        // Step 1: Resolve ItemCodes based on Tags and Implications
-                        List<long> filteredItemCodes = null;
+    "SearchBinCardWeb",
+    async (DataIn, LoginInfo) =>
+    {
+        var req = (BinCardSearchRequest)DataIn;
+        using (var ctx = new NewinvContext())
+        {
+            // Start with the movements
+            var query = ctx.InventoryMovements.AsNoTracking();
 
-                        if (req.Tags != null && req.Tags.Length > 0)
-                        {
-                            // A. Find items directly tagged
-                            var directItems = ctx.Inventories.Where(i => i.Tags != null);
-                            foreach (var tag in req.Tags)
-                            {
-                                // Pipe-separated search: |tag|
-                                directItems = directItems.Where(i => i.Tags.Contains($"|{tag}|"));
-                            }
-                            var directIds = await directItems.Select(i => i.Itemcode).ToListAsync();
+            // Filter by Tags using the View (One RTT)
+            if (req.Tags != null && req.Tags.Length > 0)
+            {
+                // Join with ItemTagImplication to find items that have the tag (transitively)
+                // This translates to a single SQL query
+                query = from m in query
+                        join imp in ctx.ItemTagImplications
+                        on m.Itemcode equals imp.Itemcode
+                        where req.Tags.Contains(imp.TransitiveTag)
+                        select m;
 
-                            // B. Find items via Implications (If we search for Tag T, and T is implied by Source S, items with S should show up)
-                            // Logic: Find SourceTags where TransitiveTag is in our search list
-                            var impliedSources = await ctx.ItemTagImplications
-                                .Where(imp => req.Tags.Contains(imp.TransitiveTag))
-                                .Select(imp => imp.SourceTag)
-                                .Distinct()
-                                .ToListAsync();
+                // Use Distinct because an item might match multiple tags in the search list
+                // or have multiple implication paths, duplicating the movement row
+                query = query.Distinct();
+            }
 
-                            var impliedItems = ctx.Inventories.Where(i => i.Tags != null);
-                            foreach (var tag in impliedSources)
-                            {
-                                impliedItems = impliedItems.Where(i => i.Tags.Contains($"|{tag}|"));
-                            }
-                            var impliedIds = await impliedItems.Select(i => i.Itemcode).ToListAsync();
+            if (req.ItemCode.HasValue)
+            {
+                query = query.Where(m => m.Itemcode == req.ItemCode.Value);
+            }
 
-                            // Combine
-                            filteredItemCodes = directIds.Union(impliedIds).ToList();
+            if (req.BatchCode.HasValue)
+            {
+                query = query.Where(m => m.Batchcode == req.BatchCode.Value);
+            }
 
-                            if (filteredItemCodes.Count == 0) return new List<InventoryMovement>(); // Empty result
-                        }
-
-                        // Step 2: Query InventoryMovement (Raw SQL because it has no PK)
-                        // We cannot use LINQ directly on Keyless entity easily for complex filters without PK.
-                        // But since it's a view/table, we can use FromSqlRaw.
-
-                        // However, for simplicity and safety, let's assume we can query it via LINQ if we treat it as a set.
-                        // EF Core might complain. Let's use a raw SQL query builder approach or plain LINQ if context allows.
-                        // Since InventoryMovement has no PK defined in EF, ctx.InventoryMovements might be problematic to track.
-                        // We will use a DTO projection or AsNoTracking.
-
-                        var query = ctx.InventoryMovements.AsNoTracking();
-
-                        if (filteredItemCodes != null)
-                        {
-                            query = query.Where(m => filteredItemCodes.Contains(m.Itemcode));
-                        }
-
-                        if (req.ItemCode.HasValue)
-                        {
-                            query = query.Where(m => m.Itemcode == req.ItemCode.Value);
-                        }
-
-                        if (req.BatchCode.HasValue)
-                        {
-                            query = query.Where(m => m.Batchcode == req.BatchCode.Value);
-                        }
-
-                        return await query.OrderByDescending(m => m.EnteredTime).Take(100).ToListAsync();
-                    }
-                },
-                "Refresh"
-            );
+            return await query.OrderByDescending(m => m.EnteredTime).Take(100).ToListAsync();
+        }
+    },
+    "Refresh"
+);
 
             // 3. Get All Tags (for dropdown)
             app.AddAsyncEndpointWithBearerAuth<object>(
@@ -125,7 +93,7 @@ namespace InvoicerBackend
                 {
                     using (var ctx = new NewinvContext())
                     {
-                        return await ctx.AllTags.OrderBy(t => t.Tag).ToListAsync();
+                        return await ctx.AllTags.Distinct().OrderBy(t => t.Tag).ToListAsync();
                     }
                 },
                 "Refresh"

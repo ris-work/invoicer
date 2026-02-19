@@ -74,7 +74,7 @@ namespace InvoicerBackend
                 async (DataIn, LoginInfo) =>
                 {
                     var Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>((string)DataIn);
-                    long PatchID = Patch["Itemcode"].GetInt64();
+                    long PatchID = Patch["ItemCode"].GetInt64();
 
                     using (var ctx = new NewinvContext())
                     {
