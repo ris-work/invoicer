@@ -73,6 +73,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<IssuedInvoice> IssuedInvoices { get; set; }
 
+    public virtual DbSet<ItemTagImplication> ItemTagImplications { get; set; }
+
     public virtual DbSet<LatestCycleCount> LatestCycleCounts { get; set; }
 
     public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
@@ -853,6 +855,18 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.SalesPersonId).HasColumnName("sales_person_id");
             entity.Property(e => e.SubTotal).HasColumnName("sub_total");
             entity.Property(e => e.TaxTotal).HasColumnName("tax_total");
+        });
+
+        modelBuilder.Entity<ItemTagImplication>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("item_tag_implications");
+
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.RuleChain).HasColumnName("rule_chain");
+            entity.Property(e => e.SourceTag).HasColumnName("source_tag");
+            entity.Property(e => e.TransitiveTag).HasColumnName("transitive_tag");
         });
 
         modelBuilder.Entity<LatestCycleCount>(entity =>

@@ -5,6 +5,18 @@ using RV.InvNew.Common;
 
 namespace InvoicerBackend
 {
+
+    // --- Live View Endpoints ---
+
+    // 1. Search Journal Entries
+    public class JournalSearchRequest
+    {
+        public int? JournalNo { get; set; }
+        public long? AccountNo { get; set; } // Filter by Credit OR Debit
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
+    }
+
     public static class JournalEndpoints
     {
         public static WebApplication AddJournalEndpoints(this WebApplication app)
@@ -170,6 +182,34 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            app.AddAsyncEndpointWithBearerAuth<JournalSearchRequest>(
+    "SearchJournalEntriesWeb",
+    async (DataIn, LoginInfo) =>
+    {
+        var req = (JournalSearchRequest)DataIn;
+        using (var ctx = new NewinvContext())
+        {
+            var query = ctx.AccountsJournalEntries.AsQueryable();
+
+            if (req.JournalNo.HasValue)
+                query = query.Where(e => e.JournalNo == req.JournalNo.Value);
+
+            if (req.AccountNo.HasValue)
+                query = query.Where(e => e.CreditAccountNo == req.AccountNo.Value || e.DebitAccountNo == req.AccountNo.Value);
+
+            if (req.From.HasValue)
+                query = query.Where(e => e.TimeTai >= req.From.Value.ToUniversalTime());
+
+            if (req.To.HasValue)
+                query = query.Where(e => e.TimeTai <= req.To.Value.ToUniversalTime());
+
+            return await query.OrderByDescending(e => e.TimeTai).Take(100).ToListAsync();
+        }
+    },
+    "Refresh"
+);
+
+            
             return app;
         }
     }

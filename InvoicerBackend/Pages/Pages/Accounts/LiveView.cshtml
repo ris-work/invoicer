@@ -1,0 +1,189 @@
+﻿@page "/Pages/Accounts/LiveView"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Accounts Live View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .filter-bar {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9em;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h2>Accounts Live View</h2>
+    <p><small>Auto-refreshes every 30 seconds.</small></p>
+
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Journal Type</label>
+                <select id="filterJournal">
+                    <option value="">All</option>
+                    <option value="1">General</option>
+                    <option value="2">Purchase</option>
+                    <option value="3">Sales</option>
+                    <option value="4">Cash Receipt</option>
+                    <option value="5">Cash Payment</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Account No</label>
+                <input type="number" id="filterAccount" placeholder="e.g. 101">
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>From</label>
+                <input type="date" id="filterFrom">
+            </div>
+            <div class="filter-group">
+                <label>To</label>
+                <input type="date" id="filterTo">
+            </div>
+            <div class="filter-group" style="justify-content: flex-end;">
+                <button onclick="loadData()">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tableContainer">Loading...</div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function renderTable(data) {
+            if (!data || data.length === 0) return "<p>No records found.</p>";
+
+            let html = "<table><thead><tr>" +
+                "<th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Amount</th><th>Ref</th>" +
+                "</tr></thead><tbody>";
+
+            data.forEach(row => {
+                const date = new Date(row.timeTai).toLocaleString();
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${row.description || ''}</td>
+                    <td>${row.debitAccountName || row.debitAccountNo} (${row.debitAccountNo})</td>
+                    <td>${row.creditAccountName || row.creditAccountNo} (${row.creditAccountNo})</td>
+                    <td style="text-align:right;">${row.amount.toFixed(2)}</td>
+                    <td>${row.refNo || ''}</td>
+                </tr>`;
+            });
+
+            html += "</tbody></table>";
+            return html;
+        }
+
+        async function loadData() {
+            const token = getCookie("auth-token");
+            const container = document.getElementById('tableContainer');
+
+            const journalNo = document.getElementById('filterJournal').value;
+            const accountNo = document.getElementById('filterAccount').value;
+            const from = document.getElementById('filterFrom').value;
+            const to = document.getElementById('filterTo').value;
+
+            const payload = {};
+            if (journalNo) payload.JournalNo = parseInt(journalNo);
+            if (accountNo) payload.AccountNo = parseInt(accountNo);
+            if (from) payload.From = new Date(from).toISOString();
+            if (to) payload.To = new Date(to).toISOString();
+
+            try {
+                container.innerHTML = "Fetching...";
+                const res = await fetch('/SearchJournalEntriesWeb', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                container.innerHTML = renderTable(data);
+
+            } catch (err) {
+                container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        // Initial Load
+        loadData();
+
+        // Auto-refresh
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>

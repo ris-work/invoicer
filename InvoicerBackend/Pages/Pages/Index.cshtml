@@ -27,7 +27,161 @@
 
 <!DOCTYPE html>
 <html>
+<head>
+    <style>
+        /* Styles for Navigation Hub */
+        .nav-hub {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .nav-search {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .nav-category {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .nav-category-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+            .nav-item a {
+                text-decoration: none;
+                color: #0056b3;
+                font-size: 0.95em;
+                display: block;
+                padding: 4px 5px;
+                border-radius: 3px;
+            }
+
+                .nav-item a:hover {
+                    background: #e9ecef;
+                    color: #004085;
+                }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
 <body>
+
+    <!-- --- NAVIGATION HUB --- -->
+    <div class="nav-hub">
+        <h2>Application Navigation</h2>
+        <input type="text" id="navSearch" class="nav-search" placeholder="Search pages (e.g. 'Batch', 'Add', 'Journal')..." onkeyup="filterNav()">
+
+        <div class="nav-grid" id="navGrid">
+            <!-- Accounts -->
+            <div class="nav-category">
+                <div class="nav-category-title">Accounts</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Accounts/Add">Add Account</a></li>
+                    <li class="nav-item"><a href="/Pages/Accounts/Search">Search Accounts</a></li>
+                    <li class="nav-item"><a href="/Pages/Accounts/LiveView">Live View (Journal)</a></li>
+                </ul>
+            </div>
+
+            <!-- Catalogue -->
+            <div class="nav-category">
+                <div class="nav-category-title">Catalogue</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Catalogue/Add">Add Item</a></li>
+                    <li class="nav-item"><a href="/Pages/Catalogue/Search">Search Items</a></li>
+                    <li class="nav-item"><a href="/Pages/Catalogue/Similar">Similar Items</a></li>
+                </ul>
+            </div>
+
+            <!-- Batches -->
+            <div class="nav-category">
+                <div class="nav-category-title">Batches & Inventory</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Flows/BeginFlowEditBatches">Edit Batches (Flow)</a></li>
+                    <li class="nav-item"><a href="/Pages/BinCard/LiveView">Bin Card Live</a></li>
+                </ul>
+            </div>
+
+            <!-- Adjustments -->
+            <div class="nav-category">
+                <div class="nav-category-title">Adjustments</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Adjustments/Index">View Adjustments</a></li>
+                </ul>
+            </div>
+
+            <!-- PII -->
+            <div class="nav-category">
+                <div class="nav-category-title">PII (Persons)</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Pii/Add">Add PII</a></li>
+                    <li class="nav-item"><a href="/Pages/Pii/Search">Search PII</a></li>
+                </ul>
+            </div>
+
+            <!-- Documents -->
+            <div class="nav-category">
+                <div class="nav-category-title">Documents (RefDocs)</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Docs/Add">Add Document</a></li>
+                    <li class="nav-item"><a href="/Pages/Docs/Index">View Documents</a></li>
+                    <li class="nav-item"><a href="/Pages/Docs/Search">Search Documents</a></li>
+                    <li class="nav-item"><a href="/Pages/Docs/Untranscribed">Untranscribed</a></li>
+                </ul>
+            </div>
+
+            <!-- Flows -->
+            <div class="nav-category">
+                <div class="nav-category-title">Flows & Links</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/Flows/BeginFlowLinkAccount">Link Account to PII</a></li>
+                </ul>
+            </div>
+
+            <!-- Auth & System -->
+            <div class="nav-category">
+                <div class="nav-category-title">System</div>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="/Pages/DumpAuth">Auth Status</a></li>
+                    <li class="nav-item"><a href="/Pages/LoginWeb">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ORIGINAL MAGIC MODE SECTION --- -->
     <h1>Reliable Magic Mode</h1>
 
     <form action="/Pages/Index" method="post">
@@ -35,12 +189,6 @@
 
         <input type="text" name="Text" placeholder="Type something..." value="@TextContent" />
 
-        @* 
-           THE FIX:
-           'formaction' overrides the form's action for just this button.
-           It adds ?handler=Echo to the URL, forcing OnPostEcho to run.
-           This is 100% reliable, unlike the form-body convention.
-        *@
         <button type="submit" formaction="/Pages/Index?handler=Echo">Echo Text</button>
         <button type="submit" formaction="/Pages/Index?handler=Increment">Increment (@Count)</button>
     </form>
@@ -52,7 +200,7 @@
         <p><strong>Result Text:</strong> @Result</p>
     </div>
 
-    @* --- THE COMPREHENSIVE DUMP --- *@
+    <!-- --- THE COMPREHENSIVE DUMP --- -->
     <div style="background: #e6f7ff; padding: 15px; margin-top: 20px; border: 1px solid blue;">
         <h3>Full Request Dump</h3>
 
@@ -82,5 +230,37 @@
             <p style="color:red; font-style:italic;">Request is not a Form (likely GET)</p>
         }
     </div>
+
+    <script>
+        function filterNav() {
+            var input = document.getElementById('navSearch');
+            var filter = input.value.toUpperCase();
+
+            // Get all navigation items
+            var items = document.getElementsByClassName('nav-item');
+
+            for (var i = 0; i < items.length; i++) {
+                var a = items[i].getElementsByTagName("a")[0];
+                var txtValue = a.textContent || a.innerText;
+
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    items[i].classList.remove('hidden');
+                } else {
+                    items[i].classList.add('hidden');
+                }
+            }
+
+            // Optional: Hide empty categories
+            var categories = document.getElementsByClassName('nav-category');
+            for (var j = 0; j < categories.length; j++) {
+                var visibleItems = categories[j].querySelectorAll('.nav-item:not(.hidden)');
+                if (visibleItems.length === 0) {
+                    categories[j].classList.add('hidden');
+                } else {
+                    categories[j].classList.remove('hidden');
+                }
+            }
+        }
+    </script>
 </body>
 </html>

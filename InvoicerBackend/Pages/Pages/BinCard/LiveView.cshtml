@@ -1,0 +1,196 @@
+﻿@page "/Pages/BinCard/LiveView"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bin Card Live View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .filter-bar {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9em;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 5px;
+            min-width: 150px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h2>Bin Card Live View</h2>
+    <p><small>Auto-refreshes every 30 seconds.</small></p>
+
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Filter by Tag</label>
+                <select id="filterTag"><option value="">Loading tags...</option></select>
+            </div>
+            <div class="filter-group">
+                <label>Item Code</label>
+                <input type="number" id="filterItem" placeholder="Specific Item">
+            </div>
+            <div class="filter-group">
+                <label>Batch Code</label>
+                <input type="number" id="filterBatch" placeholder="Specific Batch">
+            </div>
+            <div class="filter-group" style="justify-content: flex-end;">
+                <button onclick="loadData()">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tableContainer">Loading...</div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function renderTable(data) {
+            if (!data || data.length === 0) return "<p>No records found.</p>";
+
+            let html = "<table><thead><tr>" +
+                "<th>Time</th><th>Item</th><th>Batch</th><th>Change</th><th>Balance</th><th>Reference</th><th>Remarks</th>" +
+                "</tr></thead><tbody>";
+
+            data.forEach(row => {
+                const date = new Date(row.enteredTime).toLocaleString();
+                const change = row.toUnits - row.fromUnits;
+                const changeStr = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${row.itemcode}</td>
+                    <td>${row.batchcode}</td>
+                    <td style="color:${change >= 0 ? 'green' : 'red'};">${changeStr}</td>
+                    <td>${row.units.toFixed(2)}</td>
+                    <td>${row.reference || ''}</td>
+                    <td>${row.remarks || ''}</td>
+                </tr>`;
+            });
+
+            html += "</tbody></table>";
+            return html;
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            // Load Tags
+            try {
+                const res = await fetch('/GetAllTags', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const tags = await res.json();
+                const select = document.getElementById('filterTag');
+                select.innerHTML = '<option value="">All Tags</option>' +
+                    tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
+            } catch (e) {
+                console.error("Failed to load tags", e);
+            }
+
+            loadData();
+        }
+
+        async function loadData() {
+            const token = getCookie("auth-token");
+            const container = document.getElementById('tableContainer');
+
+            const tag = document.getElementById('filterTag').value;
+            const item = document.getElementById('filterItem').value;
+            const batch = document.getElementById('filterBatch').value;
+
+            const payload = {};
+            if (tag) payload.Tags = [tag];
+            if (item) payload.ItemCode = parseInt(item);
+            if (batch) payload.BatchCode = parseInt(batch);
+
+            try {
+                container.innerHTML = "Fetching...";
+                const res = await fetch('/SearchBinCardWeb', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                container.innerHTML = renderTable(data);
+
+            } catch (err) {
+                container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        init();
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
