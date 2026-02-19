@@ -5,7 +5,7 @@
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 17.2
 
--- Started on 2026-02-19 19:02:53
+-- Started on 2026-02-19 19:12:09
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1072,13 +1072,16 @@ CREATE VIEW public.tags_transitive_closure AS
 CREATE VIEW public.item_tag_implications AS
  SELECT ct.itemcode,
     ct.tag AS source_tag,
-    COALESCE(ttc.implication, ct.tag) AS transitive_tag,
-        CASE
-            WHEN (ttc.implication IS NULL) THEN 'Direct'::text
-            ELSE ttc.rule_chain
-        END AS rule_chain
+    ct.tag AS transitive_tag,
+    'Direct'::text AS rule_chain
+   FROM public.computed_tags ct
+UNION ALL
+ SELECT ct.itemcode,
+    ct.tag AS source_tag,
+    ttc.implication AS transitive_tag,
+    ttc.rule_chain
    FROM (public.computed_tags ct
-     LEFT JOIN public.tags_transitive_closure ttc ON ((ct.tag = ttc.tag)));
+     JOIN public.tags_transitive_closure ttc ON ((ct.tag = ttc.tag)));
 
 
 --
@@ -3169,7 +3172,7 @@ CREATE INDEX ix_scheduled_receipts_recon ON public.scheduled_receipts USING btre
 CREATE INDEX ix_scheduled_receipts_status_flags ON public.scheduled_receipts USING btree (is_processing, is_completed, is_failed, is_cancelled);
 
 
--- Completed on 2026-02-19 19:02:53
+-- Completed on 2026-02-19 19:12:09
 
 --
 -- PostgreSQL database dump complete
