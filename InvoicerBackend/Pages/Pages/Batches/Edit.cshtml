@@ -35,6 +35,48 @@
             cursor: pointer;
         }
 
+        /* List Styles */
+        #batchList {
+            margin-bottom: 20px;
+        }
+
+        .batch-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+
+        .batch-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85em;
+            text-decoration: none;
+            color: white;
+            border-radius: 3px;
+            border: none;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #007bff;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
         /* Barcode Styles */
         .barcode-section {
             margin-top: 20px;
@@ -64,6 +106,13 @@
     <h2>Edit Batch</h2>
     <div id="status">Checking flow...</div>
 
+    <!-- List View -->
+    <div id="batchList" style="display:none;">
+        <h3>Select Batch to Edit</h3>
+        <div id="listContent"></div>
+    </div>
+
+    <!-- Edit Form -->
     <div id="editForm" style="display:none;">
         <div class="form-group">
             <label>Item Code</label>
@@ -111,6 +160,7 @@
         const batchCodeParam = params.get('batchCode');
 
         let currentBatch = null;
+        let selectedItemCode = null;
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -121,20 +171,70 @@
         async function init() {
             const token = getCookie("auth-token");
 
-            // 1. Flow Logic
+            // 1. Get Flow Data (Mandatory)
             const flowRes = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
             });
             const flowData = await flowRes.json();
-            const itemCode = flowData.value;
 
-            if (!itemCode || !batchCodeParam) { document.getElementById('status').innerText = "Error: Missing context."; return; }
+            if (!flowData.value) {
+                document.getElementById('status').innerText = "Flow Broken: No Item selected. Go back to Item Selection.";
+                return;
+            }
 
-            // 2. Load Batch
+            selectedItemCode = flowData.value;
+            document.getElementById('status').style.display = 'none';
+
+            // 2. Decide View
+            if (batchCodeParam) {
+                // Edit Mode
+                await loadBatch(selectedItemCode, batchCodeParam);
+            } else {
+                // List Mode
+                await loadBatchList(selectedItemCode);
+            }
+        }
+
+        async function loadBatchList(itemCode) {
+            const token = getCookie("auth-token");
+            const listDiv = document.getElementById('batchList');
+            const listContent = document.getElementById('listContent');
+
+            const res = await fetch('/SearchBatchesWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ItemCode: parseInt(itemCode) })
+            });
+            const batches = await res.json();
+
+            listDiv.style.display = 'block';
+
+            if (batches.length === 0) {
+                listContent.innerHTML = "<p>No batches found for this item.</p>";
+                return;
+            }
+
+            listContent.innerHTML = batches.map(b => `
+                <div class="batch-item">
+                    <div><strong>Batch: ${b.batchcode}</strong> | Qty: ${b.units} | Exp: ${b.expDate ? new Date(b.expDate).toLocaleDateString() : 'N/A'}</div>
+                    <div class="batch-actions">
+                        <a href="?flowId=${flowId}&batchCode=${b.batchcode}" class="btn-sm btn-primary">Edit</a>
+                        <a href="/Pages/Batches/Split?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-warning">Split</a>
+                        <a href="/Pages/Batches/Adjust?flowId=${flowId}&itemCode=${b.itemcode}&batchCode=${b.batchcode}" class="btn-sm btn-danger">Adjustment</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadBatch(itemCode, batchCode) {
+            const token = getCookie("auth-token");
+            const editForm = document.getElementById('editForm');
+
+            editForm.style.display = 'block';
+
             const res = await fetch('/GetBatchWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCodeParam) })
+                body: JSON.stringify({ ItemCode: parseInt(itemCode), BatchCode: parseInt(batchCode) })
             });
             currentBatch = await res.json();
 
@@ -144,11 +244,7 @@
             document.getElementById('expDate').value = currentBatch.expDate ? new Date(currentBatch.expDate).toISOString().split('T')[0] : "";
             document.getElementById('remarks').value = currentBatch.remarks || "";
 
-            // 3. Load Barcodes
             await loadBarcodes(token);
-
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('editForm').style.display = 'block';
         }
 
         async function loadBarcodes(token) {
@@ -194,7 +290,6 @@
                 Batchcode: parseInt(currentBatch.batchcode)
             };
 
-            // Track Changes
             const newMfg = document.getElementById('mfgDate').value;
             const newExp = document.getElementById('expDate').value;
             const newRem = document.getElementById('remarks').value;

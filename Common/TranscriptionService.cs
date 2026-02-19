@@ -14,7 +14,7 @@ namespace RV.InvNew.Common
     /// </summary>
     public static class TranscriptionService
     {
-        private const string DefaultModel = "z-ai/glm-4.6v"; // Or specific high-reasoning vision model ID
+        private const string DefaultModel = "z-ai/glm-4.6v";
         private static readonly HttpClient _httpClient = new HttpClient();
 
         /// <summary>
@@ -64,7 +64,6 @@ namespace RV.InvNew.Common
                         }
                     }
                 },
-                
                 ["reasoning"] = new JsonObject { ["effort"] = "xhigh" },
                 ["response_format"] = new JsonObject { ["type"] = "json_object" }
             };
@@ -113,10 +112,14 @@ namespace RV.InvNew.Common
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            using var jsonDoc = JsonDocument.Parse(jsonResponse);
-            var contentString = jsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
 
             // 5. Parse Result
+            using var jsonDoc = JsonDocument.Parse(jsonResponse);
+            var root = jsonDoc.RootElement;
+
+            // Extract Content
+            var contentString = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+
             RefDocsTranscription transcriptionData;
             try
             {
@@ -141,7 +144,7 @@ namespace RV.InvNew.Common
                 Id = 0,
                 RefDoc = refDocId,
                 TranscriberLlmName = llmName ?? DefaultModel,
-                TranscribedAt = DateTime.UtcNow, // Explicitly UTC
+                TranscribedAt = DateTime.UtcNow,
 
                 // AI Generated Fields - Ensure UTC
                 RefDocTitle = transcriptionData?.RefDocTitle,
@@ -151,8 +154,46 @@ namespace RV.InvNew.Common
                 RefDocValidFrom = ToUtc(transcriptionData?.RefDocValidFrom),
                 RefDocNotValidAfter = ToUtc(transcriptionData?.RefDocNotValidAfter),
                 TranscriptionStructured = transcriptionData?.TranscriptionStructured,
-                TranscriptionStructureType = transcriptionData?.TranscriptionStructureType
+                TranscriptionStructureType = transcriptionData?.TranscriptionStructureType,
+
+                // Store Raw Response
+                RequestOutputAsIs = jsonResponse
             };
+
+            // Extract Usage Data
+            if (root.TryGetProperty("usage", out var usage))
+            {
+                if (usage.TryGetProperty("cost", out var costEl) && costEl.ValueKind == JsonValueKind.Number)
+                {
+                    newEntry.TranscriptionCostUsdc = costEl.GetDouble();
+                }
+
+                // Input Tokens
+                if (usage.TryGetProperty("prompt_tokens", out var pTokens) && pTokens.ValueKind == JsonValueKind.Number)
+                {
+                    newEntry.InputTextTokens = pTokens.GetInt64();
+                }
+
+                if (usage.TryGetProperty("prompt_tokens_details", out var pDetails))
+                {
+                    if (pDetails.TryGetProperty("audio_tokens", out var aTok) && aTok.ValueKind == JsonValueKind.Number)
+                        newEntry.InputAudioTokens = aTok.GetInt64();
+                    if (pDetails.TryGetProperty("video_tokens", out var vTok) && vTok.ValueKind == JsonValueKind.Number)
+                        newEntry.InputVideoTokens = vTok.GetInt64();
+                }
+
+                // Output Tokens
+                if (usage.TryGetProperty("completion_tokens", out var cTokens) && cTokens.ValueKind == JsonValueKind.Number)
+                {
+                    newEntry.OutputTextTokens = cTokens.GetInt64();
+                }
+
+                if (usage.TryGetProperty("completion_tokens_details", out var cDetails))
+                {
+                    if (cDetails.TryGetProperty("image_tokens", out var iTok) && iTok.ValueKind == JsonValueKind.Number)
+                        newEntry.OutputImageTokens = iTok.GetInt64();
+                }
+            }
 
             // 7. Save to DB
             ctx.RefDocsTranscriptions.Add(newEntry);
@@ -184,9 +225,9 @@ namespace RV.InvNew.Common
 
             return query.OrderByDescending(t => t.TranscribedAt);
         }
+
         /// <summary>
         /// Test method to transcribe 'sample_to_transcribe.jpg' from the Current Working Directory.
-        /// Creates a temporary RefDoc entry in the database, transcribes it, and prints the result.
         /// </summary>
         public static async Task TestSampleTranscribe()
         {
@@ -211,7 +252,7 @@ namespace RV.InvNew.Common
                     RefText = "Test Sample Transcription",
                     RefImage = base64Image,
                     CreatedAt = DateTime.UtcNow,
-                    AuthoredBy = 0 // System user or test user ID
+                    AuthoredBy = 0
                 };
 
                 ctx.RefDocs.Add(tempDoc);
@@ -221,25 +262,17 @@ namespace RV.InvNew.Common
                 try
                 {
                     Console.WriteLine("Starting transcription...");
-                    // Use default model (null)
                     var result = await AITranscribe(tempDoc.RefId, null, ctx);
 
                     Console.WriteLine("Transcription Successful!");
                     Console.WriteLine($"Title: {result.RefDocTitle}");
-                    Console.WriteLine($"Summary: {result.RefDocSummary}");
-                    Console.WriteLine($"Content: {result.TranscribedContent}");
-                    Console.WriteLine($"Structured Type: {result.TranscriptionStructureType}");
+                    Console.WriteLine($"Cost: {result.TranscriptionCostUsdc}");
+                    Console.WriteLine($"Input Tokens: {result.InputTextTokens}");
+                    Console.WriteLine($"Output Tokens: {result.OutputTextTokens}");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Transcription Failed: {ex.Message}");
-                }
-                finally
-                {
-                    // Cleanup: Optional - remove the test entry
-                    // ctx.RefDocs.Remove(tempDoc);
-                    // await ctx.SaveChangesAsync();
-                    // Console.WriteLine("Temporary RefDoc removed.");
                 }
             }
         }

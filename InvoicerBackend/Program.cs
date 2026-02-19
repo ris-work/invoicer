@@ -251,6 +251,12 @@ app.AddFlowEndpoints();
 app.AddPiiEndpoints();
 app.AddAccountsInformationEndpoints();
 
+app.AddInventoryAdjustmentsEndpoints();
+
+
+app.AddDiagnosticEndpoints();
+
+
 app.MapRazorPages();
 
 System.Console.WriteLine("Done setting up!");

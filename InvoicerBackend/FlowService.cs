@@ -10,28 +10,33 @@ namespace InvoicerBackend
         public static void Set(string flowId, string key, string value)
         {
             var data = _store.GetOrAdd(flowId, _ => new Dictionary<string, string>());
-            data[key] = value;
+            lock (data) { data[key] = value; }
         }
 
         public static string Get(string flowId, string key)
         {
             if (_store.TryGetValue(flowId, out var data))
             {
-                if (data.TryGetValue(key, out var value))
+                lock (data)
                 {
-                    return value;
+                    if (data.TryGetValue(key, out var value)) return value;
                 }
             }
             return null;
         }
 
-        public static void Dump(string flowId)
+        public static Dictionary<string, Dictionary<string, string>> GetAllFlows()
         {
-            if (_store.TryGetValue(flowId, out var data))
+            // Return a deep copy to avoid thread issues
+            var copy = new Dictionary<string, Dictionary<string, string>>();
+            foreach (var kvp in _store)
             {
-                Console.WriteLine($"Dumping Flow {flowId}:");
-                foreach (var kvp in data) Console.WriteLine($"- {kvp.Key}: {kvp.Value}");
+                lock (kvp.Value)
+                {
+                    copy[kvp.Key] = new Dictionary<string, string>(kvp.Value);
+                }
             }
+            return copy;
         }
     }
 

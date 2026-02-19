@@ -117,6 +117,13 @@
                 cursor: pointer;
                 text-decoration: underline;
             }
+
+        /* New style for metadata inside list */
+        .trans-meta {
+            color: #888;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -335,8 +342,19 @@
                 let html = '<strong>Select a transcription to view:</strong><br>';
                 transcriptions.forEach((t, index) => {
                     const date = new Date(t.transcribedAt).toLocaleString();
+
+                    // Build metadata string
+                    let metaStr = "";
+                    if (t.transcriptionCostUsdc !== null && t.transcriptionCostUsdc !== undefined) {
+                        metaStr += `Cost: $${t.transcriptionCostUsdc.toFixed(5)} `;
+                    }
+                    if (t.inputTextTokens !== null || t.outputTextTokens !== null) {
+                        metaStr += `In: ${t.inputTextTokens || 0} Out: ${t.outputTextTokens || 0}`;
+                    }
+
                     html += `<div class="transcription-item">
                         <a onclick="showTranscription(${refId}, ${index})">[${date}] ${t.transcriberLlmName}</a>
+                        <span class="trans-meta">${metaStr}</span>
                     </div>`;
 
                     if (!listDiv.dataset.jsonData) listDiv.dataset.jsonData = JSON.stringify(transcriptions);

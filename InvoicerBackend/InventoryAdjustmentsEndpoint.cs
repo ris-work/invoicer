@@ -31,7 +31,7 @@ namespace InvoicerBackend
     }
     public static class InventoryAdjustmentsEndpoint
     {
-        public static WebApplication AddInventoryAdjustmentsEndpoints(WebApplication app)
+        public static WebApplication AddInventoryAdjustmentsEndpoints(this WebApplication app)
         {
             app.AddAsyncEndpointWithBearerAuth<AdjustmentAddToBatchRequest>(
     "AdjustmentAddToBatch",
@@ -41,12 +41,10 @@ namespace InvoicerBackend
 
         using (var ctx = new NewinvContext())
         {
-            // Start Serializable Transaction
             using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
-                // 1. Fetch Batch
                 var batch = await ctx.Inventories
                     .FirstOrDefaultAsync(i => i.Itemcode == req.ItemCode && i.Batchcode == req.BatchCode);
 
@@ -54,12 +52,11 @@ namespace InvoicerBackend
 
                 double oldQty = batch.Units;
                 double newQty = oldQty + req.Difference;
+                long countLong = (long)req.Difference;
 
                 if (newQty < 0) throw new ArgumentException("Resulting quantity cannot be negative.");
 
-                // 2. Create Adjustment Record (As-Is)
-                long countLong = (long)req.Difference;
-
+                // 1. Create Adjustment Record
                 var adjustment = new InventoryAdjustment
                 {
                     Itemcode = req.ItemCode,
@@ -81,52 +78,31 @@ namespace InvoicerBackend
                 };
                 ctx.InventoryAdjustments.Add(adjustment);
 
-                // 3. Update Inventory
+                // 2. Update Inventory
                 batch.Units = newQty;
                 batch.LastCountedAt = DateTime.UtcNow;
 
-                // 4. Add to Bin Card (InventoryMovement)
-                // Mapping to the provided schema
-                var movement = new InventoryMovement
-                {
-                    Itemcode = batch.Itemcode,
-                    Batchcode = batch.Batchcode,
+                // 3. Insert Bin Card (Safe Raw SQL)
+                string refString = "adjustment:" + req.DocumentNumber;
+                await ctx.Database.ExecuteSqlRawAsync(
+                    @"INSERT INTO inventory_movements 
+                                (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
+                                 reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
+                                 volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
+                                VALUES 
+                                ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16}, {17}, {18}, {19}, {20})",
+                    batch.Itemcode, batch.Batchcode, oldQty, newQty, newQty, DateTime.UtcNow,
+                    DateTime.UtcNow, refString, req.Reason, true,
+                    batch.CostPrice, batch.SellingPrice, batch.MarkedPrice, batch.Suppliercode,
+                    batch.VolumeDiscounts, batch.UserDiscounts, batch.MeasurementUnit, batch.PackedSize,
+                    batch.MfgDate, batch.ExpDate, batch.BatchEnabled
+                );
 
-                    // Quantities
-                    FromUnits = oldQty,
-                    ToUnits = newQty,
-                    Units = newQty, // Current state snapshot
-
-                    // Timestamps
-                    EnteredTime = DateTime.UtcNow,
-                    LastCountedAt = DateTime.UtcNow,
-
-                    // References
-                    Reference = $"adjustment:{req.DocumentNumber}",
-                    Remarks = req.Reason,
-                    IsOneOff = true, // Marking as a manual adjustment
-
-                    // Snapshot data from Batch
-                    CostPrice = batch.CostPrice,
-                    SellingPrice = batch.SellingPrice,
-                    MarkedPrice = batch.MarkedPrice,
-                    Suppliercode = batch.Suppliercode,
-                    VolumeDiscounts = batch.VolumeDiscounts,
-                    UserDiscounts = batch.UserDiscounts,
-                    MeasurementUnit = batch.MeasurementUnit,
-                    PackedSize = batch.PackedSize,
-                    MfgDate = batch.MfgDate,
-                    ExpDate = batch.ExpDate,
-                    BatchEnabled = batch.BatchEnabled
-                };
-                ctx.InventoryMovements.Add(movement);
-
-                // 5. Accounting Entry
+                // 4. Accounting
                 double valueChange = Math.Abs(req.Difference) * batch.CostPrice;
 
                 if (valueChange > 0)
                 {
-                    // Ensure Accounts Exist
                     long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 0);
                     long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 3);
 
@@ -139,13 +115,12 @@ namespace InvoicerBackend
                         Description = $"Adjustment Doc: {req.DocumentNumber} - {req.Reason}",
                         Ref = req.DocumentNumber,
                         Amount = valueChange,
-                        JournalNo = 1, // General Journal
+                        JournalNo = 1,
                         InternalReference = $"ADJ-{req.DocumentNumber}"
                     };
 
                     if (req.Difference > 0)
                     {
-                        // Increase Inventory: Debit Asset, Credit Adj (Gain)
                         journalEntry.DebitAccountNo = assetAccountNo;
                         journalEntry.DebitAccountType = 0;
                         journalEntry.CreditAccountNo = adjAccountNo;
@@ -153,14 +128,12 @@ namespace InvoicerBackend
                     }
                     else
                     {
-                        // Decrease Inventory: Debit Adj (Loss), Credit Asset
                         journalEntry.DebitAccountNo = adjAccountNo;
                         journalEntry.DebitAccountType = 3;
                         journalEntry.CreditAccountNo = assetAccountNo;
                         journalEntry.CreditAccountType = 0;
                     }
 
-                    // Resolve Names
                     journalEntry.DebitAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.DebitAccountNo))?.AccountName;
                     journalEntry.CreditAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.CreditAccountNo))?.AccountName;
 
@@ -243,68 +216,44 @@ namespace InvoicerBackend
 
         using (var ctx = new NewinvContext())
         {
-            // Start Serializable Transaction
             using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
-                // 1. Fetch the Adjustment Record
-                var adjustment = await ctx.InventoryAdjustments
-                    .FirstOrDefaultAsync(a => a.EntryId == req.EntryId);
-
+                var adjustment = await ctx.InventoryAdjustments.FirstOrDefaultAsync(a => a.EntryId == req.EntryId);
                 if (adjustment == null) throw new ArgumentException("Adjustment record not found.");
                 if (adjustment.Posted) throw new InvalidOperationException("Adjustment is already posted.");
 
-                // 2. Fetch Batch
-                var batch = await ctx.Inventories
-                    .FirstOrDefaultAsync(i => i.Itemcode == adjustment.Itemcode && i.Batchcode == adjustment.Batchcode);
-
+                var batch = await ctx.Inventories.FirstOrDefaultAsync(i => i.Itemcode == adjustment.Itemcode && i.Batchcode == adjustment.Batchcode);
                 if (batch == null) throw new ArgumentException("Batch associated with adjustment not found.");
 
-                // 3. Concurrency Check: Ensure stock hasn't changed since adjustment was created
-                // The 'BeforeQty' in adjustment must match current 'Units' in batch
                 if (batch.Units != adjustment.BeforeQty)
-                {
-                    throw new InvalidOperationException($"Stock changed! Current stock is {batch.Units}, but adjustment expects {adjustment.BeforeQty}. Please discard and create a new adjustment.");
-                }
+                    throw new InvalidOperationException($"Stock changed! Current stock is {batch.Units}, but adjustment expects {adjustment.BeforeQty}.");
 
                 double newQty = adjustment.AfterQty;
-                double difference = adjustment.Count; // Count is the difference
+                double difference = adjustment.Count;
 
                 if (newQty < 0) throw new ArgumentException("Resulting quantity cannot be negative.");
 
-                // 4. Update Inventory
                 batch.Units = newQty;
                 batch.LastCountedAt = DateTime.UtcNow;
 
-                // 5. Add to Bin Card (InventoryMovement)
-                var movement = new InventoryMovement
-                {
-                    Itemcode = batch.Itemcode,
-                    Batchcode = batch.Batchcode,
-                    FromUnits = adjustment.BeforeQty,
-                    ToUnits = newQty,
-                    Units = newQty,
-                    EnteredTime = DateTime.UtcNow,
-                    LastCountedAt = DateTime.UtcNow,
-                    Reference = $"adjustment:{adjustment.ReferenceCode}",
-                    Remarks = adjustment.Reason,
-                    IsOneOff = true,
-                    CostPrice = batch.CostPrice,
-                    SellingPrice = batch.SellingPrice,
-                    MarkedPrice = batch.MarkedPrice,
-                    Suppliercode = batch.Suppliercode,
-                    VolumeDiscounts = batch.VolumeDiscounts,
-                    UserDiscounts = batch.UserDiscounts,
-                    MeasurementUnit = batch.MeasurementUnit,
-                    PackedSize = batch.PackedSize,
-                    MfgDate = batch.MfgDate,
-                    ExpDate = batch.ExpDate,
-                    BatchEnabled = batch.BatchEnabled
-                };
-                ctx.InventoryMovements.Add(movement);
+                // Insert Bin Card (Safe Raw SQL)
+                string refString = "adjustment:" + adjustment.ReferenceCode;
+                await ctx.Database.ExecuteSqlRawAsync(
+                    @"INSERT INTO inventory_movements 
+                                (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
+                                 reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
+                                 volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
+                                VALUES 
+                                ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16}, {17}, {18}, {19}, {20})",
+                    batch.Itemcode, batch.Batchcode, adjustment.BeforeQty, newQty, newQty, DateTime.UtcNow,
+                    DateTime.UtcNow, refString, adjustment.Reason, true,
+                    batch.CostPrice, batch.SellingPrice, batch.MarkedPrice, batch.Suppliercode,
+                    batch.VolumeDiscounts, batch.UserDiscounts, batch.MeasurementUnit, batch.PackedSize,
+                    batch.MfgDate, batch.ExpDate, batch.BatchEnabled
+                );
 
-                // 6. Accounting Entry
                 double valueChange = adjustment.NetValue;
 
                 if (valueChange > 0)
@@ -316,7 +265,7 @@ namespace InvoicerBackend
                     {
                         TimeAsEntered = DateTime.UtcNow,
                         TimeTai = DateTime.UtcNow,
-                        PrincipalId = (long)LoginInfo.UserId, // The user posting
+                        PrincipalId = (long)LoginInfo.UserId,
                         PrincipalName = LoginInfo.Principal,
                         Description = $"Posted Adjustment: {adjustment.ReferenceCode} - {adjustment.Reason}",
                         Ref = adjustment.ReferenceCode,
@@ -346,7 +295,6 @@ namespace InvoicerBackend
                     JournalEntries.AddJournalEntry(ctx, journalEntry);
                 }
 
-                // 7. Mark Adjustment as Posted
                 adjustment.Posted = true;
                 adjustment.ProcessedBy = (long)LoginInfo.UserId;
                 adjustment.EditedAt = DateTimeOffset.UtcNow;
@@ -369,26 +317,53 @@ namespace InvoicerBackend
             return app;
         }
         // Helper to ensure account exists (Let PG handle ID generation)
+        // Helper to ensure account exists with specific Name AND Type
+        // Helper to ensure account exists AND has a balance record
         private static async Task<long> EnsureAccountExists(NewinvContext ctx, string accountName, int accountType)
         {
+            // 1. Check/Create AccountsInformation
             var account = await ctx.AccountsInformations
-                .FirstOrDefaultAsync(a => a.AccountName == accountName);
+                .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
 
-            if (account != null) return account.AccountNo;
+            long accountNo;
 
-            var newAccount = new AccountsInformation
+            if (account != null)
             {
-                AccountName = accountName,
-                AccountType = accountType,
-                AccountMin = -1000000000,
-                AccountMax = 1000000000,
-                HumanFriendlyId = accountName.ToUpper().Replace(" ", "_")
-            };
+                accountNo = account.AccountNo;
+            }
+            else
+            {
+                var newAccount = new AccountsInformation
+                {
+                    AccountName = accountName,
+                    AccountType = accountType,
+                    AccountMin = -1000000000,
+                    AccountMax = 1000000000,
+                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_")}_{accountType}"
+                };
 
-            ctx.AccountsInformations.Add(newAccount);
-            await ctx.SaveChangesAsync(); // Save to get the generated ID
+                ctx.AccountsInformations.Add(newAccount);
+                await ctx.SaveChangesAsync();
+                accountNo = newAccount.AccountNo;
+            }
 
-            return newAccount.AccountNo;
+            // 2. Check/Create AccountsBalance (Crucial for JournalEntries.AddJournalEntry)
+            var balance = await ctx.AccountsBalances
+                .FirstOrDefaultAsync(b => b.AccountType == accountType && b.AccountNo == accountNo);
+
+            if (balance == null)
+            {
+                var newBalance = new AccountsBalance
+                {
+                    AccountType = accountType,
+                    AccountNo = accountNo,
+                    Amount = 0 // Initialize at zero
+                };
+                ctx.AccountsBalances.Add(newBalance);
+                await ctx.SaveChangesAsync();
+            }
+
+            return accountNo;
         }
     }
 }
