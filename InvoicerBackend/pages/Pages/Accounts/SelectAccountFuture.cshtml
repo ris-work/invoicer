@@ -1,21 +1,29 @@
-﻿@page "/Pages/SearchAndSelect/PiiSelect"
+﻿@page "/Pages/Accounts/SelectAccountFuture"
+
 @*
-  FLOW: Link Account to PII
+  FLOW: Future Accounts View
   STEP: 2 (Selector)
-  SETS: selectedPiiId, selectedPiiName
-  READS: flowId, redirTo
-  REDIRECTS: [redirTo]
+  SETS: selectedAccountNo, selectedAccountName
+  READS: flowId
+  REDIRECTS: /Pages/Accounts/LiveViewFutureAccounts
 *@
+
 @functions {
     }
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Select PII</title>
+    <title>Select Account</title>
     <style>
         body {
             font-family: sans-serif;
             padding: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
         }
 
         .card {
@@ -23,34 +31,29 @@
             padding: 10px;
             margin-bottom: 5px;
             cursor: pointer;
-        }
-
-            .card:hover {
-                background: #f0f0f0;
-            }</style>
+        }</style>
 </head>
 <body>
-    <h2>Select PII</h2>
-    <input type="text" id="query" placeholder="Search Name..." oninput="search()">
+    <h2>Select Account to View Future</h2>
+    <input type="text" id="query" placeholder="Search Account..." oninput="search()">
     <div id="results"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        const redirTo = params.get('redirTo');
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function search() {
             const token = getCookie("auth-token");
             const q = document.getElementById('query').value;
-            const res = await fetch('/SearchPiiWeb', {
+            const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(p => `
-                <div class="card" onclick="select(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
-                    <strong>${p.name}</strong><br><small>${p.email || ''}</small>
+            document.getElementById('results').innerHTML = data.map(a => `
+                <div class="card" onclick="select(${a.accountNo}, '${a.accountName.replace(/'/g, "\\'")}')">
+                    <strong>${a.accountName}</strong> (${a.accountNo})
                 </div>
             `).join('');
         }
@@ -59,13 +62,13 @@
             const token = getCookie("auth-token");
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId", Value: id.toString() })
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo", Value: id.toString() })
             });
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiName", Value: name })
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountName", Value: name })
             });
-            window.location.href = redirTo + "?flowId=" + flowId;
+            window.location.href = '/Pages/Accounts/LiveViewFutureAccounts?flowId=' + flowId;
         }
     </script>
 </body>

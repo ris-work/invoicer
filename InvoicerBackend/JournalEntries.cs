@@ -7,6 +7,16 @@ namespace InvoicerBackend
     {
         public static void AddJournalEntry(NewinvContext ctx, AccountsJournalEntry AccJE)
         {
+            var DECount = ctx
+                .AccountsBalances.Where(a =>
+                    a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo
+                ).Count();
+            var CECount = ctx
+                .AccountsBalances.Where(a =>
+                    a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo
+                )
+                .Count();
+            Console.WriteLine($"Journal Entry: Debit Account Matched Count: {DECount} Credit Account Matched Count: {CECount}");
             ctx.AccountsJournalEntries.Add(
                 /*new AccountsJournalEntry
                 {

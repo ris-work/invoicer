@@ -108,6 +108,7 @@ namespace InvoicerBackend
                                 );
                             }
                         }
+                        return Results.Unauthorized();
                         throw new UnauthorizedAccessException();
                     }
                 )
@@ -296,6 +297,7 @@ namespace InvoicerBackend
                     }
                 )
                 .WithName(Name)
+                .WithName(Name).Accepts<T>("application/json").Produces(200, D.Method.ReturnType, "application/json")
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
 
@@ -338,7 +340,7 @@ namespace InvoicerBackend
                         throw new UnauthorizedAccessException();
                     }
                 )
-                .WithName(Name)
+                .WithName(Name).Accepts<T>("application/json").Produces(200, D.Method.ReturnType, "application/json")
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
             return app;

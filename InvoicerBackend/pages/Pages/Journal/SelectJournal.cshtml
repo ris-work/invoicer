@@ -1,0 +1,67 @@
+﻿@page "/Pages/Journal/SelectJournal"
+
+@*
+  FLOW: Add Journal Entry
+  STEP: 2 (Selector)
+  SETS: selectedJournalNo
+  READS: flowId
+  REDIRECTS: /Pages/Journal/SelectDebitAccount
+*@
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Journal</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+            .card:hover {
+                background: #f0f0f0;
+            }</style>
+</head>
+<body>
+    <h2>Select Journal Type</h2>
+    <div id="list"></div>
+
+    <script>
+        const journals = [
+            {id:1, name:"General Journal"}, {id:2, name:"Purchase Journal"}, {id:3, name:"Sales Journal"},
+            {id:4, name:"Cash Receipts Journal"}, {id:5, name:"Cash Payments Journal"},
+            {id:6, name:"Purchase Returns Journal"}, {id:7, name:"Sales Returns Journal"},
+            {id:8, name:"Adjusting Journal"}, {id:9, name:"Reversing Journal"}, {id:10, name:"Closing Journal"}
+        ];
+
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        function render() {
+            document.getElementById('list').innerHTML = journals.map(j =>
+                `<div class="card" onclick="select(${j.id})"><strong>${j.id}</strong> - ${j.name}</div>`
+            ).join('');
+        }
+
+        async function select(id) {
+            const token = getCookie("auth-token");
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo", Value: id.toString() })
+            });
+            window.location.href = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
+        }
+        render();
+    </script>
+</body>
+</html>

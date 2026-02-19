@@ -48,7 +48,6 @@
             cursor: pointer;
         }
 
-        /* Table Styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -86,12 +85,17 @@
             <div class="filter-group">
                 <label>Journal Type</label>
                 <select id="filterJournal">
-                    <option value="">All</option>
-                    <option value="1">General</option>
-                    <option value="2">Purchase</option>
-                    <option value="3">Sales</option>
-                    <option value="4">Cash Receipt</option>
-                    <option value="5">Cash Payment</option>
+                    <option value="">All Journals</option>
+                    <option value="1">General Journal</option>
+                    <option value="2">Purchase Journal</option>
+                    <option value="3">Sales Journal</option>
+                    <option value="4">Cash Receipts Journal</option>
+                    <option value="5">Cash Payments Journal</option>
+                    <option value="6">Purchase Returns Journal</option>
+                    <option value="7">Sales Returns Journal</option>
+                    <option value="8">Adjusting Journal</option>
+                    <option value="9">Reversing Journal</option>
+                    <option value="10">Closing Journal</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -150,6 +154,12 @@
             const token = getCookie("auth-token");
             const container = document.getElementById('tableContainer');
 
+            // 403 Handling: Check token existence client-side first
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
             const journalNo = document.getElementById('filterJournal').value;
             const accountNo = document.getElementById('filterAccount').value;
             const from = document.getElementById('filterFrom').value;
@@ -168,6 +178,12 @@
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                // 403/401 Handling: Server response check
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/Pages/LoginWeb';
+                    return;
+                }
 
                 if (!res.ok) throw new Error(await res.text());
                 const data = await res.json();

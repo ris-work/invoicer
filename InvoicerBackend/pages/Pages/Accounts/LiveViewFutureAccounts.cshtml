@@ -1,0 +1,187 @@
+﻿@page "/Pages/Accounts/LiveViewFutureAccounts"
+
+@*
+  FLOW: Future Accounts View
+  STEP: 3 (Terminal / Viewer)
+  SETS: N/A
+  READS: selectedAccountNo, selectedAccountName
+  REDIRECTS: N/A
+*@
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Timeline</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+
+        /* Row Styles */
+        tr.posted {
+            background-color: #ffffff;
+            color: #555;
+        }
+
+        tr.overdue {
+            background-color: #ffebee;
+            font-weight: bold;
+        }
+
+        tr.due-today {
+            background-color: #fffde7;
+        }
+
+        tr.scheduled {
+            background-color: #e3f2fd;
+        }
+
+        .status-icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">Loading Flow...</div>
+
+    <div id="content" style="display:none;">
+        <div class="header">
+            <h2>Timeline: <span id="accName"></span></h2>
+            <p><small>Account No: <span id="accNo"></span> | Showing: History (Last 50) + Scheduled</small></p>
+        </div>
+
+        <div id="gridContainer">Loading data...</div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function getStatusIcon(status) {
+            if(status === "Overdue") return "⚠️";
+            if(status === "Due Today") return "🔥";
+            if(status === "Scheduled") return "📅";
+            if(status === "Posted") return "✅";
+            return "";
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            const loadKey = async (key) => {
+                const res = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: key })
+                });
+                return (await res.json()).value;
+            };
+
+            const accNo = await loadKey("selectedAccountNo");
+            const accName = await loadKey("selectedAccountName");
+
+            if (!accNo) {
+                document.getElementById('status').innerText = "Flow Broken: No Account selected.";
+                return;
+            }
+
+            document.getElementById('accName').innerText = accName;
+            document.getElementById('accNo').innerText = accNo;
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            await loadData(accNo, token);
+        }
+
+        async function loadData(accNo, token) {
+            const container = document.getElementById('gridContainer');
+            try {
+                const res = await fetch('/GetAccountFuture', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ AccountNo: parseInt(accNo) })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    container.innerHTML = "<p>No history or future entries found.</p>";
+                    return;
+                }
+
+                let html = `<table>
+                    <thead>
+                        <tr>
+                            <th>Status</th><th>Date</th><th>Type</th><th>Amount</th>
+                            <th>Debit</th><th>Credit</th><th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                data.forEach(e => {
+                    const rowClass = e.status.toLowerCase().replace(' ', '-');
+                    const icon = getStatusIcon(e.status);
+
+                    html += `<tr class="${rowClass}">
+                        <td>${icon} ${e.status}</td>
+                        <td>${new Date(e.date).toLocaleString()}</td>
+                        <td>${e.source}</td>
+                        <td>${e.amount.toFixed(2)}</td>
+                        <td>${e.debitAccountName}</td>
+                        <td>${e.creditAccountName}</td>
+                        <td>${e.description || ''}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+
+            } catch (err) {
+                container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        init();
+        setInterval(() => {
+            const token = getCookie("auth-token");
+            const accNo = document.getElementById('accNo').innerText;
+            if(accNo) loadData(accNo, token);
+        }, 60000);
+    </script>
+</body>
+</html>

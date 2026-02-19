@@ -61,7 +61,7 @@ namespace InvoicerBackend
                 {
                     Itemcode = req.ItemCode,
                     Batchcode = req.BatchCode,
-                    ReferenceCode = req.DocumentNumber,
+                    ReferenceCode = req.DocumentNumber, // User input stored here
                     BeforeQty = oldQty,
                     AfterQty = newQty,
                     Count = countLong,
@@ -78,12 +78,16 @@ namespace InvoicerBackend
                 };
                 ctx.InventoryAdjustments.Add(adjustment);
 
+                // MUST SAVE FIRST to get the generated EntryId
+                await ctx.SaveChangesAsync();
+
                 // 2. Update Inventory
                 batch.Units = newQty;
                 batch.LastCountedAt = DateTime.UtcNow;
 
-                // 3. Insert Bin Card (Safe Raw SQL)
-                string refString = "adjustment:" + req.DocumentNumber;
+                // 3. Insert Bin Card using the new EntryId
+                string binCardRef = $"adjustment:{adjustment.EntryId}";
+
                 await ctx.Database.ExecuteSqlRawAsync(
                     @"INSERT INTO inventory_movements 
                                 (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
@@ -92,7 +96,7 @@ namespace InvoicerBackend
                                 VALUES 
                                 ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16}, {17}, {18}, {19}, {20})",
                     batch.Itemcode, batch.Batchcode, oldQty, newQty, newQty, DateTime.UtcNow,
-                    DateTime.UtcNow, refString, req.Reason, true,
+                    DateTime.UtcNow, binCardRef, req.Reason, true,
                     batch.CostPrice, batch.SellingPrice, batch.MarkedPrice, batch.Suppliercode,
                     batch.VolumeDiscounts, batch.UserDiscounts, batch.MeasurementUnit, batch.PackedSize,
                     batch.MfgDate, batch.ExpDate, batch.BatchEnabled
@@ -116,7 +120,7 @@ namespace InvoicerBackend
                         Ref = req.DocumentNumber,
                         Amount = valueChange,
                         JournalNo = 1,
-                        InternalReference = $"ADJ-{req.DocumentNumber}"
+                        InternalReference = $"ADJ-{adjustment.EntryId}"
                     };
 
                     if (req.Difference > 0)
@@ -140,7 +144,7 @@ namespace InvoicerBackend
                     JournalEntries.AddJournalEntry(ctx, journalEntry);
                 }
 
-                await ctx.SaveChangesAsync();
+                // Commit Transaction
                 await tx.CommitAsync();
 
                 return new { Success = true, AdjustmentId = adjustment.EntryId, NewQuantity = newQty };
@@ -209,111 +213,112 @@ namespace InvoicerBackend
 
 
             app.AddAsyncEndpointWithBearerAuth<PostAdjustmentRequest>(
-    "PostAdjustment",
-    async (DataIn, LoginInfo) =>
-    {
-        var req = (PostAdjustmentRequest)DataIn;
+                "PostAdjustment",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (PostAdjustmentRequest)DataIn;
 
-        using (var ctx = new NewinvContext())
-        {
-            using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    using (var ctx = new NewinvContext())
+                    {
+                        using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
-            try
-            {
-                var adjustment = await ctx.InventoryAdjustments.FirstOrDefaultAsync(a => a.EntryId == req.EntryId);
-                if (adjustment == null) throw new ArgumentException("Adjustment record not found.");
-                if (adjustment.Posted) throw new InvalidOperationException("Adjustment is already posted.");
+                        try
+                        {
+                            var adjustment = await ctx.InventoryAdjustments.FirstOrDefaultAsync(a => a.EntryId == req.EntryId);
+                            if (adjustment == null) throw new ArgumentException("Adjustment record not found.");
+                            if (adjustment.Posted) throw new InvalidOperationException("Adjustment is already posted.");
 
-                var batch = await ctx.Inventories.FirstOrDefaultAsync(i => i.Itemcode == adjustment.Itemcode && i.Batchcode == adjustment.Batchcode);
-                if (batch == null) throw new ArgumentException("Batch associated with adjustment not found.");
+                            var batch = await ctx.Inventories.FirstOrDefaultAsync(i => i.Itemcode == adjustment.Itemcode && i.Batchcode == adjustment.Batchcode);
+                            if (batch == null) throw new ArgumentException("Batch associated with adjustment not found.");
 
-                if (batch.Units != adjustment.BeforeQty)
-                    throw new InvalidOperationException($"Stock changed! Current stock is {batch.Units}, but adjustment expects {adjustment.BeforeQty}.");
+                            if (batch.Units != adjustment.BeforeQty)
+                                throw new InvalidOperationException($"Stock changed! Current stock is {batch.Units}, but adjustment expects {adjustment.BeforeQty}.");
 
-                double newQty = adjustment.AfterQty;
-                double difference = adjustment.Count;
+                            double newQty = adjustment.AfterQty;
+                            double difference = adjustment.Count;
 
-                if (newQty < 0) throw new ArgumentException("Resulting quantity cannot be negative.");
+                            if (newQty < 0) throw new ArgumentException("Resulting quantity cannot be negative.");
 
-                batch.Units = newQty;
-                batch.LastCountedAt = DateTime.UtcNow;
+                            batch.Units = newQty;
+                            batch.LastCountedAt = DateTime.UtcNow;
 
-                // Insert Bin Card (Safe Raw SQL)
-                string refString = "adjustment:" + adjustment.ReferenceCode;
-                await ctx.Database.ExecuteSqlRawAsync(
-                    @"INSERT INTO inventory_movements 
+                            // Insert Bin Card using the EXISTING EntryId
+                            string binCardRef = $"adjustment:{adjustment.EntryId}";
+
+                            await ctx.Database.ExecuteSqlRawAsync(
+                                @"INSERT INTO inventory_movements 
                                 (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
                                  reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
                                  volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
                                 VALUES 
                                 ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16}, {17}, {18}, {19}, {20})",
-                    batch.Itemcode, batch.Batchcode, adjustment.BeforeQty, newQty, newQty, DateTime.UtcNow,
-                    DateTime.UtcNow, refString, adjustment.Reason, true,
-                    batch.CostPrice, batch.SellingPrice, batch.MarkedPrice, batch.Suppliercode,
-                    batch.VolumeDiscounts, batch.UserDiscounts, batch.MeasurementUnit, batch.PackedSize,
-                    batch.MfgDate, batch.ExpDate, batch.BatchEnabled
-                );
+                                batch.Itemcode, batch.Batchcode, adjustment.BeforeQty, newQty, newQty, DateTime.UtcNow,
+                                DateTime.UtcNow, binCardRef, adjustment.Reason, true,
+                                batch.CostPrice, batch.SellingPrice, batch.MarkedPrice, batch.Suppliercode,
+                                batch.VolumeDiscounts, batch.UserDiscounts, batch.MeasurementUnit, batch.PackedSize,
+                                batch.MfgDate, batch.ExpDate, batch.BatchEnabled
+                            );
 
-                double valueChange = adjustment.NetValue;
+                            double valueChange = adjustment.NetValue;
 
-                if (valueChange > 0)
-                {
-                    long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 0);
-                    long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 3);
+                            if (valueChange > 0)
+                            {
+                                long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 0);
+                                long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 3);
 
-                    var journalEntry = new AccountsJournalEntry
-                    {
-                        TimeAsEntered = DateTime.UtcNow,
-                        TimeTai = DateTime.UtcNow,
-                        PrincipalId = (long)LoginInfo.UserId,
-                        PrincipalName = LoginInfo.Principal,
-                        Description = $"Posted Adjustment: {adjustment.ReferenceCode} - {adjustment.Reason}",
-                        Ref = adjustment.ReferenceCode,
-                        Amount = valueChange,
-                        JournalNo = 1,
-                        InternalReference = $"ADJ-POST-{adjustment.EntryId}"
-                    };
+                                var journalEntry = new AccountsJournalEntry
+                                {
+                                    TimeAsEntered = DateTime.UtcNow,
+                                    TimeTai = DateTime.UtcNow,
+                                    PrincipalId = (long)LoginInfo.UserId,
+                                    PrincipalName = LoginInfo.Principal,
+                                    Description = $"Posted Adjustment: {adjustment.ReferenceCode} - {adjustment.Reason}",
+                                    Ref = adjustment.ReferenceCode,
+                                    Amount = valueChange,
+                                    JournalNo = 1,
+                                    InternalReference = $"ADJ-POST-{adjustment.EntryId}"
+                                };
 
-                    if (difference > 0)
-                    {
-                        journalEntry.DebitAccountNo = assetAccountNo;
-                        journalEntry.DebitAccountType = 0;
-                        journalEntry.CreditAccountNo = adjAccountNo;
-                        journalEntry.CreditAccountType = 3;
+                                if (difference > 0)
+                                {
+                                    journalEntry.DebitAccountNo = assetAccountNo;
+                                    journalEntry.DebitAccountType = 0;
+                                    journalEntry.CreditAccountNo = adjAccountNo;
+                                    journalEntry.CreditAccountType = 3;
+                                }
+                                else
+                                {
+                                    journalEntry.DebitAccountNo = adjAccountNo;
+                                    journalEntry.DebitAccountType = 3;
+                                    journalEntry.CreditAccountNo = assetAccountNo;
+                                    journalEntry.CreditAccountType = 0;
+                                }
+
+                                journalEntry.DebitAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.DebitAccountNo))?.AccountName;
+                                journalEntry.CreditAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.CreditAccountNo))?.AccountName;
+
+                                JournalEntries.AddJournalEntry(ctx, journalEntry);
+                            }
+
+                            adjustment.Posted = true;
+                            adjustment.ProcessedBy = (long)LoginInfo.UserId;
+                            adjustment.EditedAt = DateTimeOffset.UtcNow;
+                            adjustment.EditedBy = (long)LoginInfo.UserId;
+
+                            await ctx.SaveChangesAsync();
+                            await tx.CommitAsync();
+
+                            return new { Success = true, NewQuantity = newQty };
+                        }
+                        catch (Exception)
+                        {
+                            await tx.RollbackAsync();
+                            throw;
+                        }
                     }
-                    else
-                    {
-                        journalEntry.DebitAccountNo = adjAccountNo;
-                        journalEntry.DebitAccountType = 3;
-                        journalEntry.CreditAccountNo = assetAccountNo;
-                        journalEntry.CreditAccountType = 0;
-                    }
-
-                    journalEntry.DebitAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.DebitAccountNo))?.AccountName;
-                    journalEntry.CreditAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.CreditAccountNo))?.AccountName;
-
-                    JournalEntries.AddJournalEntry(ctx, journalEntry);
-                }
-
-                adjustment.Posted = true;
-                adjustment.ProcessedBy = (long)LoginInfo.UserId;
-                adjustment.EditedAt = DateTimeOffset.UtcNow;
-                adjustment.EditedBy = (long)LoginInfo.UserId;
-
-                await ctx.SaveChangesAsync();
-                await tx.CommitAsync();
-
-                return new { Success = true, NewQuantity = newQty };
-            }
-            catch (Exception)
-            {
-                await tx.RollbackAsync();
-                throw;
-            }
-        }
-    },
-    "Refresh"
-);
+                },
+                "Refresh"
+            );
             return app;
         }
         // Helper to ensure account exists (Let PG handle ID generation)

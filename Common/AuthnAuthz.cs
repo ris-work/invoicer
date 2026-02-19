@@ -71,7 +71,8 @@ namespace RV.InvNew.Common
             string? RequestBody,
             long? UserID,
             string Username,
-            string Token
+            string Token,
+            string Error
         )> VerifyIfAuthorizationIsOk(HttpRequest Request, string PrivilegeLevel, string Endpoint)
         {
             string Principal = null;
@@ -85,6 +86,10 @@ namespace RV.InvNew.Common
                 "Authorization",
                 out BearerTokenHeaderValue
             );
+            if (!HasBearerToken) {
+                System.Console.WriteLine($"Got Authorization: NONE, HEADER MISSING");
+                return (false, "", -1, "", "", "AUTHORIZATION: BEARER HEADER NOT SUPPLIED"); 
+            }
             string[] SplitToken = BearerTokenHeaderValue[0].Split(' ');
             var BearerToken = String.Join(' ', SplitToken.ToList().Skip(1));
             System.Console.WriteLine($"Got Authorization: {BearerToken}");
@@ -142,7 +147,7 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID);
+                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID, "None");
             }
             else
             {
@@ -157,9 +162,9 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (false, null, null, null, null);
+                return (false, null, null, null, null, "UNPRIVILEGED OR UNAUTHENTICATED");
             }
-            return (false, null, null, null, null);
+            return (false, null, null, null, null, null);
         }
     }
 

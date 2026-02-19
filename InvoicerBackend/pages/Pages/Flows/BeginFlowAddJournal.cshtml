@@ -1,0 +1,24 @@
+﻿@page "/Pages/Flows/BeginFlowAddJournal"
+
+@*
+  FLOW: Add Journal Entry
+  STEP: 1 (Initializer)
+  SETS: N/A (Generates FlowID)
+  READS: N/A
+  REDIRECTS: /Pages/Journal/SelectJournal
+*@
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Journal Entry</title>
+</head>
+<body>
+    <script>
+        const flowId = 'flow-' + Date.now();
+        window.location.href = '/Pages/Journal/SelectJournal?flowId=' + flowId;
+    </script>
+</body>
+</html>

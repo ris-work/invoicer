@@ -1,0 +1,24 @@
+﻿@page "/Pages/Flows/BeginFlowFutureAccounts"
+
+@*
+  FLOW: Future Accounts View
+  STEP: 1 (Initializer)
+  SETS: N/A (Generates FlowID)
+  READS: N/A
+  REDIRECTS: /Pages/Accounts/SelectAccountFuture
+*@
+
+@functions {
+    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Account</title>
+</head>
+<body>
+    <script>
+        const flowId = 'flow-' + Date.now();
+        window.location.href = '/Pages/Accounts/SelectAccountFuture?flowId=' + flowId;
+    </script>
+</body>
+</html>

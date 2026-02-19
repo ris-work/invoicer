@@ -26,11 +26,18 @@
             gap: 10px;
             margin-bottom: 10px;
             flex-wrap: wrap;
+            align-items: flex-end;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
+        }
+
+        .filter-combo {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         label {
@@ -47,9 +54,10 @@
         button {
             padding: 8px 15px;
             cursor: pointer;
+            height: 30px;
         }
+        /* Align height */
 
-        /* Table Styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -72,22 +80,27 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-
-        tr:hover {
-            background-color: #f1f1f1;
-        }
     </style>
 </head>
 <body>
     <h2>Bin Card Live View</h2>
-    <p><small>Auto-refreshes every 30 seconds.</small></p>
+    <p><small>Auto-refreshes every 30 seconds. Hybrid Tag Selector: Use dropdown OR type to search.</small></p>
 
     <div class="filter-bar">
         <div class="filter-row">
-            <div class="filter-group">
+            <!-- Hybrid Tag Selector -->
+            <div class="filter-group filter-combo" style="min-width: 200px;">
                 <label>Filter by Tag</label>
-                <select id="filterTag"><option value="">Loading tags...</option></select>
+                <!-- Dropdown for quick selection -->
+                <select id="tagDropdown" onchange="syncTagInput()">
+                    <option value="">All Tags</option>
+                    <!-- Options populated by JS -->
+                </select>
+                <!-- Datalist Input for autocomplete/typing -->
+                <input type="text" id="tagInput" list="tagDatalist" placeholder="Or type to search..." oninput="syncTagDropdown()">
+                <datalist id="tagDatalist"></datalist>
             </div>
+
             <div class="filter-group">
                 <label>Item Code</label>
                 <input type="number" id="filterItem" placeholder="Specific Item">
@@ -96,7 +109,7 @@
                 <label>Batch Code</label>
                 <input type="number" id="filterBatch" placeholder="Specific Batch">
             </div>
-            <div class="filter-group" style="justify-content: flex-end;">
+            <div class="filter-group">
                 <button onclick="loadData()">Apply Filter</button>
             </div>
         </div>
@@ -109,6 +122,31 @@
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // --- Tag UI Logic ---
+        function syncTagInput() {
+            const dropdown = document.getElementById('tagDropdown');
+            const input = document.getElementById('tagInput');
+            // If user picks from dropdown, put it in the input box
+            if (dropdown.value) {
+                input.value = dropdown.value;
+            }
+        }
+
+        function syncTagDropdown() {
+            const dropdown = document.getElementById('tagDropdown');
+            const input = document.getElementById('tagInput');
+            // If user types a value that exists in dropdown, select it
+            const options = dropdown.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === input.value) {
+                    dropdown.value = input.value;
+                    return;
+                }
+            }
+            // If no match, reset dropdown to "All"
+            dropdown.value = "";
         }
 
         function renderTable(data) {
@@ -140,17 +178,45 @@
 
         async function init() {
             const token = getCookie("auth-token");
-            // Load Tags
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
             try {
                 const res = await fetch('/GetAllTags', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
+
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/Pages/LoginWeb';
+                    return;
+                }
+
                 const tags = await res.json();
-                const select = document.getElementById('filterTag');
-                select.innerHTML = '<option value="">All Tags</option>' +
-                    tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
+
+                // Populate Dropdown
+                const select = document.getElementById('tagDropdown');
+                // Keep "All Tags" option
+                select.innerHTML = '<option value="">All Tags</option>';
+                tags.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.tag;
+                    opt.innerText = t.tag;
+                    select.appendChild(opt);
+                });
+
+                // Populate Datalist
+                const datalist = document.getElementById('tagDatalist');
+                datalist.innerHTML = '';
+                tags.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.tag;
+                    datalist.appendChild(opt);
+                });
+
             } catch (e) {
                 console.error("Failed to load tags", e);
             }
@@ -162,7 +228,16 @@
             const token = getCookie("auth-token");
             const container = document.getElementById('tableContainer');
 
-            const tag = document.getElementById('filterTag').value;
+            if (!token) {
+                window.location.href = '/Pages/LoginWeb';
+                return;
+            }
+
+            // Logic: If Dropdown has a value, use it. Otherwise, use Input value.
+            const dropdownVal = document.getElementById('tagDropdown').value;
+            const inputVal = document.getElementById('tagInput').value;
+            const tag = dropdownVal || inputVal;
+
             const item = document.getElementById('filterItem').value;
             const batch = document.getElementById('filterBatch').value;
 
@@ -178,6 +253,11 @@
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/Pages/LoginWeb';
+                    return;
+                }
 
                 if (!res.ok) throw new Error(await res.text());
                 const data = await res.json();

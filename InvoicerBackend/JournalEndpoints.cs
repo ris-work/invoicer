@@ -16,6 +16,16 @@ namespace InvoicerBackend
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
     }
+    public class AddJournalEntryRequest
+    {
+        public int JournalNo { get; set; }
+        public long DebitAccountNo { get; set; }
+        public long CreditAccountNo { get; set; }
+        public double Amount { get; set; }
+        public string Description { get; set; }
+        public string RefNo { get; set; }
+    }
+
 
     public static class JournalEndpoints
     {
@@ -208,8 +218,45 @@ namespace InvoicerBackend
     },
     "Refresh"
 );
+            app.AddAsyncEndpointWithBearerAuth<AddJournalEntryRequest>(
+                "AddJournalEntryWeb",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (AddJournalEntryRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        // Validate Accounts exist
+                        var debitAcc = await ctx.AccountsInformations.FindAsync(req.DebitAccountNo);
+                        var creditAcc = await ctx.AccountsInformations.FindAsync(req.CreditAccountNo);
 
-            
+                        if (debitAcc == null || creditAcc == null) throw new ArgumentException("Invalid Account Number(s).");
+
+                        var entry = new AccountsJournalEntry
+                        {
+                            JournalNo = req.JournalNo,
+                            DebitAccountNo = req.DebitAccountNo,
+                            DebitAccountType = debitAcc.AccountType,
+                            DebitAccountName = debitAcc.AccountName,
+                            CreditAccountNo = req.CreditAccountNo,
+                            CreditAccountType = creditAcc.AccountType,
+                            CreditAccountName = creditAcc.AccountName,
+                            Amount = req.Amount,
+                            Description = req.Description,
+                            RefNo = req.RefNo,
+                            TimeAsEntered = DateTime.UtcNow,
+                            TimeTai = DateTime.UtcNow,
+                            PrincipalId = (long)LoginInfo.UserId,
+                            PrincipalName = LoginInfo.Principal
+                        };
+
+                        JournalEntries.AddJournalEntry(ctx, entry);
+                        await ctx.SaveChangesAsync();
+                        return entry;
+                    }
+                },
+                "Refresh"
+            );
+
             return app;
         }
     }

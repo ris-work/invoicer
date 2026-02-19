@@ -30,13 +30,13 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
 });
-builder.Services.AddOpenApi(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1; });
+//builder.Services.AddOpenApi(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1; });
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
 });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen( o => { o.SwaggerDoc("v3", new Microsoft.OpenApi.OpenApiInfo { Title = "RVPos", Version = "v3" }); } );
+//builder.Services.AddSwaggerGen( o => { o.SwaggerDoc("v3", new Microsoft.OpenApi.OpenApiInfo { Title = "RVPos", Version = "v3" }); } );
 
 builder.Services.AddHttpLogging(o =>
 {
@@ -44,9 +44,11 @@ builder.Services.AddHttpLogging(o =>
 });
 builder.Services.AddHttpLogging();
 builder.Services.AddRazorPages();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 app.UseResponseCompression();
+app.MapOpenApi();
 //RV.InvNew.Common.TranscriptionService.TestSampleTranscribe().GetAwaiter().GetResult();
 using (var ctx = new NewinvContext())
 {
@@ -58,10 +60,19 @@ using (var ctx = new NewinvContext())
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0; });
-    app.UseSwaggerUI(o => {  });
+    //app.UseSwagger(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0; });
+    //app.UseSwaggerUI(o => { o.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1"); });
     app.UseHttpLogging();
 }
+app.UseSwaggerUI(options => {
+    options.SwaggerEndpoint("../openapi/v1.json", "v1");
+    options.ConfigObject.Urls = new[] {
+            new Swashbuckle.AspNetCore.SwaggerUI.UrlDescriptor {
+                Url = "../openapi/v1.json",
+                Name = "V1 Docs"
+            }
+        };
+});
 
 
 
@@ -250,6 +261,7 @@ app.AddBatchEditors();
 app.AddFlowEndpoints();
 app.AddPiiEndpoints();
 app.AddAccountsInformationEndpoints();
+app.AddSchedulerEndpoints();
 
 app.AddInventoryAdjustmentsEndpoints();
 
