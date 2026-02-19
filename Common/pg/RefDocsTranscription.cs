@@ -28,4 +28,24 @@ public partial class RefDocsTranscription
     public string RefDocSummary { get; set; } = null!;
 
     public string RefDocTitle { get; set; } = null!;
+
+    public double? TranscriptionCostUsdc { get; set; }
+
+    public long? InputAudioTokens { get; set; }
+
+    public long? InputTextTokens { get; set; }
+
+    public long? InputImageTokens { get; set; }
+
+    public long? InputVideoTokens { get; set; }
+
+    public long? OutputAudioTokens { get; set; }
+
+    public long? OutputTextTokens { get; set; }
+
+    public long? OutputImageTokens { get; set; }
+
+    public long? OutputVideoTokens { get; set; }
+
+    public string RequestOutputAsIs { get; set; } = null!;
 }

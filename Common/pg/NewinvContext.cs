@@ -1352,6 +1352,14 @@ public partial class NewinvContext : DbContext
             entity.ToTable("ref_docs_transcriptions");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.InputAudioTokens).HasColumnName("input_audio_tokens");
+            entity.Property(e => e.InputImageTokens).HasColumnName("input_image_tokens");
+            entity.Property(e => e.InputTextTokens).HasColumnName("input_text_tokens");
+            entity.Property(e => e.InputVideoTokens).HasColumnName("input_video_tokens");
+            entity.Property(e => e.OutputAudioTokens).HasColumnName("output_audio_tokens");
+            entity.Property(e => e.OutputImageTokens).HasColumnName("output_image_tokens");
+            entity.Property(e => e.OutputTextTokens).HasColumnName("output_text_tokens");
+            entity.Property(e => e.OutputVideoTokens).HasColumnName("output_video_tokens");
             entity.Property(e => e.RefDoc).HasColumnName("ref_doc");
             entity.Property(e => e.RefDocIssuedAt).HasColumnName("ref_doc_issued_at");
             entity.Property(e => e.RefDocNotValidAfter).HasColumnName("ref_doc_not_valid_after");
@@ -1362,9 +1370,13 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("ref_doc_title");
             entity.Property(e => e.RefDocValidFrom).HasColumnName("ref_doc_valid_from");
+            entity.Property(e => e.RequestOutputAsIs)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("request_output_as_is");
             entity.Property(e => e.TranscribedAt).HasColumnName("transcribed_at");
             entity.Property(e => e.TranscribedContent).HasColumnName("transcribed_content");
             entity.Property(e => e.TranscriberLlmName).HasColumnName("transcriber_llm_name");
+            entity.Property(e => e.TranscriptionCostUsdc).HasColumnName("transcription_cost_usdc");
             entity.Property(e => e.TranscriptionStructureType)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("transcription_structure_type");
