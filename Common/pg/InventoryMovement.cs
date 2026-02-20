@@ -46,4 +46,6 @@ public partial class InventoryMovement
     public double ToUnits { get; set; }
 
     public bool IsOneOff { get; set; }
+
+    public string? ActionType { get; set; }
 }

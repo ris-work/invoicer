@@ -803,6 +803,9 @@ public partial class NewinvContext : DbContext
                 .HasNoKey()
                 .ToTable("inventory_movements");
 
+            entity.Property(e => e.ActionType)
+                .HasComputedColumnSql("split_part(reference, ':'::text, 1)", true)
+                .HasColumnName("action_type");
             entity.Property(e => e.BatchEnabled)
                 .HasDefaultValue(true)
                 .HasColumnName("batch_enabled");

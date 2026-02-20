@@ -12,6 +12,26 @@ namespace InvoicerBackend
             public long? ItemCode { get; set; }
             public long? BatchCode { get; set; }
         }
+
+        // --- Bin Card Summary Endpoint ---
+
+        public class BinCardSummaryRequest
+        {
+            public string[] Tags { get; set; }
+            public DateTime? From { get; set; }
+            public DateTime? To { get; set; }
+            public string PeriodType { get; set; } // "daily", "monthly", "yearly"
+        }
+
+        public class BinCardSummaryItem
+        {
+            public long Itemcode { get; set; }
+            public string ItemName { get; set; }
+            public string Period { get; set; } // Formatted date string
+            public string ActionType { get; set; }
+            public double StartQty { get; set; }
+            public double EndQty { get; set; }
+        }
         public static WebApplication AddAnalyticsEndpoints(this WebApplication app)
         {
             app.AddAsyncEndpointWithBearerAuth<GetInventoryMovementsRequest>(
@@ -98,9 +118,113 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
+            app.AddAsyncEndpointWithBearerAuth<BinCardSummaryRequest>(
+                "GetBinCardSummary",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (BinCardSummaryRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        // 1. Resolve ItemCodes from Tags (Reuse logic)
+                        List<long> filteredItemCodes = null;
+                        if (req.Tags != null && req.Tags.Length > 0)
+                        {
+                            var directItems = ctx.Inventories.Where(i => i.Tags != null);
+                            foreach (var tag in req.Tags) directItems = directItems.Where(i => i.Tags.Contains($"|{tag}|"));
+                            var directIds = await directItems.Select(i => i.Itemcode).ToListAsync();
+
+                            var impliedSources = await ctx.ItemTagImplications
+                                .Where(imp => req.Tags.Contains(imp.TransitiveTag))
+                                .Select(imp => imp.SourceTag).Distinct().ToListAsync();
+
+                            var impliedItems = ctx.Inventories.Where(i => i.Tags != null);
+                            foreach (var tag in impliedSources) impliedItems = impliedItems.Where(i => i.Tags.Contains($"|{tag}|"));
+                            var impliedIds = await impliedItems.Select(i => i.Itemcode).ToListAsync();
+
+                            filteredItemCodes = directIds.Union(impliedIds).ToList();
+                            if (filteredItemCodes.Count == 0) return new List<BinCardSummaryItem>();
+                        }
+
+                        // 2. Build Query
+                        var query = ctx.InventoryMovements.AsNoTracking();
+
+                        if (filteredItemCodes != null) query = query.Where(m => filteredItemCodes.Contains(m.Itemcode));
+                        if (req.From.HasValue) query = query.Where(m => m.EnteredTime >= req.From.Value.ToUniversalTime());
+                        if (req.To.HasValue) query = query.Where(m => m.EnteredTime <= req.To.Value.ToUniversalTime());
+
+                        // 3. GroupBy and Select based on PeriodType
+                        // We use a composite key for grouping
+                        if (req.PeriodType == "daily")
+                        {
+                            var grouped = await query
+                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year, Month = m.EnteredTime.Month, Day = m.EnteredTime.Day })
+                                .Select(g => new BinCardSummaryItem
+                                {
+                                    Itemcode = g.Key.Itemcode,
+                                    ActionType = g.Key.ActionType,
+                                    Period = g.Key.Year + "-" + g.Key.Month.ToString("00") + "-" + g.Key.Day.ToString("00"),
+                                    StartQty = g.Min(x => x.FromUnits),
+                                    EndQty = g.Max(x => x.ToUnits)
+                                })
+                                .ToListAsync();
+
+                            return await EnrichWithItemName(ctx, grouped);
+                        }
+                        else if (req.PeriodType == "yearly")
+                        {
+                            var grouped = await query
+                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year })
+                                .Select(g => new BinCardSummaryItem
+                                {
+                                    Itemcode = g.Key.Itemcode,
+                                    ActionType = g.Key.ActionType,
+                                    Period = g.Key.Year.ToString(),
+                                    StartQty = g.Min(x => x.FromUnits),
+                                    EndQty = g.Max(x => x.ToUnits)
+                                })
+                                .ToListAsync();
+
+                            return await EnrichWithItemName(ctx, grouped);
+                        }
+                        else // Default: Monthly
+                        {
+                            var grouped = await query
+                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year, Month = m.EnteredTime.Month })
+                                .Select(g => new BinCardSummaryItem
+                                {
+                                    Itemcode = g.Key.Itemcode,
+                                    ActionType = g.Key.ActionType,
+                                    Period = g.Key.Year + "-" + g.Key.Month.ToString("00"),
+                                    StartQty = g.Min(x => x.FromUnits),
+                                    EndQty = g.Max(x => x.ToUnits)
+                                })
+                                .ToListAsync();
+
+                            return await EnrichWithItemName(ctx, grouped);
+                        }
+                    }
+                },
+                "Refresh"
+            );
 
 
             return app;
+        }
+        // Helper to attach Item Names
+        private static async Task<List<BinCardSummaryItem>> EnrichWithItemName(NewinvContext ctx, List<BinCardSummaryItem> items)
+        {
+            var ids = items.Select(i => i.Itemcode).Distinct().ToList();
+            var names = await ctx.Catalogues.Where(c => ids.Contains(c.Itemcode))
+                .ToDictionaryAsync(c => c.Itemcode, c => c.Description);
+
+            foreach (var item in items)
+            {
+                names.TryGetValue(item.Itemcode, out var desc);
+                item.ItemName = desc ?? "Unknown Item";
+            }
+
+            // Sort for display
+            return items.OrderBy(i => i.ItemName).ThenBy(i => i.Period).ThenBy(i => i.ActionType).ToList();
         }
     }
 }

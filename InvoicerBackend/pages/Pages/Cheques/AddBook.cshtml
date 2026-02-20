@@ -1,0 +1,174 @@
+﻿@page "/Pages/Cheques/AddBook"
+
+@functions {
+    }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Cheque Book</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            padding: 10px;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .search-results {
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .search-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+            .search-item:hover {
+                background: #f0f0f0;
+            }
+    </style>
+</head>
+<body>
+    <h2>Add Cheque Book</h2>
+
+    <div class="form-group">
+        <label>Bank Account</label>
+        <input type="text" id="accSearch" placeholder="Type to search Bank Accounts..." oninput="searchAccs()">
+        <input type="hidden" id="selectedAccId">
+        <div id="accResults" class="search-results" style="display:none;"></div>
+        <div id="selectedAccDisplay" style="margin-top:5px; font-weight:bold;"></div>
+    </div>
+
+    <div class="form-group">
+        <label>Start Number</label>
+        <input type="number" id="startNo" oninput="calcCount()">
+    </div>
+    <div class="form-group">
+        <label>End Number</label>
+        <input type="number" id="endNo" oninput="calcCount()">
+    </div>
+
+    <div id="countInfo" style="margin-bottom: 15px;"></div>
+
+    <button onclick="createBook()" style="padding: 10px 20px; cursor: pointer;">Create Book</button>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function searchAccs() {
+            const token = getCookie("auth-token");
+            const q = document.getElementById('accSearch').value;
+            const resDiv = document.getElementById('accResults');
+
+            if(q.length < 1) { resDiv.style.display = 'none'; return; }
+
+            const res = await fetch('/SearchAccountsWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: q })
+            });
+            const data = await res.json();
+
+            // Filter for Banks
+            const banks = data.filter(a => a.isBank);
+
+            if(banks.length > 0) {
+                resDiv.style.display = 'block';
+                resDiv.innerHTML = banks.map(a => `
+                    <div class="search-item" onclick="selectAcc(${a.accountNo}, '${a.accountName}')">
+                        ${a.accountName} (${a.accountNo})
+                    </div>
+                `).join('');
+            } else {
+                resDiv.innerHTML = '<div class="search-item">No bank accounts found</div>';
+                resDiv.style.display = 'block';
+            }
+        }
+
+        function selectAcc(id, name) {
+            document.getElementById('selectedAccId').value = id;
+            document.getElementById('accSearch').value = "";
+            document.getElementById('accResults').style.display = 'none';
+            document.getElementById('selectedAccDisplay').innerText = `Selected: ${name} (ID: ${id})`;
+        }
+
+        function calcCount() {
+            const s = parseInt(document.getElementById('startNo').value);
+            const e = parseInt(document.getElementById('endNo').value);
+            const div = document.getElementById('countInfo');
+            if (s && e && e >= s) {
+                const count = e - s + 1;
+                let msg = `<strong>Total Leaves:</strong> ${count}`;
+                if (count > 200) msg += `<br><div class="warning">⚠️ Warning: Book is large (>200 leaves). Consider splitting.</div>`;
+                div.innerHTML = msg;
+            } else {
+                div.innerHTML = "";
+            }
+        }
+
+        async function createBook() {
+            const token = getCookie("auth-token");
+            const payload = {
+                AccountId: parseInt(document.getElementById('selectedAccId').value),
+                StartNumber: parseInt(document.getElementById('startNo').value),
+                EndNumber: parseInt(document.getElementById('endNo').value)
+            };
+
+            if (!payload.AccountId || !payload.StartNumber || !payload.EndNumber) {
+                alert("Please select a Bank Account and fill in the numbers."); return;
+            }
+
+            try {
+                const res = await fetch('/CreateChequeBook', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`Success! Book Created. ID: ${data.bookId}`);
+                    location.reload();
+                } else {
+                    alert("Error: " + await res.text());
+                }
+            } catch(err) { alert(err.message); }
+        }
+    </script>
+</body>
+</html>

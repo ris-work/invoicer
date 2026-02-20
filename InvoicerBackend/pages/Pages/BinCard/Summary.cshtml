@@ -1,0 +1,174 @@
+﻿@page "/Pages/BinCard/Summary"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bin Card Summary</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .filter-bar { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; }
+        label { font-size: 0.9em; margin-bottom: 3px; font-weight: bold; }
+        input, select { padding: 5px; min-width: 150px; }
+        button { padding: 8px 15px; cursor: pointer; }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .section-header { background-color: #e0e0e0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Bin Card Summary</h2>
+
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Tag (Dropdown)</label>
+                <select id="filterTagSelect" onchange="syncTagInput()"><option value="">All Tags</option></select>
+            </div>
+            <div class="filter-group">
+                <label>Or Search Tag (Datalist)</label>
+                <input list="tagList" id="filterTagInput" placeholder="Type to search...">
+                <datalist id="tagList"></datalist>
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Period Type</label>
+                <select id="periodType">
+                    <option value="monthly" selected>Monthly</option>
+                    <option value="daily">Daily</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>From</label>
+                <input type="date" id="filterFrom">
+            </div>
+            <div class="filter-group">
+                <label>To</label>
+                <input type="date" id="filterTo">
+            </div>
+            <div class="filter-group" style="justify-content: flex-end;">
+                <button onclick="loadData()">Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gridContainer"></div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            // Load Tags for both Dropdown and Datalist
+            const res = await fetch('/GetAllTags', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const tags = await res.json();
+
+            // Populate Select
+            const select = document.getElementById('filterTagSelect');
+            select.innerHTML = '<option value="">All Tags</option>' + 
+                tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
+
+            // Populate Datalist
+            const datalist = document.getElementById('tagList');
+            datalist.innerHTML = tags.map(t => `<option value="${t.tag}">`).join('');
+
+            // Default dates (Last 3 months)
+            const now = new Date();
+            document.getElementById('filterTo').value = now.toISOString().split('T')[0];
+            now.setMonth(now.getMonth() - 3);
+            document.getElementById('filterFrom').value = now.toISOString().split('T')[0];
+        }
+
+        function syncTagInput() {
+            // If user picks from dropdown, put it in the input (for consistency)
+            const val = document.getElementById('filterTagSelect').value;
+            document.getElementById('filterTagInput').value = val;
+        }
+
+        async function loadData() {
+            const token = getCookie("auth-token");
+            const container = document.getElementById('gridContainer');
+
+            // Prefer Dropdown if set, else Input
+            let tagVal = document.getElementById('filterTagSelect').value;
+            if (!tagVal) tagVal = document.getElementById('filterTagInput').value;
+
+            const payload = {
+                PeriodType: document.getElementById('periodType').value,
+                From: document.getElementById('filterFrom').value ? new Date(document.getElementById('filterFrom').value).toISOString() : null,
+                To: document.getElementById('filterTo').value ? new Date(document.getElementById('filterTo').value).toISOString() : null,
+                Tags: tagVal ? [tagVal] : null
+            };
+
+            container.innerHTML = "Aggregating data...";
+
+            try {
+                const res = await fetch('/GetBinCardSummary', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                renderTable(data);
+
+            } catch (err) {
+                container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        function renderTable(data) {
+            const container = document.getElementById('gridContainer');
+            if (data.length === 0) {
+                container.innerHTML = "<p>No data found for selected criteria.</p>";
+                return;
+            }
+
+            // Group by Item for display
+            let html = '<table>';
+            html += '<tr><th>Item</th><th>Period</th><th>Action</th><th>Start Qty</th><th>End Qty</th></tr>';
+
+            let lastItem = "";
+            data.forEach(row => {
+                if (row.itemName !== lastItem) {
+                    // New Item Section
+                    html += `<tr class="section-header"><td colspan="5">${row.itemName} (${row.itemcode})</td></tr>`;
+                    lastItem = row.itemName;
+                }
+                html += `<tr>
+                    <td></td>
+                    <td>${row.period}</td>
+                    <td>${row.actionType || 'N/A'}</td>
+                    <td>${row.startQty.toFixed(2)}</td>
+                    <td>${row.endQty.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>
