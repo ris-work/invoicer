@@ -1,10 +1,10 @@
 ﻿@page "/Pages/Journal/SelectJournal"
 
 @*
-  FLOW: Add Journal Entry (Step 2)
+  FLOW: Add Journal Entry / Scheduled Entry
+  STEP: Selector
   SETS: selectedJournalNo
-  READS: flowId, FlowSteps (optional)
-  REDIRECTS: Dynamic or Default (/Pages/Journal/SelectDebitAccount)
+  READS: flowId, FlowSteps
 *@
 
 @functions {
@@ -28,10 +28,40 @@
 
             .card:hover {
                 background: #f0f0f0;
-            }</style>
+            }
+
+        .current-bar {
+            background: #e3f2fd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #90caf9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .current-bar button {
+                padding: 5px 10px;
+                cursor: pointer;
+                background: #1976d2;
+                color: white;
+                border: none;
+                border-radius: 3px;
+            }
+    </style>
 </head>
 <body>
     <h2>Select Journal Type</h2>
+
+    <!-- Current Selection Bar -->
+    <div id="currentBar" style="display:none;" class="current-bar">
+        <div>
+            <strong>Current:</strong> <span id="currentName"></span>
+        </div>
+        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+    </div>
+
     <div id="list"></div>
 
     <script>
@@ -46,6 +76,27 @@
         const flowId = params.get('flowId');
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Check if already set
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo" })
+            });
+            const data = await res.json();
+
+            if(data.value) {
+                const id = parseInt(data.value);
+                const j = journals.find(x => x.id === id);
+                if(j) {
+                    document.getElementById('currentName').innerText = j.name;
+                    document.getElementById('currentBar').style.display = 'flex';
+                }
+            }
+            render();
+        }
+
         function render() {
             document.getElementById('list').innerHTML = journals.map(j =>
                 `<div class="card" onclick="select(${j.id})"><strong>${j.id}</strong> - ${j.name}</div>`
@@ -54,22 +105,22 @@
 
         async function select(id) {
             const token = getCookie("auth-token");
-
-            // Set Data
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo", Value: id.toString() })
             });
 
-            // Determine Next Step
+            const defaultNext = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
+            await navigateNext(defaultNext);
+        }
+
+        async function proceedWithCurrent() {
             const defaultNext = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
             await navigateNext(defaultNext);
         }
 
         async function navigateNext(defaultUrl) {
             const token = getCookie("auth-token");
-
-            // Try to get custom navigation list
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
@@ -82,7 +133,6 @@
 
                 currentIndex++;
                 if (currentIndex < steps.length) {
-                    // Save new index
                     await fetch('/SetFlowData', {
                         method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: currentIndex.toString() })
@@ -91,8 +141,6 @@
                     return;
                 }
             }
-
-            // Fallback
             window.location.href = defaultUrl;
         }
 
@@ -105,7 +153,7 @@
             return data.value || "0";
         }
 
-        render();
+        init();
     </script>
 </body>
 </html>

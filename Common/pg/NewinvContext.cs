@@ -43,6 +43,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<ChequeBook> ChequeBooks { get; set; }
 
+    public virtual DbSet<ChequeLeaf> ChequeLeaves { get; set; }
+
     public virtual DbSet<CodesBatch> CodesBatches { get; set; }
 
     public virtual DbSet<CodesCatalogue> CodesCatalogues { get; set; }
@@ -490,6 +492,33 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.StartNumber).HasColumnName("start_number");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<ChequeLeaf>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("cheque_leaves_pkey");
+
+            entity.ToTable("cheque_leaves");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.ChequeBookId).HasColumnName("cheque_book_id");
+            entity.Property(e => e.IssuedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("issued_at");
+            entity.Property(e => e.LeafNumber).HasColumnName("leaf_number");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PayeeName)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("payee_name");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'unused'::text")
+                .HasColumnName("status");
+            entity.Property(e => e.TxId).HasColumnName("tx_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
                 .HasColumnName("updated_at");
         });
 

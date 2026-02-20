@@ -3,8 +3,7 @@
 @*
   FLOW: Generic Selector (Credit)
   SETS: selectedCreditAccountNo, selectedCreditAccountName
-  READS: flowId, FlowSteps (optional)
-  REDIRECTS: Dynamic or Default (/Pages/Journal/EnterDetails)
+  READS: flowId, FlowSteps
 *@
 
 @functions {
@@ -30,10 +29,40 @@
             padding: 10px;
             margin-bottom: 5px;
             cursor: pointer;
-        }</style>
+        }
+
+        .current-bar {
+            background: #e3f2fd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #90caf9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .current-bar button {
+                padding: 5px 10px;
+                cursor: pointer;
+                background: #1976d2;
+                color: white;
+                border: none;
+                border-radius: 3px;
+            }
+    </style>
 </head>
 <body>
     <h2>Select Credit Account</h2>
+
+    <!-- Current Selection Bar -->
+    <div id="currentBar" style="display:none;" class="current-bar">
+        <div>
+            <strong>Current:</strong> <span id="currentName"></span> (<span id="currentId"></span>)
+        </div>
+        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+    </div>
+
     <input type="text" id="query" placeholder="Search Account Name or No..." oninput="search()">
     <div id="results"></div>
 
@@ -41,6 +70,29 @@
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Check if already set
+            const resId = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedCreditAccountNo" })
+            });
+            const dataId = await resId.json();
+
+            if(dataId.value) {
+                const resName = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedCreditAccountName" })
+                });
+                const dataName = await resName.json();
+
+                document.getElementById('currentId').innerText = dataId.value;
+                document.getElementById('currentName').innerText = dataName.value || "Unknown";
+                document.getElementById('currentBar').style.display = 'flex';
+            }
+        }
 
         async function search() {
             const token = getCookie("auth-token");
@@ -59,7 +111,6 @@
 
         async function select(id, name) {
             const token = getCookie("auth-token");
-
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedCreditAccountNo", Value: id.toString() })
@@ -69,6 +120,11 @@
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedCreditAccountName", Value: name })
             });
 
+            const defaultNext = '/Pages/Journal/EnterDetails?flowId=' + flowId;
+            await navigateNext(defaultNext);
+        }
+
+        async function proceedWithCurrent() {
             const defaultNext = '/Pages/Journal/EnterDetails?flowId=' + flowId;
             await navigateNext(defaultNext);
         }
@@ -106,6 +162,8 @@
             const data = await res.json();
             return data.value || "0";
         }
+
+        init();
     </script>
 </body>
 </html>
