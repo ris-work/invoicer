@@ -9,19 +9,116 @@
     <title>Bin Card Summary</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .filter-bar { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .filter-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-        .filter-group { display: flex; flex-direction: column; }
-        label { font-size: 0.9em; margin-bottom: 3px; font-weight: bold; }
-        input, select { padding: 5px; min-width: 150px; }
-        button { padding: 8px 15px; cursor: pointer; }
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .filter-bar {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9em;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 5px;
+            min-width: 150px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
 
         /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .section-header { background-color: #e0e0e0; font-weight: bold; }
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+        }
+
+        /* Zebra Striping */
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Hover Highlight */
+        tbody tr:hover {
+            background-color: #f1f1f1;
+            cursor: default;
+        }
+
+        /* Specific Columns */
+        td.item-code {
+            text-align: left;
+            font-weight: bold;
+            background: #f0f0f0;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+
+        td.item-name {
+            text-align: left;
+            font-weight: bold;
+            background: #f0f0f0;
+            position: sticky;
+            left: 80px;
+            z-index: 1;
+        }
+
+        td.period-col {
+            text-align: left;
+            font-weight: bold;
+            background: #fff;
+            position: sticky;
+            left: 250px;
+            z-index: 1;
+        }
+
+        td.start-qty, td.end-qty {
+            font-weight: bold;
+            background-color: #e8f5e9;
+        }
     </style>
 </head>
 <body>
@@ -42,7 +139,7 @@
         <div class="filter-row">
             <div class="filter-group">
                 <label>Period Type</label>
-                <select id="periodType">
+                <select id="periodType" onchange="updateHeaderLabel()">
                     <option value="monthly" selected>Monthly</option>
                     <option value="daily">Daily</option>
                     <option value="yearly">Yearly</option>
@@ -62,9 +159,15 @@
         </div>
     </div>
 
-    <div id="gridContainer"></div>
+    <div id="gridContainer" class="table-container"></div>
 
     <script>
+        const ACTION_ORDER = [
+            "purchase", "production", "purchasereturn",
+            "sale", "salesreturn", "consumption", "issue",
+            "adjustment", "deprecated"
+        ];
+
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -73,41 +176,37 @@
 
         async function init() {
             const token = getCookie("auth-token");
-            // Load Tags for both Dropdown and Datalist
             const res = await fetch('/GetAllTags', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
             });
             const tags = await res.json();
 
-            // Populate Select
             const select = document.getElementById('filterTagSelect');
-            select.innerHTML = '<option value="">All Tags</option>' + 
-                tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
+            select.innerHTML = '<option value="">All Tags</option>' + tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
+            document.getElementById('tagList').innerHTML = tags.map(t => `<option value="${t.tag}">`).join('');
 
-            // Populate Datalist
-            const datalist = document.getElementById('tagList');
-            datalist.innerHTML = tags.map(t => `<option value="${t.tag}">`).join('');
-
-            // Default dates (Last 3 months)
             const now = new Date();
             document.getElementById('filterTo').value = now.toISOString().split('T')[0];
             now.setMonth(now.getMonth() - 3);
             document.getElementById('filterFrom').value = now.toISOString().split('T')[0];
+
+            updateHeaderLabel();
         }
 
         function syncTagInput() {
-            // If user picks from dropdown, put it in the input (for consistency)
-            const val = document.getElementById('filterTagSelect').value;
-            document.getElementById('filterTagInput').value = val;
+            document.getElementById('filterTagInput').value = document.getElementById('filterTagSelect').value;
+        }
+
+        function updateHeaderLabel() {
+            // We can't easily update the existing table header without re-rendering,
+            // but we can store the label for the next render.
         }
 
         async function loadData() {
             const token = getCookie("auth-token");
             const container = document.getElementById('gridContainer');
 
-            // Prefer Dropdown if set, else Input
             let tagVal = document.getElementById('filterTagSelect').value;
             if (!tagVal) tagVal = document.getElementById('filterTagInput').value;
 
@@ -128,43 +227,88 @@
                 });
 
                 if (!res.ok) throw new Error(await res.text());
-                const data = await res.json();
+                const data = await res.json(); // { Periods: [], Actions: [] }
 
-                renderTable(data);
+                renderPivotTable(data);
 
             } catch (err) {
                 container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
             }
         }
 
-        function renderTable(data) {
+        function renderPivotTable(data) {
             const container = document.getElementById('gridContainer');
-            if (data.length === 0) {
-                container.innerHTML = "<p>No data found for selected criteria.</p>";
+            const periods = data.periods;
+            const actions = data.actions;
+
+            if (periods.length === 0) {
+                container.innerHTML = "<p>No data found.</p>";
                 return;
             }
 
-            // Group by Item for display
-            let html = '<table>';
-            html += '<tr><th>Item</th><th>Period</th><th>Action</th><th>Start Qty</th><th>End Qty</th></tr>';
+            // Determine Period Label
+            const pType = document.getElementById('periodType').value;
+            const periodLabel = pType === 'daily' ? 'Date' : (pType === 'yearly' ? 'Year' : 'Period');
 
-            let lastItem = "";
-            data.forEach(row => {
-                if (row.itemName !== lastItem) {
-                    // New Item Section
-                    html += `<tr class="section-header"><td colspan="5">${row.itemName} (${row.itemcode})</td></tr>`;
-                    lastItem = row.itemName;
-                }
-                html += `<tr>
-                    <td></td>
-                    <td>${row.period}</td>
-                    <td>${row.actionType || 'N/A'}</td>
-                    <td>${row.startQty.toFixed(2)}</td>
-                    <td>${row.endQty.toFixed(2)}</td>
-                </tr>`;
+            // 1. Build Map: Key -> "ItemCode|Period" -> { Start, End, Actions: {} }
+            const pivotMap = {};
+
+            // Populate Start/End
+            periods.forEach(p => {
+                const key = `${p.itemcode}|${p.period}`;
+                if (!pivotMap[key]) pivotMap[key] = { ItemCode: p.itemcode, ItemName: p.itemName, Period: p.period, Actions: {} };
+                pivotMap[key].StartQty = p.startQty;
+                pivotMap[key].EndQty = p.endQty;
             });
 
-            html += '</table>';
+            // Populate Actions
+            actions.forEach(a => {
+                const key = `${a.itemcode}|${a.period}`;
+                if (!pivotMap[key]) pivotMap[key] = { ItemCode: a.itemcode, ItemName: a.itemName, Period: a.period, Actions: {} };
+
+                if (!pivotMap[key].Actions[a.actionType]) pivotMap[key].Actions[a.actionType] = 0;
+                pivotMap[key].Actions[a.actionType] += a.totalUnits;
+            });
+
+            // 2. Build HTML
+            let html = '<table>';
+
+            // Header
+            html += '<thead><tr>';
+            html += '<th>Item Code</th>';
+            html += '<th>Item Name</th>';
+            html += `<th>${periodLabel}</th>`; // Dynamic Label
+            html += '<th>Start Qty</th>';
+            ACTION_ORDER.forEach(act => { html += `<th>${act}</th>`; });
+            html += '<th>End Qty</th>';
+            html += '</tr></thead><tbody>';
+
+            // Sort keys
+            const keys = Object.keys(pivotMap).sort((a, b) => {
+                const [codeA, periodA] = a.split('|');
+                const [codeB, periodB] = b.split('|');
+                if (codeA !== codeB) return codeA.localeCompare(codeB);
+                return periodA.localeCompare(periodB);
+            });
+
+            keys.forEach(key => {
+                const row = pivotMap[key];
+                html += '<tr>';
+                html += `<td class="item-code">${row.ItemCode}</td>`;
+                html += `<td class="item-name">${row.ItemName || 'Unknown'}</td>`;
+                html += `<td class="period-col">${row.Period}</td>`;
+                html += `<td class="start-qty">${row.StartQty.toFixed(2)}</td>`;
+
+                ACTION_ORDER.forEach(act => {
+                    const val = row.Actions[act];
+                    html += `<td>${val ? val.toFixed(2) : ''}</td>`;
+                });
+
+                html += `<td class="end-qty">${row.EndQty.toFixed(2)}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 

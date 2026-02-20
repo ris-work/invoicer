@@ -32,6 +32,32 @@ namespace InvoicerBackend
             public double StartQty { get; set; }
             public double EndQty { get; set; }
         }
+        // --- Bin Card Summary Endpoint ---
+
+        public class BinCardSummaryResponse
+        {
+            public List<BinCardPeriodBoundary> Periods { get; set; }
+            public List<BinCardActionDelta> Actions { get; set; }
+        }
+
+        public class BinCardPeriodBoundary
+        {
+            public long Itemcode { get; set; }
+            public string ItemName { get; set; }
+            public string Period { get; set; }
+            public double StartQty { get; set; }
+            public double EndQty { get; set; }
+        }
+
+        public class BinCardActionDelta
+        {
+            public long Itemcode { get; set; }
+            public string ItemName { get; set; }
+            public string Period { get; set; }
+            public string ActionType { get; set; }
+            public double TotalUnits { get; set; } // Sum of 'Units'
+        }
+
         public static WebApplication AddAnalyticsEndpoints(this WebApplication app)
         {
             app.AddAsyncEndpointWithBearerAuth<GetInventoryMovementsRequest>(
@@ -125,7 +151,7 @@ namespace InvoicerBackend
                     var req = (BinCardSummaryRequest)DataIn;
                     using (var ctx = new NewinvContext())
                     {
-                        // 1. Resolve ItemCodes from Tags (Reuse logic)
+                        // 1. Resolve ItemCodes from Tags
                         List<long> filteredItemCodes = null;
                         if (req.Tags != null && req.Tags.Length > 0)
                         {
@@ -142,66 +168,103 @@ namespace InvoicerBackend
                             var impliedIds = await impliedItems.Select(i => i.Itemcode).ToListAsync();
 
                             filteredItemCodes = directIds.Union(impliedIds).ToList();
-                            if (filteredItemCodes.Count == 0) return new List<BinCardSummaryItem>();
+                            if (filteredItemCodes.Count == 0) return new BinCardSummaryResponse { Periods = new List<BinCardPeriodBoundary>(), Actions = new List<BinCardActionDelta>() };
                         }
 
-                        // 2. Build Query
-                        var query = ctx.InventoryMovements.AsNoTracking();
+                        // 2. Build Base Query with Join to Catalogue for Names
+                        var query = from m in ctx.InventoryMovements.AsNoTracking()
+                                    join c in ctx.Catalogues on m.Itemcode equals c.Itemcode
+                                    select new { Movement = m, Name = c.Description };
 
-                        if (filteredItemCodes != null) query = query.Where(m => filteredItemCodes.Contains(m.Itemcode));
-                        if (req.From.HasValue) query = query.Where(m => m.EnteredTime >= req.From.Value.ToUniversalTime());
-                        if (req.To.HasValue) query = query.Where(m => m.EnteredTime <= req.To.Value.ToUniversalTime());
+                        if (filteredItemCodes != null) query = query.Where(x => filteredItemCodes.Contains(x.Movement.Itemcode));
+                        if (req.From.HasValue) query = query.Where(x => x.Movement.EnteredTime >= req.From.Value.ToUniversalTime());
+                        if (req.To.HasValue) query = query.Where(x => x.Movement.EnteredTime <= req.To.Value.ToUniversalTime());
 
-                        // 3. GroupBy and Select based on PeriodType
-                        // We use a composite key for grouping
+                        // 3. Execute Queries based on PeriodType
+                        List<BinCardPeriodBoundary> periods = new List<BinCardPeriodBoundary>();
+                        List<BinCardActionDelta> actions = new List<BinCardActionDelta>();
+
                         if (req.PeriodType == "daily")
                         {
-                            var grouped = await query
-                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year, Month = m.EnteredTime.Month, Day = m.EnteredTime.Day })
-                                .Select(g => new BinCardSummaryItem
-                                {
-                                    Itemcode = g.Key.Itemcode,
-                                    ActionType = g.Key.ActionType,
-                                    Period = g.Key.Year + "-" + g.Key.Month.ToString("00") + "-" + g.Key.Day.ToString("00"),
-                                    StartQty = g.Min(x => x.FromUnits),
-                                    EndQty = g.Max(x => x.ToUnits)
-                                })
-                                .ToListAsync();
+                            // Daily Grouping
+                            var pGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, Year = x.Movement.EnteredTime.Year, Month = x.Movement.EnteredTime.Month, Day = x.Movement.EnteredTime.Day });
 
-                            return await EnrichWithItemName(ctx, grouped);
+                            periods = await pGroup.Select(g => new BinCardPeriodBoundary
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                Period = g.Key.Year + "-" + g.Key.Month.ToString("00") + "-" + g.Key.Day.ToString("00"),
+                                StartQty = g.OrderBy(x => x.Movement.EnteredTime).FirstOrDefault().Movement.FromUnits,
+                                EndQty = g.OrderByDescending(x => x.Movement.EnteredTime).FirstOrDefault().Movement.ToUnits
+                            }).ToListAsync();
+
+                            var aGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, x.Movement.ActionType, Year = x.Movement.EnteredTime.Year, Month = x.Movement.EnteredTime.Month, Day = x.Movement.EnteredTime.Day });
+
+                            actions = await aGroup.Select(g => new BinCardActionDelta
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                ActionType = g.Key.ActionType,
+                                Period = g.Key.Year + "-" + g.Key.Month.ToString("00") + "-" + g.Key.Day.ToString("00"),
+                                TotalUnits = g.Sum(x => x.Movement.Units)
+                            }).ToListAsync();
                         }
                         else if (req.PeriodType == "yearly")
                         {
-                            var grouped = await query
-                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year })
-                                .Select(g => new BinCardSummaryItem
-                                {
-                                    Itemcode = g.Key.Itemcode,
-                                    ActionType = g.Key.ActionType,
-                                    Period = g.Key.Year.ToString(),
-                                    StartQty = g.Min(x => x.FromUnits),
-                                    EndQty = g.Max(x => x.ToUnits)
-                                })
-                                .ToListAsync();
+                            // Yearly Grouping
+                            var pGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, Year = x.Movement.EnteredTime.Year });
 
-                            return await EnrichWithItemName(ctx, grouped);
+                            periods = await pGroup.Select(g => new BinCardPeriodBoundary
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                Period = g.Key.Year.ToString(),
+                                StartQty = g.OrderBy(x => x.Movement.EnteredTime).FirstOrDefault().Movement.FromUnits,
+                                EndQty = g.OrderByDescending(x => x.Movement.EnteredTime).FirstOrDefault().Movement.ToUnits
+                            }).ToListAsync();
+
+                            var aGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, x.Movement.ActionType, Year = x.Movement.EnteredTime.Year });
+
+                            actions = await aGroup.Select(g => new BinCardActionDelta
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                ActionType = g.Key.ActionType,
+                                Period = g.Key.Year.ToString(),
+                                TotalUnits = g.Sum(x => x.Movement.Units)
+                            }).ToListAsync();
                         }
-                        else // Default: Monthly
+                        else // Monthly (Default)
                         {
-                            var grouped = await query
-                                .GroupBy(m => new { m.Itemcode, m.ActionType, Year = m.EnteredTime.Year, Month = m.EnteredTime.Month })
-                                .Select(g => new BinCardSummaryItem
-                                {
-                                    Itemcode = g.Key.Itemcode,
-                                    ActionType = g.Key.ActionType,
-                                    Period = g.Key.Year + "-" + g.Key.Month.ToString("00"),
-                                    StartQty = g.Min(x => x.FromUnits),
-                                    EndQty = g.Max(x => x.ToUnits)
-                                })
-                                .ToListAsync();
+                            // Monthly Grouping
+                            var pGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, Year = x.Movement.EnteredTime.Year, Month = x.Movement.EnteredTime.Month });
 
-                            return await EnrichWithItemName(ctx, grouped);
+                            periods = await pGroup.Select(g => new BinCardPeriodBoundary
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                Period = g.Key.Year + "-" + g.Key.Month.ToString("00"),
+                                StartQty = g.OrderBy(x => x.Movement.EnteredTime).FirstOrDefault().Movement.FromUnits,
+                                EndQty = g.OrderByDescending(x => x.Movement.EnteredTime).FirstOrDefault().Movement.ToUnits
+                            }).ToListAsync();
+
+                            var aGroup = query.GroupBy(x => new { x.Movement.Itemcode, x.Name, x.Movement.ActionType, Year = x.Movement.EnteredTime.Year, Month = x.Movement.EnteredTime.Month });
+
+                            actions = await aGroup.Select(g => new BinCardActionDelta
+                            {
+                                Itemcode = g.Key.Itemcode,
+                                ItemName = g.Key.Name,
+                                ActionType = g.Key.ActionType,
+                                Period = g.Key.Year + "-" + g.Key.Month.ToString("00"),
+                                TotalUnits = g.Sum(x => x.Movement.Units)
+                            }).ToListAsync();
                         }
+
+                        return new BinCardSummaryResponse
+                        {
+                            Periods = periods,
+                            Actions = actions
+                        };
                     }
                 },
                 "Refresh"
