@@ -1,13 +1,18 @@
 ﻿@page "/Pages/SearchAndSelect/ItemSelect"
 
 @*
-  FLOW: Generic (Used by Edit Batches, etc.)
+  FLOW: Generic Selector (Item)
   STEP: 2 (Selector)
-  SETS: selectedPiiId (if used for PII), selectedItemCode (if used for Item)
-  READS: flowId, redirTo
-  REDIRECTS: [redirTo]
-*@
+  SETS: selectedItemCode, selectedItemDescription
+  READS: flowId, FlowSteps, selectedItemCode
+  REDIRECTS: Next step in FlowSteps or [redirTo] (fallback)
 
+  SUMMARY:
+  1. Checks if 'selectedItemCode' is already set. Shows "Current: [Code] - [Desc]".
+  2. Handles Barcode scanning (auto-redirects if match found).
+  3. Handles text search.
+  4. Uses 'navigateNext' for flow control.
+*@
 
 @functions {
 }
@@ -45,13 +50,43 @@
             color: red;
             font-weight: bold;
         }
+
+        /* Current Selection Bar Styles */
+        .current-bar {
+            background: #e3f2fd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #90caf9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .current-bar button {
+                padding: 5px 10px;
+                cursor: pointer;
+                background: #1976d2;
+                color: white;
+                border: none;
+                border-radius: 3px;
+            }
     </style>
 </head>
 <body>
     <h2>Select an Item</h2>
+
+    <!-- Current Selection Bar -->
+    <div id="currentBar" style="display:none;" class="current-bar">
+        <div>
+            <strong>Current:</strong> <span id="currentItemDisplay"></span>
+        </div>
+        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+    </div>
+
     <div id="errorBox" class="error" style="display:none;"></div>
 
-    <div id="content" style="display:none;">
+    <div id="content">
         <input type="text" id="searchQuery" placeholder="Search name or scan barcode...">
         <div id="results"></div>
     </div>
@@ -61,12 +96,10 @@
         const flowId = params.get('flowId');
         const redirTo = params.get('redirTo');
 
-        // Strict Check: Flow must be initialized
-        if (!flowId || !redirTo) {
-            document.getElementById('errorBox').innerText = "Error: Invalid Flow. No Flow ID or Redirect target specified.";
+        if (!flowId) {
+            document.getElementById('errorBox').innerText = "Error: Invalid Flow. No Flow ID.";
             document.getElementById('errorBox').style.display = 'block';
-        } else {
-            document.getElementById('content').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
         }
 
         function getCookie(name) {
@@ -75,15 +108,33 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Check if already set
+            const resId = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const dataId = await resId.json();
+
+            if (dataId.value) {
+                const resDesc = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedItemDescription" })
+                });
+                const dataDesc = await resDesc.json();
+
+                document.getElementById('currentItemDisplay').innerText = `${dataId.value} - ${dataDesc.value || 'No Desc'}`;
+                document.getElementById('currentBar').style.display = 'flex';
+            }
+        }
+
         let debounceTimer;
         document.getElementById('searchQuery').addEventListener('input', function(e) {
             clearTimeout(debounceTimer);
             const query = e.target.value;
-
-            // Debounce to prevent searching while scanning
-            debounceTimer = setTimeout(() => {
-                handleInput(query);
-            }, 300);
+            debounceTimer = setTimeout(() => { handleInput(query); }, 300);
         });
 
         async function handleInput(query) {
@@ -94,43 +145,27 @@
             resultsDiv.innerHTML = "Checking...";
 
             try {
-                // 1. Try to resolve as Barcode
+                // 1. Try Barcode
                 const barcodeRes = await fetch('/ResolveBarcode', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(query)
                 });
 
                 if (barcodeRes.ok) {
                     const barcodeData = await barcodeRes.json();
-
                     if (barcodeData.found && barcodeData.itemCode) {
                         resultsDiv.innerHTML = "<p>Barcode found! Redirecting...</p>";
 
-                        // Set Flow Data
-                        await fetch('/SetFlowData', {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: barcodeData.itemCode.toString() })
-                        });
-
-                        // Redirect Logic
-                        // If redirTo is Batch Edit AND we have a specific batch code, go directly to it
-                        if (barcodeData.batchCode && redirTo.includes("Batches/Edit")) {
-                            window.location.href = redirTo + "?flowId=" + flowId + "&batchCode=" + barcodeData.batchCode;
-                        } else {
-                            // Otherwise just go to the default redirect (e.g. Batch List for Item)
-                            window.location.href = redirTo + "?flowId=" + flowId;
-                        }
-                        return; // Stop execution here
+                        // We might not have the description from barcode scan, set a placeholder or fetch it
+                        await select(barcodeData.itemCode, "Scanned Item", barcodeData.batchCode);
+                        return;
                     }
                 }
 
-                // 2. Fallback to Catalogue Search
+                // 2. Search Catalogue
                 resultsDiv.innerHTML = "Searching...";
                 const searchRes = await fetch('/SearchCatalogueWeb', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Query: query })
                 });
 
@@ -138,39 +173,74 @@
                 const items = await searchRes.json();
 
                 resultsDiv.innerHTML = items.map(i => `
-                    <div class="result-card" onclick="selectItem(${i.itemcode})">
+                    <div class="result-card" onclick="select(${i.itemcode}, '${(i.description || 'No Desc').replace(/'/g, "\\'")}')">
                         <strong>${i.itemcode}</strong>: ${i.description || 'No Desc'}
                     </div>
                 `).join('');
 
-            } catch (err) {
-                console.error(err);
-                resultsDiv.innerHTML = "Error searching.";
-            }
+            } catch (err) { console.error(err); resultsDiv.innerHTML = "Error searching."; }
         }
 
-        async function selectItem(itemCode) {
+        async function select(itemCode, description, batchCode = null) {
             const token = getCookie("auth-token");
 
-            try {
-                // Set Flow Data
-                const setRes = await fetch('/SetFlowData', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: itemCode.toString() })
-                });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode", Value: itemCode.toString() })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemDescription", Value: description })
+            });
 
-                if (!setRes.ok) {
-                    alert("Failed to save selection.");
-                    return;
-                }
-
-                // Redirect
-                window.location.href = redirTo + "?flowId=" + flowId;
-            } catch (err) {
-                console.error(err);
+            // Logic for Batch Edit shortcut
+            if (batchCode && redirTo && redirTo.includes("Batches/Edit")) {
+                 window.location.href = redirTo + "?flowId=" + flowId + "&batchCode=" + batchCode;
+            } else {
+                 await navigateNext();
             }
         }
+
+        async function proceedWithCurrent() {
+            await navigateNext();
+        }
+
+        async function navigateNext() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
+            });
+            const data = await res.json();
+
+            if (data.value) {
+                const steps = JSON.parse(data.value);
+                let currentIndex = parseInt(await getCurrentStepIndex(token));
+
+                currentIndex++;
+                if (currentIndex < steps.length) {
+                    await fetch('/SetFlowData', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: currentIndex.toString() })
+                    });
+                    window.location.href = steps[currentIndex] + "?flowId=" + flowId;
+                    return;
+                }
+            }
+
+            if(redirTo) window.location.href = redirTo + "?flowId=" + flowId;
+        }
+
+        async function getCurrentStepIndex(token) {
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex" })
+            });
+            const data = await res.json();
+            return data.value || "0";
+        }
+
+        init();
     </script>
 </body>
 </html>

@@ -1,13 +1,21 @@
 ﻿@page "/Pages/SearchAndSelect/PiiSelect"
+
 @*
-  FLOW: Link Account to PII
+  FLOW: Generic Selector (PII)
   STEP: 2 (Selector)
   SETS: selectedPiiId, selectedPiiName
-  READS: flowId, redirTo
-  REDIRECTS: [redirTo]
+  READS: flowId, FlowSteps (for navigation), selectedPiiId (for current state)
+  REDIRECTS: Next step in FlowSteps or [redirTo] (fallback)
+
+  SUMMARY:
+  1. Checks if 'selectedPiiId' is already set. If so, shows "Current: [Name]" and a "Proceed" button.
+  2. Allows searching for PII entities.
+  3. On selection, saves ID and Name to flow session.
+  4. Uses 'navigateNext' to determine the next page based on 'FlowSteps' array.
 *@
+
 @functions {
-    }
+}
 <!DOCTYPE html>
 <html>
 <head>
@@ -16,6 +24,13 @@
         body {
             font-family: sans-serif;
             padding: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
 
         .card {
@@ -27,18 +42,72 @@
 
             .card:hover {
                 background: #f0f0f0;
-            }</style>
+            }
+
+        /* Current Selection Bar Styles */
+        .current-bar {
+            background: #e3f2fd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #90caf9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .current-bar button {
+                padding: 5px 10px;
+                cursor: pointer;
+                background: #1976d2;
+                color: white;
+                border: none;
+                border-radius: 3px;
+            }
+    </style>
 </head>
 <body>
     <h2>Select PII</h2>
+
+    <!-- Current Selection Bar -->
+    <div id="currentBar" style="display:none;" class="current-bar">
+        <div>
+            <strong>Current:</strong> <span id="currentName"></span>
+        </div>
+        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+    </div>
+
     <input type="text" id="query" placeholder="Search Name..." oninput="search()">
     <div id="results"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        const redirTo = params.get('redirTo');
+        const redirTo = params.get('redirTo'); // Fallback
+
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Check if already set
+            const resId = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId" })
+            });
+            const dataId = await resId.json();
+
+            if (dataId.value) {
+                const resName = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiName" })
+                });
+                const dataName = await resName.json();
+
+                document.getElementById('currentName').innerText = dataName.value || `ID: ${dataId.value}`;
+                document.getElementById('currentBar').style.display = 'flex';
+            }
+        }
 
         async function search() {
             const token = getCookie("auth-token");
@@ -65,8 +134,50 @@
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiName", Value: name })
             });
+
+            await navigateNext();
+        }
+
+        async function proceedWithCurrent() {
+            await navigateNext();
+        }
+
+        async function navigateNext() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
+            });
+            const data = await res.json();
+
+            if (data.value) {
+                const steps = JSON.parse(data.value);
+                let currentIndex = parseInt(await getCurrentStepIndex(token));
+
+                currentIndex++;
+                if (currentIndex < steps.length) {
+                    await fetch('/SetFlowData', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: currentIndex.toString() })
+                    });
+                    window.location.href = steps[currentIndex] + "?flowId=" + flowId;
+                    return;
+                }
+            }
+            // Fallback
             window.location.href = redirTo + "?flowId=" + flowId;
         }
+
+        async function getCurrentStepIndex(token) {
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex" })
+            });
+            const data = await res.json();
+            return data.value || "0";
+        }
+
+        init();
     </script>
 </body>
 </html>
