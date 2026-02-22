@@ -12,4 +12,8 @@ public partial class TagsImply
     public string Implies { get; set; } = null!;
 
     public DateTime RecordedAt { get; set; }
+
+    public string Description { get; set; } = null!;
+
+    public long CreatedBy { get; set; }
 }

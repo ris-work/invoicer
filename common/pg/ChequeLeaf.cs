@@ -24,4 +24,6 @@ public partial class ChequeLeaf
     public string? TxId { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
+
+    public long IssuedBy { get; set; }
 }

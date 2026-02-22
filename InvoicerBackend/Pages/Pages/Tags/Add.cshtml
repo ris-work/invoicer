@@ -1,0 +1,53 @@
+﻿@page "/Pages/Tags/Add"
+
+@functions {
+    }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Tag Implication</title>
+    <style> body { font-family: sans-serif; padding: 20px; } input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; } button { padding: 10px 15px; cursor: pointer; } </style>
+</head>
+<body>
+    <h2>Add Tag Implication</h2>
+    <div class="form-group">
+        <label>Source Tag</label>
+        <input type="text" id="tag" placeholder="e.g. fruit">
+    </div>
+    <div class="form-group">
+        <label>Implies (Target Tag)</label>
+        <input type="text" id="implies" placeholder="e.g. food">
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <textarea id="desc" rows="2"></textarea>
+    </div>
+    <button onclick="save()">Save</button>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function save() {
+            const token = getCookie("auth-token");
+            const payload = {
+                Tag: document.getElementById('tag').value,
+                Implies: document.getElementById('implies').value,
+                Description: document.getElementById('desc').value
+            };
+
+            const res = await fetch('/AddTagImplication', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                alert("Added!");
+                window.location.href = "/Pages/Tags/Index";
+            } else {
+                alert("Error: " + await res.text());
+            }
+        }
+    </script>
+</body>
+</html>

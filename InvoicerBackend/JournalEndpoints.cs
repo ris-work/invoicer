@@ -225,6 +225,9 @@ namespace InvoicerBackend
                     var req = (AddJournalEntryRequest)DataIn;
                     using (var ctx = new NewinvContext())
                     {
+                        var tx = await ctx.Database.BeginTransactionAsync(
+                            IsolationLevel.Serializable
+                        );
                         // Validate Accounts exist
                         var debitAcc = await ctx.AccountsInformations.FindAsync(req.DebitAccountNo);
                         var creditAcc = await ctx.AccountsInformations.FindAsync(req.CreditAccountNo);
@@ -250,6 +253,7 @@ namespace InvoicerBackend
                         };
 
                         JournalEntries.AddJournalEntry(ctx, entry);
+                        await tx.CommitAsync();
                         await ctx.SaveChangesAsync();
                         return entry;
                     }

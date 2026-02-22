@@ -22,4 +22,6 @@ public partial class RequestsBad
     public string? Endpoint { get; set; }
 
     public string? ProvidedPrivilegeLevels { get; set; }
+
+    public long ReqReference { get; set; }
 }

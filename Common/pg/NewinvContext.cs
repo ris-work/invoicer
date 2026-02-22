@@ -137,6 +137,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<SuggestedPrice> SuggestedPrices { get; set; }
 
+    public virtual DbSet<SuggestedPricesToBeRemoved> SuggestedPricesToBeRemoveds { get; set; }
+
     public virtual DbSet<TagsImply> TagsImplies { get; set; }
 
     public virtual DbSet<TagsTransitiveClosure> TagsTransitiveClosures { get; set; }
@@ -481,6 +483,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy)
+                .HasDefaultValue(0L)
+                .HasColumnName("created_by");
             entity.Property(e => e.EndNumber).HasColumnName("end_number");
             entity.Property(e => e.IsCancelled)
                 .HasDefaultValue(false)
@@ -507,6 +512,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.IssuedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("issued_at");
+            entity.Property(e => e.IssuedBy)
+                .HasDefaultValue(0L)
+                .HasColumnName("issued_by");
             entity.Property(e => e.LeafNumber).HasColumnName("leaf_number");
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.PayeeName)
@@ -1443,6 +1451,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Endpoint).HasColumnName("endpoint");
             entity.Property(e => e.Principal).HasColumnName("principal");
             entity.Property(e => e.ProvidedPrivilegeLevels).HasColumnName("provided_privilege_levels");
+            entity.Property(e => e.ReqReference)
+                .HasDefaultValueSql("((((EXTRACT(epoch FROM clock_timestamp()))::bigint << 20) | ((1)::bigint << 10)) | ((random() * (1024)::double precision))::bigint)")
+                .HasColumnName("req_reference");
             entity.Property(e => e.RequestBody).HasColumnName("request_body");
             entity.Property(e => e.RequestedAction).HasColumnName("requested_action");
             entity.Property(e => e.RequestedPrivilegeLevel).HasColumnName("requested_privilege_level");
@@ -1463,6 +1474,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Endpoint).HasColumnName("endpoint");
             entity.Property(e => e.Principal).HasColumnName("principal");
             entity.Property(e => e.ProvidedPrivilegeLevels).HasColumnName("provided_privilege_levels");
+            entity.Property(e => e.ReqReference)
+                .HasDefaultValueSql("((((EXTRACT(epoch FROM clock_timestamp()))::bigint << 20) | ((1)::bigint << 10)) | ((random() * (1024)::double precision))::bigint)")
+                .HasColumnName("req_reference");
             entity.Property(e => e.RequestBody).HasColumnName("request_body");
             entity.Property(e => e.RequestedAction).HasColumnName("requested_action");
             entity.Property(e => e.RequestedPrivilegeLevel).HasColumnName("requested_privilege_level");
@@ -1716,9 +1730,25 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<SuggestedPrice>(entity =>
         {
-            entity.HasKey(e => new { e.Itemcode, e.Price }).HasName("suggested_prices_pkey");
+            entity.HasKey(e => e.Id).HasName("suggested_prices_pkey1");
 
             entity.ToTable("suggested_prices");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.AllRequestIds)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("all_request_ids");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.RequestId).HasColumnName("request_id");
+        });
+
+        modelBuilder.Entity<SuggestedPricesToBeRemoved>(entity =>
+        {
+            entity.HasKey(e => new { e.Itemcode, e.Price }).HasName("suggested_prices_pkey");
+
+            entity.ToTable("suggested_prices_to_be_removed");
 
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.Price).HasColumnName("price");
@@ -1735,6 +1765,12 @@ public partial class NewinvContext : DbContext
             entity.ToTable("tags_implies");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreatedBy)
+                .HasDefaultValue(0L)
+                .HasColumnName("created_by");
+            entity.Property(e => e.Description)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("description");
             entity.Property(e => e.Implies).HasColumnName("implies");
             entity.Property(e => e.RecordedAt)
                 .HasDefaultValueSql("now()")

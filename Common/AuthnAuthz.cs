@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
+using static NpgsqlTypes.NpgsqlTsQuery;
 
 namespace RV.InvNew.Common
 {
@@ -22,7 +23,7 @@ namespace RV.InvNew.Common
             return false;
         }
 
-        public static void AddToRequestLog(
+        public static long AddToRequestLog(
             string Request,
             bool WasItBad,
             string? RequestedPrivilegeLevel,
@@ -32,12 +33,14 @@ namespace RV.InvNew.Common
             string? Endpoint = null
         )
         {
+            int nodeId = 0;
+            var req_reference_id = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() << 20) | ((long)nodeId << 10) | (long)Random.Shared.Next(0, 1024);
             using (var ctx = new NewinvContext())
             {
                 if (WasItBad)
                 {
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
+                        $"INSERT INTO requests_bad(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels, req_reference) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList}, {req_reference_id})"
                     );
                     /*ctx.RequestsBads.Add(
                         new RequestsBad
@@ -50,8 +53,9 @@ namespace RV.InvNew.Common
                 }
                 else
                 {
+                    
                     ctx.Database.ExecuteSql(
-                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList})"
+                        $"INSERT INTO requests(principal, token, request_body, type, requested_privilege_level, endpoint, provided_privilege_levels, req_reference) VALUES ({PrincipalUserId}, {JsonSerializer.Serialize<LoginToken>(Token)}, {Request}, {typeof(Request).ToString()}, {RequestedPrivilegeLevel}, {Endpoint}, {ExistingPrivilegeList}, {req_reference_id})"
                     );
                     /*ctx.Requests.Add(
                         new Request
@@ -62,6 +66,7 @@ namespace RV.InvNew.Common
                         }
                     );*/
                 }
+                return req_reference_id;
                 //ctx.SaveChanges();
             }
         }
@@ -72,7 +77,8 @@ namespace RV.InvNew.Common
             long? UserID,
             string Username,
             string Token,
-            string Error
+            string Error,
+            long RequestId
         )> VerifyIfAuthorizationIsOk(HttpRequest Request, string PrivilegeLevel, string Endpoint)
         {
             string Principal = null;
@@ -88,7 +94,7 @@ namespace RV.InvNew.Common
             );
             if (!HasBearerToken) {
                 System.Console.WriteLine($"Got Authorization: NONE, HEADER MISSING");
-                return (false, "", -1, "", "", "AUTHORIZATION: BEARER HEADER NOT SUPPLIED"); 
+                return (false, "", -1, "", "", "AUTHORIZATION: BEARER HEADER NOT SUPPLIED", 0); 
             }
             string[] SplitToken = BearerTokenHeaderValue[0].Split(' ');
             var BearerToken = String.Join(' ', SplitToken.ToList().Skip(1));
@@ -139,7 +145,7 @@ namespace RV.InvNew.Common
             var RequestAsString = await (new StreamReader(Request.Body)).ReadToEndAsync();
             if (auth_success)
             {
-                AddToRequestLog(
+                long reqid = AddToRequestLog(
                     RequestAsString,
                     false,
                     PrivilegeLevel.ToLowerInvariant(),
@@ -147,14 +153,14 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID, "None");
+                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID, "None", reqid);
             }
             else
             {
                 Console.Error.WriteLine(
                     $"{PrivilegeLevel.ToLowerInvariant()} not in {ExistingPrivilegeList}"
                 );
-                AddToRequestLog(
+                var reqid = AddToRequestLog(
                     RequestAsString,
                     true,
                     PrivilegeLevel.ToLowerInvariant(),
@@ -162,9 +168,9 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (false, null, null, null, null, "UNPRIVILEGED OR UNAUTHENTICATED");
+                return (false, null, null, null, null, "UNPRIVILEGED OR UNAUTHENTICATED", reqid);
             }
-            return (false, null, null, null, null, null);
+            return (false, null, null, null, null, null, 0);
         }
     }
 

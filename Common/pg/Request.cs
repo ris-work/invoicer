@@ -24,4 +24,6 @@ public partial class Request
     public string? ProvidedPrivilegeLevels { get; set; }
 
     public DateTime DatetimeTai { get; set; }
+
+    public long ReqReference { get; set; }
 }

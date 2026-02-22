@@ -8,6 +8,7 @@ using System.Transactions;
 using InvoicerBackend;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using MyAOTFriendlyExtensions;
 using RV.InvNew.Common;
 using Tomlyn.Syntax;
@@ -47,6 +48,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+// 1. Define the path to your 'static' folder
+var staticFilePath = Path.Combine(builder.Environment.ContentRootPath, "Pages","static");
 app.UseResponseCompression();
 app.MapOpenApi();
 //RV.InvNew.Common.TranscriptionService.TestSampleTranscribe().GetAwaiter().GetResult();
@@ -246,6 +249,7 @@ app.AddEndpointWithBearerAuth<Inventory>(
     },
     "Refresh"
 );
+app.UseRouting();
 //app.AddCatalogueDefaultImageEndpoints();
 app.AddCatalogueEditorHandlers();
 app.AddJournalEndpoints();
@@ -262,11 +266,19 @@ app.AddFlowEndpoints();
 app.AddPiiEndpoints();
 app.AddAccountsInformationEndpoints();
 app.AddSchedulerEndpoints();
+app.AddTagImplicationsEndpoints();
 
 app.AddInventoryAdjustmentsEndpoints();
 
 
 app.AddDiagnosticEndpoints();
+// 2. Configure StaticFiles to use this folder
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(staticFilePath),
+    RequestPath = "/Pages/static" // This defines the URL prefix
+});
+
 
 
 app.MapRazorPages();

@@ -1,0 +1,113 @@
+﻿@page "/Pages/Tags/Index"
+
+@functions {
+    }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tag Implications</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            text-decoration: none;
+            color: white;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .btn-del {
+            background: #dc3545;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-edit {
+            background: #007bff;
+        }
+
+        .btn-trans {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Tag Implications</h2>
+    <a href="/Pages/Tags/Add" class="btn btn-edit">Add New Implication</a>
+    <a href="/Pages/Tags/Transitive" class="btn btn-trans">View Transitive Closure</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tag</th>
+                <th>Implies</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="list"></tbody>
+    </table>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function load() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetTagImplications', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+
+            const tbody = document.getElementById('list');
+            tbody.innerHTML = data.map(t => `
+                <tr>
+                    <td>${t.id}</td>
+                    <td>${t.tag}</td>
+                    <td>${t.implies}</td>
+                    <td>${t.description || ''}</td>
+                    <td>
+                        <a href="/Pages/Tags/Edit?id=${t.id}" class="btn btn-edit">Edit</a>
+                        <button class="btn btn-del" onclick="del(${t.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function del(id) {
+            if(!confirm("Delete this implication?")) return;
+            const token = getCookie("auth-token");
+            await fetch('/DeleteTagImplication', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(id)
+            });
+            load();
+        }
+
+        load();
+    </script>
+</body>
+</html>

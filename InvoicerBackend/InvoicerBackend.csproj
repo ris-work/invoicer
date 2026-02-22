@@ -37,6 +37,12 @@
 		<!-- Only treat .cshtml files in Slices directory as Razor Slices -->
 		<RazorSlice Include="Slices\**\*.cshtml" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Content Remove="Pages\Pages\Tags\Edit.cshtml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="Pages\Pages\Tags\Edit.cshtml" />
+	</ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Common\common.csproj" />
     </ItemGroup>

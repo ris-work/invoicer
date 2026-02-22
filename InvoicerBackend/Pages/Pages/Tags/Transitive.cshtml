@@ -1,0 +1,83 @@
+﻿@page "/Pages/Tags/Transitive"
+
+@functions {
+    }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transitive Closure Viewer</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        input {
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .chain-item {
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h2>Transitive Closure Viewer</h2>
+    <p>Find all tags implied by a specific tag (direct and indirect).</p>
+
+    <input type="text" id="searchTag" placeholder="Enter Tag (e.g. apple)">
+    <button onclick="search()">Find Implications</button>
+
+    <div id="results" class="result-box" style="display:none;">
+        <h3>Results for: <span id="searchTerm"></span></h3>
+        <div id="chainList"></div>
+    </div>
+
+    <script>
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function search() {
+            const token = getCookie("auth-token");
+            const tag = document.getElementById('searchTag').value;
+            if(!tag) return;
+
+            const res = await fetch('/GetTransitiveImplications', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Tag: tag })
+            });
+
+            const data = await res.json();
+
+            document.getElementById('searchTerm').innerText = tag;
+            const listDiv = document.getElementById('chainList');
+
+            if(data.length === 0) {
+                listDiv.innerHTML = "<p>No implications found.</p>";
+            } else {
+                listDiv.innerHTML = data.map(r =>
+                    `<div class="chain-item" style="margin-left: ${(r.depth-1) * 20}px;">
+                        ${r.ruleChain}
+                    </div>`
+                ).join('');
+            }
+
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

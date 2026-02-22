@@ -58,6 +58,7 @@ namespace InvoicerBackend
         public class GetChequeLeavesRequest { public long AccountId { get; set; } }
 
         // 3. Updated AddScheduledEntryWeb to handle JIT Leaf Creation
+        // 3. Add Scheduled Entry (With Serializable Transaction)
         public class AddScheduledEntryRequestEx
         {
             public string Type { get; set; }
@@ -75,6 +76,12 @@ namespace InvoicerBackend
             public long? ChequeBookId { get; set; }
             public long? ChequeLeafNumber { get; set; }
         }
+
+
+        // 1. Get Books for Account
+        public class GetBooksRequest { public long AccountId { get; set; } }
+        // 2. Get Leaves for specific Book (JIT)
+        public class GetLeavesRequest { public long BookId { get; set; } }
 
         public static WebApplication AddSchedulerEndpoints(this WebApplication app)
         {
@@ -248,97 +255,120 @@ namespace InvoicerBackend
                 async (DataIn, LoginInfo) =>
                 {
                     var req = (AddScheduledEntryRequestEx)DataIn;
+
+                    // Use Serializable for critical accounting/cheque operations
+                    // This ensures no phantom reads or concurrent inserts for the same leaf
                     using (var ctx = new NewinvContext())
+                    using (var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable))
                     {
-                        long entryId = 0;
-
-                        if (req.Type == "Payment")
+                        try
                         {
-                            var entry = new ScheduledPayment
+                            long entryId = 0;
+
+                            if (req.Type == "Payment")
                             {
-                                DebitAccountId = req.DebitAccountId,
-                                CreditAccountId = req.CreditAccountId,
-                                Amount = req.Amount,
-                                Description = req.Description,
-                                Frequency = req.Frequency,
-                                NextRunDate = req.NextRunDate,
-                                IsAutomaticClear = req.IsAutomatic,
-                                IsPending = true,
-                                CreatedAt = DateTime.UtcNow,
-                                CreatedBy = (long)LoginInfo.UserId,
-                                CompanyId = 1,
-                                PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
-                                Currency = "LKR",
-                                ExchangeRate = 1.0,
-                                PaymentMethod = req.PaymentMethod ?? "Manual",
-                                JournalNo = req.JournalNo
-                            };
-                            ctx.ScheduledPayments.Add(entry);
-                            await ctx.SaveChangesAsync();
-                            entryId = entry.Id;
-
-                            // JIT Cheque Leaf Handling
-                            if (req.PaymentMethod == "Cheque" && req.ChequeBookId.HasValue && req.ChequeLeafNumber.HasValue)
-                            {
-                                // Check if leaf somehow already exists (race condition safety)
-                                var existingLeaf = await ctx.ChequeLeaves.FirstOrDefaultAsync(l =>
-                                    l.ChequeBookId == req.ChequeBookId.Value && l.LeafNumber == req.ChequeLeafNumber.Value);
-
-                                if (existingLeaf != null) throw new Exception($"Cheque leaf #{req.ChequeLeafNumber} is already issued.");
-
-                                // Create the leaf record now
-                                var newLeaf = new ChequeLeaf
+                                // 1. Create Payment
+                                var entry = new ScheduledPayment
                                 {
-                                    ChequeBookId = req.ChequeBookId.Value,
-                                    LeafNumber = req.ChequeLeafNumber.Value,
-                                    Status = "Issued",
-                                    PayeeName = req.Description,
+                                    DebitAccountId = req.DebitAccountId,
+                                    CreditAccountId = req.CreditAccountId,
                                     Amount = req.Amount,
-                                    IssuedAt = DateTime.UtcNow,
-                                    TxId = $"scheduledpayment:{entryId}",
-                                    UpdatedAt = DateTimeOffset.UtcNow
+                                    Description = req.Description,
+                                    Frequency = req.Frequency,
+                                    NextRunDate = req.NextRunDate,
+                                    IsAutomaticClear = req.IsAutomatic,
+                                    IsPending = true,
+                                    CreatedAt = DateTime.UtcNow,
+                                    CreatedBy = (long)LoginInfo.UserId,
+                                    CompanyId = 1,
+                                    PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
+                                    Currency = "LKR",
+                                    ExchangeRate = 1.0,
+                                    PaymentMethod = req.PaymentMethod ?? "Manual",
+                                    JournalNo = req.JournalNo
                                 };
-                                ctx.ChequeLeaves.Add(newLeaf);
-
-                                // Update Book's NextNumber pointer if this was the expected next
-                                var book = await ctx.ChequeBooks.FindAsync(req.ChequeBookId.Value);
-                                if (book != null && book.NextNumber == req.ChequeLeafNumber.Value)
-                                {
-                                    book.NextNumber++;
-                                    book.UpdatedAt = DateTime.UtcNow;
-                                }
-
+                                ctx.ScheduledPayments.Add(entry);
                                 await ctx.SaveChangesAsync();
-                            }
-                        }
-                        else
-                        {
-                            // Receipt logic (same as before)
-                            var entry = new ScheduledReceipt
-                            {
-                                DebitAccountId = req.DebitAccountId,
-                                CreditAccountId = req.CreditAccountId,
-                                Amount = req.Amount,
-                                Description = req.Description,
-                                Frequency = req.Frequency,
-                                NextRunDate = req.NextRunDate,
-                                IsAutomaticClear = req.IsAutomatic,
-                                IsPending = true,
-                                CreatedAt = DateTime.UtcNow,
-                                CreatedBy = (long)LoginInfo.UserId,
-                                CompanyId = 1,
-                                PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
-                                Currency = "LKR",
-                                ExchangeRate = 1.0,
-                                PaymentMethod = req.PaymentMethod ?? "Manual",
-                                JournalNo = req.JournalNo
-                            };
-                            ctx.ScheduledReceipts.Add(entry);
-                            await ctx.SaveChangesAsync();
-                            entryId = entry.Id;
-                        }
+                                entryId = entry.Id;
 
-                        return true;
+                                // 2. Handle Cheque (JIT Creation)
+                                if (req.PaymentMethod == "Cheque" && req.ChequeBookId.HasValue && req.ChequeLeafNumber.HasValue)
+                                {
+                                    // Double check inside transaction
+                                    bool exists = await ctx.ChequeLeaves.AnyAsync(l =>
+                                        l.ChequeBookId == req.ChequeBookId.Value &&
+                                        l.LeafNumber == req.ChequeLeafNumber.Value
+                                    );
+
+                                    if (exists)
+                                    {
+                                        throw new Exception($"Cheque leaf #{req.ChequeLeafNumber} is already issued (Concurrency Check).");
+                                    }
+
+                                    var newLeaf = new ChequeLeaf
+                                    {
+                                        ChequeBookId = req.ChequeBookId.Value,
+                                        LeafNumber = req.ChequeLeafNumber.Value,
+                                        Status = "Issued",
+                                        PayeeName = req.Description,
+                                        Amount = req.Amount,
+                                        IssuedAt = DateTime.UtcNow,
+                                        TxId = $"scheduledpayment:{entryId}",
+                                        UpdatedAt = DateTimeOffset.UtcNow,
+                                        IssuedBy = (long)LoginInfo.UserId // ADDED
+                                    };
+                                    ctx.ChequeLeaves.Add(newLeaf);
+
+                                    // Update Book Pointer
+                                    var book = await ctx.ChequeBooks.FindAsync(req.ChequeBookId.Value);
+                                    if (book != null)
+                                    {
+                                        // Optional: Update NextNumber if it matches
+                                        if (book.NextNumber == req.ChequeLeafNumber.Value)
+                                        {
+                                            book.NextNumber++;
+                                        }
+                                        book.UpdatedAt = DateTime.UtcNow;
+                                    }
+
+                                    await ctx.SaveChangesAsync();
+                                }
+                            }
+                            else
+                            {
+                                // Receipt Logic
+                                var entry = new ScheduledReceipt
+                                {
+                                    DebitAccountId = req.DebitAccountId,
+                                    CreditAccountId = req.CreditAccountId,
+                                    Amount = req.Amount,
+                                    Description = req.Description,
+                                    Frequency = req.Frequency,
+                                    NextRunDate = req.NextRunDate,
+                                    IsAutomaticClear = req.IsAutomatic,
+                                    IsPending = true,
+                                    CreatedAt = DateTime.UtcNow,
+                                    CreatedBy = (long)LoginInfo.UserId,
+                                    CompanyId = 1,
+                                    PaymentReference = $"SCH-{DateTime.UtcNow.Ticks}",
+                                    Currency = "LKR",
+                                    ExchangeRate = 1.0,
+                                    PaymentMethod = req.PaymentMethod ?? "Manual",
+                                    JournalNo = req.JournalNo
+                                };
+                                ctx.ScheduledReceipts.Add(entry);
+                                await ctx.SaveChangesAsync();
+                                entryId = entry.Id;
+                            }
+
+                            await tx.CommitAsync();
+                            return true;
+                        }
+                        catch
+                        {
+                            await tx.RollbackAsync();
+                            throw;
+                        }
                     }
                 },
                 "Refresh"
@@ -414,12 +444,66 @@ namespace InvoicerBackend
                             NextNumber = req.StartNumber,
                             IsOpen = true,
                             CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
+                            UpdatedAt = DateTime.UtcNow,
+                            CreatedBy = (long)LoginInfo.UserId // ADDED
                         };
                         ctx.ChequeBooks.Add(book);
                         await ctx.SaveChangesAsync();
 
                         return new { BookId = book.Id, LeafCount = count, Warning = count > 200 ? "Warning: Book is large (>200 leaves)." : "" };
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<GetBooksRequest>(
+                "GetChequeBooks",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (GetBooksRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        return await ctx.ChequeBooks
+                            .Where(b => b.AccountId == req.AccountId && b.IsOpen && !b.IsCancelled)
+                            .OrderBy(b => b.Id)
+                            .Select(b => new { b.Id, b.StartNumber, b.EndNumber, b.NextNumber })
+                            .ToListAsync();
+                    }
+                },
+                "Refresh"
+            );
+            app.AddAsyncEndpointWithBearerAuth<GetLeavesRequest>(
+                "GetChequeLeavesForBook",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (GetLeavesRequest)DataIn;
+                    using (var ctx = new NewinvContext())
+                    {
+                        var book = await ctx.ChequeBooks.FindAsync(req.BookId);
+                        if (book == null) return new { Leaves = new List<object>(), Remaining = 0 };
+
+                        // Get used numbers
+                        var usedNumbers = await ctx.ChequeLeaves
+                            .Where(l => l.ChequeBookId == book.Id)
+                            .Select(l => l.LeafNumber)
+                            .ToListAsync();
+
+                        var availableLeaves = new List<object>();
+
+                        // Iterate range (Limit to next 20 available for UI performance)
+                        for (long i = book.StartNumber; i <= book.EndNumber; i++)
+                        {
+                            if (!usedNumbers.Contains(i))
+                            {
+                                availableLeaves.Add(new { LeafNumber = i });
+                                if (availableLeaves.Count >= 20) break;
+                            }
+                        }
+
+                        // Calculate total remaining
+                        long totalInRange = book.EndNumber - book.StartNumber + 1;
+                        int remaining = (int)(totalInRange - usedNumbers.Count);
+
+                        return new { Leaves = availableLeaves, Remaining = remaining };
                     }
                 },
                 "Refresh"

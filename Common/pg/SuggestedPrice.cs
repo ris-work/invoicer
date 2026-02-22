@@ -5,11 +5,15 @@ namespace RV.InvNew.Common;
 
 public partial class SuggestedPrice
 {
+    public long Id { get; set; }
+
     public long Itemcode { get; set; }
 
     public double Price { get; set; }
 
-    public DateTime AddedAt { get; set; }
+    public long CreatedBy { get; set; }
 
-    public long AddedBy { get; set; }
+    public long RequestId { get; set; }
+
+    public string AllRequestIds { get; set; } = null!;
 }

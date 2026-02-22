@@ -1,0 +1,71 @@
+﻿@page "/Pages/Tags/Edit"
+
+@functions {}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Tag Implication</title>
+    <style> body { font-family: sans-serif; padding: 20px; } input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; } button { padding: 10px 15px; cursor: pointer; } </style>
+</head>
+<body>
+    <h2>Edit Tag Implication</h2>
+    <input type="hidden" id="id">
+    <div class="form-group">
+        <label>Source Tag</label>
+        <input type="text" id="tag">
+    </div>
+    <div class="form-group">
+        <label>Implies (Target Tag)</label>
+        <input type="text" id="implies">
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <textarea id="desc" rows="2"></textarea>
+    </div>
+    <button onclick="save()">Save Changes</button>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function load() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetTagImplications', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: JSON.stringify({}) });
+            const data = await res.json();
+            const item = data.find(t => t.id == id);
+            if(item) {
+                document.getElementById('id').value = item.id;
+                document.getElementById('tag').value = item.tag;
+                document.getElementById('implies').value = item.implies;
+                document.getElementById('desc').value = item.description;
+            }
+        }
+
+        async function save() {
+            const token = getCookie("auth-token");
+            const payload = {
+                Id: parseInt(document.getElementById('id').value),
+                Tag: document.getElementById('tag').value,
+                Implies: document.getElementById('implies').value,
+                Description: document.getElementById('desc').value
+            };
+
+            const res = await fetch('/EditTagImplication', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                alert("Updated!");
+                window.location.href = "/Pages/Tags/Index";
+            } else {
+                alert("Error: " + await res.text());
+            }
+        }
+
+        load();
+    </script>
+</body>
+</html>

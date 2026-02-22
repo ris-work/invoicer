@@ -86,13 +86,21 @@
             </select>
         </div>
 
-        <!-- Cheque Leaf Selection -->
-        <div id="chequeSection" style="display:none;" class="form-group">
-            <label>Select Cheque Leaf</label>
-            <select id="chequeLeafSelect">
-                <option value="">Loading...</option>
-            </select>
-            <div id="chequeWarning" class="warning"></div>
+        <!-- Cheque Selection Section -->
+        <div id="chequeSection" style="display:none;">
+            <div class="form-group">
+                <label>1. Select Cheque Book</label>
+                <select id="chequeBookSelect" onchange="loadLeavesForBook()">
+                    <option value="">Select Book...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>2. Select Leaf</label>
+                <select id="chequeLeafSelect">
+                    <option value="">Select Book First</option>
+                </select>
+                <div id="chequeWarning" class="warning"></div>
+            </div>
         </div>
 
         <div class="form-group">
@@ -163,47 +171,73 @@
             const type = document.getElementById('dispType').innerText;
             const chequeDiv = document.getElementById('chequeSection');
 
-            // Only show for Payments
             if (method === "Cheque" && type === "Payment") {
                 chequeDiv.style.display = 'block';
-                await loadChequeLeaves();
+                await loadBooks();
             } else {
                 chequeDiv.style.display = 'none';
             }
         }
 
-        async function loadChequeLeaves() {
+        async function loadBooks() {
             const token = getCookie("auth-token");
-            // Credit Account is the Bank Account in a Payment flow
             const bankAccId = document.getElementById('dispCreditNo').innerText;
 
-            const res = await fetch('/GetAvailableChequeLeaves', {
+            const res = await fetch('/GetChequeBooks', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ AccountId: parseInt(bankAccId) })
             });
 
             const data = await res.json();
-            const select = document.getElementById('chequeLeafSelect');
+            const select = document.getElementById('chequeBookSelect');
+            select.innerHTML = '<option value="">Select Book...</option>';
+
+            if (data.length === 0) {
+                select.innerHTML = '<option value="">No Books Available</option>';
+                return;
+            }
+
+            data.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.innerText = `Book #${b.id} (${b.startNumber} - ${b.endNumber})`;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadLeavesForBook() {
+            const token = getCookie("auth-token");
+            const bookId = document.getElementById('chequeBookSelect').value;
+            const leafSelect = document.getElementById('chequeLeafSelect');
             const warningDiv = document.getElementById('chequeWarning');
 
-            select.innerHTML = "";
+            leafSelect.innerHTML = "<option value=''>Loading...</option>";
+            warningDiv.innerText = "";
+
+            if (!bookId) return;
+
+            const res = await fetch('/GetChequeLeavesForBook', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ BookId: parseInt(bookId) })
+            });
+
+            const data = await res.json();
+            leafSelect.innerHTML = "";
 
             if (data.leaves.length === 0) {
-                select.innerHTML = "<option value=''>No Available Cheques</option>";
+                leafSelect.innerHTML = "<option value=''>Book Full or No Leaves</option>";
                 return;
             }
 
             data.leaves.forEach(l => {
                 const opt = document.createElement('option');
-                opt.value = l.id;
+                opt.value = l.leafNumber;
                 opt.innerText = `Leaf #${l.leafNumber}`;
-                select.appendChild(opt);
+                leafSelect.appendChild(opt);
             });
 
             if (data.remaining < 5) {
                 warningDiv.innerText = `⚠️ Warning: Only ${data.remaining} leaves remaining!`;
-            } else {
-                warningDiv.innerText = "";
             }
         }
 
@@ -227,18 +261,20 @@
                 NextRunDate: document.getElementById('nextRunDate').value,
                 Frequency: document.getElementById('frequency').value,
                 IsAutomatic: document.getElementById('isAutomatic').checked,
-                ChequeLeafId: null
+                ChequeBookId: null,
+                ChequeLeafNumber: null
             };
 
-            // Add Cheque Leaf ID if applicable
             if (payload.PaymentMethod === "Cheque" && payload.Type === "Payment") {
-                const leafSelect = document.getElementById('chequeLeafSelect');
-                if (leafSelect.value) {
-                    payload.ChequeLeafId = parseInt(leafSelect.value);
-                } else {
-                    alert("Please select a Cheque Leaf.");
+                const bookVal = document.getElementById('chequeBookSelect').value;
+                const leafVal = document.getElementById('chequeLeafSelect').value;
+
+                if (!bookVal || !leafVal) {
+                    alert("Please select both a Cheque Book and Leaf.");
                     btn.disabled = false; return;
                 }
+                payload.ChequeBookId = parseInt(bookVal);
+                payload.ChequeLeafNumber = parseInt(leafVal);
             }
 
             try {
