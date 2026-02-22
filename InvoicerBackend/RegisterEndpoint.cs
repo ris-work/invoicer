@@ -18,7 +18,7 @@ namespace InvoicerBackend
     {
         public delegate object Del(object o);
 
-        public readonly record struct LoginDetails(long? UserId, string TokenId, string Principal);
+        public readonly record struct LoginDetails(long? UserId, string TokenId, string Principal, long RequestId);
 
         public delegate object DelWithDetails(object o, LoginDetails Login);
         public delegate Task<object> DelWithDetailsAsync(object o, LoginDetails Login);
@@ -101,7 +101,8 @@ namespace InvoicerBackend
                                             new LoginDetails(
                                                 VerificationResultAndMessage.UserID,
                                                 VerificationResultAndMessage.Token,
-                                                VerificationResultAndMessage.Username
+                                                VerificationResultAndMessage.Username,
+                                                VerificationResultAndMessage.RequestId
                                             )
                                         )
                                     )
@@ -152,7 +153,8 @@ namespace InvoicerBackend
                                             new LoginDetails(
                                                 VerificationResultAndMessage.UserID,
                                                 VerificationResultAndMessage.Token,
-                                                VerificationResultAndMessage.Username
+                                                VerificationResultAndMessage.Username,
+                                                VerificationResultAndMessage.RequestId
                                             )
                                         )
                                     )
@@ -219,7 +221,8 @@ namespace InvoicerBackend
                                             new LoginDetails(
                                                 VerificationResultAndMessage.UserID,
                                                 VerificationResultAndMessage.Token,
-                                                VerificationResultAndMessage.Username
+                                                VerificationResultAndMessage.Username,
+                                                VerificationResultAndMessage.RequestId
                                             )
                                         )
                                     )
@@ -286,7 +289,8 @@ namespace InvoicerBackend
                                             new LoginDetails(
                                                 VerificationResultAndMessage.UserID,
                                                 VerificationResultAndMessage.Token,
-                                                VerificationResultAndMessage.Username
+                                                VerificationResultAndMessage.Username,
+                                                VerificationResultAndMessage.RequestId
                                             )
                                         )
                                     )

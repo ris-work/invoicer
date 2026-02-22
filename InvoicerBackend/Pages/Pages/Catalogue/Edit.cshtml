@@ -47,30 +47,42 @@
             display: none;
         }
 
-        /* Barcode Styles */
-        .barcode-section {
+        /* Section Styles */
+        .section {
             margin-top: 20px;
             border-top: 1px solid #eee;
             padding-top: 15px;
         }
 
-        .barcode-input-group {
+        .input-group {
             display: flex;
             gap: 5px;
+            margin-bottom: 10px;
         }
 
-        .barcode-list {
-            margin-top: 10px;
-        }
-
-        .barcode-item {
+        /* List Styles */
+        .list-item {
             background: #f8f9fa;
             padding: 8px;
             margin-bottom: 5px;
             border-radius: 3px;
             border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+
+            .list-item button {
+                background: #dc3545;
+                color: white;
+                border: none;
+                padding: 2px 8px;
+                cursor: pointer;
+                font-size: 0.8em;
+            }
     </style>
+    <!-- Assuming u.js is served statically, otherwise he() needs definition -->
+    <script src="/Pages/static/u.js"></script>
 </head>
 <body>
     <div class="container">
@@ -113,16 +125,28 @@
                 <img id="preview" alt="Preview" />
             </div>
 
+            <!-- Suggested Prices Section -->
+            <div class="section">
+                <h3>Suggested Prices</h3>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="number" id="newPrice" placeholder="Enter price (e.g. 350.00)" step="0.01">
+                        <button onclick="addPrice()">Add</button>
+                    </div>
+                </div>
+                <div id="priceList"></div>
+            </div>
+
             <!-- Barcode Section -->
-            <div class="barcode-section">
+            <div class="section">
                 <h3>Barcodes</h3>
                 <div class="form-group">
-                    <div class="barcode-input-group">
+                    <div class="input-group">
                         <input type="text" id="newBarcode" placeholder="Scan or enter barcode">
                         <button onclick="addBarcode()">Add</button>
                     </div>
                 </div>
-                <div id="barcodeList" class="barcode-list"></div>
+                <div id="barcodeList" class="list-group"></div>
             </div>
 
             <div style="margin-top: 20px;">
@@ -135,6 +159,11 @@
         const params = new URLSearchParams(window.location.search);
         const itemCode = params.get('itemcode');
         let originalData = null;
+
+        // State for lists
+        let currentPrices = [];
+        let originalPrices = [];
+        let currentBarcodes = [];
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -152,12 +181,8 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-                        if (width > maxWidth) {
-                            height = Math.round(height * (maxWidth / width));
-                            width = maxWidth;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
+                        if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.fillStyle = "#FFFFFF";
                         ctx.fillRect(0, 0, width, height);
@@ -210,25 +235,76 @@
                 }
             }
 
-            // 3. Load Barcodes
+            // 3. Load Prices
+            await loadPrices(token);
+
+            // 4. Load Barcodes
             await loadBarcodes(token);
 
             document.getElementById('status').style.display = 'none';
             document.getElementById('editForm').style.display = 'block';
         }
 
+        // --- Price Logic ---
+        async function loadPrices(token) {
+            const res = await fetch('/GetSuggestedPrices', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(parseInt(itemCode))
+            });
+            const data = await res.json();
+
+            originalPrices = data.map(p => p.price).sort((a,b) => a-b);
+            currentPrices = [...originalPrices]; // Copy
+
+            renderPrices();
+        }
+
+        function renderPrices() {
+            const list = document.getElementById('priceList');
+            // Use he() for XSS protection
+            list.innerHTML = currentPrices.map((p, i) => `
+                <div class="list-item">
+                    <span>${he(p.toFixed(2))}</span>
+                    <button onclick="removePrice(${i})">X</button>
+                </div>
+            `).join('');
+        }
+
+        function addPrice() {
+            const input = document.getElementById('newPrice');
+            const val = parseFloat(input.value);
+            if (isNaN(val) || val <= 0) { alert("Invalid price"); return; }
+
+            if (!currentPrices.includes(val)) {
+                currentPrices.push(val);
+                currentPrices.sort((a,b) => a-b);
+                renderPrices();
+            }
+            input.value = "";
+        }
+
+        function removePrice(index) {
+            currentPrices.splice(index, 1);
+            renderPrices();
+        }
+
+        // --- Barcode Logic ---
         async function loadBarcodes(token) {
             const res = await fetch('/GetBarcodes', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Itemcode: parseInt(itemCode) })
             });
-            const codes = await res.json();
+            currentBarcodes = await res.json();
+            renderBarcodes();
+        }
+
+        function renderBarcodes() {
             const list = document.getElementById('barcodeList');
-            list.innerHTML = codes.map(b => `
-                <div class="barcode-item">
-                    <strong>${b.code}</strong>
-                    <small style="float:right;">${b.remarks || ''}</small>
+            list.innerHTML = currentBarcodes.map(b => `
+                <div class="list-item">
+                    <span>${he(b.code)}</span>
                 </div>
             `).join('');
         }
@@ -248,21 +324,22 @@
                 document.getElementById('newBarcode').value = "";
                 await loadBarcodes(token);
             } else {
-                alert("Error adding barcode: " + await res.text());
+                alert("Error adding barcode");
             }
         }
 
+        // --- Save Logic ---
         async function saveItem() {
             const token = getCookie("auth-token");
             const payload = { ItemCode: parseInt(itemCode) };
 
-            // Track Changes
+            // 1. Track Item Changes
             if (document.getElementById('description').value !== originalData.description) payload.Description = document.getElementById('description').value;
             if (document.getElementById('active').value !== (originalData.active ? "true" : "false")) payload.Active = document.getElementById('active').value === "true";
             if (document.getElementById('tags').value !== (originalData.tags || "")) payload.Tags = document.getElementById('tags').value;
             if (document.getElementById('remarks').value !== (originalData.remarks || "")) payload.Remarks = document.getElementById('remarks').value;
 
-            // Save Item
+            // Save Item Metadata
             if (Object.keys(payload).length > 1) {
                 const res = await fetch('/EditCatalogueWeb', {
                     method: 'POST',
@@ -272,7 +349,19 @@
                 if (!res.ok) { alert("Error saving item: " + await res.text()); return; }
             }
 
-            // Save Image if changed
+            // 2. Save Prices (if changed)
+            const pricesChanged = (JSON.stringify(currentPrices) !== JSON.stringify(originalPrices));
+
+            if (pricesChanged) {
+                const pRes = await fetch('/SetSuggestedPrices', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ItemCode: parseInt(itemCode), Prices: currentPrices })
+                });
+                if (!pRes.ok) { alert("Error saving prices"); }
+            }
+
+            // 3. Save Image if changed
             const fileInput = document.getElementById('fileInput');
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];

@@ -267,6 +267,7 @@ app.AddPiiEndpoints();
 app.AddAccountsInformationEndpoints();
 app.AddSchedulerEndpoints();
 app.AddTagImplicationsEndpoints();
+app.AddSuggestedPriceEndpoints();
 
 app.AddInventoryAdjustmentsEndpoints();
 
