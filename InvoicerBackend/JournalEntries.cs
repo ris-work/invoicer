@@ -7,6 +7,7 @@ namespace InvoicerBackend
     {
         public static void AddJournalEntry(NewinvContext ctx, AccountsJournalEntry AccJE)
         {
+            ctx.EnsureSerializableTransaction();
             var DECount = ctx
                 .AccountsBalances.Where(a =>
                     a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo

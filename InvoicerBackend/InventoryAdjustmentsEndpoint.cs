@@ -326,6 +326,7 @@ namespace InvoicerBackend
         // Helper to ensure account exists AND has a balance record
         private static async Task<long> EnsureAccountExists(NewinvContext ctx, string accountName, int accountType)
         {
+            ctx.EnsureSerializableTransaction();
             // 1. Check/Create AccountsInformation
             var account = await ctx.AccountsInformations
                 .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
