@@ -44,7 +44,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddFlowEndpoints(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<FlowRequest>(
+            app.AddAsyncEndpointWithBearerAuth<FlowRequest, bool>(
             "SetFlowData",
             async (DataIn, LoginInfo) =>
             {
@@ -55,7 +55,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<FlowRequest>(
+            app.AddAsyncEndpointWithBearerAuth<FlowRequest, object>(
                 "GetFlowData",
                 async (DataIn, LoginInfo) =>
                 {

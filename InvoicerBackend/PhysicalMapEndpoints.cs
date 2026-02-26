@@ -11,7 +11,7 @@ namespace InvoicerBackend
         public static WebApplication AddPhysicalMapEndpoints(this WebApplication app)
         {
             // Save Map (Upsert Map and Replace Locations)
-            app.AddAsyncEndpointWithBearerAuth<MapSaveDto>(
+            app.AddAsyncEndpointWithBearerAuth<MapSaveDto, PhysicalMap>(
                 "SaveMap",
                 async (DataIn, LoginInfo) =>
                 {
@@ -93,7 +93,7 @@ namespace InvoicerBackend
 
             // Get Map (Fetch Map and Locations)
             // FIX: Changed AddEndpointWithBearerAuth to AddAsyncEndpointWithBearerAuth to support async/await
-            app.AddAsyncEndpointWithBearerAuth<long>(
+            app.AddAsyncEndpointWithBearerAuth<long, MapSaveDto>(
                 "GetMap",
                 async (MapIdIn, LoginInfo) =>
                 {

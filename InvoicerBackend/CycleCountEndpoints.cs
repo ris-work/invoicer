@@ -10,7 +10,7 @@ namespace InvoicerBackend
         public static WebApplication AddCycleCountEndpoints(this WebApplication app)
         {
             // Add a new cycle count entry
-            app.AddAsyncEndpointWithBearerAuth<CycleCount>(
+            app.AddAsyncEndpointWithBearerAuth<CycleCount, int>(
                 "AddCycleCount",
                 async (AS, LoginInfo) =>
                 {
@@ -46,7 +46,7 @@ namespace InvoicerBackend
             );
 
             // Get the latest cycle count for a specific item
-            app.AddEndpointWithBearerAuth<long>(
+            app.AddEndpointWithBearerAuth<long, CycleCount>(
                 "GetLatestCycleCount",
                 (AS, LoginInfo) =>
                 {
@@ -68,7 +68,7 @@ namespace InvoicerBackend
             );
 
             // Get cycle count history for a specific item
-            app.AddEndpointWithBearerAuth<long>(
+            app.AddEndpointWithBearerAuth<long, List<CycleCount>>(
                 "GetCycleCountHistory",
                 (AS, LoginInfo) =>
                 {
@@ -89,7 +89,7 @@ namespace InvoicerBackend
             );
 
             // Search cycle counts (omnibox style)
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<CycleCount>>(
                 "SearchCycleCounts",
                 (AS, LoginInfo) =>
                 {
@@ -115,7 +115,7 @@ namespace InvoicerBackend
             );
 
             // Get all cycle counts
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<CycleCount>>(
                 "GetAllCycleCounts",
                 (AS, LoginInfo) =>
                 {
@@ -134,7 +134,7 @@ namespace InvoicerBackend
             );
 
             // Get cycle counts within a time period
-            app.AddEndpointWithBearerAuth<TimePeriod>(
+            app.AddEndpointWithBearerAuth<TimePeriod, CycleCount>(
                 "GetCycleCountsWithinTimePeriod",
                 (AS, LoginInfo) =>
                 {
@@ -158,7 +158,7 @@ namespace InvoicerBackend
             );
 
             // Get cycle counts with discrepancies
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<CycleCount>>(
                 "GetCycleCountsWithDiscrepancies",
                 (AS, LoginInfo) =>
                 {

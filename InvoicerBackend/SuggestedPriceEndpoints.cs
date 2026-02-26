@@ -14,7 +14,7 @@ namespace InvoicerBackend
         public static WebApplication AddSuggestedPriceEndpoints(this WebApplication app)
         {
             // 1. Get Suggested Prices
-            app.AddAsyncEndpointWithBearerAuth<long>(
+            app.AddAsyncEndpointWithBearerAuth<long, List<SuggestedPrice>>(
                 "GetSuggestedPrices",
                 async (ItemCodeIn, LoginInfo) =>
                 {
@@ -29,7 +29,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<SetSuggestedPricesRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SetSuggestedPricesRequest, bool>(
                 "SetSuggestedPrices",
                 async (DataIn, LoginInfo) =>
                 {

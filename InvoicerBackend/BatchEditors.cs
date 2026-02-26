@@ -59,7 +59,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddBatchEditors(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<BatchSearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<BatchSearchRequest, List<Inventory>>(
             "SearchBatchesWeb",
                  async (DataIn, LoginInfo) =>
                 {
@@ -75,7 +75,7 @@ namespace InvoicerBackend
             "Refresh"
         );
 
-            app.AddAsyncEndpointWithBearerAuth<BatchGetRequest>(
+            app.AddAsyncEndpointWithBearerAuth<BatchGetRequest, List<Inventory>>(
             "GetBatchWeb",
             async (DataIn, LoginInfo) =>
             {
@@ -92,7 +92,7 @@ namespace InvoicerBackend
             // 3. Edit Batch (Patch)
             // Filtered keys: Itemcode, Batchcode, Units, CostPrice, MarkedPrice, SellingPrice (if needed), etc.
             // Allowed: MfgDate, ExpDate, Remarks, Tags, RefLink, VolumeDiscounts, UserDiscounts, Multiplicative/Additive Discount.
-            app.AddAsyncPatchEndpointWithBearerAuth<string>(
+            app.AddAsyncPatchEndpointWithBearerAuth<string, bool>(
                 "EditBatchWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -122,7 +122,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<AdjustmentFilterRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AdjustmentFilterRequest, InventoryAdjustment>(
                 "GetInventoryAdjustments",
                 async (DataIn, LoginInfo) =>
                 {
@@ -145,7 +145,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<SplitBatchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SplitBatchRequest, object>(
                 "SplitBatchWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -203,7 +203,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<string>(
+            app.AddAsyncEndpointWithBearerAuth<string, object>(
                 "ResolveBarcode",
                 async (CodeIn, LoginInfo) =>
                 {
@@ -223,7 +223,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<AssignBarcodeRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AssignBarcodeRequest, bool>(
                 "AssignBarcode",
                 async (DataIn, LoginInfo) =>
                 {
@@ -263,7 +263,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<GetBarcodesRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetBarcodesRequest, Barcode>(
                 "GetBarcodes",
                 async (DataIn, LoginInfo) =>
                 {

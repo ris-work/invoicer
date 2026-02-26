@@ -22,7 +22,7 @@ namespace InvoicerBackend
             // --- Accounts Endpoints ---
 
             // 1. Create Account
-            app.AddAsyncEndpointWithBearerAuth<AccountsInformation>(
+            app.AddAsyncEndpointWithBearerAuth<AccountsInformation, AccountsInformation>(
                 "CreateAccountWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -39,7 +39,7 @@ namespace InvoicerBackend
             );
 
             // 2. Edit Account (Patch) - Filtered
-            app.AddAsyncPatchEndpointWithBearerAuth<string>(
+            app.AddAsyncPatchEndpointWithBearerAuth<string, bool>(
                 "EditAccountWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -65,7 +65,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<SearchAccountRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SearchAccountRequest, List<AccountsInformation>>(
                 "SearchAccountsWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -83,7 +83,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<LinkAccountPiiRequest>(
+            app.AddAsyncEndpointWithBearerAuth<LinkAccountPiiRequest, bool>(
                 "LinkAccountPiiWeb",
                 async (DataIn, LoginInfo) =>
                 {

@@ -17,7 +17,7 @@ namespace InvoicerBackend
         public static WebApplication AddRefDocsEndpoints(this WebApplication app)
         {
             // Save RefDoc (POST)
-            app.AddAsyncEndpointWithBearerAuth<RefDoc>(
+            app.AddAsyncEndpointWithBearerAuth<RefDoc, RefDoc>(
                 "SaveRefDoc",
                 async (DataIn, LoginInfo) =>
                 {
@@ -45,7 +45,7 @@ namespace InvoicerBackend
             );
 
             // ReTranscribe RefDoc (POST)
-            app.AddAsyncEndpointWithBearerAuth<RefDocsTranscription>(
+            app.AddAsyncEndpointWithBearerAuth<RefDocsTranscription, RefDocsTranscription>(
                 "ReTranscribeRefDoc",
                 async (DataIn, LoginInfo) =>
                 {
@@ -61,7 +61,7 @@ namespace InvoicerBackend
             );
 
             // GetDocuments (POST) - Changed from GET
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, List<RefDoc>>(
                 "GetDocuments",
                 async (DataIn, LoginInfo) =>
                 {
@@ -77,7 +77,7 @@ namespace InvoicerBackend
             );
 
             // SearchDocuments (POST)
-            app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest, object>(
                 "SearchDocuments",
                 async (DataIn, LoginInfo) =>
                 {
@@ -114,7 +114,7 @@ namespace InvoicerBackend
             );
 
             // SuggestDocuments (POST)
-            app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<DocumentSearchRequest, object>(
                 "SuggestDocuments",
                 async (DataIn, LoginInfo) =>
                 {
@@ -152,7 +152,7 @@ namespace InvoicerBackend
             );
 
             // GetTranscriptions (POST) - Changed from GET
-            app.AddAsyncEndpointWithBearerAuth<TranscriptionIdRequest>(
+            app.AddAsyncEndpointWithBearerAuth<TranscriptionIdRequest, List<RefDocsTranscription>>(
                 "GetTranscriptions",
                 async (DataIn, LoginInfo) =>
                 {
@@ -172,7 +172,7 @@ namespace InvoicerBackend
             // GetUntranscribed (NEW)
             // GetUntranscribed (Target of the complaint)
             // GetUntranscribed
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, List<RefDoc>>(
                 "GetUntranscribed",
                 async (DataIn, LoginInfo) =>
                 {

@@ -153,6 +153,24 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<UsersFieldLevelAccessControlsDenyList> UsersFieldLevelAccessControlsDenyLists { get; set; }
 
+    public virtual DbSet<VComprehensiveSalesFinalMatrix> VComprehensiveSalesFinalMatrices { get; set; }
+
+    public virtual DbSet<VSalesFinalMatrix> VSalesFinalMatrices { get; set; }
+
+    public virtual DbSet<VSalesFinalMatrixSuggested> VSalesFinalMatrixSuggesteds { get; set; }
+
+    public virtual DbSet<VSalesFinalOutput> VSalesFinalOutputs { get; set; }
+
+    public virtual DbSet<VSalesFinalOutputSuggested> VSalesFinalOutputSuggesteds { get; set; }
+
+    public virtual DbSet<VSalesStep1Inherent> VSalesStep1Inherents { get; set; }
+
+    public virtual DbSet<VSalesStep1Suggested> VSalesStep1Suggesteds { get; set; }
+
+    public virtual DbSet<VSalesStep2SuggestedVolume> VSalesStep2SuggestedVolumes { get; set; }
+
+    public virtual DbSet<VSalesStep2Volume> VSalesStep2Volumes { get; set; }
+
     public virtual DbSet<VatCategory> VatCategories { get; set; }
 
     public virtual DbSet<VolumeDiscount> VolumeDiscounts { get; set; }
@@ -1863,6 +1881,217 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
+        modelBuilder.Entity<VComprehensiveSalesFinalMatrix>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_comprehensive_sales_final_matrix");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.ExplanationFinal).HasColumnName("explanation_final");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IsClamped).HasColumnName("is_clamped");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.OAdjustedMinPrice).HasColumnName("o_adjusted_min_price");
+            entity.Property(e => e.OEffectiveDiscountPerUnit).HasColumnName("o_effective_discount_per_unit");
+            entity.Property(e => e.OEffectiveLpRate).HasColumnName("o_effective_lp_rate");
+            entity.Property(e => e.OEffectiveSellingPricePerUnit).HasColumnName("o_effective_selling_price_per_unit");
+            entity.Property(e => e.ORawDiscountAmt).HasColumnName("o_raw_discount_amt");
+            entity.Property(e => e.ORawDiscountPercentage).HasColumnName("o_raw_discount_percentage");
+            entity.Property(e => e.ORawPrice).HasColumnName("o_raw_price");
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+        });
+
+        modelBuilder.Entity<VSalesFinalMatrix>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_final_matrix");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationFinal).HasColumnName("explanation_final");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.IPiiAddRate).HasColumnName("i_pii_add_rate");
+            entity.Property(e => e.IPiiMultRate).HasColumnName("i_pii_mult_rate");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IVolDiscPct).HasColumnName("i_vol_disc_pct");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.OAdjustedMinPrice).HasColumnName("o_adjusted_min_price");
+            entity.Property(e => e.OEffectiveLpRate).HasColumnName("o_effective_lp_rate");
+            entity.Property(e => e.ORawDiscountPercentage).HasColumnName("o_raw_discount_percentage");
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+            entity.Property(e => e.VolStartFrom).HasColumnName("vol_start_from");
+        });
+
+        modelBuilder.Entity<VSalesFinalMatrixSuggested>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_final_matrix_suggested");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationFinal).HasColumnName("explanation_final");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.IPiiAddRate).HasColumnName("i_pii_add_rate");
+            entity.Property(e => e.IPiiMultRate).HasColumnName("i_pii_mult_rate");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IVolDiscPct).HasColumnName("i_vol_disc_pct");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.OAdjustedMinPrice).HasColumnName("o_adjusted_min_price");
+            entity.Property(e => e.OEffectiveLpRate).HasColumnName("o_effective_lp_rate");
+            entity.Property(e => e.ORawDiscountPercentage).HasColumnName("o_raw_discount_percentage");
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+            entity.Property(e => e.VolStartFrom).HasColumnName("vol_start_from");
+        });
+
+        modelBuilder.Entity<VSalesFinalOutput>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_final_output");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.ExplanationFinal).HasColumnName("explanation_final");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IsClamped).HasColumnName("is_clamped");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.OAdjustedMinPrice).HasColumnName("o_adjusted_min_price");
+            entity.Property(e => e.OEffectiveDiscountPerUnit).HasColumnName("o_effective_discount_per_unit");
+            entity.Property(e => e.OEffectiveLpRate).HasColumnName("o_effective_lp_rate");
+            entity.Property(e => e.OEffectiveSellingPricePerUnit).HasColumnName("o_effective_selling_price_per_unit");
+            entity.Property(e => e.ORawDiscountAmt).HasColumnName("o_raw_discount_amt");
+            entity.Property(e => e.ORawDiscountPercentage).HasColumnName("o_raw_discount_percentage");
+            entity.Property(e => e.ORawPrice).HasColumnName("o_raw_price");
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+        });
+
+        modelBuilder.Entity<VSalesFinalOutputSuggested>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_final_output_suggested");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.ExplanationFinal).HasColumnName("explanation_final");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IsClamped).HasColumnName("is_clamped");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.OAdjustedMinPrice).HasColumnName("o_adjusted_min_price");
+            entity.Property(e => e.OEffectiveDiscountPerUnit).HasColumnName("o_effective_discount_per_unit");
+            entity.Property(e => e.OEffectiveLpRate).HasColumnName("o_effective_lp_rate");
+            entity.Property(e => e.OEffectiveSellingPricePerUnit).HasColumnName("o_effective_selling_price_per_unit");
+            entity.Property(e => e.ORawDiscountAmt).HasColumnName("o_raw_discount_amt");
+            entity.Property(e => e.ORawDiscountPercentage).HasColumnName("o_raw_discount_percentage");
+            entity.Property(e => e.ORawPrice).HasColumnName("o_raw_price");
+            entity.Property(e => e.PiiId).HasColumnName("pii_id");
+        });
+
+        modelBuilder.Entity<VSalesStep1Inherent>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_step1_inherent");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationStep1).HasColumnName("explanation_step1");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+        });
+
+        modelBuilder.Entity<VSalesStep1Suggested>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_step1_suggested");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationStep1).HasColumnName("explanation_step1");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+        });
+
+        modelBuilder.Entity<VSalesStep2SuggestedVolume>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_step2_suggested_volume");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationStep2).HasColumnName("explanation_step2");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IVolDiscPct).HasColumnName("i_vol_disc_pct");
+            entity.Property(e => e.IsVolDiscActive).HasColumnName("is_vol_disc_active");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+            entity.Property(e => e.VolStartFrom).HasColumnName("vol_start_from");
+        });
+
+        modelBuilder.Entity<VSalesStep2Volume>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_sales_step2_volume");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.ExplanationStep2).HasColumnName("explanation_step2");
+            entity.Property(e => e.HasUserDiscFlag).HasColumnName("has_user_disc_flag");
+            entity.Property(e => e.HasVolDiscFlag).HasColumnName("has_vol_disc_flag");
+            entity.Property(e => e.IInvAddRate).HasColumnName("i_inv_add_rate");
+            entity.Property(e => e.IInvMultRate).HasColumnName("i_inv_mult_rate");
+            entity.Property(e => e.IMinPrice).HasColumnName("i_min_price");
+            entity.Property(e => e.ISellingPrice).HasColumnName("i_selling_price");
+            entity.Property(e => e.ISuggestedPrice).HasColumnName("i_suggested_price");
+            entity.Property(e => e.IVolDiscPct).HasColumnName("i_vol_disc_pct");
+            entity.Property(e => e.IsVolDiscActive).HasColumnName("is_vol_disc_active");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+            entity.Property(e => e.VolStartFrom).HasColumnName("vol_start_from");
+        });
+
         modelBuilder.Entity<VatCategory>(entity =>
         {
             entity
@@ -1885,8 +2114,18 @@ public partial class NewinvContext : DbContext
                 .HasNoKey()
                 .ToTable("volume_discounts");
 
-            entity.Property(e => e.DiscountPerUnit).HasColumnName("discount_per_unit");
+            entity.Property(e => e.AllRequestIds)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("all_request_ids");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.DiscountPercentage).HasColumnName("discount_percentage");
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.RequestId).HasColumnName("request_id");
             entity.Property(e => e.StartFrom)
                 .HasDefaultValue(1L)
                 .HasColumnName("start_from");

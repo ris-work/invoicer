@@ -68,7 +68,7 @@ namespace RV.InvNew.Common
                     Qty = x.Sale.Quantity,
                     MinPriceTotal = x.Inv.MinPrice * x.Sale.Quantity,
                     VatRate = x.Sale.VatRatePercentage,
-                    VolDiscPerUnit = x.Vol == null ? 0.0 : x.Vol.DiscountPerUnit,
+                    VolDiscPerUnit = x.Vol == null ? 0.0 : x.Vol.DiscountPercentage,
                     MultRateInv = x.Inv.MultiplicativeDiscountPercentage,
                     MultRatePii = x.Pii == null ? 0.0 : x.Pii.DiscountRateMultiplicativePercentage,
                     AddRateInv = x.Inv.AdditiveDiscountPercentage,
@@ -212,7 +212,7 @@ namespace RV.InvNew.Common
                 new Catalogue { Itemcode = -1000, Description = "Test Item", ProcessDiscounts = true }
             };
             var volList = new List<VolumeDiscount> {
-                new VolumeDiscount { Itemcode = -1000, StartFrom = 5, DiscountPerUnit = 2.0 }
+                new VolumeDiscount { Itemcode = -1000, StartFrom = 5, DiscountPercentage = 2.0 }
             };
             var piiList = new List<Pii> {
                 new Pii { Id = -4000, Name = "Test Customer", DiscountRateMultiplicativePercentage = 5.0, DiscountRateAdditivePercentage = 0.0, LoyaltyPointsRateMultiplicativePercentage = 10.0 }
@@ -308,7 +308,7 @@ namespace RV.InvNew.Common
                                                                     }
                                                                 };
                                                                 var cat = new List<Catalogue> { new Catalogue { Itemcode = 1 } };
-                                                                var vol = v ? new List<VolumeDiscount> { new VolumeDiscount { Itemcode = 1, StartFrom = 1, DiscountPerUnit = 10 } } : new List<VolumeDiscount>();
+                                                                var vol = v ? new List<VolumeDiscount> { new VolumeDiscount { Itemcode = 1, StartFrom = 1, DiscountPercentage = 10 } } : new List<VolumeDiscount>();
                                                                 var pii = p ? new List<Pii> {
                                                                     new Pii {
                                                                         Id = 1,

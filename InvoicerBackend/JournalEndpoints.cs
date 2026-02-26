@@ -35,7 +35,7 @@ namespace InvoicerBackend
             {
                 return 0;
             };
-            app.AddAsyncEndpointWithBearerAuth<AccountsJournalEntry>(
+            app.AddAsyncEndpointWithBearerAuth<AccountsJournalEntry, int>(
                 "AddJournalEntry",
                 async (AS, LoginInfo) =>
                 {
@@ -73,7 +73,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<long>(
+            app.AddEndpointWithBearerAuth<long, int>(
                 "ReverseJournalEntry",
                 (AS, LoginInfo) =>
                 {
@@ -82,7 +82,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsJournalEntry>>(
                 "GetAllJournalEntries",
                 (AS, LoginInfo) =>
                 {
@@ -95,7 +95,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsJournalEntry>>(
     "GetNJournalEntries",
     (AS, LoginInfo) =>
     {
@@ -108,7 +108,7 @@ namespace InvoicerBackend
     },
     "Refresh"
     );
-            app.AddEndpointWithBearerAuth<TimePeriod>(
+            app.AddEndpointWithBearerAuth<TimePeriod, List<AccountsJournalEntry>>(
                 "GetAllJournalEntriesWithinTimePeriod",
                 (AS, LoginInfo) =>
                 {
@@ -127,7 +127,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsInformation>>(
                 "GetAccountsInformation",
                 (AS, LoginInfo) =>
                 {
@@ -140,7 +140,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsType>>(
                 "GetAccountsTypes",
                 (AS, LoginInfo) =>
                 {
@@ -153,7 +153,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsBalance>>(
                 "GetAccountsBalances",
                 (AS, LoginInfo) =>
                 {
@@ -166,7 +166,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsJournalEntry>>(
                 "GetAccountsJournalInformation",
                 (AS, LoginInfo) =>
                 {
@@ -179,7 +179,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, List<AccountsBalance>>(
                 "GetAccountBalances",
                 (AS, LoginInfo) =>
                 {
@@ -192,7 +192,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<JournalSearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<JournalSearchRequest, List<AccountsJournalEntry>>(
     "SearchJournalEntriesWeb",
     async (DataIn, LoginInfo) =>
     {
@@ -218,7 +218,7 @@ namespace InvoicerBackend
     },
     "Refresh"
 );
-            app.AddAsyncEndpointWithBearerAuth<AddJournalEntryRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AddJournalEntryRequest, List<AccountsJournalEntry>>(
                 "AddJournalEntryWeb",
                 async (DataIn, LoginInfo) =>
                 {

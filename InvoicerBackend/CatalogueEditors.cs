@@ -10,7 +10,7 @@ namespace InvoicerBackend
         private static void Log(string a) { System.Console.WriteLine(a); }
         public static WebApplication AddCatalogueEditorHandlers(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<Catalogue>("CreateCatalogueItem", async (o, a) => {
+            app.AddAsyncEndpointWithBearerAuth<Catalogue, bool>("CreateCatalogueItem", async (o, a) => {
                 using (var ctx = new NewinvContext())
                 {
                     var N = (Catalogue)o;
@@ -19,7 +19,7 @@ namespace InvoicerBackend
                 }
                 return true;
             }, "Refresh");
-            app.AddAsyncPatchEndpointWithBearerAuth<string>("EditCatalogueItem", async (o, a) => {
+            app.AddAsyncPatchEndpointWithBearerAuth<string, bool>("EditCatalogueItem", async (o, a) => {
                 Log($"Input: ${((string)o)}");
                 Dictionary<string, JsonElement> Patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(((string)o));
                 long PatchID = Patch["Itemcode"].GetInt64();
@@ -38,7 +38,7 @@ namespace InvoicerBackend
             }, [], "Refresh");
 
             // 1. Create Catalogue Web
-            app.AddAsyncEndpointWithBearerAuth<Catalogue>(
+            app.AddAsyncEndpointWithBearerAuth<Catalogue, Catalogue>(
                 "CreateCatalogueWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -69,7 +69,7 @@ namespace InvoicerBackend
             );
 
             // 2. Edit Catalogue Web (Patch)
-            app.AddAsyncPatchEndpointWithBearerAuth<string>(
+            app.AddAsyncPatchEndpointWithBearerAuth<string, bool>(
                 "EditCatalogueWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -108,7 +108,7 @@ namespace InvoicerBackend
             );
 
             // 3. Search Catalogue Web
-            app.AddAsyncEndpointWithBearerAuth<SearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SearchRequest, List<Catalogue>>(
                 "SearchCatalogueWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -136,7 +136,7 @@ namespace InvoicerBackend
             );
 
             // 4. Suggest Catalogue Web (Similar Items)
-            app.AddAsyncEndpointWithBearerAuth<SearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SearchRequest, List<Catalogue>>(
                 "SuggestCatalogueWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -170,7 +170,7 @@ namespace InvoicerBackend
             );
 
             // 5. Get Catalogue Item Web (By ID)
-            app.AddAsyncEndpointWithBearerAuth<CatalogueGetRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CatalogueGetRequest, Catalogue>(
                 "GetCatalogueItemWeb",
                 async (DataIn, LoginInfo) =>
                 {

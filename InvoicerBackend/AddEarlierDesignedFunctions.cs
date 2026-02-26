@@ -352,7 +352,7 @@ namespace InvoicerBackend
                 )
                 .WithName("NewAccount")
                 .WithOpenApi();
-            app.AddEndpointWithBearerAuth<string>(
+            app.AddEndpointWithBearerAuth<string, PosRefresh>(
                 "PosRefreshBearerAuth",
                 (AS, LoginInfo) =>
                 {
@@ -412,7 +412,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddEndpointWithBearerAuth<string>("BearerAuthenticatedEcho", (AS, LoginInfo) => { return (string)AS; }, "Refresh");
+            app.AddEndpointWithBearerAuth<string, string>("BearerAuthenticatedEcho", (AS, LoginInfo) => { return (string)AS; }, "Refresh");
         }
     }
 }

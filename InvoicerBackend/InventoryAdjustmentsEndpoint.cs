@@ -33,7 +33,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddInventoryAdjustmentsEndpoints(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<AdjustmentAddToBatchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AdjustmentAddToBatchRequest, object>(
     "AdjustmentAddToBatch",
     async (DataIn, LoginInfo) =>
     {
@@ -159,7 +159,7 @@ namespace InvoicerBackend
     "Refresh"
 );
 
-            app.AddAsyncEndpointWithBearerAuth<CreateAdjustmentRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CreateAdjustmentRequest, object>(
     "CreateUnpostedAdjustment",
     async (DataIn, LoginInfo) =>
     {
@@ -212,7 +212,7 @@ namespace InvoicerBackend
 );
 
 
-            app.AddAsyncEndpointWithBearerAuth<PostAdjustmentRequest>(
+            app.AddAsyncEndpointWithBearerAuth<PostAdjustmentRequest, object>(
                 "PostAdjustment",
                 async (DataIn, LoginInfo) =>
                 {

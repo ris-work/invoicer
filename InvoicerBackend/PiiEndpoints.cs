@@ -34,7 +34,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddPiiEndpoints(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<CreatePiiRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CreatePiiRequest, Pii>(
                 "CreatePiiWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -69,7 +69,7 @@ namespace InvoicerBackend
             );
 
             // 2. Edit PII (Patch)
-            app.AddAsyncPatchEndpointWithBearerAuth<string>(
+            app.AddAsyncPatchEndpointWithBearerAuth<string, bool>(
                 "EditPiiWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -92,7 +92,7 @@ namespace InvoicerBackend
             );
 
 
-            app.AddAsyncEndpointWithBearerAuth<SearchPiiRequest>(
+            app.AddAsyncEndpointWithBearerAuth<SearchPiiRequest, List<Pii>>(
                 "SearchPiiWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -111,7 +111,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<AddPiiImageRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AddPiiImageRequest, PiiImage>(
     "AddPiiImage",
     async (DataIn, LoginInfo) =>
     {
@@ -143,7 +143,7 @@ namespace InvoicerBackend
 );
 
 
-            app.AddAsyncEndpointWithBearerAuth<GetPiiImagesRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetPiiImagesRequest, List<PiiImage>>(
                 "GetPiiImages",
                 async (DataIn, LoginInfo) =>
                 {

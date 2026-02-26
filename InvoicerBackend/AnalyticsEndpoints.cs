@@ -60,7 +60,7 @@ namespace InvoicerBackend
 
         public static WebApplication AddAnalyticsEndpoints(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<GetInventoryMovementsRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetInventoryMovementsRequest, List<InventoryMovement>>(
                 "GetInventoryMovements",
                 async (reqr, loginInfo) =>
                 {
@@ -90,7 +90,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<BinCardSearchRequest>(
+            app.AddAsyncEndpointWithBearerAuth<BinCardSearchRequest, List<InventoryMovement>>(
     "SearchBinCardWeb",
     async (DataIn, LoginInfo) =>
     {
@@ -133,7 +133,7 @@ namespace InvoicerBackend
 );
 
             // 3. Get All Tags (for dropdown)
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, string>(
                 "GetAllTags",
                 async (DataIn, LoginInfo) =>
                 {
@@ -144,7 +144,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<BinCardSummaryRequest>(
+            app.AddAsyncEndpointWithBearerAuth<BinCardSummaryRequest, BinCardSummaryResponse>(
                 "GetBinCardSummary",
                 async (DataIn, LoginInfo) =>
                 {

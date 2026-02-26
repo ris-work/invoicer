@@ -86,7 +86,7 @@ namespace InvoicerBackend
         public static WebApplication AddSchedulerEndpoints(this WebApplication app)
         {
             // 1. Get Future Journal Overview (All Pending Scheduled Items)
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, List<FutureEntryDto>>(
                 "GetFutureJournalOverview",
                 async (DataIn, LoginInfo) =>
                 {
@@ -142,7 +142,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<AccountFutureRequest>(
+            app.AddAsyncEndpointWithBearerAuth<AccountFutureRequest, List<FutureEntryDto>>(
                 "GetAccountFuture",
                 async (DataIn, LoginInfo) =>
                 {
@@ -250,7 +250,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<AddScheduledEntryRequestEx>(
+            app.AddAsyncEndpointWithBearerAuth<AddScheduledEntryRequestEx, bool>(
                 "AddScheduledEntryWeb",
                 async (DataIn, LoginInfo) =>
                 {
@@ -374,7 +374,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<GetChequeLeavesRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetChequeLeavesRequest, object>(
                 "GetAvailableChequeLeaves",
                 async (DataIn, LoginInfo) =>
                 {
@@ -424,7 +424,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<CreateChequeBookRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CreateChequeBookRequest, object>(
                 "CreateChequeBook",
                 async (DataIn, LoginInfo) =>
                 {
@@ -455,7 +455,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<GetBooksRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetBooksRequest, List<ChequeBook>>(
                 "GetChequeBooks",
                 async (DataIn, LoginInfo) =>
                 {
@@ -471,7 +471,7 @@ namespace InvoicerBackend
                 },
                 "Refresh"
             );
-            app.AddAsyncEndpointWithBearerAuth<GetLeavesRequest>(
+            app.AddAsyncEndpointWithBearerAuth<GetLeavesRequest, object>(
                 "GetChequeLeavesForBook",
                 async (DataIn, LoginInfo) =>
                 {

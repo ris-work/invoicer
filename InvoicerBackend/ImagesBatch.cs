@@ -14,7 +14,7 @@ namespace RV.InvNew.Common
         public static WebApplication AddBatchDefaultImageEndpoints(this WebApplication app)
         {
             // 3. Batch Default Image Get
-            app.AddAsyncEndpointWithBearerAuth<long>(
+            app.AddAsyncEndpointWithBearerAuth<long, object>(
                 "BatchDefaultImageGet",
                 async (ItemCodeIn, LoginInfo) =>
                 {
@@ -47,7 +47,7 @@ namespace RV.InvNew.Common
             );
 
             // 4. Batch Default Image Set
-            app.AddAsyncEndpointWithBearerAuth<InventoryImageRequest>(
+            app.AddAsyncEndpointWithBearerAuth<InventoryImageRequest, object>(
                 "BatchDefaultImageSet",
                 async (DataIn, LoginInfo) =>
                 {

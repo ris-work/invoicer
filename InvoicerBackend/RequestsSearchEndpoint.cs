@@ -13,7 +13,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddRequestsEndpoints(this WebApplication app)
         {
-            app.AddEndpointWithBearerAuth<RequestSearchCriteria>(
+            app.AddEndpointWithBearerAuth<RequestSearchCriteria, List<RequestsBad>>(
                 "RequestsSearchEndpoint",
                 (AS, LoginInfo) =>
                 {

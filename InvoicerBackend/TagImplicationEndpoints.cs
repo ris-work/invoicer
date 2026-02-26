@@ -30,7 +30,7 @@ namespace InvoicerBackend
     {
         public static WebApplication AddTagImplicationsEndpoints(this WebApplication app)
         {
-            app.AddAsyncEndpointWithBearerAuth<TagImplicationDto>(
+            app.AddAsyncEndpointWithBearerAuth<TagImplicationDto, TagsImply>(
                 "AddTagImplication",
                 async (DataIn, LoginInfo) =>
                 {
@@ -53,7 +53,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
             // 2. List All
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, List<TagsImply>>(
                 "GetTagImplications",
                 async (DataIn, LoginInfo) =>
                 {
@@ -66,7 +66,7 @@ namespace InvoicerBackend
             );
 
 
-            app.AddAsyncEndpointWithBearerAuth<EditTagImplicationDto>(
+            app.AddAsyncEndpointWithBearerAuth<EditTagImplicationDto, bool>(
                 "EditTagImplication",
                 async (DataIn, LoginInfo) =>
                 {
@@ -88,7 +88,7 @@ namespace InvoicerBackend
             );
 
             // 4. Delete
-            app.AddAsyncEndpointWithBearerAuth<long>(
+            app.AddAsyncEndpointWithBearerAuth<long, bool>(
                 "DeleteTagImplication",
                 async (DataIn, LoginInfo) =>
                 {
@@ -107,7 +107,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            app.AddAsyncEndpointWithBearerAuth<TransitiveRequest>(
+            app.AddAsyncEndpointWithBearerAuth<TransitiveRequest, List<object>>(
                 "GetTransitiveImplications",
                 async (DataIn, LoginInfo) =>
                 {

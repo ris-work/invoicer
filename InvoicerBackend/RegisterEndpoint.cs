@@ -5,6 +5,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Transactions;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
@@ -14,8 +15,18 @@ using RV.InvNew.Common;
 
 namespace InvoicerBackend
 {
+    public class EndpointDefinition
+    {
+        public string EndpointName;
+        public Type InputType;
+        public object Function;
+        public Type OutputType;
+        public string Privilege;
+    }
+    
     public static class RegisterEndpoint
     {
+        public static Dictionary<string, EndpointDefinition> EndpointsDict = new();
         public delegate object Del(object o);
 
         public readonly record struct LoginDetails(long? UserId, string TokenId, string Principal, long RequestId);
@@ -23,6 +34,27 @@ namespace InvoicerBackend
         public delegate object DelWithDetails(object o, LoginDetails Login);
         public delegate Task<object> DelWithDetailsAsync(object o, LoginDetails Login);
         public delegate object PatchDelWithDetails(string JsonPatch, LoginDetails Login);
+
+        public static Type UnwrapResultType(Type type)
+        {
+            // Handle Task (non-generic) -> void
+            if (type == typeof(Task)) return typeof(void);
+
+            // Handle Task -> T
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            // Handle ValueTask -> T
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>))
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            // Fallback
+            return type;
+        }
 
         public static void TryAddPermissionToDatabase(string Permission)
         {
@@ -42,7 +74,7 @@ namespace InvoicerBackend
             }
         }
 
-        public static WebApplication AddEndpoint<T>(
+        public static WebApplication AddEndpoint<T, To>(
             this WebApplication app,
             string Name,
             Del D,
@@ -67,7 +99,7 @@ namespace InvoicerBackend
             return app;
         }
 
-        public static WebApplication AddEndpointWithBearerAuth<T>(
+        public static WebApplication AddEndpointWithBearerAuth<T, To>(
             this WebApplication app,
             string Name,
             DelWithDetails D,
@@ -116,10 +148,11 @@ namespace InvoicerBackend
                 .WithName(Name)
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
+            EndpointsDict.Add(Name, new EndpointDefinition() { EndpointName = Name, Function = D, InputType = D.Method.GetParameters()[0].ParameterType, OutputType = typeof(To), Privilege = Permission });
             return app;
         }
 
-        public static WebApplication AddAsyncEndpointWithBearerAuth<T>(
+        public static WebApplication AddAsyncEndpointWithBearerAuth<T, To>(
             this WebApplication app,
             string Name,
             DelWithDetailsAsync D,
@@ -167,6 +200,19 @@ namespace InvoicerBackend
                 .WithName(Name)
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
+            // Use typeof(T) for input as it's explicitly generic
+            var inputType = typeof(T);
+
+            // Unwrap the delegate return type (Task<object> -> object)
+            var outputType = UnwrapResultType(D.Method.ReturnType);
+            EndpointsDict.Add(Name, new EndpointDefinition()
+            {
+                EndpointName = Name,
+                Function = D,
+                InputType = inputType,
+                OutputType = outputType, // This will be 'object' with current delegate
+                Privilege = Permission
+            });
 
             return app;
         }
@@ -184,7 +230,7 @@ namespace InvoicerBackend
         /// <param name="Permission">Required access level</param>
         /// <returns></returns>
         /// <exception cref="UnauthorizedAccessException"></exception>
-        public static WebApplication AddPatchEndpointWithBearerAuth<T>(
+        public static WebApplication AddPatchEndpointWithBearerAuth<T, To>(
             this WebApplication app,
             string Name,
             DelWithDetails D,
@@ -235,6 +281,7 @@ namespace InvoicerBackend
                 .WithName(Name)
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
+            EndpointsDict.Add(Name, new EndpointDefinition() { EndpointName = Name, Function = D, InputType = D.Method.GetParameters()[0].ParameterType, OutputType = typeof(To), Privilege = Permission });
 
             return app;
         }
@@ -252,7 +299,7 @@ namespace InvoicerBackend
         /// <param name="Permission">Required access level</param>
         /// <returns></returns>
         /// <exception cref="UnauthorizedAccessException"></exception>
-        public static WebApplication AddAsyncPatchEndpointWithBearerAuth<T>(
+        public static WebApplication AddAsyncPatchEndpointWithBearerAuth<T, To>(
             this WebApplication app,
             string Name,
             DelWithDetailsAsync D,
@@ -304,11 +351,25 @@ namespace InvoicerBackend
                 .WithName(Name).Accepts<T>("application/json").Produces(200, D.Method.ReturnType, "application/json")
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
+            // Use typeof(T) for input as it's explicitly generic
+            var inputType = typeof(T);
+
+            // Unwrap the delegate return type (Task<object> -> object)
+            var outputType = UnwrapResultType(D.Method.ReturnType);
+            EndpointsDict.Add(Name, new EndpointDefinition()
+            {
+                EndpointName = Name,
+                Function = D,
+                InputType = inputType,
+                OutputType = typeof(To), // This will be 'object' with current delegate
+                Privilege = Permission
+            });
+            //EndpointsDict.Add(Name, new EndpointDefinition() { EndpointName = Name, Function = D, InputType = D.Method.GetParameters()[0].ParameterType, OutputType = D.Method.ReturnType, Privilege = Permission });
 
             return app;
         }
 
-        public static WebApplication AddEndpointWithBearerAuth<T>(
+        public static WebApplication AddEndpointWithBearerAuth<T, To>(
             this WebApplication app,
             string Name,
             Del D,
@@ -347,6 +408,7 @@ namespace InvoicerBackend
                 .WithName(Name).Accepts<T>("application/json").Produces(200, D.Method.ReturnType, "application/json")
                 .WithOpenApi();
             TryAddPermissionToDatabase(Permission);
+            EndpointsDict.Add(Name, new EndpointDefinition() { EndpointName = Name, Function = D, InputType = D.Method.GetParameters()[0].ParameterType, OutputType = typeof(To), Privilege = Permission });
             return app;
         }
     }

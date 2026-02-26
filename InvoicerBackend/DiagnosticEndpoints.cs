@@ -7,7 +7,7 @@
             // --- Diagnostic Endpoints ---
 
             // 1. Get All Flow Sessions
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, Dictionary<string, Dictionary<string, string>>>(
                 "GetAllFlows",
                 async (DataIn, LoginInfo) =>
                 {
@@ -23,7 +23,7 @@
             );
 
             // 2. Get System Info
-            app.AddAsyncEndpointWithBearerAuth<object>(
+            app.AddAsyncEndpointWithBearerAuth<object, Dictionary<string, object>>(
                 "GetSystemInfo",
                 async (DataIn, LoginInfo) =>
                 {

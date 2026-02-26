@@ -13,7 +13,7 @@ namespace InvoicerBackend
         public static WebApplication AddCatalogueImageEndpoints(this WebApplication app)
         {
             // 1. Catalogue Default Image Get
-            app.AddAsyncEndpointWithBearerAuth<CatalogueGetRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CatalogueGetRequest, object>(
                 "CatalogueDefaultImageGet",
                 async (ItemCodeIn, LoginInfo) =>
                 {
@@ -47,7 +47,7 @@ namespace InvoicerBackend
 
             // 2. Catalogue Default Image Set
             // 2. Catalogue Default Image Set
-            app.AddAsyncEndpointWithBearerAuth<CatalogueImageRequest>(
+            app.AddAsyncEndpointWithBearerAuth<CatalogueImageRequest, object>(
                 "CatalogueDefaultImageSet",
                 async (DataIn, LoginInfo) =>
                 {

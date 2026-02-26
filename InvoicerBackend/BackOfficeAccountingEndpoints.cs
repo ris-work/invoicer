@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using common;
+using Microsoft.EntityFrameworkCore;
 using RV.InvNew.Common;
 using System.Data;
 using System.Text.Json;
@@ -8,7 +9,7 @@ namespace InvoicerBackend
     public static class BackOfficeAccountingEndpoints
     {
         public static WebApplication AddBackOfficeAccountingEndpoints(this WebApplication app) {
-            app.AddEndpointWithBearerAuth<string>("BackOfficeAccountingRefresh", (AS, LoginInfo) => {
+            app.AddEndpointWithBearerAuth<string, BackOfficeAccountingDataTransfer>("BackOfficeAccountingRefresh", (AS, LoginInfo) => {
                 common.BackOfficeAccountingDataTransfer BAT = new();
                 using (var ctx = new NewinvContext())
                 {
@@ -49,7 +50,7 @@ namespace InvoicerBackend
                 //Console.WriteLine($"===== {JsonSerializer.Serialize(BAT)}");
                 return BAT;
             }, "Refresh");
-            app.AddAsyncEndpointWithBearerAuth<string>("AutoProcessScheduledPayments", async (AS, LoginInfo) =>
+            app.AddAsyncEndpointWithBearerAuth<string, ScheduledPayment>("AutoProcessScheduledPayments", async (AS, LoginInfo) =>
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 var tomorrow = today.AddDays(1);
@@ -71,7 +72,7 @@ namespace InvoicerBackend
                 }
                 return Schd;
             }, "Refresh");
-            app.AddAsyncEndpointWithBearerAuth<string>("AutoProcessScheduledReceipt", async (AS, LoginInfo) =>
+            app.AddAsyncEndpointWithBearerAuth<string, ScheduledReceipt>("AutoProcessScheduledReceipt", async (AS, LoginInfo) =>
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 var tomorrow = today.AddDays(1);
