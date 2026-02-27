@@ -153,6 +153,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<UsersFieldLevelAccessControlsDenyList> UsersFieldLevelAccessControlsDenyLists { get; set; }
 
+    public virtual DbSet<VBatchSelectionWindow> VBatchSelectionWindows { get; set; }
+
     public virtual DbSet<VComprehensiveSalesFinalMatrix> VComprehensiveSalesFinalMatrices { get; set; }
 
     public virtual DbSet<VSalesFinalMatrix> VSalesFinalMatrices { get; set; }
@@ -1879,6 +1881,23 @@ public partial class NewinvContext : DbContext
 
             entity.Property(e => e.DeniedField).HasColumnName("denied_field");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
+
+        modelBuilder.Entity<VBatchSelectionWindow>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_batch_selection_window");
+
+            entity.Property(e => e.Batchcode).HasColumnName("batchcode");
+            entity.Property(e => e.CumulativeQuantity).HasColumnName("cumulative_quantity");
+            entity.Property(e => e.ExpDate).HasColumnName("exp_date");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.MfgDate).HasColumnName("mfg_date");
+            entity.Property(e => e.MinPrice).HasColumnName("min_price");
+            entity.Property(e => e.PrevCumulativeQuantity).HasColumnName("prev_cumulative_quantity");
+            entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
+            entity.Property(e => e.Units).HasColumnName("units");
         });
 
         modelBuilder.Entity<VComprehensiveSalesFinalMatrix>(entity =>
