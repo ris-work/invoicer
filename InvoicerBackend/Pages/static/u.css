@@ -1,0 +1,336 @@
+﻿/*
+ * u.css - Common Stylesheet
+ * 
+ * Implemented Classes:
+ * --------------------
+ * Layout:
+ * .container      - Max-width centered container.
+ * .section        - Padded block with background, used in Echo.
+ * .card           - Generic white box with shadow/border.
+ * .search-box     - Input container styling.
+ * .flow-card      - Collapsible card for SessionInfo.
+ * .flow-header    - Clickable header for flow-card.
+ * .flow-body      - Hidden body for flow-card.
+ * 
+ * Tables & Pre:
+ * table           - Full width, collapsed borders.
+ * th, td          - Padding and borders.
+ * pre             - Code block styling (dark theme).
+ * 
+ * Buttons:
+ * .btn            - Base button class.
+ * .btn-primary    - Blue background.
+ * .btn-success    - Green background.
+ * .btn-secondary  - Grey background.
+ * .btn-warning    - Yellow background.
+ * .btn-close      - Grey close button.
+ * 
+ * Endpoints/CheckAccess:
+ * .endpoint-list  - Flex column container.
+ * .endpoint-card  - Clickable card with left border.
+ * .endpoint-name  - Monospace bold name.
+ * .endpoint-meta  - Small grey text.
+ * 
+ * Status Indicators:
+ * .status-granted - Green left border.
+ * .status-denied  - Red left border.
+ * .status-unknown - Grey left border.
+ * .status-badge   - Small pill-shaped badge.
+ * .badge-granted  - Green badge.
+ * .badge-denied   - Red badge.
+ * .badge-check    - Blue badge.
+ * 
+ * Privilege Tags (Echo):
+ * .priv-list      - Flex container for tags.
+ * .priv-tag       - Monospace tag style.
+ * .has-access     - Green tag variant.
+ * 
+ * Modals:
+ * .result-modal   - Full screen overlay.
+ * .modal-content  - Centered white box.
+ * .modal-header   - Title section.
+ * .modal-footer   - Action section.
+ * 
+ * Misc:
+ * .warning        - Yellow warning text box.
+ * .result-box     - Output container.
+ */
+
+body {
+    font-family: sans-serif;
+    padding: 20px;
+    background-color: #f4f4f9; /* Light grey default */
+    color: #333;
+}
+
+h1, h2 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    color: #333;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.search-box {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+input[type=text], input[type=password] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    width: 30%;
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Code / Pre */
+pre {
+    background-color: #282c34;
+    color: #abb2bf;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    margin-right: 5px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-close {
+    background: #6c757d;
+    color: white;
+}
+
+/* Endpoint List (CheckAccess) */
+.endpoint-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.endpoint-card {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 5px solid #ccc;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+    .endpoint-card:hover {
+        transform: translateX(5px);
+        background: #fafafa;
+    }
+
+.endpoint-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    font-family: monospace;
+}
+
+.endpoint-meta {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Status Indicators */
+.status-granted {
+    border-left-color: #28a745;
+}
+
+.status-denied {
+    border-left-color: #dc3545;
+}
+
+.status-unknown {
+    border-left-color: #6c757d;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    color: white;
+    float: right;
+}
+
+.badge-granted {
+    background: #28a745;
+}
+
+.badge-denied {
+    background: #dc3545;
+}
+
+.badge-check {
+    background: #007bff;
+}
+
+/* Privilege Tags */
+.priv-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.priv-tag {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+    border: 1px solid #dee2e6;
+}
+
+    .priv-tag.has-access {
+        background: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+    }
+
+/* Modals */
+.result-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.modal-footer {
+    margin-top: 20px;
+    text-align: right;
+}
+
+/* Flow Cards (SessionInfo) */
+.flow-card {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.flow-header {
+    background: #f0f0f0;
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.flow-body {
+    padding: 10px;
+    display: none;
+}
+
+/* Misc */
+.warning {
+    color: #856404;
+    background: #fff3cd;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.result-box {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #e9ecef;
+    background: #fff;
+    border-radius: 4px;
+}

@@ -1,61 +1,16 @@
 ﻿@page "/Pages/SessionInfo"
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Session Info</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        h2 {
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        .flow-card {
-            border: 1px solid #ddd;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .flow-header {
-            background: #f0f0f0;
-            padding: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .flow-body {
-            padding: 10px;
-            display: none;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 5px;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Active Flow Sessions</h2>
     <div id="content">Loading...</div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -73,32 +28,29 @@
 
             const data = await res.json();
             const container = document.getElementById('content');
-
-            // Convert dictionary to array for iteration
             const flows = Object.entries(data);
 
             if (flows.length === 0) {
-                container.innerHTML = "<p>No active flows found.</p>";
-                return;
+                container.innerHTML = "<p>No active flows found.</p>"; return;
             }
 
             let html = '';
             flows.forEach(([id, values]) => {
-                html += `
-                    <div class="flow-card">
-                        <div class="flow-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">
-                            Flow ID: ${id}
-                        </div>
-                        <div class="flow-body">
-                            <table>
-                                <thead><tr><th>Key</th><th>Value</th></tr></thead>
-                                <tbody>
-                                    ${Object.entries(values).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                // Using s for XSS protection
+                html += s`
+                <div class="flow-card">
+                    <div class="flow-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">
+                        Flow ID: ${id}
                     </div>
-                `;
+                    <div class="flow-body">
+                        <table>
+                            <thead><tr><th>Key</th><th>Value</th></tr></thead>
+                            <tbody>
+                                ${Object.entries(values).map(([k, v]) => s`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
             });
             container.innerHTML = html;
         }

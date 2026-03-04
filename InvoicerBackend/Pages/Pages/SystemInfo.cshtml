@@ -1,53 +1,16 @@
 ﻿@page "/Pages/SystemInfo"
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>System Info</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        h2 {
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-
-        th {
-            width: 30%;
-            background: #f8f9fa;
-        }
-
-        pre {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 3px;
-            overflow-x: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>System Information</h2>
     <div id="content">Loading...</div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -64,13 +27,11 @@
             });
 
             const data = await res.json();
-
             let html = '<table>';
             for (const [key, value] of Object.entries(data)) {
-                html += `<tr><th>${key}</th><td>${value}</td></tr>`;
+                html += s`<tr><th>${key}</th><td>${value}</td></tr>`;
             }
             html += '</table>';
-
             document.getElementById('content').innerHTML = html;
         }
         load();

@@ -1,60 +1,31 @@
 ﻿@page "/Pages/DumpAuth"
-
 @functions {
     public string FoundToken { get; set; } = "Checking...";
 }
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Dump Auth & Test API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .btn {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .btn-primary {
-            background: #007bff;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h1>Dump Auth & Test API</h1>
-
     <p><strong>Server says:</strong> @FoundToken</p>
 
-    <button onclick="testAuthenticatedEcho()" class="btn btn-primary">Call /BearerAuthenticatedEcho (POST)</button>
+    <button onclick="testAuthenticatedEcho()" class="btn btn-primary">Call /BearerEcho (POST)</button>
 
-    <div id="result" style="margin-top: 20px; padding: 10px; background: #eee; border: 1px solid #ccc; min-height: 50px;">
+    <div id="result" class="result-box" style="min-height: 50px;">
         <em>Click button to test...</em>
     </div>
 
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-        <a href="/Pages/Docs/Index" class="btn btn-success">Back to List</a> |
-        <a href="/Pages/Docs/Search" class="btn btn-secondary">Search</a> |
+        <a href="/Pages/Docs/Index" class="btn btn-success">Back to List</a>
+        <a href="/Pages/Docs/Search" class="btn btn-secondary">Search</a>
         <a href="/Pages/Docs/Add" class="btn btn-primary">Add New</a>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -67,46 +38,31 @@
             const display = document.getElementById("result");
 
             if (!token) {
-                display.innerHTML = "Error: No 'auth-token' cookie found. <a href='/LoginWeb'>Login first</a>.";
+                display.innerHTML = "Error: No 'auth-token' cookie found.";
                 return;
             }
 
-            display.innerHTML = "Sending POST request to /BearerAuthenticatedEcho...";
+            display.innerHTML = "Sending POST request to /BearerEcho...";
 
             try {
-                // 1. Call MapPost endpoint
-                const response = await fetch('/BearerAuthenticatedEcho', {
+                const response = await fetch('/BearerEcho', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
 
-                // 2. Handle Response
                 if (response.ok) {
-                    const contentType = response.headers.get("content-type");
-                    let resultText;
-
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        const data = await response.json();
-                        resultText = JSON.stringify(data, null, 2);
-                    } else {
-                        resultText = await response.text();
-                    }
-
-                    display.innerHTML = `
+                    const data = await response.json();
+                    display.innerHTML = s`
                         <div style="color: green;"><strong>Success (200 OK)</strong></div>
-                        <pre>${resultText}</pre>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
                     `;
                 } else {
                     const errorText = await response.text();
-                    display.innerHTML = `<div style="color: red;"><strong>Error ${response.status}</strong><br>${errorText}</div>`;
+                    display.innerHTML = s`<div style="color: red;"><strong>Error ${response.status}</strong><br>${errorText}</div>`;
                 }
-
             } catch (err) {
-                display.innerHTML = `<div style="color: red;">Network Error: ${err}</div>`;
+                display.innerHTML = s`<div style="color: red;">Network Error: ${err}</div>`;
             }
         }
     </script>

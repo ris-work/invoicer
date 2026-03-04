@@ -1,65 +1,49 @@
 ﻿@page "/Pages/LoginWeb"
-
-@functions {
-    // No server-side logic needed here
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
 <body>
     <h1>Login</h1>
-
-    <div style="max-width: 400px; padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
-
+    <div class="card" style="max-width: 400px;">
         <form id="loginForm" onsubmit="doLogin(event)">
-
             <div style="margin-bottom: 10px;">
                 <label><strong>User:</strong></label><br />
-                <input type="text" id="User" name="User" style="width: 100%;" required />
+                <input type="text" id="User" name="User" required />
             </div>
-
             <div style="margin-bottom: 10px;">
                 <label><strong>Password:</strong></label><br />
-                <input type="password" id="Password" name="Password" style="width: 100%;" required />
+                <input type="password" id="Password" name="Password" required />
             </div>
-
             <div style="margin-bottom: 10px;">
                 <label><strong>Terminal:</strong></label><br />
-                <input type="text" id="Terminal" name="Terminal" style="width: 100%;" value="WebClient" />
+                <input type="text" id="Terminal" name="Terminal" value="WebClient" />
             </div>
-
             <div style="margin-bottom: 10px;">
                 <label><strong>TOTP (Optional):</strong></label><br />
-                <input type="text" id="TOTP" name="TOTP" style="width: 100%;" placeholder="123456" />
+                <input type="text" id="TOTP" name="TOTP" placeholder="123456" />
             </div>
-
-            <button type="submit" style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer;">Login</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
         </form>
-
         <div id="statusMessage" style="margin-top: 15px; font-weight: bold;"></div>
-
-        <!-- Display the generated Base64 token for debugging -->
-        <div id="rawOutput" style="margin-top: 15px; padding: 10px; background: #eef; font-family: monospace; word-break: break-all; display: none;"></div>
+        <div id="rawOutput" class="result-box" style="display: none; font-family: monospace; word-break: break-all;"></div>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         async function doLogin(e) {
             e.preventDefault();
-
             const user = document.getElementById('User').value;
             const password = document.getElementById('Password').value;
             const terminal = document.getElementById('Terminal').value;
             const totp = document.getElementById('TOTP').value;
-
             const statusDiv = document.getElementById('statusMessage');
             const rawDiv = document.getElementById('rawOutput');
 
-            const payload = {
-                User: user,
-                Password: password,
-                Terminal: terminal,
-                TOTP: totp ? totp : null
-            };
+            const payload = { User: user, Password: password, Terminal: terminal, TOTP: totp || null };
 
             statusDiv.innerText = "Logging in...";
             statusDiv.style.color = "blue";
@@ -74,49 +58,33 @@
 
                 const data = await response.json();
 
-                // Check for errors in the JSON response
                 if (!response.ok || data.error) {
                     statusDiv.innerText = "Error: " + (data.error || response.statusText);
                     statusDiv.style.color = "red";
                 } else {
-
-                    // 1. Construct the LoginToken object matching your C# struct
-                    // We use lowercase keys because the response was lowercase,
-                    // but your Common Lib snippet "LoginToken" expects the structure.
-                    // If your server expects PascalCase ("TokenID") in the Base64, change keys below to TokenID, Token, etc.
                     const loginTokenObject = {
-                        TokenID: data.tokenID,      // Key is PascalCase
-                        Token: data.token,          // Key is PascalCase
+                        TokenID: data.tokenID,
+                        Token: data.token,
                         SecretToken: data.secretToken,
                         Error: data.error
                     };
 
-                    // 2. Serialize to JSON
                     const jsonString = JSON.stringify(loginTokenObject);
-
-                    // 3. Convert to Base64 (This matches your Common Lib: Convert.FromBase64String)
-                    // btoa() handles binary-to-ascii encoding (effectively Base64 in browser)
                     const base64Token = btoa(jsonString);
 
-                    // Debug: Show the Base64 string
                     rawDiv.style.display = "block";
                     rawDiv.innerText = "Generated Bearer Token (Base64):\n" + base64Token;
 
-                    // 4. Store the Base64 string in the cookie
-                    // This is what your server will read as BearerToken
                     document.cookie = `auth-token=${base64Token}; path=/`;
 
-                    statusDiv.innerText = "Login Successful! Full Token (Base64) stored.";
+                    statusDiv.innerText = "Login Successful! Redirecting...";
                     statusDiv.style.color = "green";
 
-                    setTimeout(() => {
-                        window.location.href = "/Pages/DumpAuth";
-                    }, 1000);
+                    setTimeout(() => { window.location.href = "/Pages/DumpAuth"; }, 1000);
                 }
-
             } catch (err) {
                 console.error(err);
-                statusDiv.innerText = "Network Error: Could not reach server.";
+                statusDiv.innerText = "Network Error.";
                 statusDiv.style.color = "red";
             }
         }
