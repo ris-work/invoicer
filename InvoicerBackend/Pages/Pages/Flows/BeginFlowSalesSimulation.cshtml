@@ -1,0 +1,46 @@
+﻿@page "/Pages/Flows/BeginFlowSalesSimulation"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Sales Simulation</title>
+</head>
+<body>
+    <p>Initializing Sales Flow...</p>
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const flowId = 'flow-' + Date.now();
+            const token = getCookie("auth-token");
+
+            const steps = [
+                "/Pages/SearchAndSelect/PiiSelect",
+                "/Pages/SearchAndSelect/ItemSelect",
+                "/Pages/Sales/SelectPrice",
+                "/Pages/Sales/EnterQuantity",
+                "/Pages/Sales/ReviewBatches"
+            ];
+
+            // Set Flow Data
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps", Value: JSON.stringify(steps) })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "0" })
+            });
+
+            window.location.href = steps[0] + "?flowId=" + flowId;
+        }
+        init();
+    </script>
+</body>
+</html>

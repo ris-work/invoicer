@@ -1,0 +1,135 @@
+﻿@page "/Pages/Sales/ReviewBatches"
+
+@*
+  FLOW: Sales Simulation
+  STEP: 5 (Review & Finalize)
+  READS: selectedItemCode, selectedPiiId, selectedQuantity, selectedPrice, isManualPrice
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Sale</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .summary {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+    <h2>Review Sale Simulation</h2>
+    <div id="status">Calculating...</div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function run() {
+            const token = getCookie("auth-token");
+            const statusDiv = document.getElementById('status');
+
+            // 1. Gather Data
+            const keys = ["selectedItemCode", "selectedPiiId", "selectedQuantity", "selectedPrice", "isManualPrice"];
+            const data = {};
+
+            for (const key of keys) {
+                const res = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: key })
+                });
+                const json = await res.json();
+                data[key] = json.value;
+            }
+
+            if (!data.selectedItemCode || !data.selectedPiiId || !data.selectedQuantity) {
+                statusDiv.innerHTML = "<span style='color:red'>Error: Missing flow data.</span>";
+                return;
+            }
+
+            // 2. Call Simulation API
+            const payload = {
+                ItemCode: parseInt(data.selectedItemCode),
+                PiiId: parseInt(data.selectedPiiId),
+                Quantity: parseFloat(data.selectedQuantity),
+                TargetPrice: data.selectedPrice ? parseFloat(data.selectedPrice) : null,
+                IsManualPrice: data.isManualPrice === 'true'
+            };
+
+            const simRes = await fetch('/SimulateSale', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!simRes.ok) {
+                statusDiv.innerHTML = `<span style='color:red'>API Error: ${await simRes.text()}</span>`;
+                return;
+            }
+
+            const result = await simRes.json();
+            render(result);
+        }
+
+        function render(result) {
+            const statusDiv = document.getElementById('status');
+            if (!result.success) {
+                statusDiv.innerHTML = `<span style='color:red'>Error: ${s`${result.message}`}</span>`;
+                return;
+            }
+
+            let html = "<h3>Batches Selected</h3>";
+            html += "<table><tr><th>Batch</th><th>Qty</th><th>Unit Price</th><th>Unit Disc</th><th>Cum. Qty</th></tr>";
+
+            result.selectedBatches.forEach(b => {
+                html += `<tr>
+                    <td>${b.batchcode}</td>
+                    <td>${b.quantity.toFixed(2)}</td>
+                    <td>${b.unitPrice.toFixed(2)}</td>
+                    <td>${b.unitDiscount.toFixed(2)}</td>
+                    <td>${b.cumulative.toFixed(2)}</td>
+                </tr>`;
+            });
+            html += "</table>";
+
+            html += `<div class="summary">
+                <p><strong>Subtotal:</strong> ${result.subTotal.toFixed(2)}</p>
+                <p><strong>Total Discount:</strong> ${result.totalDiscount.toFixed(2)}</p>
+                <p><strong>Grand Total:</strong> ${result.grandTotal.toFixed(2)}</p>
+                <hr>
+                <p><strong>Current LP Balance:</strong> ${result.currentLoyaltyPoints.toFixed(2)}</p>
+                <p><strong>LP Gained:</strong> ${result.loyaltyPointsGained.toFixed(2)}</p>
+            </div>`;
+
+            statusDiv.innerHTML = html;
+        }
+
+        run();
+    </script>
+</body>
+</html>

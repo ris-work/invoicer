@@ -1,0 +1,150 @@
+﻿@page "/Pages/Sales/SelectPrice"
+
+@*
+  FLOW: Sales Simulation
+  STEP: 3 (Price Selector)
+  SETS: selectedPrice, isManualPrice
+  READS: selectedItemCode, flowId
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Price</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select Price</h2>
+    <div id="content">Loading pricing options...</div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Get Item Code
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const dataItem = await resItem.json();
+
+            if (!dataItem.value) {
+                document.getElementById('content').innerText = "Error: No Item selected.";
+                return;
+            }
+
+            const itemCode = dataItem.value;
+
+            // Fetch Pricing Context
+            const resCtx = await fetch('/GetPricingContext', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(parseInt(itemCode))
+            });
+            const ctx = await resCtx.json();
+
+            render(ctx, itemCode, token);
+        }
+
+        function render(ctx, itemCode, token) {
+            const container = document.getElementById('content');
+            let html = "";
+
+            // 1. Show Default Price (if not manual)
+            if (!ctx.priceManual) {
+                html += `<div class="card" onclick="selectDefault(${ctx.defaultSellingPrice}, ${itemCode})">
+                    <strong>Default Selling Price</strong><br>
+                    Price: ${ctx.defaultSellingPrice.toFixed(2)}
+                </div>`;
+            }
+
+            // 2. Show Suggestions
+            if (ctx.allowPriceSuggestions && ctx.suggestedPrices && ctx.suggestedPrices.length > 0) {
+                html += "<h3>Suggested Prices</h3>";
+                ctx.suggestedPrices.forEach(p => {
+                    html += `<div class="card" onclick="selectSuggested(${p}, ${itemCode})">
+                        <strong>Suggested Price</strong>: ${p.toFixed(2)}
+                    </div>`;
+                });
+            }
+
+            // 3. Manual Input Option (Always available or if PriceManual is true)
+            html += `<div class="manual-input">
+                <h3>Manual Price</h3>
+                <input type="number" id="manualPrice" placeholder="Enter price..." step="0.01">
+                <button onclick="selectManual()">Set Manual Price</button>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        async function selectDefault(price, itemCode) {
+            await saveSelection(price, false);
+        }
+
+        async function selectSuggested(price, itemCode) {
+            await saveSelection(price, false);
+        }
+
+        async function selectManual() {
+            const val = document.getElementById('manualPrice').value;
+            if (!val) return;
+            await saveSelection(parseFloat(val), true);
+        }
+
+        async function saveSelection(price, isManual) {
+            const token = getCookie("auth-token");
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPrice", Value: price.toString() })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "isManualPrice", Value: isManual.toString() })
+            });
+
+            navigateNext();
+        }
+
+        async function navigateNext() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
+            });
+            const data = await res.json();
+
+            // Increment Index Logic (Simple version)
+            // Assuming standard navigation flow
+            window.location.href = '/Pages/Sales/EnterQuantity?flowId=' + flowId;
+        }
+
+        init();
+    </script>
+</body>
+</html>

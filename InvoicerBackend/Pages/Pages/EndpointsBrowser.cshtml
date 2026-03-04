@@ -1,0 +1,137 @@
+﻿@page "/Pages/EndpointsBrowser"
+@functions {
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Endpoints</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .badge {
+            background-color: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .schema-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .schema-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+            .schema-box h4 {
+                margin-top: 0;
+                margin-bottom: 5px;
+                color: #555;
+                font-size: 0.9em;
+            }
+
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <h2>API Endpoints Definition</h2>
+    <div id="list">Loading...</div>
+
+    <script>
+        function getCookie(n) {
+            const v = `; ${document.cookie}`;
+            const p = v.split(`; ${n}=`);
+            return p.length === 2 ? p.pop().split(';').shift() : null;
+        }
+
+        async function load() {
+            const token = getCookie("auth-token");
+            const res = await fetch('/Endpoints', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) {
+                document.getElementById('list').innerText = "Error loading endpoints: " + await res.text();
+                return;
+            }
+
+            const data = await res.json();
+            render(data);
+        }
+
+        function render(data) {
+            const container = document.getElementById('list');
+            container.innerHTML = '';
+
+            data.forEach(endpoint => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                card.innerHTML = `
+                    <div class="header">
+                        <span class="title">${endpoint.name}</span>
+                        <span class="badge">${endpoint.privilege}</span>
+                    </div>
+                    <div class="schema-container">
+                        <div class="schema-box">
+                            <h4>Input: ${endpoint.inputType}</h4>
+                            <pre>${JSON.stringify(endpoint.inputSchema, null, 2)}</pre>
+                        </div>
+                        <div class="schema-box">
+                            <h4>Output: ${endpoint.outputType}</h4>
+                            <pre>${JSON.stringify(endpoint.outputSchema, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        load();
+    </script>
+</body>
+</html>
