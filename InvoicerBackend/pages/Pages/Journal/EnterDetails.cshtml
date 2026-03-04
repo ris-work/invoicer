@@ -8,92 +8,45 @@
   REDIRECTS: /Pages/Accounts/LiveView
 *@
 
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Enter Journal Details</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 15px;
-            cursor: pointer;
-            background: #28a745;
-            color: white;
-            border: none;
-        }
-
-        .summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-            .summary p {
-                margin: 5px 0;
-            }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Enter Journal Details</h2>
-    <div id="status">Loading Flow...</div>
+    <div class="container">
+        <h2>Enter Journal Details</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="status">Loading Flow...</div>
 
-    <div id="form" style="display:none;">
-        <div class="summary">
-            <p><strong>Journal:</strong> <span id="dispJournal"></span></p>
-            <hr>
-            <p><strong>Debit Account:</strong> <span id="dispDebitName"></span> (ID: <span id="dispDebitNo"></span>)</p>
-            <p><strong>Credit Account:</strong> <span id="dispCreditName"></span> (ID: <span id="dispCreditNo"></span>)</p>
-        </div>
+        <div id="form" style="display:none;">
+            <div class="summary">
+                <p><strong>Journal:</strong> <span id="dispJournal"></span></p>
+                <hr>
+                <p><strong>Debit Account:</strong> <span id="dispDebitName"></span> (ID: <span id="dispDebitNo"></span>)</p>
+                <p><strong>Credit Account:</strong> <span id="dispCreditName"></span> (ID: <span id="dispCreditNo"></span>)</p>
+            </div>
 
-        <div class="form-group">
-            <label>Amount</label>
-            <input type="number" id="amount" step="0.01" placeholder="0.00">
-        </div>
-        <div class="form-group">
-            <label>Description</label>
-            <textarea id="description" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-            <label>Reference No (Optional)</label>
-            <input type="text" id="refNo">
-        </div>
+            <div class="form-group"><label>Amount</label><input type="number" id="amount" step="0.01" placeholder="0.00"></div>
+            <div class="form-group"><label>Description</label><textarea id="description" rows="3"></textarea></div>
+            <div class="form-group"><label>Reference No (Optional)</label><input type="text" id="refNo"></div>
 
-        <button onclick="submit()">Submit Entry</button>
+            <button class="btn btn-success" onclick="submit()">Submit Entry</button>
+        </div>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "AddJournalEntryWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
         const journalNames = ["", "General", "Purchase", "Sales", "Cash Receipts", "Cash Payments", "Purchase Returns", "Sales Returns", "Adjusting", "Reversing", "Closing"];
 
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
-
         async function init() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
 
             const loadKey = async (key) => {
                 const res = await fetch('/GetFlowData', {
@@ -110,33 +63,30 @@
             const cName = await loadKey("selectedCreditAccountName");
 
             if (!jNo || !dNo || !cNo) {
-                document.getElementById('status').innerText = "Flow Broken: Missing data.";
-                return;
+                document.getElementById('status').innerText = "Flow Broken: Missing data."; return;
             }
 
+            // Safe Assignments using s for any user-derived data (though names usually safe)
             document.getElementById('dispJournal').innerText = `${journalNames[parseInt(jNo)]} (${jNo})`;
-
-            document.getElementById('dispDebitName').innerText = dName || "N/A";
-            document.getElementById('dispDebitNo').innerText = dNo;
-
-            document.getElementById('dispCreditName').innerText = cName || "N/A";
-            document.getElementById('dispCreditNo').innerText = cNo;
+            document.getElementById('dispDebitName').textContent = dName || "N/A";
+            document.getElementById('dispDebitNo').textContent = dNo;
+            document.getElementById('dispCreditName').textContent = cName || "N/A";
+            document.getElementById('dispCreditNo').textContent = cNo;
 
             document.getElementById('status').style.display = 'none';
             document.getElementById('form').style.display = 'block';
         }
 
         async function submit() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const btn = document.querySelector("button");
-            btn.disabled = true;
-            btn.innerText = "Saving...";
+            btn.disabled = true; btn.innerText = "Saving...";
 
             try {
                 const payload = {
-                    JournalNo: parseInt(document.getElementById('dispJournal').innerText.match(/\((\d+)\)/)[1]),
-                    DebitAccountNo: parseInt(document.getElementById('dispDebitNo').innerText),
-                    CreditAccountNo: parseInt(document.getElementById('dispCreditNo').innerText),
+                    JournalNo: parseInt(document.getElementById('dispJournal').textContent.match(/\((\d+)\)/)[1]),
+                    DebitAccountNo: parseInt(document.getElementById('dispDebitNo').textContent),
+                    CreditAccountNo: parseInt(document.getElementById('dispCreditNo').textContent),
                     Amount: parseFloat(document.getElementById('amount').value),
                     Description: document.getElementById('description').value,
                     RefNo: document.getElementById('refNo').value
@@ -150,14 +100,11 @@
                 });
 
                 if (!res.ok) throw new Error(await res.text());
-
                 alert("Journal Entry Added!");
                 window.location.href = '/Pages/Accounts/LiveView';
-
             } catch (err) {
                 alert("Error: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "Submit Entry";
+                btn.disabled = false; btn.innerText = "Submit Entry";
             }
         }
 

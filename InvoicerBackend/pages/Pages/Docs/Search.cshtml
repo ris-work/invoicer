@@ -1,127 +1,38 @@
 ﻿@page "/Pages/Docs/Search"
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Search Documents</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="text"], input[type="date"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 15px;
-            cursor: pointer;
-        }
-
-        .doc-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .doc-title {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-            .doc-title a {
-                text-decoration: none;
-                color: #333;
-            }
-
-                .doc-title a:hover {
-                    color: #007bff;
-                    text-decoration: underline;
-                }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h1>Search Documents</h1>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
-    <div class="form-group">
-        <label>Search Query</label>
-        <input type="text" id="searchQuery" placeholder="Keywords (e.g. 'invoice receipt')">
-    </div>
+    <div class="form-group"><label>Query</label><input type="text" id="searchQuery"></div>
+    <div class="form-group"><label>From</label><input type="date" id="dateFrom"></div>
+    <div class="form-group"><label>To</label><input type="date" id="dateTo"></div>
+    <div class="form-group"><label><input type="checkbox" id="exactMatch"> Exact Match</label></div>
 
-    <div class="form-group">
-        <label>Date From (Optional)</label>
-        <input type="date" id="dateFrom">
-    </div>
-
-    <div class="form-group">
-        <label>Date To (Optional)</label>
-        <input type="date" id="dateTo">
-    </div>
-
-    <div class="form-group">
-        <label>
-            <input type="checkbox" id="exactMatch"> Exact Match (Full Text Search)
-        </label>
-    </div>
-
-    <button id="btnSearch">Search</button>
-
+    <button class="btn btn-primary" id="btnSearch">Search</button>
     <div id="results" style="margin-top: 20px;"></div>
 
-    <div style="margin-top: 20px;">
-        <a href="/Pages/Docs/Index">Back to List</a> |
-        <a href="/Pages/Docs/Add">Add New</a>
-    </div>
+    <div style="margin-top: 20px;"><a href="/Pages/Docs/Index">Back</a> | <a href="/Pages/Docs/Add">Add New</a></div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('query')) {
-            document.getElementById('searchQuery').value = urlParams.get('query');
-        }
-
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-
+        const requiredEndpoints = ["SearchDocuments", "SuggestDocuments"];
+        
         document.getElementById('btnSearch').addEventListener('click', async function() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const resultsDiv = document.getElementById('results');
-
-            if (!token) {
-                window.location.href = '/Pages/LoginWeb';
-                return;
-            }
-
             const query = document.getElementById('searchQuery').value;
             const fromVal = document.getElementById('dateFrom').value;
             const toVal = document.getElementById('dateTo').value;
             const isExact = document.getElementById('exactMatch').checked;
 
-            if (!query && !fromVal && !toVal) {
-                alert("Please enter a search term or date range.");
-                return;
-            }
-
+            if (!query && !fromVal && !toVal) { alert("Input required."); return; }
             resultsDiv.innerHTML = "Searching...";
 
             const payload = {
@@ -133,46 +44,28 @@
             const endpoint = isExact ? '/SearchDocuments' : '/SuggestDocuments';
 
             try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                const res = await fetch(endpoint, {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                if (!res.ok) throw new Error("Failed");
+                const docs = await res.json();
 
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}`);
-                }
-
-                const docs = await response.json();
-
-                if (docs.length === 0) {
-                    resultsDiv.innerHTML = "<p>No results found.</p>";
-                    return;
-                }
+                if (docs.length === 0) { resultsDiv.innerHTML = "<p>No results.</p>"; return; }
 
                 let html = `<h3>${docs.length} Result(s)</h3>`;
                 docs.forEach(doc => {
-                    const date = new Date(doc.createdAt).toLocaleString();
-                    // Link to Index with ID
-                    html += `
+                    html += s`
                         <div class="doc-card">
-                            <div class="doc-title">
-                                <a href="/Pages/Docs/Index?id=${doc.refId}">${doc.refText || 'Untitled'}</a>
-                            </div>
-                            <div>ID: ${doc.refId} | Created: ${date}</div>
-                        </div>
-                    `;
+                            <div class="doc-title"><a href="/Pages/Docs/Index?id=${doc.refId}">${doc.refText || 'Untitled'}</a></div>
+                            <div>ID: ${doc.refId} | Created: ${new Date(doc.createdAt).toLocaleString()}</div>
+                        </div>`;
                 });
                 resultsDiv.innerHTML = html;
-
-            } catch (err) {
-                resultsDiv.innerHTML = `<p style="color: red;">Search failed: ${err.message}</p>`;
-                console.error(err);
-            }
+            } catch (err) { resultsDiv.innerHTML = s`<p style="color:red;">Error: ${err.message}</p>`; }
         });
+
+        checkPagePermissions(requiredEndpoints);
     </script>
 </body>
 </html>

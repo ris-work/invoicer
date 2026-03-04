@@ -7,55 +7,30 @@
 *@
 
 @functions { }
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Review Sale</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .summary {
-            margin-top: 20px;
-            padding: 10px;
-            background: #e8f5e9;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Review Sale Simulation</h2>
-    <div id="status">Calculating...</div>
+    <div class="container">
+        <h2>Review Sale Simulation</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="status">Calculating...</div>
+    </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SimulateSale"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function run() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
             const statusDiv = document.getElementById('status');
 
-            // 1. Gather Data
             const keys = ["selectedItemCode", "selectedPiiId", "selectedQuantity", "selectedPrice", "isManualPrice"];
             const data = {};
 
@@ -69,11 +44,9 @@
             }
 
             if (!data.selectedItemCode || !data.selectedPiiId || !data.selectedQuantity) {
-                statusDiv.innerHTML = "<span style='color:red'>Error: Missing flow data.</span>";
-                return;
+                statusDiv.innerHTML = "<span style='color:red'>Error: Missing flow data.</span>"; return;
             }
 
-            // 2. Call Simulation API
             const payload = {
                 ItemCode: parseInt(data.selectedItemCode),
                 PiiId: parseInt(data.selectedPiiId),
@@ -88,26 +61,22 @@
             });
 
             if (!simRes.ok) {
-                statusDiv.innerHTML = `<span style='color:red'>API Error: ${await simRes.text()}</span>`;
-                return;
+                statusDiv.innerHTML = s`<span style='color:red'>API Error: ${await simRes.text()}</span>`; return;
             }
 
-            const result = await simRes.json();
-            render(result);
+            render(await simRes.json());
         }
 
         function render(result) {
             const statusDiv = document.getElementById('status');
             if (!result.success) {
-                statusDiv.innerHTML = `<span style='color:red'>Error: ${s`${result.message}`}</span>`;
-                return;
+                statusDiv.innerHTML = s`<span style='color:red'>Error: ${result.message}</span>`; return;
             }
 
-            let html = "<h3>Batches Selected</h3>";
-            html += "<table><tr><th>Batch</th><th>Qty</th><th>Unit Price</th><th>Unit Disc</th><th>Cum. Qty</th></tr>";
+            let html = "<h3>Batches Selected</h3><table><tr><th>Batch</th><th>Qty</th><th>Unit Price</th><th>Unit Disc</th><th>Cum. Qty</th></tr>";
 
             result.selectedBatches.forEach(b => {
-                html += `<tr>
+                html += s`<tr>
                     <td>${b.batchcode}</td>
                     <td>${b.quantity.toFixed(2)}</td>
                     <td>${b.unitPrice.toFixed(2)}</td>
@@ -117,7 +86,7 @@
             });
             html += "</table>";
 
-            html += `<div class="summary">
+            html += s`<div class="summary">
                 <p><strong>Subtotal:</strong> ${result.subTotal.toFixed(2)}</p>
                 <p><strong>Total Discount:</strong> ${result.totalDiscount.toFixed(2)}</p>
                 <p><strong>Grand Total:</strong> ${result.grandTotal.toFixed(2)}</p>

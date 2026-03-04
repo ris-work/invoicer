@@ -7,64 +7,29 @@
   READS: flowId, FlowSteps
 *@
 
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Select Journal</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-            .card:hover {
-                background: #f0f0f0;
-            }
-
-        .current-bar {
-            background: #e3f2fd;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #90caf9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-            .current-bar button {
-                padding: 5px 10px;
-                cursor: pointer;
-                background: #1976d2;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Select Journal Type</h2>
+    <div class="container">
+        <h2>Select Journal Type</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
-    <!-- Current Selection Bar -->
-    <div id="currentBar" style="display:none;" class="current-bar">
-        <div>
-            <strong>Current:</strong> <span id="currentName"></span>
+        <div id="currentBar" style="display:none;" class="current-bar">
+            <div><strong>Current:</strong> <span id="currentName"></span></div>
+            <button onclick="proceedWithCurrent()">Proceed</button>
         </div>
-        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+
+        <div id="list"></div>
     </div>
 
-    <div id="list"></div>
-
+    <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData"];
         const journals = [
             {id:1, name:"General Journal"}, {id:2, name:"Purchase Journal"}, {id:3, name:"Sales Journal"},
             {id:4, name:"Cash Receipts Journal"}, {id:5, name:"Cash Payments Journal"},
@@ -74,12 +39,11 @@
 
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function init() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
 
-            // Check if already set
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo" })
@@ -90,7 +54,7 @@
                 const id = parseInt(data.value);
                 const j = journals.find(x => x.id === id);
                 if(j) {
-                    document.getElementById('currentName').innerText = j.name;
+                    document.getElementById('currentName').textContent = j.name;
                     document.getElementById('currentBar').style.display = 'flex';
                 }
             }
@@ -99,28 +63,25 @@
 
         function render() {
             document.getElementById('list').innerHTML = journals.map(j =>
-                `<div class="card" onclick="select(${j.id})"><strong>${j.id}</strong> - ${j.name}</div>`
+                s`<div class="card" onclick="select(${j.id})"><strong>${j.id}</strong> - ${j.name}</div>`
             ).join('');
         }
 
         async function select(id) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedJournalNo", Value: id.toString() })
             });
-
-            const defaultNext = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
-            await navigateNext(defaultNext);
+            await navigateNext('/Pages/Journal/SelectDebitAccount?flowId=' + flowId);
         }
 
         async function proceedWithCurrent() {
-            const defaultNext = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
-            await navigateNext(defaultNext);
+            await navigateNext('/Pages/Journal/SelectDebitAccount?flowId=' + flowId);
         }
 
         async function navigateNext(defaultUrl) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
@@ -130,7 +91,6 @@
             if (data.value) {
                 const steps = JSON.parse(data.value);
                 let currentIndex = parseInt(await getCurrentStepIndex(token));
-
                 currentIndex++;
                 if (currentIndex < steps.length) {
                     await fetch('/SetFlowData', {

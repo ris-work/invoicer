@@ -1,33 +1,33 @@
 ﻿@page "/Pages/Pii/Search"
-
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Search PII</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-        }</style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Search PII</h2>
-    <input type="text" id="query" placeholder="Name or Email..." oninput="search()">
-    <div id="results"></div>
-    <a href="/Pages/Pii/Add">Add New PII</a>
+    <div class="container">
+        <h2>Search PII</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
+        <div class="form-group">
+            <input type="text" id="query" placeholder="Name or Email..." oninput="search()">
+        </div>
+        <div id="results"></div>
+        <div style="margin-top:20px;"><a href="/Pages/Pii/Add" class="btn btn-primary">Add New PII</a></div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
     <script>
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const requiredEndpoints = ["SearchPiiWeb"];
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+        }
+
         async function search() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('query').value;
             if(!q) return;
             const res = await fetch('/SearchPiiWeb', {
@@ -35,7 +35,7 @@
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(p => `
+            document.getElementById('results').innerHTML = data.map(p => s`
                 <div class="card">
                     <strong>${p.name}</strong> (${p.isCompany ? 'Company' : 'Individual'})<br>
                     <small>${p.email || 'No Email'}</small>
@@ -43,6 +43,8 @@
                 </div>
             `).join('');
         }
+
+        init();
     </script>
 </body>
 </html>

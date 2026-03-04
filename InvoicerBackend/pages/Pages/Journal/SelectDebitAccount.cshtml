@@ -6,75 +6,39 @@
   READS: flowId, FlowSteps
 *@
 
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Select Debit Account</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
-
-        .current-bar {
-            background: #e3f2fd;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #90caf9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-            .current-bar button {
-                padding: 5px 10px;
-                cursor: pointer;
-                background: #1976d2;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Select Debit Account</h2>
+    <div class="container">
+        <h2>Select Debit Account</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
-    <!-- Current Selection Bar -->
-    <div id="currentBar" style="display:none;" class="current-bar">
-        <div>
-            <strong>Current:</strong> <span id="currentName"></span> (<span id="currentId"></span>)
+        <div id="currentBar" style="display:none;" class="current-bar">
+            <div><strong>Current:</strong> <span id="currentName"></span> (<span id="currentId"></span>)</div>
+            <button onclick="proceedWithCurrent()">Proceed</button>
         </div>
-        <button onclick="proceedWithCurrent()">Proceed with Current</button>
+
+        <div class="form-group">
+            <input type="text" id="query" placeholder="Search Account Name or No..." oninput="search()">
+        </div>
+        <div id="results"></div>
     </div>
 
-    <input type="text" id="query" placeholder="Search Account Name or No..." oninput="search()">
-    <div id="results"></div>
-
+    <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "SearchAccountsWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function init() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
 
-            // Check if already set
             const resId = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountNo" })
@@ -88,21 +52,21 @@
                 });
                 const dataName = await resName.json();
 
-                document.getElementById('currentId').innerText = dataId.value;
-                document.getElementById('currentName').innerText = dataName.value || "Unknown";
+                document.getElementById('currentId').textContent = dataId.value;
+                document.getElementById('currentName').textContent = dataName.value || "Unknown";
                 document.getElementById('currentBar').style.display = 'flex';
             }
         }
 
         async function search() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('query').value;
             const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(a => `
+            document.getElementById('results').innerHTML = data.map(a => s`
                 <div class="card" onclick="select(${a.accountNo}, '${a.accountName.replace(/'/g, "\\'")}')">
                     <strong>${a.accountName}</strong> (ID: ${a.accountNo})
                 </div>
@@ -110,7 +74,7 @@
         }
 
         async function select(id, name) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountNo", Value: id.toString() })
@@ -119,18 +83,15 @@
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountName", Value: name })
             });
-
-            const defaultNext = '/Pages/Journal/SelectCreditAccount?flowId=' + flowId;
-            await navigateNext(defaultNext);
+            await navigateNext('/Pages/Journal/SelectCreditAccount?flowId=' + flowId);
         }
 
         async function proceedWithCurrent() {
-            const defaultNext = '/Pages/Journal/SelectCreditAccount?flowId=' + flowId;
-            await navigateNext(defaultNext);
+            await navigateNext('/Pages/Journal/SelectCreditAccount?flowId=' + flowId);
         }
 
         async function navigateNext(defaultUrl) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps" })
@@ -140,7 +101,6 @@
             if (data.value) {
                 const steps = JSON.parse(data.value);
                 let currentIndex = parseInt(await getCurrentStepIndex(token));
-
                 currentIndex++;
                 if (currentIndex < steps.length) {
                     await fetch('/SetFlowData', {

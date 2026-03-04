@@ -7,35 +7,35 @@
 *@
 
 @functions { }
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Enter Quantity</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        input {
-            padding: 8px;
-            font-size: 1.2em;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
-    <h2>Enter Quantity</h2>
-    <input type="number" id="qty" placeholder="Quantity" step="0.01">
-    <button onclick="save()">Next</button>
+    <div class="container">
+        <h2>Enter Quantity</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
+        <div class="form-group">
+            <input type="number" id="qty" placeholder="Quantity" step="0.01" class="input-lg">
+        </div>
+        <button class="btn btn-primary" onclick="save()">Next</button>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["SetFlowData"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+        }
 
         async function save() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const qty = document.getElementById('qty').value;
             if (!qty) return;
 
@@ -46,6 +46,8 @@
 
             window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
         }
+
+        init();
     </script>
 </body>
 </html>

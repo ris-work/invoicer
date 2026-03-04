@@ -605,3 +605,130 @@ td.start-qty, td.end-qty {
     color: #666;
     margin-top: 5px;
 }
+
+
+/* Docs */
+.doc-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    background: #fff;
+}
+
+.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.doc-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    flex-grow: 1;
+}
+
+.doc-meta {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.doc-image {
+    max-width: 100%;
+    max-height: 300px;
+    margin-top: 10px;
+    border: 1px solid #eee;
+    display: block;
+}
+
+.transcription-area {
+    width: 100%;
+    height: 200px;
+    display: none;
+    font-size: 0.95em;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    resize: vertical;
+    white-space: pre-wrap;
+}
+
+    .transcription-area.json-mode {
+        font-family: monospace;
+        font-size: 0.85em;
+    }
+
+.transcription-controls {
+    margin-top: 5px;
+    display: none;
+    gap: 10px;
+}
+
+.transcription-list {
+    margin-top: 10px;
+}
+
+.transcription-item {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+    .transcription-item a {
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+.trans-meta {
+    color: #888;
+    font-size: 0.85em;
+    margin-left: 5px;
+}
+
+/* Add to u.css */
+
+/* Flow Navigation Bar */
+.current-bar {
+    background: #e3f2fd;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #90caf9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .current-bar button {
+        padding: 5px 10px;
+        cursor: pointer;
+        background: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 3px;
+    }
+
+/* Journal Summary Box */
+.summary {
+    background: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+    .summary p {
+        margin: 5px 0;
+    }
+
+/* Manual Input Area (Sales) */
+.manual-input {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}

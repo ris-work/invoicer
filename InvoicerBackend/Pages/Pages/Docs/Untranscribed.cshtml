@@ -1,43 +1,16 @@
 ﻿@page "/Pages/Docs/Untranscribed"
-
 @functions {
     public string ErrorMessage { get; set; } = "";
 }
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Untranscribed Documents</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .doc-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #fff; }
-        .doc-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .doc-title { font-weight: bold; font-size: 1.1em; flex-grow: 1; }
-        .doc-meta { font-size: 0.9em; color: #666; margin-top: 5px; }
-        .doc-image { max-width: 100%; max-height: 300px; margin-top: 10px; border: 1px solid #eee; display: block; }
-        .btn { padding: 6px 12px; text-decoration: none; color: white; border-radius: 4px; border: none; cursor: pointer; font-size: 0.9em; }
-        .btn-primary { background: #007bff; }
-        .btn-warning { background: #ffc107; color: #000; }
-        .transcription-area {
-            margin-top: 10px;
-            width: 100%;
-            height: 200px;
-            display: none;
-            font-family: sans-serif;
-            font-size: 0.95em;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background: #f9f9f9;
-            resize: vertical;
-            white-space: pre-wrap;
-        }
-        .transcription-list { margin-top: 10px; }
-        .transcription-item { margin-bottom: 5px; font-size: 0.9em; }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h1>Untranscribed Documents</h1>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
@@ -46,208 +19,56 @@
 
     <div id="docList">Loading...</div>
 
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-        <a href="/Pages/Docs/Index" class="btn btn-primary">Back to List</a> |
-        <a href="/Pages/Docs/Search" class="btn btn-warning">Search</a>
+    <div style="margin-top: 20px;">
+        <a href="/Pages/Docs/Index" class="btn btn-primary">Back to List</a>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
+        const requiredEndpoints = ["GetUntranscribed", "ReTranscribeRefDoc", "GetTranscriptions"];
 
         async function loadDocs() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const listDiv = document.getElementById('docList');
-
-            if (!token) {
-                window.location.href = '/Pages/LoginWeb';
-                return;
-            }
-
             try {
-                const response = await fetch('/GetUntranscribed', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({})
+                const res = await fetch('/GetUntranscribed', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({})
                 });
+                if (!res.ok) throw new Error("Failed");
+                const docs = await res.json();
 
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-
-                const docs = await response.json();
-
-                if (docs.length === 0) {
-                    listDiv.innerHTML = "<p>No untranscribed documents found.</p>";
-                    return;
-                }
+                if (docs.length === 0) { listDiv.innerHTML = "<p>None found.</p>"; return; }
 
                 let html = '';
                 docs.forEach(doc => {
-                    const date = new Date(doc.createdAt).toLocaleString();
-                    const transAreaId = `trans-${doc.refId}`;
-                    const transListId = `list-${doc.refId}`;
-
-                    html += `
+                    html += s`
                         <div class="doc-card" id="card-${doc.refId}">
                             <div class="doc-header">
                                 <div class="doc-title">${doc.refText || 'Untitled'}</div>
-                                <button class="btn btn-warning" onclick="retranscribe(${doc.refId})">Retranscribe</button>
-                                <button class="btn btn-primary" onclick="toggleTranscriptions(${doc.refId})">View Transcriptions</button>
-                                </div>
+                                <button class="btn btn-warning" onclick="retranscribe(${doc.refId})">Transcribe</button>
                             </div>
-                            <div class="doc-meta">ID: ${doc.refId} | Created: ${date}</div>
-
-                            <div id="${transListId}" class="transcription-list" style="display:none;"></div>
-                            <textarea id="${transAreaId}" class="transcription-area" readonly></textarea>
-                        </div>
-                    `;
+                            <div class="doc-meta">ID: ${doc.refId}</div>
+                            <img src="data:image/jpeg;base64,${doc.refImage}" class="doc-image" />
+                        </div>`;
                 });
                 listDiv.innerHTML = html;
-
-            } catch (err) {
-                listDiv.innerHTML = `<p style="color: red;">Failed to load documents: ${err.message}</p>`;
-                console.error(err);
-            }
+            } catch (err) { listDiv.innerHTML = s`<p style="color:red;">Error: ${err.message}</p>`; }
         }
 
         async function retranscribe(refId) {
-            const token = getCookie("auth-token");
-            if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
-
+            const token = await getCookie("auth-token");
             const card = document.getElementById(`card-${refId}`);
-            const statusId = `status-${refId}`;
+            const btn = card.querySelector("button");
+            btn.disabled = true; btn.innerText = "Processing...";
 
-            const existingStatus = document.getElementById(statusId);
-            if (existingStatus) existingStatus.remove();
-
-            const status = document.createElement('div');
-            status.id = statusId;
-            status.innerText = "Transcribing...";
-            status.style.color = "blue";
-            status.style.marginTop = "10px";
-            card.appendChild(status);
-
-            try {
-                const payload = {
-                    RefDoc: refId,
-                    TranscriberLlmName: "z-ai/glm-4.6v"
-                };
-
-                const response = await fetch('/ReTranscribeRefDoc', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const err = await response.text();
-                    throw new Error(err);
-                }
-
-                const result = await response.json();
-
-                // Remove status on success
-                const statusEl = document.getElementById(statusId);
-                if (statusEl) statusEl.remove();
-
-                loadDocs(); // Reload to show updated status (transcribed or moved to other list)
-                alert("Transcription complete!");
-
-            } catch (err) {
-                const statusEl = document.getElementById(statusId);
-                if (statusEl) {
-                    statusEl.innerText = "Error: " + err.message;
-                    statusEl.style.color = "red";
-                }
-                console.error(err);
-            }
+            const res = await fetch('/ReTranscribeRefDoc', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ RefDoc: refId, TranscriberLlmName: "z-ai/glm-4.6v" })
+            });
+            if (res.ok) { alert("Done"); loadDocs(); } else { alert("Error"); btn.disabled = false; btn.innerText = "Transcribe"; }
         }
 
-        async function toggleTranscriptions(refId) {
-            const listDiv = document.getElementById(`list-${refId}`);
-            const textArea = document.getElementById(`trans-${refId}`);
-
-            if (listDiv.style.display === 'block') {
-                listDiv.style.display = 'none';
-                textArea.style.display = 'none';
-                return;
-            }
-
-            await loadTranscriptions(refId);
-        }
-
-        async function loadTranscriptions(refId) {
-            const token = getCookie("auth-token");
-            const listDiv = document.getElementById(`list-${refId}`);
-            const textArea = document.getElementById(`trans-${refId}`);
-
-            if (!token) return;
-
-            listDiv.innerHTML = "Loading...";
-            listDiv.style.display = 'block';
-            textArea.style.display = 'none';
-
-            try {
-                const response = await fetch('/GetTranscriptions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ RefId: refId })
-                });
-
-                if (!response.ok) throw new Error("Failed to load transcriptions");
-
-                const transcriptions = await response.json();
-
-                if (transcriptions.length === 0) {
-                    listDiv.innerHTML = "<em>No transcriptions found.</em>";
-                    return;
-                }
-
-                let html = '<strong>Select a transcription to view:</strong><br>';
-                transcriptions.forEach((t, index) => {
-                    const date = new Date(t.transcribedAt).toLocaleString();
-                    html += `<div class="transcription-item">
-                        <a onclick="showTranscription(${refId}, ${index})">[${date}] ${t.transcriberLlmName}</a>
-                    </div>`;
-
-                    if (!listDiv.dataset.jsonData) listDiv.dataset.jsonData = JSON.stringify(transcriptions);
-                });
-
-                listDiv.innerHTML = html;
-
-            } catch (err) {
-                listDiv.innerHTML = "Error loading transcriptions.";
-                console.error(err);
-            }
-        }
-
-        function showTranscription(refId, index) {
-            const listDiv = document.getElementById(`list-${refId}`);
-            const textArea = document.getElementById(`trans-${refId}`);
-
-            if (!listDiv.dataset.jsonData) return;
-
-            const transcriptions = JSON.parse(listDiv.dataset.jsonData);
-            const selected = transcriptions[index];
-
-            // Ensure controls and textarea are visible
-            listDiv.style.display = 'block';
-            textArea.style.display = 'block';
-
-            textArea.value = selected.transcribedContent || "No transcriptions found.";
-        }
-
+        checkPagePermissions(requiredEndpoints);
         loadDocs();
     </script>
 </body>

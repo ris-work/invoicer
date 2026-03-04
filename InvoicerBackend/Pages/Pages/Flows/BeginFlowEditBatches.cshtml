@@ -7,27 +7,17 @@
   READS: N/A
   REDIRECTS: /Pages/SearchAndSelect/ItemSelect
 *@
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Starting Flow...</title>
 </head>
 <body>
-    <div style="font-family: sans-serif; padding: 20px; text-align: center;">
-        <p>Initializing Batch Editor...</p>
-    </div>
+    <div class="container"><p>Initializing Batch Editor...</p></div>
     <script>
-        // 1. Generate a unique Flow ID
-        const flowId = 'flow-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
-
-        // 2. Define the target redirect after selection
+        const flowId = 'flow-' + Date.now();
         const redirTo = '/Pages/Batches/Edit';
-
-        // 3. Redirect to Item Selection with flow parameters
         window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
     </script>
 </body>
