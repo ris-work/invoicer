@@ -1,34 +1,15 @@
 ﻿@page "/Pages/Accounts/Edit"
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Edit Account</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }</style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Edit Account</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
+
     <div id="status">Loading...</div>
     <div id="form" style="display:none;">
         <input type="hidden" id="accNo">
@@ -41,17 +22,18 @@
         <div class="form-group"><label>Allow Credit</label><input type="checkbox" id="allowCredit"></div>
         <div class="form-group"><label>Allow Debit</label><input type="checkbox" id="allowDebit"></div>
 
-        <button onclick="save()">Save</button>
+        <button class="btn btn-primary" onclick="save()">Save</button>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const accNo = params.get('id');
         let original = null;
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const requiredEndpoints = ["SearchAccountsWeb", "EditAccountWeb"];
 
         async function load() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: accNo })
@@ -74,7 +56,7 @@
         }
 
         async function save() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const payload = { AccountNo: parseInt(accNo) };
 
             if(document.getElementById('name').value !== original.accountName) payload.AccountName = document.getElementById('name').value;
@@ -93,6 +75,8 @@
             if(res.ok) { alert("Saved"); location.reload(); }
             else alert("Error: " + await res.text());
         }
+
+        checkPagePermissions(requiredEndpoints);
         load();
     </script>
 </body>

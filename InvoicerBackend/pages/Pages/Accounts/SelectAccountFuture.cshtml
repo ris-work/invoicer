@@ -1,57 +1,33 @@
 ﻿@page "/Pages/Accounts/SelectAccountFuture"
-
-@*
-  FLOW: Future Accounts View
-  STEP: 2 (Selector)
-  SETS: selectedAccountNo, selectedAccountName
-  READS: flowId
-  REDIRECTS: /Pages/Accounts/LiveViewFutureAccounts
-*@
-
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Select Account</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }</style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Select Account to View Future</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
+
     <input type="text" id="query" placeholder="Search Account..." oninput="search()">
     <div id="results"></div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const requiredEndpoints = ["SearchAccountsWeb", "SetFlowData"];
 
         async function search() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('query').value;
             const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(a => `
+            document.getElementById('results').innerHTML = data.map(a => s`
                 <div class="card" onclick="select(${a.accountNo}, '${a.accountName.replace(/'/g, "\\'")}')">
                     <strong>${a.accountName}</strong> (${a.accountNo})
                 </div>
@@ -59,7 +35,7 @@
         }
 
         async function select(id, name) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo", Value: id.toString() })
@@ -70,6 +46,8 @@
             });
             window.location.href = '/Pages/Accounts/LiveViewFutureAccounts?flowId=' + flowId;
         }
+
+        checkPagePermissions(requiredEndpoints);
     </script>
 </body>
 </html>

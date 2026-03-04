@@ -1,26 +1,36 @@
 ﻿@page "/Pages/Accounts/Search"
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
-<head><title>Search Accounts</title><style>body{font-family:sans-serif;padding:20px;} .card{border:1px solid #ccc; padding:10px; margin-bottom:10px;}</style></head>
+<head>
+    <title>Search Accounts</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
 <body>
     <h2>Search Accounts</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
+
     <input type="text" id="query" placeholder="Account Name..." oninput="search()">
     <div id="results"></div>
-    <a href="/Pages/Accounts/Add">Add New</a> | <a href="/Pages/Flows/BeginFlowLinkAccount">Link Account to PII</a>
 
+    <div style="margin-top: 20px;">
+        <a href="/Pages/Accounts/Add" class="btn btn-primary">Add New</a>
+        <a href="/Pages/Flows/BeginFlowLinkAccount" class="btn btn-secondary">Link Account to PII</a>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
     <script>
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const requiredEndpoints = ["SearchAccountsWeb"];
+
         async function search() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('query').value;
             const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(a => `
+            document.getElementById('results').innerHTML = data.map(a => s`
                 <div class="card">
                     <strong>${a.accountName}</strong> (ID: ${a.accountNo})<br>
                     <small>PII ID: ${a.accountPii || 'None'}</small>
@@ -28,6 +38,9 @@
                 </div>
             `).join('');
         }
+
+        checkPagePermissions(requiredEndpoints);
+        search();
     </script>
 </body>
 </html>

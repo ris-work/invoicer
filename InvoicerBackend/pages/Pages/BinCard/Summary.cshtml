@@ -1,214 +1,53 @@
 ﻿@page "/Pages/BinCard/Summary"
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Bin Card Summary</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .filter-bar {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-size: 0.9em;
-            margin-bottom: 3px;
-            font-weight: bold;
-        }
-
-        input, select {
-            padding: 5px;
-            min-width: 150px;
-        }
-
-        button {
-            padding: 8px 15px;
-            cursor: pointer;
-        }
-
-        /* Table Styles */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            position: sticky;
-            top: 0;
-        }
-
-        /* Zebra Striping */
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        /* Hover Highlight */
-        tbody tr:hover {
-            background-color: #f1f1f1;
-            cursor: default;
-        }
-
-        /* Specific Columns */
-        td.item-code {
-            text-align: left;
-            font-weight: bold;
-            background: #f0f0f0;
-            position: sticky;
-            left: 0;
-            z-index: 1;
-        }
-
-        td.item-name {
-            text-align: left;
-            font-weight: bold;
-            background: #f0f0f0;
-            position: sticky;
-            left: 80px;
-            z-index: 1;
-        }
-
-        td.period-col {
-            text-align: left;
-            font-weight: bold;
-            background: #fff;
-            position: sticky;
-            left: 250px;
-            z-index: 1;
-        }
-
-        td.start-qty, td.end-qty {
-            font-weight: bold;
-            background-color: #e8f5e9;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Bin Card Summary</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
     <div class="filter-bar">
         <div class="filter-row">
-            <div class="filter-group">
-                <label>Tag (Dropdown)</label>
-                <select id="filterTagSelect" onchange="syncTagInput()"><option value="">All Tags</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Or Search Tag (Datalist)</label>
-                <input list="tagList" id="filterTagInput" placeholder="Type to search...">
-                <datalist id="tagList"></datalist>
-            </div>
+            <div class="filter-group"><label>Tag</label><select id="filterTagSelect" onchange="syncTagInput()"><option value="">All</option></select></div>
+            <div class="filter-group"><label>Or Search</label><input list="tagList" id="filterTagInput"><datalist id="tagList"></datalist></div>
         </div>
         <div class="filter-row">
-            <div class="filter-group">
-                <label>Period Type</label>
-                <select id="periodType" onchange="updateHeaderLabel()">
-                    <option value="monthly" selected>Monthly</option>
-                    <option value="daily">Daily</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>From</label>
-                <input type="date" id="filterFrom">
-            </div>
-            <div class="filter-group">
-                <label>To</label>
-                <input type="date" id="filterTo">
-            </div>
-            <div class="filter-group" style="justify-content: flex-end;">
-                <button onclick="loadData()">Generate Report</button>
-            </div>
+            <div class="filter-group"><label>Period</label><select id="periodType"><option value="monthly">Monthly</option><option value="daily">Daily</option></select></div>
+            <div class="filter-group"><label>From</label><input type="date" id="filterFrom"></div>
+            <div class="filter-group"><label>To</label><input type="date" id="filterTo"></div>
+            <div class="filter-group" style="justify-content: flex-end;"><button class="btn btn-primary" onclick="loadData()">Generate</button></div>
         </div>
     </div>
-
     <div id="gridContainer" class="table-container"></div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
-        const ACTION_ORDER = [
-            "purchase", "production", "purchasereturn",
-            "sale", "salesreturn", "consumption", "issue",
-            "adjustment", "deprecated"
-        ];
-
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
+        const requiredEndpoints = ["GetAllTags", "GetBinCardSummary"];
+        const ACTION_ORDER = ["purchase", "production", "purchasereturn", "sale", "salesreturn", "consumption", "issue", "adjustment", "deprecated"];
 
         async function init() {
-            const token = getCookie("auth-token");
-            const res = await fetch('/GetAllTags', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetAllTags', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: JSON.stringify({}) });
             const tags = await res.json();
-
             const select = document.getElementById('filterTagSelect');
-            select.innerHTML = '<option value="">All Tags</option>' + tags.map(t => `<option value="${t.tag}">${t.tag}</option>`).join('');
-            document.getElementById('tagList').innerHTML = tags.map(t => `<option value="${t.tag}">`).join('');
-
+            select.innerHTML = '<option value="">All</option>' + tags.map(t => s`<option value="${t.tag}">${t.tag}</option>`).join('');
+            document.getElementById('tagList').innerHTML = tags.map(t => s`<option value="${t.tag}">`).join('');
+            // Set default dates
             const now = new Date();
             document.getElementById('filterTo').value = now.toISOString().split('T')[0];
             now.setMonth(now.getMonth() - 3);
             document.getElementById('filterFrom').value = now.toISOString().split('T')[0];
-
-            updateHeaderLabel();
         }
-
-        function syncTagInput() {
-            document.getElementById('filterTagInput').value = document.getElementById('filterTagSelect').value;
-        }
-
-        function updateHeaderLabel() {
-            // We can't easily update the existing table header without re-rendering,
-            // but we can store the label for the next render.
-        }
+        function syncTagInput() { document.getElementById('filterTagInput').value = document.getElementById('filterTagSelect').value; }
 
         async function loadData() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const container = document.getElementById('gridContainer');
-
-            let tagVal = document.getElementById('filterTagSelect').value;
-            if (!tagVal) tagVal = document.getElementById('filterTagInput').value;
+            const tagVal = document.getElementById('filterTagSelect').value || document.getElementById('filterTagInput').value;
 
             const payload = {
                 PeriodType: document.getElementById('periodType').value,
@@ -216,102 +55,51 @@
                 To: document.getElementById('filterTo').value ? new Date(document.getElementById('filterTo').value).toISOString() : null,
                 Tags: tagVal ? [tagVal] : null
             };
-
-            container.innerHTML = "Aggregating data...";
-
+            container.innerHTML = "Aggregating...";
             try {
-                const res = await fetch('/GetBinCardSummary', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
+                const res = await fetch('/GetBinCardSummary', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!res.ok) throw new Error(await res.text());
-                const data = await res.json(); // { Periods: [], Actions: [] }
-
-                renderPivotTable(data);
-
-            } catch (err) {
-                container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-            }
+                renderPivotTable(await res.json());
+            } catch (err) { container.innerHTML = s`<p style="color:red;">Error: ${err.message}</p>`; }
         }
 
         function renderPivotTable(data) {
             const container = document.getElementById('gridContainer');
             const periods = data.periods;
             const actions = data.actions;
+            if (periods.length === 0) { container.innerHTML = "<p>No data.</p>"; return; }
 
-            if (periods.length === 0) {
-                container.innerHTML = "<p>No data found.</p>";
-                return;
-            }
-
-            // Determine Period Label
-            const pType = document.getElementById('periodType').value;
-            const periodLabel = pType === 'daily' ? 'Date' : (pType === 'yearly' ? 'Year' : 'Period');
-
-            // 1. Build Map: Key -> "ItemCode|Period" -> { Start, End, Actions: {} }
             const pivotMap = {};
-
-            // Populate Start/End
             periods.forEach(p => {
                 const key = `${p.itemcode}|${p.period}`;
                 if (!pivotMap[key]) pivotMap[key] = { ItemCode: p.itemcode, ItemName: p.itemName, Period: p.period, Actions: {} };
-                pivotMap[key].StartQty = p.startQty;
-                pivotMap[key].EndQty = p.endQty;
+                pivotMap[key].StartQty = p.startQty; pivotMap[key].EndQty = p.endQty;
             });
-
-            // Populate Actions
             actions.forEach(a => {
                 const key = `${a.itemcode}|${a.period}`;
                 if (!pivotMap[key]) pivotMap[key] = { ItemCode: a.itemcode, ItemName: a.itemName, Period: a.period, Actions: {} };
-
                 if (!pivotMap[key].Actions[a.actionType]) pivotMap[key].Actions[a.actionType] = 0;
                 pivotMap[key].Actions[a.actionType] += a.totalUnits;
             });
 
-            // 2. Build HTML
-            let html = '<table>';
+            let html = '<table><thead><tr><th>Item Code</th><th>Item Name</th><th>Period</th><th>Start</th>';
+            ACTION_ORDER.forEach(act => html += s`<th>${act}</th>`);
+            html += '<th>End</th></tr></thead><tbody>';
 
-            // Header
-            html += '<thead><tr>';
-            html += '<th>Item Code</th>';
-            html += '<th>Item Name</th>';
-            html += `<th>${periodLabel}</th>`; // Dynamic Label
-            html += '<th>Start Qty</th>';
-            ACTION_ORDER.forEach(act => { html += `<th>${act}</th>`; });
-            html += '<th>End Qty</th>';
-            html += '</tr></thead><tbody>';
-
-            // Sort keys
-            const keys = Object.keys(pivotMap).sort((a, b) => {
-                const [codeA, periodA] = a.split('|');
-                const [codeB, periodB] = b.split('|');
-                if (codeA !== codeB) return codeA.localeCompare(codeB);
-                return periodA.localeCompare(periodB);
-            });
-
-            keys.forEach(key => {
+            Object.keys(pivotMap).sort().forEach(key => {
                 const row = pivotMap[key];
-                html += '<tr>';
-                html += `<td class="item-code">${row.ItemCode}</td>`;
-                html += `<td class="item-name">${row.ItemName || 'Unknown'}</td>`;
-                html += `<td class="period-col">${row.Period}</td>`;
-                html += `<td class="start-qty">${row.StartQty.toFixed(2)}</td>`;
-
-                ACTION_ORDER.forEach(act => {
-                    const val = row.Actions[act];
-                    html += `<td>${val ? val.toFixed(2) : ''}</td>`;
-                });
-
-                html += `<td class="end-qty">${row.EndQty.toFixed(2)}</td>`;
-                html += '</tr>';
+                html += s`<tr>
+                    <td class="item-code">${row.ItemCode}</td>
+                    <td class="item-name">${row.ItemName || ''}</td>
+                    <td class="period-col">${row.Period}</td>
+                    <td class="start-qty">${row.StartQty.toFixed(2)}</td>`;
+                ACTION_ORDER.forEach(act => { const val = row.Actions[act]; html += s`<td>${val ? val.toFixed(2) : ''}</td>`; });
+                html += s`<td class="end-qty">${row.EndQty.toFixed(2)}</td></tr>`;
             });
-
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            container.innerHTML = html + '</tbody></table>';
         }
 
+        checkPagePermissions(requiredEndpoints);
         init();
     </script>
 </body>

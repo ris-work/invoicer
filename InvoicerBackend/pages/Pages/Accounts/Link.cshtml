@@ -1,31 +1,15 @@
 ﻿@page "/Pages/Accounts/Link"
-@*
-  FLOW: Link Account to PII
-  STEP: 3 (Target)
-  SETS: N/A
-  READS: selectedPiiId, selectedPiiName
-  REDIRECTS: /Pages/Accounts/Search (Terminal)
-*@
-@functions {
-    }
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Link Account</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-        }</style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Link Account to PII</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
+
     <div id="status">Loading Flow...</div>
     <div id="content" style="display:none;">
         <p>Selected PII: <strong id="piiName"></strong></p>
@@ -35,15 +19,15 @@
         <div id="accResults"></div>
     </div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
         let piiId = null;
-
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const requiredEndpoints = ["GetFlowData", "LinkAccountPiiWeb", "SearchAccountsWeb"];
 
         async function init() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId" })
@@ -64,23 +48,23 @@
         }
 
         async function searchAcc() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('accQuery').value;
             const res = await fetch('/SearchAccountsWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Query: q })
             });
             const data = await res.json();
-            document.getElementById('accResults').innerHTML = data.map(a => `
+            document.getElementById('accResults').innerHTML = data.map(a => s`
                 <div class="card">
                     <strong>${a.accountName}</strong> (ID: ${a.accountNo})<br>
-                    <button onclick="link(${a.accountNo})">Link This Account</button>
+                    <button class="btn btn-secondary" onclick="link(${a.accountNo})">Link This Account</button>
                 </div>
             `).join('');
         }
 
         async function link(accNo) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/LinkAccountPiiWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ AccountNo: accNo, PiiId: parseInt(piiId) })
@@ -93,6 +77,7 @@
             }
         }
 
+        checkPagePermissions(requiredEndpoints);
         init();
     </script>
 </body>

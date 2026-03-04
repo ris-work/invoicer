@@ -1,78 +1,36 @@
 ﻿@page "/Pages/Accounts/LiveViewFuture"
-
-@functions {
-}
-
+@functions { }
 <!DOCTYPE html>
 <html>
 <head>
     <title>Scheduled Entries Overview</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        tr.overdue {
-            background-color: #ffebee;
-        }
-
-        tr.due-today {
-            background-color: #fffde7;
-        }
-
-        .status-icon {
-            font-size: 1.2em;
-        }
-    </style>
+    <link rel="stylesheet" href="/Pages/static/u.css">
 </head>
 <body>
     <h2>Scheduled Entries (Past & Future)</h2>
+    <div id="permWarning" class="perm-warning" style="display:none;"></div>
     <p><small>Auto-refreshes every 60 seconds.</small></p>
 
     <div id="status">Loading...</div>
     <div id="gridContainer"></div>
 
+    <script src="/Pages/static/u.js"></script>
     <script>
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
+        const requiredEndpoints = ["GetFutureJournalOverview"];
 
         function getStatusIcon(status) {
-            if(status === "Overdue") return "⚠️";
-            if(status === "Due Today") return "🔥";
-            if(status === "Scheduled") return "📅";
-            return "";
+            if(status === "Overdue") return "⚠️"; if(status === "Due Today") return "🔥";
+            if(status === "Scheduled") return "📅"; return "";
         }
 
         async function loadData() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const container = document.getElementById('gridContainer');
             const statusDiv = document.getElementById('status');
 
             try {
                 const res = await fetch('/GetFutureJournalOverview', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
 
@@ -80,44 +38,28 @@
                 const data = await res.json();
                 statusDiv.style.display = 'none';
 
-                if (data.length === 0) {
-                    container.innerHTML = "<p>No pending entries found.</p>";
-                    return;
-                }
+                if (data.length === 0) { container.innerHTML = "<p>No pending entries found.</p>"; return; }
 
-                let html = `<table>
-                    <thead>
-                        <tr>
-                            <th>Status</th><th>Date</th><th>Type</th><th>Amount</th>
-                            <th>Debit</th><th>Credit</th><th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
+                let html = `<table><thead><tr><th>Status</th><th>Date</th><th>Type</th><th>Amount</th><th>Debit</th><th>Credit</th><th>Description</th></tr></thead><tbody>`;
                 data.forEach(e => {
                     const rowClass = e.status.toLowerCase().replace(' ', '-');
                     const icon = getStatusIcon(e.status);
-
-                    html += `<tr class="${rowClass}">
-                        <td>${icon} ${e.status}</td>
-                        <td>${new Date(e.date).toLocaleDateString()}</td>
-                        <td>${e.source}</td>
-                        <td>${e.amount.toFixed(2)}</td>
-                        <td>${e.debitAccountName}</td>
-                        <td>${e.creditAccountName}</td>
+                    html += s`<tr class="${rowClass}">
+                        <td>${icon} ${e.status}</td><td>${new Date(e.date).toLocaleDateString()}</td>
+                        <td>${e.source}</td><td>${e.amount.toFixed(2)}</td>
+                        <td>${e.debitAccountName}</td><td>${e.creditAccountName}</td>
                         <td>${e.description || ''}</td>
                     </tr>`;
                 });
-
                 html += `</tbody></table>`;
                 container.innerHTML = html;
-
             } catch (err) {
                 statusDiv.innerText = "Error: " + err.message;
                 statusDiv.style.color = "red";
             }
         }
 
+        checkPagePermissions(requiredEndpoints);
         loadData();
         setInterval(loadData, 60000);
     </script>

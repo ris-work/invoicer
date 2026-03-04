@@ -334,3 +334,274 @@ pre {
     background: #fff;
     border-radius: 4px;
 }
+
+
+/* Add to u.css */
+
+/* Forms */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* Filters (LiveView) */
+.filter-bar {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Table Status Rows */
+tr.posted {
+    background-color: #ffffff;
+    color: #555;
+}
+
+tr.overdue {
+    background-color: #ffebee;
+    font-weight: bold;
+}
+
+tr.due-today {
+    background-color: #fffde7;
+}
+
+tr.scheduled {
+    background-color: #e3f2fd;
+}
+
+/* Permission Warning */
+.perm-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+}
+
+/* Add to u.css */
+
+/* Adjustment Cards */
+.unposted {
+    border-left: 5px solid #ffc107;
+    background: #fffcf0;
+}
+
+.posted {
+    border-left: 5px solid #28a745;
+    background: #f0fff0;
+}
+
+.card-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Buttons */
+.btn-post {
+    background: #28a745;
+    color: white;
+    border: none;
+}
+
+/* Add to u.css */
+
+/* Adjust Page */
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+    .row > div {
+        flex: 1;
+    }
+
+/* Batch Edit */
+.batch-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 5px;
+}
+
+.batch-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.85em;
+    text-decoration: none;
+    color: white;
+    border-radius: 3px;
+    border: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.barcode-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.barcode-input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.barcode-list {
+    margin-top: 10px;
+}
+
+.barcode-item {
+    background: #f8f9fa;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    border: 1px solid #e9ecef;
+}
+
+/* BinCard LiveView */
+.filter-combo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* BinCard Summary Table */
+.table-container {
+    overflow-x: auto;
+}
+
+td.item-code {
+    text-align: left;
+    font-weight: bold;
+    background: #f0f0f0;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+td.item-name {
+    text-align: left;
+    font-weight: bold;
+    background: #f0f0f0;
+    position: sticky;
+    left: 80px;
+    z-index: 1;
+}
+
+td.period-col {
+    text-align: left;
+    font-weight: bold;
+    background: #fff;
+    position: sticky;
+    left: 250px;
+    z-index: 1;
+}
+
+td.start-qty, td.end-qty {
+    font-weight: bold;
+    background-color: #e8f5e9;
+}
+
+/* Add to u.css */
+
+/* Catalogue Add/Edit */
+.checkbox-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.input-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+    .input-group input {
+        flex: 1;
+    }
+
+/* Cheques AddBook */
+.search-results {
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    background: white;
+}
+
+.search-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+    .search-item:hover {
+        background: #f0f0f0;
+    }
+
+/* Catalogue Edit Lists */
+.list-item {
+    background: #f8f9fa;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .list-item button {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 2px 8px;
+        cursor: pointer;
+        font-size: 0.8em;
+    }
+
+/* Catalogue Search Results */
+.result-card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.result-title {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.result-meta {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
