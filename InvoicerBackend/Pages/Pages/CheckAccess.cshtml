@@ -1,0 +1,306 @@
+﻿@page "/Pages/CheckAccess"
+
+@functions {
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Access Control Check</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f4f4f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input[type=text] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .endpoint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .endpoint-card {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 5px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+            .endpoint-card:hover {
+                transform: translateX(5px);
+                background: #fafafa;
+            }
+
+        .endpoint-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            font-family: monospace;
+        }
+
+        .endpoint-meta {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Status Colors */
+        .status-granted {
+            border-left-color: #28a745;
+        }
+
+        .status-denied {
+            border-left-color: #dc3545;
+        }
+
+        .status-unknown {
+            border-left-color: #6c757d;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            color: white;
+            float: right;
+        }
+
+        .badge-granted {
+            background: #28a745;
+        }
+
+        .badge-denied {
+            background: #dc3545;
+        }
+
+        .badge-check {
+            background: #007bff;
+        }
+
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-close {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Endpoint Access Check</h1>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search endpoints (e.g. BearerEcho, SaveMap)..." oninput="filterList()">
+        </div>
+
+        <div id="endpointList" class="endpoint-list">
+            <p>Loading endpoints...</p>
+        </div>
+    </div>
+
+    <!-- Modal for detailed check -->
+    <div id="resultModal" class="result-modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header" id="modalTitle">Checking...</div>
+            <div id="modalBody">
+                <p>Verifying permissions with server...</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-close" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        let allEndpoints = [];
+        const safeInterpolate = (str) => (typeof s === 'function') ? s`${str}` : str;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function loadEndpoints() {
+            const token = getCookie("auth-token");
+            try {
+                // Fetch list of all endpoints
+                const res = await fetch('/Endpoints', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                allEndpoints = await res.json();
+                renderList(allEndpoints);
+            } catch (e) {
+                document.getElementById('endpointList').innerHTML = `<p style="color:red">Failed to load endpoints: ${e.message}</p>`;
+            }
+        }
+
+        function renderList(data) {
+            const container = document.getElementById('endpointList');
+            if (data.length === 0) {
+                container.innerHTML = "<p>No endpoints found.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(ep => `
+                <div class="endpoint-card status-unknown" id="card-${safeInterpolate(ep.name)}" onclick="checkAccess('${safeInterpolate(ep.name)}')">
+                    <div>
+                        <span class="endpoint-name">${safeInterpolate(ep.name)}</span>
+                        <span class="status-badge badge-check" id="badge-${safeInterpolate(ep.name)}">Click to Check</span>
+                    </div>
+                    <div class="endpoint-meta">
+                        Privilege: <strong>${safeInterpolate(ep.privilege)}</strong> |
+                        Input: ${safeInterpolate(ep.inputType)} | Output: ${safeInterpolate(ep.outputType)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterList() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allEndpoints.filter(ep =>
+                ep.name.toLowerCase().includes(query) ||
+                ep.privilege.toLowerCase().includes(query)
+            );
+            renderList(filtered);
+        }
+
+        async function checkAccess(endpointName) {
+            const token = getCookie("auth-token");
+            const card = document.getElementById(`card-${endpointName}`);
+            const badge = document.getElementById(`badge-${endpointName}`);
+            const modal = document.getElementById('resultModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            // Reset UI
+            card.className = "endpoint-card status-unknown";
+            badge.className = "status-badge badge-check";
+            badge.innerText = "Checking...";
+
+            modal.style.display = 'flex';
+            modalTitle.innerText = `Checking: ${endpointName}`;
+            modalBody.innerHTML = "<p>Contacting /AmIAllowedTo...</p>";
+
+            try {
+                const res = await fetch('/AmIAllowedTo', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ EndpointName: endpointName })
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json(); // AmIAllowedToResponse
+
+                // Update List Item
+                if (data.allowed) {
+                    card.className = "endpoint-card status-granted";
+                    badge.className = "status-badge badge-granted";
+                    badge.innerText = "Allowed";
+                } else {
+                    card.className = "endpoint-card status-denied";
+                    badge.className = "status-badge badge-denied";
+                    badge.innerText = "Denied";
+                }
+
+                // Update Modal
+                modalTitle.innerText = data.allowed ? "✅ Access Granted" : "⛔ Access Denied";
+                modalBody.innerHTML = `
+                    <p><strong>Endpoint:</strong> ${safeInterpolate(endpointName)}</p>
+                    <p><strong>Exists:</strong> ${data.exists}</p>
+                    <p><strong>Required Privilege:</strong> ${safeInterpolate(data.requiredPrivilege || "N/A")}</p>
+                    <hr>
+                    <p><strong>Message:</strong> ${safeInterpolate(data.message)}</p>
+                `;
+
+            } catch (err) {
+                card.className = "endpoint-card status-denied";
+                badge.className = "status-badge badge-denied";
+                badge.innerText = "Error";
+
+                modalTitle.innerText = "Error";
+                modalBody.innerHTML = `<p style="color:red">${safeInterpolate(err.message)}</p>`;
+            }
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.id === 'resultModal') {
+                document.getElementById('resultModal').style.display = 'none';
+            }
+        }
+
+        // Initialize
+        loadEndpoints();
+    </script>
+</body>
+</html>
