@@ -78,7 +78,8 @@ namespace RV.InvNew.Common
             string Username,
             string Token,
             string Error,
-            long RequestId
+            long RequestId,
+            string[]? PermittedTo
         )> VerifyIfAuthorizationIsOk(HttpRequest Request, string PrivilegeLevel, string Endpoint)
         {
             string Principal = null;
@@ -94,7 +95,7 @@ namespace RV.InvNew.Common
             );
             if (!HasBearerToken) {
                 System.Console.WriteLine($"Got Authorization: NONE, HEADER MISSING");
-                return (false, "", -1, "", "", "AUTHORIZATION: BEARER HEADER NOT SUPPLIED", 0); 
+                return (false, "", -1, "", "", "AUTHORIZATION: BEARER HEADER NOT SUPPLIED", 0, null); 
             }
             string[] SplitToken = BearerTokenHeaderValue[0].Split(' ');
             var BearerToken = String.Join(' ', SplitToken.ToList().Skip(1));
@@ -102,6 +103,7 @@ namespace RV.InvNew.Common
             LoginToken Token = JsonSerializer.Deserialize<LoginToken>(
                 Encoding.UTF8.GetString(Convert.FromBase64String(BearerToken))
             );
+            string[]? PermittedTo = null;
             using (var ctx = new NewinvContext())
             {
                 try
@@ -131,6 +133,7 @@ namespace RV.InvNew.Common
                                 .First();
                             Principal = PrincipalEntry.Username;
                             PrincipalUserId = PrincipalEntry.Userid;
+                            PermittedTo = ExistingPrivilegeList.Split(',');
                         }
                         else
                             auth_success = false;
@@ -153,7 +156,7 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID, "None", reqid);
+                return (true, RequestAsString, PrincipalUserId, Principal, Token.TokenID, "None", reqid, PermittedTo);
             }
             else
             {
@@ -168,9 +171,9 @@ namespace RV.InvNew.Common
                     Token,
                     Endpoint
                 );
-                return (false, null, null, null, null, "UNPRIVILEGED OR UNAUTHENTICATED", reqid);
+                return (false, null, null, null, null, "UNPRIVILEGED OR UNAUTHENTICATED", reqid, null);
             }
-            return (false, null, null, null, null, null, 0);
+            return (false, null, null, null, null, null, 0, null);
         }
     }
 

@@ -269,6 +269,8 @@ app.AddSchedulerEndpoints();
 app.AddTagImplicationsEndpoints();
 app.AddSuggestedPriceEndpoints();
 app.AddEndpointsDefinitionEndpoint();
+app.AddSalesSimulationEndpoints();
+app.AddPrivilegeUtilities();
 
 app.AddInventoryAdjustmentsEndpoints();
 
