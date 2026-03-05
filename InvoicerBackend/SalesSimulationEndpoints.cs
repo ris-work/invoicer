@@ -11,19 +11,20 @@ namespace InvoicerBackend
     {
         public static WebApplication AddSalesSimulationEndpoints(this WebApplication app)
         {
-            // 1. Get Pricing Context (Flags, Suggestions)
+            // 1. Get Pricing Context
             app.AddAsyncEndpointWithBearerAuth<long, PricingContextResponse>(
                 "GetPricingContext",
                 async (ItemCodeI, LoginInfo) =>
                 {
                     var ItemCode = (long)ItemCodeI;
                     using var ctx = new NewinvContext();
-
                     var item = await ctx.Catalogues.FirstOrDefaultAsync(c => c.Itemcode == ItemCode);
                     if (item == null) throw new ArgumentException("Item not found");
 
-                    var inv = await ctx.Inventories.Where(i => i.Itemcode == ItemCode && i.Units > 0)
-                        .OrderBy(i => i.ExpDate ?? DateTime.MaxValue).FirstOrDefaultAsync();
+                    var inv = await ctx.Inventories
+                        .Where(i => i.Itemcode == ItemCode && i.Units > 0)
+                        .OrderBy(i => i.ExpDate ?? DateTime.MaxValue)
+                        .FirstOrDefaultAsync();
 
                     var resp = new PricingContextResponse
                     {
@@ -41,148 +42,231 @@ namespace InvoicerBackend
                             .Select(s => s.Price)
                             .ToListAsync();
                     }
-
                     return resp;
                 },
                 "Refresh"
             );
 
-            // 2. Simulate Sale (Batch Selection & Calculation)
-            app.AddAsyncEndpointWithBearerAuth<SimulateSaleRequest, SimulateSaleResponse>(
-                "SimulateSale",
+            // 2. Simulate Order
+            app.AddAsyncEndpointWithBearerAuth<SimulateOrderRequest, SimulateOrderResponse>(
+                "SimulateSaleOrder",
                 async (ReqI, LoginInfo) =>
                 {
-                    var Req = (SimulateSaleRequest)ReqI;
+                    var Req = (SimulateOrderRequest)ReqI;
                     using var ctx = new NewinvContext();
 
-                    // A. Get PII Info
                     var pii = await ctx.Piis.FirstOrDefaultAsync(p => p.Id == Req.PiiId);
                     if (pii == null) throw new ArgumentException("PII not found");
 
-                    // B. Get Valid Batches (Window View)
-                    var batches = await ctx.VBatchSelectionWindows
-                        .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = {0}", Req.ItemCode)
+                    var itemCodes = Req.Items.Select(i => i.ItemCode).Distinct().ToList();
+
+                    // --- FETCH DATA ---
+
+                    // 1. Batches
+                    var allBatchesRaw = await ctx.VBatchSelectionWindows
+                        .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = ANY({0})", itemCodes.ToArray())
                         .ToListAsync();
 
-                    // C. Get Discount Matrix (Filtered!)
-                    // RULE: 
-                    // 1. If TargetPrice is set and NOT manual -> It's a Suggestion. Filter by i_suggested_price.
-                    // 2. Else -> It's Standard. Filter by i_suggested_price IS NULL.
+                    Console.WriteLine($"[SimulateSaleOrder] Fetched {allBatchesRaw.Count} batches from View.");
 
-                    IQueryable<VComprehensiveSalesFinalMatrix> matrixQuery = ctx.VComprehensiveSalesFinalMatrices
-                        .Where(m => m.Itemcode == Req.ItemCode && m.PiiId == Req.PiiId);
+                    // Snapshots
+                    var initialInventory = allBatchesRaw.ToDictionary(b => b.Batchcode ?? 0, b => b.Units ?? 0);
+                    var virtualInventory = new Dictionary<long, double>(initialInventory);
 
-                    bool isSuggestedPrice = Req.TargetPrice.HasValue && !Req.IsManualPrice;
+                    // 2. Matrix
+                    var matrixDataRaw = await ctx.VComprehensiveSalesFinalMatrices
+                        .Where(m => itemCodes.Contains(m.Itemcode ?? 0) && m.PiiId == Req.PiiId)
+                        .ToListAsync();
 
-                    if (isSuggestedPrice)
+                    var matrixByItem = matrixDataRaw.GroupBy(m => m.Itemcode ?? 0)
+                        .ToDictionary(g => g.Key, g => g.ToList());
+
+                    // --- SORTING LOGIC (NEW) ---
+                    // Strategy: 
+                    // 1. Precise Batch (HasBatchCode) = Priority 1
+                    // 2. Sale Order (Auto) = Priority 2
+                    // Sub-sort: Effective Price (Ascending) -> "Unlikely/Rare" deals first.
+
+                    var sortedItems = Req.Items.Select(item =>
                     {
-                        // Select the specific suggested price row
-                        matrixQuery = matrixQuery.Where(m => m.ISuggestedPrice == Req.TargetPrice.Value);
-                    }
-                    else
-                    {
-                        // Select the standard row (Suggested Price is usually null or 0 for standard entries based on view def)
-                        // Checking for "Source: STANDARD" in ExplanationFinal is safer if NULL logic varies
-                        // But assuming i_suggested_price is the discriminator:
-                        matrixQuery = matrixQuery.Where(m => m.ISuggestedPrice == null || m.ISuggestedPrice == 0);
-                    }
+                        double estimatedPrice = double.MaxValue;
 
-                    // Execute
-                    var matrixData = await matrixQuery.ToDictionaryAsync(m => m.Batchcode ?? 0);
-
-                    // Log to Console
-                    Console.WriteLine($"[SimulateSale] Item: {Req.ItemCode}, PII: {Req.PiiId}, Qty: {Req.Quantity}");
-                    Console.WriteLine($"[SimulateSale] Mode: {(isSuggestedPrice ? "SUGGESTED" : (Req.IsManualPrice ? "MANUAL" : "STANDARD"))}");
-                    Console.WriteLine($"[SimulateSale] Found {batches.Count} batches, {matrixData.Count} matrix entries.");
-
-                    double remainingQty = Req.Quantity;
-                    double subtotal = 0;
-                    double totalDiscount = 0;
-                    double totalLp = 0;
-
-                    var selectedBatches = new List<SelectedBatchInfo>();
-                    var logs = new List<string>();
-
-                    foreach (var batch in batches)
-                    {
-                        if (remainingQty <= 0) break;
-
-                        if (!matrixData.TryGetValue((long)batch.Batchcode, out var priceInfo))
+                        if (item.TargetPrice.HasValue)
                         {
-                            logs.Add($"Batch {batch.Batchcode}: Skipped (No pricing data in matrix for this mode).");
-                            continue;
-                        }
-
-                        double unitPrice;
-                        double unitDiscount = 0;
-                        double lpRate;
-
-                        if (Req.IsManualPrice && Req.TargetPrice.HasValue)
-                        {
-                            // MANUAL OVERRIDE
-                            unitPrice = Req.TargetPrice.Value;
-                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice; // Approximate discount
-                            lpRate = priceInfo.OEffectiveLpRate ?? (pii.LoyaltyPointsRateAdditivePercentage + pii.LoyaltyPointsRateMultiplicativePercentage);
-
-                            // Validation: Check Min Price
-                            if (unitPrice < (priceInfo.OAdjustedMinPrice ?? 0))
-                            {
-                                logs.Add($"Batch {batch.Batchcode}: WARN - Manual price {unitPrice} < Adjusted Min Price {priceInfo.OAdjustedMinPrice}");
-                            }
+                            estimatedPrice = item.TargetPrice.Value;
                         }
                         else
                         {
-                            // STANDARD OR SUGGESTED (Matrix Calculated)
-                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
-                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
-                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                            // Estimate standard price from the first batch of this item
+                            var firstBatch = allBatchesRaw.FirstOrDefault(b => b.Itemcode == item.ItemCode);
+                            if (firstBatch != null) estimatedPrice = firstBatch.SellingPrice ?? 0;
                         }
 
-                        // Quantity Logic
-                        double takeQty = Math.Min((double)batch.Units, remainingQty);
+                        return new { Item = item, SortPrice = estimatedPrice };
+                    })
+                    .OrderBy(x => x.Item.BatchCode.HasValue ? 0 : 1) // Precise First
+                    .ThenBy(x => x.SortPrice)                        // Low Price First
+                    .Select(x => x.Item)
+                    .ToList();
 
-                        selectedBatches.Add(new SelectedBatchInfo
-                        {
-                            Batchcode = batch.Batchcode ?? 0,
-                            Quantity = takeQty,
-                            UnitPrice = unitPrice,
-                            UnitDiscount = unitDiscount,
-                            Cumulative = batch.CumulativeQuantity ?? 0,
-                            PrevCumulative = batch.PrevCumulativeQuantity ?? 0
-                        });
+                    var itemResults = new List<SimulateItemResult>();
 
-                        subtotal += takeQty * unitPrice;
-                        totalDiscount += takeQty * unitDiscount;
-                        totalLp += (takeQty * unitPrice) * (lpRate / 100.0);
+                    // --- PROCESS ITEMS ---
+                    foreach (var itemReq in sortedItems)
+                    {
+                        var itemBatches = allBatchesRaw.Where(b => b.Itemcode == itemReq.ItemCode).ToList();
+                        var itemMatrix = matrixByItem.GetValueOrDefault(itemReq.ItemCode, new List<VComprehensiveSalesFinalMatrix>());
 
-                        logs.Add($"Batch {batch.Batchcode}: Took {takeQty} @ {unitPrice:F2}. Rem: {remainingQty - takeQty}");
-
-                        remainingQty -= takeQty;
+                        var result = ProcessItem(itemReq, itemBatches, virtualInventory, initialInventory, itemMatrix);
+                        itemResults.Add(result);
                     }
 
-                    if (remainingQty > 0)
+                    return new SimulateOrderResponse
                     {
-                        logs.Add($"ERROR: Insufficient stock. Short by {remainingQty}");
-                    }
-
-                    return new SimulateSaleResponse
-                    {
-                        Success = remainingQty <= 0,
-                        Message = remainingQty > 0 ? "Insufficient stock" : "OK",
-                        SelectedBatches = selectedBatches,
-                        SubTotal = subtotal + totalDiscount,
-                        TotalDiscount = totalDiscount,
-                        GrandTotal = subtotal,
-                        LoyaltyPointsGained = totalLp,
-                        CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId),
-                        Logs = logs
+                        Success = itemResults.All(r => r.Success),
+                        Items = itemResults, // Returns in the optimized processing order
+                        CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId)
                     };
                 },
                 "Refresh"
             );
 
-
             return app;
+        }
+
+        private static SimulateItemResult ProcessItem(
+            SaleOrderLineItem req,
+            List<VBatchSelectionWindow> itemBatches,
+            Dictionary<long, double> virtualInventory,
+            Dictionary<long, double> initialInventory,
+            List<VComprehensiveSalesFinalMatrix> itemMatrix)
+        {
+            double remainingQty = req.Quantity;
+            var selectedBatches = new List<SelectedBatchInfo>();
+            var allBatchDebug = new List<BatchDebugInfo>();
+
+            bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
+
+            // --- BRANCH 1: PRECISE BATCH SELECTION ---
+            if (req.BatchCode.HasValue)
+            {
+                var batchId = req.BatchCode.Value;
+                var batch = itemBatches.FirstOrDefault(b => b.Batchcode == batchId);
+                var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+                var priceInfo = itemMatrix.FirstOrDefault(m => m.Batchcode == batchId);
+
+                var dbg = new BatchDebugInfo
+                {
+                    Batchcode = batchId,
+                    InitialQty = initialQty,
+                    ViInitialQty = virtualQty,
+                    AvailableQty = virtualQty,
+                    EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                    Status = "Skipped"
+                };
+
+                if (batch == null) dbg.Status = "Batch Not Found";
+                else if (virtualQty < req.Quantity) dbg.Status = "Insufficient Stock";
+                else if (priceInfo == null) dbg.Status = "No Price Data";
+                else
+                {
+                    double unitPrice = req.IsManualPrice && req.TargetPrice.HasValue
+                        ? req.TargetPrice.Value
+                        : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
+
+                    selectedBatches.Add(new SelectedBatchInfo
+                    {
+                        Batchcode = batchId,
+                        Quantity = req.Quantity,
+                        UnitPrice = unitPrice
+                    });
+
+                    virtualInventory[batchId] -= req.Quantity;
+                    remainingQty = 0;
+                    dbg.Status = "Selected";
+                    dbg.AvailableQty = virtualInventory[batchId];
+                }
+                allBatchDebug.Add(dbg);
+            }
+            // --- BRANCH 2: AUTO ALLOCATION (SALE ORDER) ---
+            else
+            {
+                foreach (var batch in itemBatches)
+                {
+                    var batchId = batch.Batchcode ?? 0;
+                    var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                    var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+
+                    var priceInfo = itemMatrix.FirstOrDefault(m =>
+                        m.Batchcode == batchId &&
+                        (
+                            (isSuggested && m.ISuggestedPrice == req.TargetPrice) ||
+                            (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0))
+                        )
+                    );
+
+                    var dbg = new BatchDebugInfo
+                    {
+                        Batchcode = batchId,
+                        InitialQty = initialQty,
+                        ViInitialQty = virtualQty,
+                        AvailableQty = virtualQty,
+                        EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                        Status = "Skipped"
+                    };
+
+                    if (virtualQty <= 0) { dbg.Status = "Empty/Reserved"; }
+                    else if (remainingQty <= 0) { dbg.Status = "Demand Satisfied"; }
+                    else if (priceInfo == null) { dbg.Status = "Price Mismatch"; }
+                    else
+                    {
+                        double takeQty = Math.Min(virtualQty, remainingQty);
+
+                        double unitPrice;
+                        double unitDiscount = 0;
+                        double lpRate;
+
+                        if (req.IsManualPrice && req.TargetPrice.HasValue)
+                        {
+                            unitPrice = req.TargetPrice.Value;
+                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+                        else
+                        {
+                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
+                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+
+                        selectedBatches.Add(new SelectedBatchInfo
+                        {
+                            Batchcode = batchId,
+                            Quantity = takeQty,
+                            UnitPrice = unitPrice,
+                            UnitDiscount = unitDiscount,
+                            LpRate = lpRate
+                        });
+
+                        virtualInventory[batchId] -= takeQty;
+                        remainingQty -= takeQty;
+
+                        dbg.Status = "Selected";
+                        dbg.AvailableQty = virtualInventory[batchId];
+                    }
+                    allBatchDebug.Add(dbg);
+                }
+            }
+
+            return new SimulateItemResult
+            {
+                ItemCode = req.ItemCode,
+                Success = remainingQty <= 0,
+                Message = remainingQty > 0 ? $"Insufficient stock" : "OK",
+                SelectedBatches = selectedBatches,
+                AllBatches = allBatchDebug
+            };
         }
     }
 
@@ -194,29 +278,38 @@ namespace InvoicerBackend
         public double DefaultSellingPrice { get; set; }
         public double MinPrice { get; set; }
         public bool EnforceMinPrice { get; set; }
-        public List<double> SuggestedPrices { get; set; }
+        public List<double> SuggestedPrices { get; set; } = new List<double>();
     }
 
-    public class SimulateSaleRequest
+    public class SimulateOrderRequest
+    {
+        public long PiiId { get; set; }
+        public List<SaleOrderLineItem> Items { get; set; }
+    }
+
+    public class SaleOrderLineItem
     {
         public long ItemCode { get; set; }
-        public long PiiId { get; set; }
         public double Quantity { get; set; }
-        public double? TargetPrice { get; set; } // Used for Manual or Selected Suggestion
+        public double? TargetPrice { get; set; }
         public bool IsManualPrice { get; set; }
+        public long? BatchCode { get; set; }
     }
 
-    public class SimulateSaleResponse
+    public class SimulateOrderResponse
     {
+        public bool Success { get; set; }
+        public List<SimulateItemResult> Items { get; set; }
+        public double CurrentLoyaltyPoints { get; set; }
+    }
+
+    public class SimulateItemResult
+    {
+        public long ItemCode { get; set; }
         public bool Success { get; set; }
         public string Message { get; set; }
         public List<SelectedBatchInfo> SelectedBatches { get; set; }
-        public double SubTotal { get; set; }
-        public double TotalDiscount { get; set; }
-        public double GrandTotal { get; set; }
-        public double LoyaltyPointsGained { get; set; }
-        public double CurrentLoyaltyPoints { get; set; }
-        public List<string> Logs { get; set; } // Added
+        public List<BatchDebugInfo> AllBatches { get; set; }
     }
 
     public class SelectedBatchInfo
@@ -225,7 +318,16 @@ namespace InvoicerBackend
         public double Quantity { get; set; }
         public double UnitPrice { get; set; }
         public double UnitDiscount { get; set; }
-        public double Cumulative { get; set; }
-        public double PrevCumulative { get; set; }
+        public double LpRate { get; set; }
+    }
+
+    public class BatchDebugInfo
+    {
+        public long Batchcode { get; set; }
+        public double InitialQty { get; set; }
+        public double ViInitialQty { get; set; }
+        public double AvailableQty { get; set; }
+        public double? EffectivePrice { get; set; }
+        public string Status { get; set; }
     }
 }

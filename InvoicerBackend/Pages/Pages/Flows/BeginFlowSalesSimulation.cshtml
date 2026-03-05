@@ -1,5 +1,7 @@
 ﻿@page "/Pages/Flows/BeginFlowSalesSimulation"
+
 @functions { }
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,23 +9,29 @@
 </head>
 <body>
     <p>Initializing Sales Flow...</p>
-    <script src="/Pages/static/u.js"></script>
     <script>
-        const requiredEndpoints = ["SetFlowData"];
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
 
         async function init() {
-            await checkPagePermissions(requiredEndpoints); // Optional check
-            const token = await getCookie("auth-token");
             const flowId = 'flow-' + Date.now();
+            const token = getCookie("auth-token");
 
+            // FLOW: PII -> (Item -> Price -> Qty -> Loop?) -> Review
+                        // FLOW: PII -> Item -> MODE -> ...
             const steps = [
                 "/Pages/SearchAndSelect/PiiSelect",
                 "/Pages/SearchAndSelect/ItemSelect",
-                "/Pages/Sales/SelectPrice",
+                "/Pages/Sales/SelectMode", // <--- NEW STEP
+                "/Pages/Sales/SelectPrice", // Used if 'Order' selected
                 "/Pages/Sales/EnterQuantity",
                 "/Pages/Sales/ReviewBatches"
             ];
 
+            // Initialize Flow
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps", Value: JSON.stringify(steps) })
@@ -31,6 +39,12 @@
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "0" })
+            });
+
+            // INITIALIZE EMPTY CART
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: "[]" })
             });
 
             window.location.href = steps[0] + "?flowId=" + flowId;

@@ -1,0 +1,146 @@
+﻿@page "/Pages/Sales/SelectBatchCodes"
+
+@*
+  FLOW: Sales Simulation (Precise)
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Batches</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select Batches</h2>
+    <div id="status">Loading batches...</div>
+    <div id="content" style="display:none;">
+        <table>
+            <thead><tr><th>Batch ID</th><th>Avail Qty</th><th>Price</th><th>Select Qty</th></tr></thead>
+            <tbody id="batchList"></tbody>
+        </table>
+        <br>
+        <button class="btn btn-success" onclick="save(false)">Add to Order</button>
+        <button class="btn btn-primary" onclick="save(true)">Add & Select Another</button>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const dataItem = await resItem.json();
+            if (!dataItem.value) { alert("No item"); return; }
+
+            // Reuse API to get debug list (efficient hack)
+            const simReq = { PiiId: 2, Items: [{ ItemCode: parseInt(dataItem.value), Quantity: 0.01 }] };
+
+            const resSim = await fetch('/SimulateSaleOrder', {
+                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                 body: JSON.stringify(simReq)
+            });
+            const result = await resSim.json();
+
+            const batches = result.items[0].allBatches;
+            render(batches);
+        }
+
+        function render(batches) {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            const tbody = document.getElementById('batchList');
+            tbody.innerHTML = "";
+
+            batches.forEach(b => {
+                // ADDED step="1"
+                tbody.innerHTML += s`
+                    <tr>
+                        <td>${b.batchcode}</td>
+                        <td>${b.availableQty.toFixed(2)}</td>
+                        <td>${b.effectivePrice ? b.effectivePrice.toFixed(2) : '-'}</td>
+                        <td><input type="number" id="qty-${b.batchcode}" step="1" placeholder="0" max="${b.availableQty}"></td>
+                    </tr>`;
+            });
+        }
+
+        // Updated to support "Add Another"
+        async function save(addMore) {
+            const token = getCookie("auth-token");
+
+            const inputs = document.querySelectorAll('input[type=number]');
+            const selections = [];
+
+            inputs.forEach(inp => {
+                const val = parseFloat(inp.value);
+                if (val > 0) {
+                    const batchId = inp.id.replace('qty-', '');
+                    selections.push({ BatchCode: parseInt(batchId), Qty: val });
+                }
+            });
+
+            if (selections.length === 0) { alert("Select quantity"); return; }
+
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const itemCode = (await resItem.json()).value;
+
+            selections.forEach(sel => {
+                list.push({
+                    ItemCode: parseInt(itemCode),
+                    Quantity: sel.Qty,
+                    BatchCode: sel.BatchCode,
+                    TargetPrice: null,
+                    IsManualPrice: false
+                });
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
+            });
+
+            if (addMore) {
+                window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+            } else {
+                window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+﻿@page "/Pages/Sales/SelectMode"
+
+@*
+  FLOW: Sales Simulation
+  STEP: Branch Decision
+  READS: selectedItemCode
+  REDIRECTS: SelectBatchCodes (Precise) OR SelectPrice (Order)
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Mode</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .choice-container { display: flex; gap: 20px; justify-content: center; margin-top: 50px; }
+        .choice-card { border: 2px solid #007bff; padding: 30px; border-radius: 10px; width: 200px; cursor: pointer; }
+        .choice-card:hover { background: #f0f7ff; }
+    </style>
+</head>
+<body>
+    <h2>How would you like to select stock?</h2>
+    <div class="choice-container">
+        <div class="choice-card" onclick="go('order')">
+            <h3>Sale Order</h3>
+            <p>Auto-allocate from available batches (FEFO).</p>
+        </div>
+        <div class="choice-card" onclick="go('precise')">
+            <h3>Precise Batch</h3>
+            <p>Manually select specific batches.</p>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function go(mode) {
+            const token = getCookie("auth-token");
+
+            if (mode === 'order') {
+                // Continue to Price Selection
+                window.location.href = '/Pages/Sales/SelectPrice?flowId=' + flowId;
+            } else {
+                // Go to Batch Selection
+                window.location.href = '/Pages/Sales/SelectBatchCodes?flowId=' + flowId;
+            }
+        }
+    </script>
+</body>
+</html>

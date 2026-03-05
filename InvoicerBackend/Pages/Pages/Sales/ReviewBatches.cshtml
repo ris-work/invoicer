@@ -1,101 +1,248 @@
 ﻿@page "/Pages/Sales/ReviewBatches"
 
 @*
-  FLOW: Sales Simulation
-  STEP: 5 (Review & Finalize)
-  READS: selectedItemCode, selectedPiiId, selectedQuantity, selectedPrice, isManualPrice
+  FLOW: Sales Simulation / Sale Order
+  STEP: Final (Review)
 *@
 
 @functions { }
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Review Sale</title>
+    <title>Review Sale Order</title>
     <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        /* Page-specific styles */
+        .item-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .item-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-ok {
+            color: #28a745;
+        }
+
+        .status-fail {
+            color: #dc3545;
+        }
+
+        .debug-details {
+            border-top: 1px solid #eee;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+            .debug-details summary {
+                cursor: pointer;
+                color: #666;
+                font-size: 0.9em;
+            }
+
+        .row-selected {
+            background-color: #e8f5e9;
+        }
+
+        .row-skipped {
+            color: #999;
+            background-color: #fff;
+        }
+
+        .remove-btn {
+            margin-left: 15px;
+            color: #dc3545;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Review Sale Simulation</h2>
-        <div id="permWarning" class="perm-warning" style="display:none;"></div>
-        <div id="status">Calculating...</div>
+        <h2>Review Sale Order</h2>
+        <div id="content" class="result-box"><p>Processing Order...</p></div>
     </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
-        const requiredEndpoints = ["GetFlowData", "SimulateSale"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function run() {
-            await checkPagePermissions(requiredEndpoints);
-            const token = await getCookie("auth-token");
-            const statusDiv = document.getElementById('status');
+            const token = getCookie("auth-token");
+            const contentDiv = document.getElementById('content');
 
-            const keys = ["selectedItemCode", "selectedPiiId", "selectedQuantity", "selectedPrice", "isManualPrice"];
-            const data = {};
-
-            for (const key of keys) {
-                const res = await fetch('/GetFlowData', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ FlowId: flowId, Key: key })
-                });
-                const json = await res.json();
-                data[key] = json.value;
-            }
-
-            if (!data.selectedItemCode || !data.selectedPiiId || !data.selectedQuantity) {
-                statusDiv.innerHTML = "<span style='color:red'>Error: Missing flow data.</span>"; return;
-            }
-
-            const payload = {
-                ItemCode: parseInt(data.selectedItemCode),
-                PiiId: parseInt(data.selectedPiiId),
-                Quantity: parseFloat(data.selectedQuantity),
-                TargetPrice: data.selectedPrice ? parseFloat(data.selectedPrice) : null,
-                IsManualPrice: data.isManualPrice === 'true'
-            };
-
-            const simRes = await fetch('/SimulateSale', {
+            // 1. Load Order Data
+            const resItems = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems" })
             });
+            const dataItems = await resItems.json();
 
-            if (!simRes.ok) {
-                statusDiv.innerHTML = s`<span style='color:red'>API Error: ${await simRes.text()}</span>`; return;
+            const resPii = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPiiId" })
+            });
+            const dataPii = await resPii.json();
+
+            if (!dataItems.value || !dataPii.value) {
+                contentDiv.innerHTML = s`<p class="warning">Error: Missing flow data.</p>`;
+                return;
             }
 
-            render(await simRes.json());
+            const orderItems = JSON.parse(dataItems.value);
+            const piiId = parseInt(dataPii.value);
+
+            // Check if empty AFTER potential removal
+            if (orderItems.length === 0) {
+                contentDiv.innerHTML = s`<p class="warning">Order is empty. <a href="/Pages/SearchAndSelect/ItemSelect?flowId=${flowId}">Add items</a></p>`;
+                return;
+            }
+
+            try {
+                // 2. Call Simulation API
+                const simRes = await fetch('/SimulateSaleOrder', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ PiiId: piiId, Items: orderItems })
+                });
+
+                if (!simRes.ok) throw new Error(await simRes.text());
+                const result = await simRes.json();
+                render(result, orderItems); // Pass orderItems to render Remove buttons with correct indices
+
+            } catch (err) {
+                contentDiv.innerHTML = s`<p class="warning">API Error: ${err.message}</p>`;
+            }
         }
 
-        function render(result) {
-            const statusDiv = document.getElementById('status');
+        function render(result, orderItems) {
+            const contentDiv = document.getElementById('content');
+            let html = "";
+
             if (!result.success) {
-                statusDiv.innerHTML = s`<span style='color:red'>Error: ${result.message}</span>`; return;
+                html += `<p class="warning">Order Cannot Be Fulfilled Completely</p>`;
+            } else {
+                html += `<p style="color: #28a745; font-weight: bold;">Order Ready for Execution</p>`;
             }
 
-            let html = "<h3>Batches Selected</h3><table><tr><th>Batch</th><th>Qty</th><th>Unit Price</th><th>Unit Disc</th><th>Cum. Qty</th></tr>";
+            // Iterate Items
+            result.items.forEach((item, index) => {
+                const statusClass = item.success ? "status-ok" : "status-fail";
+                const statusText = item.success ? "OK" : "FAILED";
 
-            result.selectedBatches.forEach(b => {
-                html += s`<tr>
-                    <td>${b.batchcode}</td>
-                    <td>${b.quantity.toFixed(2)}</td>
-                    <td>${b.unitPrice.toFixed(2)}</td>
-                    <td>${b.unitDiscount.toFixed(2)}</td>
-                    <td>${b.cumulative.toFixed(2)}</td>
-                </tr>`;
+                html += `<div class="item-card">`;
+                html += s`<div class="item-header">
+                    <span>Item ${item.itemCode}</span>
+                    <div>
+                        <span class="${statusClass}">${statusText}: ${item.message}</span>
+                        <!-- REMOVE BUTTON -->
+                        <span class="remove-btn" onclick="removeItem(${index})">✕</span>
+                    </div>
+                </div>`;
+
+                html += `<div style="padding: 10px;">
+                    <h4>Selected Batches</h4>
+                    <table>
+                        <thead><tr><th>Batch</th><th>Qty</th><th>Price</th><th>Disc</th></tr></thead>
+                        <tbody>`;
+
+                // Iterate Selected Batches
+                item.selectedBatches.forEach(b => {
+                    html += s`<tr class="row-selected">
+                        <td>${b.batchcode}</td>
+                        <td>${b.quantity.toFixed(2)}</td>
+                        <td>${b.unitPrice.toFixed(2)}</td>
+                        <td>${b.unitDiscount.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+
+                // Debug Details
+                html += `<details class="debug-details">
+                    <summary>All Batches (Debug Info)</summary>
+                    <table>
+                        <thead><tr><th>ID</th><th>Initial</th><th>VI Initial</th><th>Avail</th><th>Status</th><th>Eff. Price</th></tr></thead>
+                        <tbody>`;
+
+                // Iterate All Batches
+                item.allBatches.forEach(b => {
+                    let rowClass = "row-skipped";
+                    if(b.status === "Selected") rowClass = "row-selected";
+
+                    html += s`<tr class="${rowClass}">
+                        <td>${b.batchcode}</td>
+                        <td>${b.initialQty.toFixed(2)}</td>
+                        <td>${b.viInitialQty.toFixed(2)}</td>
+                        <td>${b.availableQty.toFixed(2)}</td>
+                        <td>${b.status}</td>
+                        <td>${b.effectivePrice ? b.effectivePrice.toFixed(2) : '-'}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>
+                </details>
+                </div>
+                </div>`;
             });
-            html += "</table>";
 
+            // Footer
             html += s`<div class="summary">
-                <p><strong>Subtotal:</strong> ${result.subTotal.toFixed(2)}</p>
-                <p><strong>Total Discount:</strong> ${result.totalDiscount.toFixed(2)}</p>
-                <p><strong>Grand Total:</strong> ${result.grandTotal.toFixed(2)}</p>
-                <hr>
                 <p><strong>Current LP Balance:</strong> ${result.currentLoyaltyPoints.toFixed(2)}</p>
-                <p><strong>LP Gained:</strong> ${result.loyaltyPointsGained.toFixed(2)}</p>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-success" onclick="alert('Done')">Confirm Sale</button>
+                    <button class="btn btn-secondary" onclick="addMore()">Add More Items</button>
+                </div>
             </div>`;
 
-            statusDiv.innerHTML = html;
+            contentDiv.innerHTML = html;
+        }
+
+        async function removeItem(index) {
+            if (!confirm("Remove this item from the order?")) return;
+
+            const token = getCookie("auth-token");
+
+            // 1. Get Current List
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            // 2. Remove Item at Index
+            list.splice(index, 1);
+
+            // 3. Save Back
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
+            });
+
+            // 4. Refresh Page (Re-run simulation)
+            run();
+        }
+
+        async function addMore() {
+            const token = getCookie("auth-token");
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "1" })
+            });
+            window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
         }
 
         run();
