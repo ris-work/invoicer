@@ -42,4 +42,8 @@ public partial class AccountsInformation
     public double AccountSurchargesMultiplicativePercentage { get; set; }
 
     public double AccountSurchargesAdditiveFee { get; set; }
+
+    public long? IfrsCategoryId { get; set; }
+
+    public virtual IfrsCategory? IfrsCategory { get; set; }
 }

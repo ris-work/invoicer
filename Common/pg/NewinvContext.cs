@@ -65,6 +65,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Idempotency> Idempotencies { get; set; }
 
+    public virtual DbSet<IfrsCategory> IfrsCategories { get; set; }
+
     public virtual DbSet<Inventory> Inventories { get; set; }
 
     public virtual DbSet<InventoryAdjustment> InventoryAdjustments { get; set; }
@@ -239,6 +241,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("allow_debit_on_pos");
             entity.Property(e => e.HumanFriendlyId).HasColumnName("human_friendly_id");
+            entity.Property(e => e.IfrsCategoryId)
+                .HasDefaultValue(1L)
+                .HasColumnName("ifrs_category_id");
             entity.Property(e => e.IsBank)
                 .HasDefaultValue(false)
                 .HasColumnName("is_bank");
@@ -258,6 +263,10 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("is_reserve");
             entity.Property(e => e.LoyaltyBaseMultiplicativePointsPercentage).HasColumnName("loyalty_base_multiplicative_points_percentage");
+
+            entity.HasOne(d => d.IfrsCategory).WithMany(p => p.AccountsInformations)
+                .HasForeignKey(d => d.IfrsCategoryId)
+                .HasConstraintName("fk_accounts_ifrs_category");
         });
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
@@ -722,6 +731,27 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("time with time zone")
                 .HasColumnName("time_tai");
+        });
+
+        modelBuilder.Entity<IfrsCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("ifrs_categories_pkey");
+
+            entity.ToTable("ifrs_categories");
+
+            entity.HasIndex(e => e.Code, "ifrs_categories_code_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.IsCurrent)
+                .HasDefaultValue(false)
+                .HasColumnName("is_current");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.ReportType).HasColumnName("report_type");
+            entity.Property(e => e.SortOrder)
+                .HasDefaultValue(0)
+                .HasColumnName("sort_order");
+            entity.Property(e => e.ValidAccountType).HasColumnName("valid_account_type");
         });
 
         modelBuilder.Entity<Inventory>(entity =>

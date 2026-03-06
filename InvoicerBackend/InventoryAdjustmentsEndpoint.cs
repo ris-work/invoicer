@@ -107,8 +107,8 @@ namespace InvoicerBackend
 
                 if (valueChange > 0)
                 {
-                    long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 0);
-                    long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 3);
+                    long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 1, "INVENTORY");
+                    long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 5, "COGS");
 
                     var journalEntry = new AccountsJournalEntry
                     {
@@ -263,8 +263,8 @@ namespace InvoicerBackend
 
                             if (valueChange > 0)
                             {
-                                long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 0);
-                                long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 3);
+                                long assetAccountNo = await EnsureAccountExists(ctx, "Inventory Asset", 1, "INVENTORY");
+                                long adjAccountNo = await EnsureAccountExists(ctx, "Inventory Adjustments", 5, "COGS");
 
                                 var journalEntry = new AccountsJournalEntry
                                 {
@@ -324,10 +324,32 @@ namespace InvoicerBackend
         // Helper to ensure account exists (Let PG handle ID generation)
         // Helper to ensure account exists with specific Name AND Type
         // Helper to ensure account exists AND has a balance record
-        private static async Task<long> EnsureAccountExists(NewinvContext ctx, string accountName, int accountType)
+        private static async Task<long> EnsureAccountExists(
+    NewinvContext ctx,
+    string accountName,
+    int accountType,
+    string? ifrsCode = null)
         {
             ctx.EnsureSerializableTransaction();
-            // 1. Check/Create AccountsInformation
+
+            // 1. SMART DEFAULTS: Infer IFRS Code if not provided
+            if (string.IsNullOrEmpty(ifrsCode))
+            {
+                ifrsCode = InferIfrsCodeFromName(accountName, accountType);
+            }
+
+            // 2. Resolve IFRS Category from DB
+            var ifrsCategory = await ctx.IfrsCategories
+                .FirstOrDefaultAsync(c => c.Code == ifrsCode);
+
+            // Fallback: If code not found, try to find generic 'UNMAP' for the type
+            if (ifrsCategory == null)
+            {
+                ifrsCategory = await ctx.IfrsCategories
+                    .FirstOrDefaultAsync(c => c.ValidAccountType == accountType && c.Code.StartsWith("UNMAP"));
+            }
+
+            // 3. Check/Create AccountsInformation
             var account = await ctx.AccountsInformations
                 .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
 
@@ -336,6 +358,13 @@ namespace InvoicerBackend
             if (account != null)
             {
                 accountNo = account.AccountNo;
+
+                // Update IFRS Category if we found a better match
+                if (ifrsCategory != null && account.IfrsCategoryId != ifrsCategory.Id)
+                {
+                    account.IfrsCategoryId = ifrsCategory.Id;
+                    // No IsCurrent to update here anymore
+                }
             }
             else
             {
@@ -343,9 +372,16 @@ namespace InvoicerBackend
                 {
                     AccountName = accountName,
                     AccountType = accountType,
+
+                    // Standard Limits
                     AccountMin = -1000000000,
                     AccountMax = 1000000000,
-                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_")}_{accountType}"
+
+                    // Human Friendly ID
+                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_").Replace("-", "_")}_{accountType}",
+
+                    // IFRS Mapping (The only column we need now)
+                    IfrsCategoryId = ifrsCategory?.Id ?? 1
                 };
 
                 ctx.AccountsInformations.Add(newAccount);
@@ -353,7 +389,7 @@ namespace InvoicerBackend
                 accountNo = newAccount.AccountNo;
             }
 
-            // 2. Check/Create AccountsBalance (Crucial for JournalEntries.AddJournalEntry)
+            // 4. Check/Create AccountsBalance
             var balance = await ctx.AccountsBalances
                 .FirstOrDefaultAsync(b => b.AccountType == accountType && b.AccountNo == accountNo);
 
@@ -363,13 +399,73 @@ namespace InvoicerBackend
                 {
                     AccountType = accountType,
                     AccountNo = accountNo,
-                    Amount = 0 // Initialize at zero
+                    Amount = 0
                 };
                 ctx.AccountsBalances.Add(newBalance);
                 await ctx.SaveChangesAsync();
             }
 
             return accountNo;
+        }
+
+        /// <summary>
+        /// Heuristic to determine IFRS Code from Account Name.
+        /// </summary>
+        private static string InferIfrsCodeFromName(string name, int type)
+        {
+            string upper = name.ToUpperInvariant();
+
+            // Type 1: Assets
+            if (type == 1)
+            {
+                if (upper.Contains("CASH") || upper.Contains("BANK")) return "CASH";
+                if (upper.Contains("RECEIVABLE") || upper.Contains("DEBTOR")) return "RECV_TRADE";
+                if (upper.Contains("INVENTORY") || upper.Contains("STOCK")) return "INVENTORY";
+                if (upper.Contains("EQUIPMENT") || upper.Contains("FURNITURE") || upper.Contains("MACHINERY")) return "PPE_PLANT";
+                if (upper.Contains("BUILDING") || upper.Contains("LAND")) return "PPE_LAND";
+                if (upper.Contains("INTANGIBLE") || upper.Contains("GOODWILL")) return "INTANG";
+                return "UNMAP_ASSET";
+            }
+
+            // Type 2: Liabilities
+            if (type == 2)
+            {
+                if (upper.Contains("PAYABLE") || upper.Contains("CREDITOR")) return "PAY_TRADE";
+                if (upper.Contains("TAX")) return "TAX_CUR";
+                if (upper.Contains("LOAN") || upper.Contains("BORROW")) return "LOAN_NC";
+                if (upper.Contains("PROVISION")) return "PROV_NC";
+                return "UNMAP_LIAB";
+            }
+
+            // Type 3: Equity
+            if (type == 3)
+            {
+                if (upper.Contains("CAPITAL") || upper.Contains("SHARE")) return "EQ_CAPITAL";
+                if (upper.Contains("RETAINED")) return "EQ_RETAINED";
+                if (upper.Contains("RESERVE")) return "EQ_REVAL";
+                return "UNMAP_EQUITY";
+            }
+
+            // Type 4: Income
+            if (type == 4)
+            {
+                if (upper.Contains("SALE") || upper.Contains("REVENUE")) return "REV_SALES";
+                if (upper.Contains("INTEREST") || upper.Contains("DIVIDEND")) return "FIN_INC";
+                return "UNMAP_INC";
+            }
+
+            // Type 5: Expenses
+            if (type == 5)
+            {
+                if (upper.Contains("COST OF SALES") || upper.Contains("COST OF GOODS") || upper.Contains("COGS")) return "COGS";
+                if (upper.Contains("DEPRECIATION")) return "EXP_DEPR";
+                if (upper.Contains("INTEREST") || upper.Contains("FINANCE")) return "EXP_FIN";
+                if (upper.Contains("TAX")) return "EXP_TAX";
+                if (upper.Contains("RENT") || upper.Contains("SALARY") || upper.Contains("ADMIN")) return "EXP_ADMIN";
+                return "UNMAP_EXP";
+            }
+
+            return "NONE";
         }
     }
 }
