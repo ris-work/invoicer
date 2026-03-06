@@ -1,47 +1,166 @@
 ﻿@page "/Pages/Accounts/Add"
+
 @functions { }
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Add Account</title>
     <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .hint {
+            font-size: 0.85em;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <h2>Add Account</h2>
     <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
-    <div class="form-group"><label>Name</label><input type="text" id="name"></div>
     <div class="form-group">
-        <label>Type</label>
-        <select id="type">
-            <option value="0">Asset</option>
-            <option value="1">Liability</option>
-            <option value="2">Income</option>
-            <option value="3">Expense</option>
+        <label>Name</label>
+        <input type="text" id="name" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label>Type (1=Asset, 2=Liability, 3=Equity, 4=Income, 5=Expense)</label>
+        <select id="type" class="form-control" onchange="updateIfrsCategories()">
+            <option value="1">1: Asset</option>
+            <option value="2">2: Liability</option>
+            <option value="3">3: Equity</option>
+            <option value="4">4: Income</option>
+            <option value="5">5: Expense</option>
         </select>
     </div>
-    <div class="form-group"><label>Human Friendly ID</label><input type="text" id="hfid"></div>
 
-    <h3>Limits</h3>
-    <div class="form-group"><label>Min Limit</label><input type="number" id="min" value="-1000000000"></div>
-    <div class="form-group"><label>Max Limit</label><input type="number" id="max" value="1000000000"></div>
+    <div class="form-group">
+        <label>IFRS Category</label>
+        <select id="ifrsCategoryId" class="form-control">
+            <option value="">Loading...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Human Friendly ID</label>
+        <input type="text" id="hfid" class="form-control">
+    </div>
+
+    <hr>
+    <h3>Limits & Flags</h3>
+
+    <div class="form-group">
+        <label>Min Limit</label>
+        <input type="number" id="min" class="form-control" value="-1000000000">
+    </div>
+    <div class="form-group">
+        <label>Max Limit</label>
+        <input type="number" id="max" class="form-control" value="1000000000">
+    </div>
+
+    <div class="form-group">
+        <label>Is Cash?</label>
+        <input type="checkbox" id="isCash">
+    </div>
+    <div class="form-group">
+        <label>Is Bank?</label>
+        <input type="checkbox" id="isBank">
+    </div>
+    <div class="form-group">
+        <label>Is Reserve?</label>
+        <input type="checkbox" id="isReserve">
+    </div>
+
+    <hr>
+    <h3>Loyalty & Surcharges</h3>
+    <p class="hint">Loyalty Base % must be negative or zero (penalty). Surcharges are positive.</p>
+
+    <div class="form-group">
+        <label>Loyalty Base Multiplicative % (e.g. -2.0)</label>
+        <input type="number" id="loyaltyBase" class="form-control" step="0.01" value="0">
+    </div>
+    <div class="form-group">
+        <label>Surcharge Multiplicative %</label>
+        <input type="number" id="surchargeMult" class="form-control" step="0.01" value="0">
+    </div>
+    <div class="form-group">
+        <label>Surcharge Additive Fee</label>
+        <input type="number" id="surchargeAdd" class="form-control" step="0.01" value="0">
+    </div>
 
     <button class="btn btn-primary" onclick="save()">Create</button>
+    <a href="/Pages/Accounts/Search" class="btn btn-secondary">Cancel</a>
 
     <script src="/Pages/static/u.js"></script>
     <script>
-        // Endpoints used: CreateAccountWeb
         const requiredEndpoints = ["CreateAccountWeb"];
+
+        async function updateIfrsCategories() {
+            const type = document.getElementById('type').value;
+            const token = await getCookie("auth-token");
+
+            // Fetch categories filtered by account type (valid_account_type)
+            // Note: Your backend must support filtering SearchAccountsWeb or provide a specific endpoint
+            // Assuming a generic endpoint or pre-loaded data.
+            // For now, we use a mock fetch or hardcoded logic if endpoint not ready.
+
+            // Ideally: fetch('/SearchIfrsCategories?type=' + type)
+            // Here, we assume the endpoint returns { id, code, name }
+            // Placeholder:
+            const select = document.getElementById('ifrsCategoryId');
+            select.innerHTML = '<option value="">Select...</option>';
+
+            // Fetch logic (assuming endpoint /GetIfrsCategories exists)
+            try {
+                const res = await fetch('/GetIfrsCategories?accountType=' + type, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                data.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.name} (${c.code})</option>`;
+                });
+            } catch(e) {
+                console.error("Failed to load IFRS categories", e);
+            }
+        }
 
         async function save() {
             const token = await getCookie("auth-token");
+
+            // Validation
+            const loyaltyBase = parseFloat(document.getElementById('loyaltyBase').value);
+            if (loyaltyBase > 0) {
+                alert("Loyalty Base % must be negative or zero (penalty).");
+                return;
+            }
+
             const payload = {
                 AccountName: document.getElementById('name').value,
                 AccountType: parseInt(document.getElementById('type').value),
                 HumanFriendlyId: document.getElementById('hfid').value,
                 AccountMin: parseFloat(document.getElementById('min').value),
-                AccountMax: parseFloat(document.getElementById('max').value)
+                AccountMax: parseFloat(document.getElementById('max').value),
+                IfrsCategoryId: parseInt(document.getElementById('ifrsCategoryId').value) || 1,
+                IsCash: document.getElementById('isCash').checked,
+                IsBank: document.getElementById('isBank').checked,
+                IsReserve: document.getElementById('isReserve').checked,
+                LoyaltyBaseMultiplicativePointsPercentage: loyaltyBase,
+                AccountSurchargesMultiplicativePercentage: parseFloat(document.getElementById('surchargeMult').value),
+                AccountSurchargesAdditiveFee: parseFloat(document.getElementById('surchargeAdd').value)
             };
+
             const res = await fetch('/CreateAccountWeb', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -51,6 +170,7 @@
         }
 
         checkPagePermissions(requiredEndpoints);
+        updateIfrsCategories(); // Initial load
     </script>
 </body>
 </html>

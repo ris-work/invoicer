@@ -1,0 +1,90 @@
+﻿@page "/Pages/Sales/EnterPaymentAmount"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Payment</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Enter Payment Amount</h2>
+        <div id="status">Loading...</div>
+        <div id="content" style="display:none;">
+            <p>Account: <strong id="accName"></strong></p>
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="amount" step="0.01" class="form-control">
+            </div>
+            <button class="btn btn-success" onclick="save()">Add Payment</button>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Load Selected Account
+            const resAcc = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+            });
+            const dataAcc = await resAcc.json();
+
+            // Load Name (Hack: usually name is also saved in flow or we search)
+            // For now, let's assume we search it
+            const resSearch = await fetch('/SearchAccountsWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: dataAcc.value })
+            });
+            const list = await resSearch.json();
+            const acc = list.find(a => a.accountNo == dataAcc.value);
+
+            document.getElementById('accName').innerText = acc ? acc.accountName : "Unknown";
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        async function save() {
+            const token = getCookie("auth-token");
+            const amount = parseFloat(document.getElementById('amount').value);
+            if(!amount || amount <= 0) { alert("Invalid amount"); return; }
+
+            const resAcc = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+            });
+            const dataAcc = await resAcc.json();
+
+            // Load Current Payments
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            list.push({
+                AccountNo: parseInt(dataAcc.value),
+                Amount: amount
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+
+            window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+        }
+
+        init();
+    </script>
+</body>
+</html>

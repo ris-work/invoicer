@@ -1,10 +1,17 @@
 ﻿@page "/Pages/Accounts/Edit"
+
 @functions { }
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Edit Account</title>
     <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .hint {
+            font-size: 0.85em;
+            color: #666;
+        }</style>
 </head>
 <body>
     <h2>Edit Account</h2>
@@ -13,14 +20,44 @@
     <div id="status">Loading...</div>
     <div id="form" style="display:none;">
         <input type="hidden" id="accNo">
-        <div class="form-group"><label>Name</label><input type="text" id="name"></div>
-        <div class="form-group"><label>Human Friendly ID</label><input type="text" id="hfid"></div>
-        <div class="form-group"><label>Min Limit</label><input type="number" id="min"></div>
-        <div class="form-group"><label>Max Limit</label><input type="number" id="max"></div>
+
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="name" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Human Friendly ID</label>
+            <input type="text" id="hfid" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Min Limit</label>
+            <input type="number" id="min" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Max Limit</label>
+            <input type="number" id="max" class="form-control">
+        </div>
 
         <h3>POS Settings</h3>
         <div class="form-group"><label>Allow Credit</label><input type="checkbox" id="allowCredit"></div>
         <div class="form-group"><label>Allow Debit</label><input type="checkbox" id="allowDebit"></div>
+        <div class="form-group"><label>Is Cash</label><input type="checkbox" id="isCash"></div>
+        <div class="form-group"><label>Is Bank</label><input type="checkbox" id="isBank"></div>
+
+        <h3>Loyalty & Surcharges</h3>
+        <p class="hint">Loyalty Base % must be negative or zero.</p>
+        <div class="form-group">
+            <label>Loyalty Base %</label>
+            <input type="number" id="loyaltyBase" step="0.01" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Surcharge Mult %</label>
+            <input type="number" id="surchargeMult" step="0.01" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Surcharge Add Fee</label>
+            <input type="number" id="surchargeAdd" step="0.01" class="form-control">
+        </div>
 
         <button class="btn btn-primary" onclick="save()">Save</button>
     </div>
@@ -32,50 +69,132 @@
         let original = null;
         const requiredEndpoints = ["SearchAccountsWeb", "EditAccountWeb"];
 
+        console.log("[EditAccount] Page script started. ID:", accNo);
+
         async function load() {
-            const token = await getCookie("auth-token");
-            const res = await fetch('/SearchAccountsWeb', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Query: accNo })
-            });
-            const list = await res.json();
-            const data = list.find(a => a.accountNo == accNo);
-            if(!data) return;
-            original = data;
+            console.log("[EditAccount] load() function called.");
+            try {
+                const token = await getCookie("auth-token");
+                if (!token) {
+                    console.error("[EditAccount] No auth token found.");
+                    document.getElementById('status').innerText = "Error: Authentication token missing.";
+                    return;
+                }
 
-            document.getElementById('accNo').value = data.accountNo;
-            document.getElementById('name').value = data.accountName;
-            document.getElementById('hfid').value = data.humanFriendlyId;
-            document.getElementById('min').value = data.accountMin;
-            document.getElementById('max').value = data.accountMax;
-            document.getElementById('allowCredit').checked = data.allowCreditOnPos;
-            document.getElementById('allowDebit').checked = data.allowDebitOnPos;
+                console.log("[EditAccount] Fetching account data...");
+                const res = await fetch('/SearchAccountsWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: accNo })
+                });
 
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('form').style.display = 'block';
+                console.log("[EditAccount] Response status:", res.status);
+                if (!res.ok) {
+                    const errText = await res.text();
+                    console.error("[EditAccount] API Error:", errText);
+                    document.getElementById('status').innerText = "API Error: " + errText;
+                    return;
+                }
+
+                const list = await res.json();
+                console.log("[EditAccount] Raw data:", list);
+
+                // Check if data is an array
+                if (!Array.isArray(list)) {
+                    console.error("[EditAccount] Response is not an array. Received:", list);
+                    document.getElementById('status').innerText = "Error: Invalid data format from server.";
+                    return;
+                }
+
+                const data = list.find(a => a.accountNo == accNo); // Loose comparison '==' is fine here (string vs number)
+
+                if (!data) {
+                    console.error("[EditAccount] Account not found in response for ID:", accNo);
+                    document.getElementById('status').innerText = "Error: Account not found.";
+                    return;
+                }
+
+                original = data;
+                console.log("[EditAccount] Found account:", original);
+
+                // Populate Form
+                document.getElementById('accNo').value = data.accountNo;
+                document.getElementById('name').value = data.accountName || "";
+                document.getElementById('hfid').value = data.humanFriendlyId || "";
+                document.getElementById('min').value = data.accountMin;
+                document.getElementById('max').value = data.accountMax;
+
+                document.getElementById('allowCredit').checked = data.allowCreditOnPos;
+                document.getElementById('allowDebit').checked = data.allowDebitOnPos;
+                document.getElementById('isCash').checked = data.isCash;
+                document.getElementById('isBank').checked = data.isBank;
+
+                // New fields
+                document.getElementById('loyaltyBase').value = data.loyaltyBaseMultiplicativePointsPercentage || 0;
+                document.getElementById('surchargeMult').value = data.accountSurchargesMultiplicativePercentage || 0;
+                document.getElementById('surchargeAdd').value = data.accountSurchargesAdditiveFee || 0;
+
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('form').style.display = 'block';
+
+            } catch (err) {
+                console.error("[EditAccount] Exception in load():", err);
+                document.getElementById('status').innerText = "Exception: " + err.message;
+            }
         }
 
         async function save() {
+            console.log("[EditAccount] save() called.");
             const token = await getCookie("auth-token");
             const payload = { AccountNo: parseInt(accNo) };
 
+            // Validation
+            const loyaltyBase = parseFloat(document.getElementById('loyaltyBase').value);
+            if (loyaltyBase > 0) {
+                alert("Loyalty Base % must be negative or zero.");
+                return;
+            }
+
+            // Build Payload (Only send changes)
             if(document.getElementById('name').value !== original.accountName) payload.AccountName = document.getElementById('name').value;
             if(document.getElementById('hfid').value !== original.humanFriendlyId) payload.HumanFriendlyId = document.getElementById('hfid').value;
             if(parseFloat(document.getElementById('min').value) !== original.accountMin) payload.AccountMin = parseFloat(document.getElementById('min').value);
             if(parseFloat(document.getElementById('max').value) !== original.accountMax) payload.AccountMax = parseFloat(document.getElementById('max').value);
+
             if(document.getElementById('allowCredit').checked !== original.allowCreditOnPos) payload.AllowCreditOnPos = document.getElementById('allowCredit').checked;
             if(document.getElementById('allowDebit').checked !== original.allowDebitOnPos) payload.AllowDebitOnPos = document.getElementById('allowDebit').checked;
+            if(document.getElementById('isCash').checked !== original.isCash) payload.IsCash = document.getElementById('isCash').checked;
+            if(document.getElementById('isBank').checked !== original.isBank) payload.IsBank = document.getElementById('isBank').checked;
+
+            if(loyaltyBase !== original.loyaltyBaseMultiplicativePointsPercentage) payload.LoyaltyBaseMultiplicativePointsPercentage = loyaltyBase;
+            if(parseFloat(document.getElementById('surchargeMult').value) !== original.accountSurchargesMultiplicativePercentage) payload.AccountSurchargesMultiplicativePercentage = parseFloat(document.getElementById('surchargeMult').value);
+            if(parseFloat(document.getElementById('surchargeAdd').value) !== original.accountSurchargesAdditiveFee) payload.AccountSurchargesAdditiveFee = parseFloat(document.getElementById('surchargeAdd').value);
 
             if(Object.keys(payload).length <= 1) { alert("No changes"); return; }
 
-            const res = await fetch('/EditAccountWeb', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) { alert("Saved"); location.reload(); }
-            else alert("Error: " + await res.text());
+            console.log("[EditAccount] Sending payload:", payload);
+
+            try {
+                const res = await fetch('/EditAccountWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    console.log("[EditAccount] Save successful.");
+                    alert("Saved");
+                    location.reload();
+                }
+                else {
+                    const err = await res.text();
+                    console.error("[EditAccount] Save failed:", err);
+                    alert("Error: " + err);
+                }
+            } catch (err) {
+                console.error("[EditAccount] Save exception:", err);
+                alert("Exception: " + err.message);
+            }
         }
 
+        // Initial run
         checkPagePermissions(requiredEndpoints);
         load();
     </script>

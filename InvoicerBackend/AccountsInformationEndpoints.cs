@@ -66,22 +66,34 @@ namespace InvoicerBackend
             );
 
             app.AddAsyncEndpointWithBearerAuth<SearchAccountRequest, List<AccountsInformation>>(
-                "SearchAccountsWeb",
-                async (DataIn, LoginInfo) =>
-                {
-                    var req = (SearchAccountRequest)DataIn;
-                    using (var ctx = new NewinvContext())
-                    {
-                        var q = ctx.AccountsInformations.AsQueryable();
-                        if (!string.IsNullOrEmpty(req.Query))
-                        {
-                            q = q.Where(a => a.AccountName.ToLower().Contains(req.Query.ToLower()));
-                        }
-                        return await q.OrderByDescending(a => a.AccountNo).Take(50).ToListAsync();
-                    }
-                },
-                "Refresh"
-            );
+    "SearchAccountsWeb",
+    async (DataIn, LoginInfo) =>
+    {
+        var req = (SearchAccountRequest)DataIn;
+        using (var ctx = new NewinvContext())
+        {
+            var q = ctx.AccountsInformations.AsQueryable();
+
+            if (!string.IsNullOrEmpty(req.Query))
+            {
+                var lowerQuery = req.Query.ToLower();
+                bool isNumber = long.TryParse(req.Query, out long accNo);
+
+                // Filter by Name OR ID
+                q = q.Where(a =>
+                    a.AccountName.ToLower().Contains(lowerQuery) ||
+                    (isNumber && a.AccountNo == accNo)
+                );
+            }
+
+            // Sort by AccountNo descending (most recent/likely relevant first)
+            // This ensures that if "1" matches ID 1 and Name "Account 1", ID 1 might appear lower or higher depending on ID.
+            // It is standard to show most recent accounts first.
+            return await q.OrderByDescending(a => a.AccountNo).Take(50).ToListAsync();
+        }
+    },
+    "Refresh"
+);
 
             app.AddAsyncEndpointWithBearerAuth<LinkAccountPiiRequest, bool>(
                 "LinkAccountPiiWeb",
@@ -97,6 +109,39 @@ namespace InvoicerBackend
                         await ctx.SaveChangesAsync();
                         return true;
                     }
+                },
+                "Refresh"
+            );
+            // Inside AddAccountsInformationEndpoints
+
+            app.AddAsyncEndpointWithBearerAuth<object?, List<IfrsCategory>>(
+                "GetIfrsCategories",
+                async (AccountTypeStrI, LoginInfo) =>
+                {
+                    string AccountTypeStr = "";
+                    try
+                    {
+                        if (AccountTypeStrI is string S)
+                        {
+                            AccountTypeStr = S;
+                        }
+                    }
+                    catch(Exception E) { }
+                    int? accountType = null;
+                    if (!string.IsNullOrEmpty(AccountTypeStr) && int.TryParse(AccountTypeStr, out int t))
+                    {
+                        accountType = t;
+                    }
+
+                    using var ctx = new NewinvContext();
+                    var query = ctx.IfrsCategories.AsQueryable();
+
+                    if (accountType.HasValue)
+                    {
+                        query = query.Where(c => c.ValidAccountType == accountType.Value);
+                    }
+
+                    return await query.OrderBy(c => c.SortOrder).ToListAsync();
                 },
                 "Refresh"
             );

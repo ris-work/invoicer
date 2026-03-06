@@ -234,6 +234,10 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.AccountSurchargesAdditiveFee).HasColumnName("account_surcharges_additive_fee");
             entity.Property(e => e.AccountSurchargesMultiplicativePercentage).HasColumnName("account_surcharges_multiplicative_percentage");
             entity.Property(e => e.AccountType).HasColumnName("account_type");
+            entity.Property(e => e.AccountsSurchargesTransferredToDuringSalePayment)
+                .HasDefaultValue(0L)
+                .HasColumnName("accounts_surcharges_transferred_to_during_sale_payment");
+            entity.Property(e => e.AccountsUsageNonTransparentChargePercentage).HasColumnName("accounts_usage_non_transparent_charge_percentage");
             entity.Property(e => e.AllowCreditOnPos)
                 .HasDefaultValue(false)
                 .HasColumnName("allow_credit_on_pos");
