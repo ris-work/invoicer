@@ -143,6 +143,10 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<TagsTransitiveClosure> TagsTransitiveClosures { get; set; }
 
+    public virtual DbSet<TaxJurisdiction> TaxJurisdictions { get; set; }
+
+    public virtual DbSet<TaxRate> TaxRates { get; set; }
+
     public virtual DbSet<TieredDiscount> TieredDiscounts { get; set; }
 
     public virtual DbSet<Token> Tokens { get; set; }
@@ -172,6 +176,8 @@ public partial class NewinvContext : DbContext
     public virtual DbSet<VSalesStep2SuggestedVolume> VSalesStep2SuggestedVolumes { get; set; }
 
     public virtual DbSet<VSalesStep2Volume> VSalesStep2Volumes { get; set; }
+
+    public virtual DbSet<VTaxResolution> VTaxResolutions { get; set; }
 
     public virtual DbSet<VatCategory> VatCategories { get; set; }
 
@@ -1809,6 +1815,36 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Tag).HasColumnName("tag");
         });
 
+        modelBuilder.Entity<TaxJurisdiction>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("tax_jurisdictions_pkey");
+
+            entity.ToTable("tax_jurisdictions");
+
+            entity.HasIndex(e => e.Code, "tax_jurisdictions_code_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.IsDefault)
+                .HasDefaultValue(false)
+                .HasColumnName("is_default");
+            entity.Property(e => e.Name).HasColumnName("name");
+        });
+
+        modelBuilder.Entity<TaxRate>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("tax_rates_pkey");
+
+            entity.ToTable("tax_rates");
+
+            entity.HasIndex(e => new { e.JurisdictionCode, e.VatCategoryId }, "unique_override").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.JurisdictionCode).HasColumnName("jurisdiction_code");
+            entity.Property(e => e.RatePercentage).HasColumnName("rate_percentage");
+            entity.Property(e => e.VatCategoryId).HasColumnName("vat_category_id");
+        });
+
         modelBuilder.Entity<TieredDiscount>(entity =>
         {
             entity
@@ -2109,6 +2145,21 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Itemcode).HasColumnName("itemcode");
             entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
             entity.Property(e => e.VolStartFrom).HasColumnName("vol_start_from");
+        });
+
+        modelBuilder.Entity<VTaxResolution>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_tax_resolution");
+
+            entity.Property(e => e.EffectiveRatePercentage).HasColumnName("effective_rate_percentage");
+            entity.Property(e => e.IsDefault).HasColumnName("is_default");
+            entity.Property(e => e.JurisdictionCode).HasColumnName("jurisdiction_code");
+            entity.Property(e => e.JurisdictionName).HasColumnName("jurisdiction_name");
+            entity.Property(e => e.RateSource).HasColumnName("rate_source");
+            entity.Property(e => e.VatCategoryId).HasColumnName("vat_category_id");
+            entity.Property(e => e.VatName).HasColumnName("vat_name");
         });
 
         modelBuilder.Entity<VatCategory>(entity =>

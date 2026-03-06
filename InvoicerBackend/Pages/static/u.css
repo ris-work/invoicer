@@ -1,59 +1,68 @@
 ﻿/*
- * u.css - Common Stylesheet
+ * ==============================================================================
+ * UI STYLES & COMPONENTS (u.css)
+ * ==============================================================================
  * 
- * Implemented Classes:
- * --------------------
- * Layout:
- * .container      - Max-width centered container.
- * .section        - Padded block with background, used in Echo.
- * .card           - Generic white box with shadow/border.
- * .search-box     - Input container styling.
- * .flow-card      - Collapsible card for SessionInfo.
- * .flow-header    - Clickable header for flow-card.
- * .flow-body      - Hidden body for flow-card.
+ * A global stylesheet for the Inventory System's web interface (Razor/Pages).
+ * Designed to be compatible with Servo, Ladybird, and standard browsers.
+ *
+ * SECTIONS:
+ * ---------
+ * 1. LAYOUT & CONTAINERS
+ *    - .container   : Max-width centered wrapper.
+ *    - .section     : Padded block with background.
+ *    - .card        : Generic white box with shadow.
+ *    - .item-card   : Specific container for Sales Review items.
+ *
+ * 2. NAVIGATION & FLOW
+ *    - .current-bar : Top bar showing current flow state (used in Selectors).
+ *    - .flow-card   : Collapsible container for flow details.
+ *    - .choice-container, .choice-card : Container for Mode Selection (Order vs Precise).
+ *
+ * 3. TABLES & GRIDS
+ *    - table, th, td : Standard bordered tables.
+ *    - .table-container : Wrapper for scrolling tables.
+ *    - .row-selected   : Highlight for selected batches (Green tint).
+ *    - .row-skipped    : Dimmed for skipped batches.
+ *    - .row-empty      : Greyed out for empty stock.
+ *
+ * 4. FORMS & INPUTS
+ *    - .form-group    : Label + Input wrapper.
+ *    - input, select, textarea : Standard input styling.
+ *    - .filter-bar, .filter-row : Containers for list filters.
+ *    - .checkbox-group : Horizontal checkbox layout.
+ *    - .input-group   : Attached input sets.
  * 
- * Tables & Pre:
- * table           - Full width, collapsed borders.
- * th, td          - Padding and borders.
- * pre             - Code block styling (dark theme).
- * 
- * Buttons:
- * .btn            - Base button class.
- * .btn-primary    - Blue background.
- * .btn-success    - Green background.
- * .btn-secondary  - Grey background.
- * .btn-warning    - Yellow background.
- * .btn-close      - Grey close button.
- * 
- * Endpoints/CheckAccess:
- * .endpoint-list  - Flex column container.
- * .endpoint-card  - Clickable card with left border.
- * .endpoint-name  - Monospace bold name.
- * .endpoint-meta  - Small grey text.
- * 
- * Status Indicators:
- * .status-granted - Green left border.
- * .status-denied  - Red left border.
- * .status-unknown - Grey left border.
- * .status-badge   - Small pill-shaped badge.
- * .badge-granted  - Green badge.
- * .badge-denied   - Red badge.
- * .badge-check    - Blue badge.
- * 
- * Privilege Tags (Echo):
- * .priv-list      - Flex container for tags.
- * .priv-tag       - Monospace tag style.
- * .has-access     - Green tag variant.
- * 
- * Modals:
- * .result-modal   - Full screen overlay.
- * .modal-content  - Centered white box.
- * .modal-header   - Title section.
- * .modal-footer   - Action section.
- * 
- * Misc:
- * .warning        - Yellow warning text box.
- * .result-box     - Output container.
+ * 5. BUTTONS
+ *    - .btn           : Base button class.
+ *    - .btn-primary   : Blue (Main Action).
+ *    - .btn-success   : Green (Confirm/Save).
+ *    - .btn-warning   : Yellow (Edit/Attention).
+ *    - .btn-danger    : Red (Delete - implied via context usually, explicit here if needed).
+ *    - .btn-secondary : Grey (Cancel/Neutral).
+ *    - .btn-sm        : Smaller button size.
+ *    - .remove-btn    : Red 'X' icon link for removing items.
+ *
+ * 6. STATUS INDICATORS
+ *    - .status-ok     : Green text (Success).
+ *    - .status-fail   : Red text (Error).
+ *    - .status-badge  : Small pill indicators.
+ *    - .perm-warning  : Yellow box for permission errors.
+ *    - .warning       : Generic warning box.
+ *
+ * 7. SPECIALIZED COMPONENTS
+ *    - .search-box    : Container for search inputs.
+ *    - .search-results, .search-item : Dropdown-style list results.
+ *    - .doc-card      : Container for Reference Documents.
+ *    - .debug-details : Collapsible <details> section for Debug Info.
+ *    - .summary       : Box for totals/Loyalty Points.
+ *    - .result-box    : Generic output container.
+ *
+ * RESPONSIVE:
+ * -----------
+ * - Standard widths and padding used. No complex media queries required currently.
+ * - ExpandContentWidth/Height handled by Eto.Forms logic primarily, CSS adapts to container.
+ *
  */
 
 body {

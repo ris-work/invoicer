@@ -5,6 +5,69 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+/*
+ * ==============================================================================
+ * SALES SIMULATION & BATCH SELECTION ENGINE
+ * ==============================================================================
+ * 
+ * PURPOSE:
+ * Provides endpoints for simulating sales orders and selecting batches based on
+ * complex pricing rules and inventory availability. It supports both "Sale Order"
+ * (Auto-allocation) and "Precise Batch" (Manual selection) modes.
+ *
+ * CORE CONCEPT: VIRTUAL INVENTORY
+ * -------------------------------
+ * To prevent race conditions within a single order containing multiple line items,
+ * this engine uses a "Virtual Inventory" approach.
+ * 1. The engine fetches the current Real Inventory state from `v_batch_selection_window`.
+ * 2. It creates a mutable copy (Virtual Inventory) specific to the current API request.
+ * 3. As line items are processed, stock is "reserved" in the Virtual Inventory.
+ * 4. Subsequent line items in the same request see the reduced availability.
+ * 5. The Virtual Inventory is discarded after the response is sent. It is never cached.
+ *
+ * PROCESSING ORDER (CRITICAL FOR FAIRNESS):
+ * -----------------------------------------
+ * Incoming line items are sorted before processing to maximize fulfillment likelihood:
+ * 1. PRIORITY: "Precise Batch" requests are processed FIRST. (Hard Constraints)
+ * 2. PRIORITY: "Sale Order" requests are processed SECOND. (Soft Constraints)
+ * 3. SUB-SORT: Within each group, items are sorted by Price (Ascending).
+ *    Rationale: Lower prices (often discounts/manual overrides) are "harder" to fulfill
+ *    or represent higher value to the customer, so they get dibs on stock before
+ *    standard high-margin sales.
+ *
+ * PRICING LOGIC:
+ * --------------
+ * - Manual Price: Uses user input price. Checks MinPrice constraints.
+ * - Suggested Price: Matches `ISuggestedPrice` in the matrix.
+ * - Standard Price: Matches rows where `ISuggestedPrice` is NULL/0.
+ * - Loyalty Points: Calculated based on the Matrix's `OEffectiveLpRate`.
+ *
+ * ENDPOINTS:
+ * ----------
+ * 1. GetPricingContext (ItemCode)
+ *    - Returns pricing flags (Manual, Suggestions), default prices, and constraints.
+ *    - Used by the UI to render the Price Selection screen.
+ * 
+ * 2. SimulateSaleOrder (PiiId, List<SaleOrderLineItem>)
+ *    - The main engine. Accepts a mixed list of orders.
+ *    - Returns `SimulateItemResult` for each item:
+ *      - Selected Batches (The allocation plan).
+ *      - Debug Info (Real vs Virtual Inventory snapshots).
+ *
+ * VIEWS DEPENDENCY:
+ * -----------------
+ * - `public.v_batch_selection_window`: Must contain sorted batches (FEFO) with columns:
+ *   itemcode, batchcode, units, selling_price, min_price, exp_date, cumulative_quantity.
+ * - `public.v_comprehensive_sales_final_matrix`: Must contain pricing/lp data:
+ *   itemcode, batchcode, pii_id, i_suggested_price, o_effective_selling_price_per_unit, etc.
+ *
+ * DTOs:
+ * -----
+ * - SaleOrderLineItem: The input structure (ItemCode, Quantity, TargetPrice, BatchCode?).
+ * - BatchDebugInfo: The detailed snapshot for UI debugging (Initial, VI Before, VI After).
+ * 
+ */
+
 namespace InvoicerBackend
 {
     public static class SalesSimulationEndpoints
@@ -67,9 +130,6 @@ namespace InvoicerBackend
                         .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = ANY({0})", itemCodes.ToArray())
                         .ToListAsync();
 
-                    Console.WriteLine($"[SimulateSaleOrder] Fetched {allBatchesRaw.Count} batches from View.");
-
-                    // Snapshots
                     var initialInventory = allBatchesRaw.ToDictionary(b => b.Batchcode ?? 0, b => b.Units ?? 0);
                     var virtualInventory = new Dictionary<long, double>(initialInventory);
 
@@ -81,35 +141,29 @@ namespace InvoicerBackend
                     var matrixByItem = matrixDataRaw.GroupBy(m => m.Itemcode ?? 0)
                         .ToDictionary(g => g.Key, g => g.ToList());
 
-                    // --- SORTING LOGIC (NEW) ---
-                    // Strategy: 
-                    // 1. Precise Batch (HasBatchCode) = Priority 1
-                    // 2. Sale Order (Auto) = Priority 2
-                    // Sub-sort: Effective Price (Ascending) -> "Unlikely/Rare" deals first.
-
+                    // --- SORTING LOGIC ---
                     var sortedItems = Req.Items.Select(item =>
                     {
                         double estimatedPrice = double.MaxValue;
-
-                        if (item.TargetPrice.HasValue)
-                        {
-                            estimatedPrice = item.TargetPrice.Value;
-                        }
+                        if (item.TargetPrice.HasValue) estimatedPrice = item.TargetPrice.Value;
                         else
                         {
-                            // Estimate standard price from the first batch of this item
                             var firstBatch = allBatchesRaw.FirstOrDefault(b => b.Itemcode == item.ItemCode);
                             if (firstBatch != null) estimatedPrice = firstBatch.SellingPrice ?? 0;
                         }
-
                         return new { Item = item, SortPrice = estimatedPrice };
                     })
-                    .OrderBy(x => x.Item.BatchCode.HasValue ? 0 : 1) // Precise First
-                    .ThenBy(x => x.SortPrice)                        // Low Price First
+                    .OrderBy(x => x.Item.BatchCode.HasValue ? 0 : 1)
+                    .ThenBy(x => x.SortPrice)
                     .Select(x => x.Item)
                     .ToList();
 
+                    // --- TAX RESOLUTION SETUP ---
+                    string jurisdictionCode = "HOME"; // Default to Source
+                    // Future Logic: if (!string.IsNullOrEmpty(pii.Country)) jurisdictionCode = pii.Country;
+
                     var itemResults = new List<SimulateItemResult>();
+                    double grandTotalTax = 0;
 
                     // --- PROCESS ITEMS ---
                     foreach (var itemReq in sortedItems)
@@ -117,15 +171,19 @@ namespace InvoicerBackend
                         var itemBatches = allBatchesRaw.Where(b => b.Itemcode == itemReq.ItemCode).ToList();
                         var itemMatrix = matrixByItem.GetValueOrDefault(itemReq.ItemCode, new List<VComprehensiveSalesFinalMatrix>());
 
-                        var result = ProcessItem(itemReq, itemBatches, virtualInventory, initialInventory, itemMatrix);
+                        var result = ProcessItem(itemReq, itemBatches, virtualInventory, initialInventory, itemMatrix, ctx, jurisdictionCode);
+
+                        grandTotalTax += result.SelectedBatches.Sum(b => b.TaxAmount);
                         itemResults.Add(result);
                     }
 
                     return new SimulateOrderResponse
                     {
                         Success = itemResults.All(r => r.Success),
-                        Items = itemResults, // Returns in the optimized processing order
-                        CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId)
+                        Items = itemResults,
+                        CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId),
+                        TotalTax = grandTotalTax, // NEW
+                        TaxJurisdiction = jurisdictionCode // NEW
                     };
                 },
                 "Refresh"
@@ -134,12 +192,17 @@ namespace InvoicerBackend
             return app;
         }
 
+        /// <summary>
+        /// Full Logic for Processing a Single Line Item (Now with Tax)
+        /// </summary>
         private static SimulateItemResult ProcessItem(
             SaleOrderLineItem req,
             List<VBatchSelectionWindow> itemBatches,
             Dictionary<long, double> virtualInventory,
             Dictionary<long, double> initialInventory,
-            List<VComprehensiveSalesFinalMatrix> itemMatrix)
+            List<VComprehensiveSalesFinalMatrix> itemMatrix,
+            NewinvContext ctx, // ADDED Context
+            string jurisdictionCode) // ADDED Jurisdiction
         {
             double remainingQty = req.Quantity;
             var selectedBatches = new List<SelectedBatchInfo>();
@@ -147,7 +210,7 @@ namespace InvoicerBackend
 
             bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
 
-            // --- BRANCH 1: PRECISE BATCH SELECTION ---
+            // PRECISE BATCH SELECTION
             if (req.BatchCode.HasValue)
             {
                 var batchId = req.BatchCode.Value;
@@ -175,21 +238,26 @@ namespace InvoicerBackend
                         ? req.TargetPrice.Value
                         : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
 
+                    // --- TAX CALCULATION ---
+                    var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, req.Quantity);
+
                     selectedBatches.Add(new SelectedBatchInfo
                     {
                         Batchcode = batchId,
                         Quantity = req.Quantity,
-                        UnitPrice = unitPrice
+                        UnitPrice = unitPrice,
+                        TaxRate = taxInfo.Rate,
+                        TaxAmount = taxInfo.Amount,
+                        TaxSource = taxInfo.Source
                     });
 
                     virtualInventory[batchId] -= req.Quantity;
                     remainingQty = 0;
-                    dbg.Status = "Selected";
-                    dbg.AvailableQty = virtualInventory[batchId];
+                    dbg.Status = "Selected"; dbg.AvailableQty = virtualInventory[batchId];
                 }
                 allBatchDebug.Add(dbg);
             }
-            // --- BRANCH 2: AUTO ALLOCATION (SALE ORDER) ---
+            // AUTO ALLOCATION
             else
             {
                 foreach (var batch in itemBatches)
@@ -200,10 +268,7 @@ namespace InvoicerBackend
 
                     var priceInfo = itemMatrix.FirstOrDefault(m =>
                         m.Batchcode == batchId &&
-                        (
-                            (isSuggested && m.ISuggestedPrice == req.TargetPrice) ||
-                            (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0))
-                        )
+                        ((isSuggested && m.ISuggestedPrice == req.TargetPrice) || (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0)))
                     );
 
                     var dbg = new BatchDebugInfo
@@ -240,13 +305,19 @@ namespace InvoicerBackend
                             lpRate = priceInfo.OEffectiveLpRate ?? 0;
                         }
 
+                        // --- TAX CALCULATION ---
+                        var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, takeQty);
+
                         selectedBatches.Add(new SelectedBatchInfo
                         {
                             Batchcode = batchId,
                             Quantity = takeQty,
                             UnitPrice = unitPrice,
                             UnitDiscount = unitDiscount,
-                            LpRate = lpRate
+                            LpRate = lpRate,
+                            TaxRate = taxInfo.Rate,
+                            TaxAmount = taxInfo.Amount,
+                            TaxSource = taxInfo.Source
                         });
 
                         virtualInventory[batchId] -= takeQty;
@@ -267,6 +338,36 @@ namespace InvoicerBackend
                 SelectedBatches = selectedBatches,
                 AllBatches = allBatchDebug
             };
+        }
+
+
+        private static (double Rate, double Amount, string Source) CalculateTax(NewinvContext ctx, string jurisdiction, long itemCode, double unitPrice, double qty)
+        {
+            try
+            {
+                // 1. Get Item's Tax Category from Catalogue
+                // Note: In a high-perf scenario, fetch Catalogue data once in the main loop.
+                // Doing it here for simplicity of patching.
+                var category = ctx.Catalogues.Where(c => c.Itemcode == itemCode).Select(c => c.DefaultVatCategory).FirstOrDefault();
+
+                // 2. Query Resolution View
+                var rateInfo = ctx.VTaxResolutions
+                    .FirstOrDefault(t => t.JurisdictionCode == jurisdiction && t.VatCategoryId == (category));
+
+                if (rateInfo != null)
+                {
+                    double taxableAmount = unitPrice * qty;
+                    double taxAmount = taxableAmount * ((rateInfo.EffectiveRatePercentage??0) / 100.0);
+                    return (rateInfo.EffectiveRatePercentage??0, taxAmount, rateInfo.RateSource);
+                }
+            }
+            catch
+            {
+                // If view doesn't exist or error, fallback to 0
+                Console.WriteLine($"WARN: Tax lookup failed for item {itemCode} in {jurisdiction}");
+            }
+
+            return (0, 0, "ERROR");
         }
     }
 
@@ -301,6 +402,8 @@ namespace InvoicerBackend
         public bool Success { get; set; }
         public List<SimulateItemResult> Items { get; set; }
         public double CurrentLoyaltyPoints { get; set; }
+        public double TotalTax { get; set; } // NEW
+        public string TaxJurisdiction { get; set; } // NEW
     }
 
     public class SimulateItemResult
@@ -319,6 +422,10 @@ namespace InvoicerBackend
         public double UnitPrice { get; set; }
         public double UnitDiscount { get; set; }
         public double LpRate { get; set; }
+        // TAX FIELDS
+        public double TaxRate { get; set; }
+        public double TaxAmount { get; set; }
+        public string TaxSource { get; set; } // "SOURCE_DEFAULT" or "OVERRIDE"
     }
 
     public class BatchDebugInfo
