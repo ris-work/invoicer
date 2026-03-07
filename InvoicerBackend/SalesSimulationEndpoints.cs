@@ -111,7 +111,7 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // 2. Simulate Order
+            // 2. Simulate Order (Re-using Shared Logic)
             app.AddAsyncEndpointWithBearerAuth<SimulateOrderRequest, SimulateOrderResponse>(
                 "SimulateSaleOrder",
                 async (ReqI, LoginInfo) =>
@@ -119,82 +119,28 @@ namespace InvoicerBackend
                     var Req = (SimulateOrderRequest)ReqI;
                     using var ctx = new NewinvContext();
 
-                    var pii = await ctx.Piis.FirstOrDefaultAsync(p => p.Id == Req.PiiId);
-                    if (pii == null) throw new ArgumentException("PII not found");
+                    // Call the Unified Processor with Empty Payments
+                    var processResult = await InvoiceProcessingService.ProcessInvoice(
+                        ctx,
+                        Req.PiiId,
+                        Req.Items,
+                        new List<PaymentEntry>() // Payments are empty for simulation
+                    );
 
-                    var itemCodes = Req.Items.Select(i => i.ItemCode).Distinct().ToList();
-
-                    // --- FETCH DATA ---
-
-                    // 1. Batches
-                    var allBatchesRaw = await ctx.VBatchSelectionWindows
-                        .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = ANY({0})", itemCodes.ToArray())
-                        .ToListAsync();
-
-                    var initialInventory = allBatchesRaw.ToDictionary(b => b.Batchcode ?? 0, b => b.Units ?? 0);
-                    var virtualInventory = new Dictionary<long, double>(initialInventory);
-
-                    // 2. Matrix
-                    var matrixDataRaw = await ctx.VComprehensiveSalesFinalMatrices
-                        .Where(m => itemCodes.Contains(m.Itemcode ?? 0) && m.PiiId == Req.PiiId)
-                        .ToListAsync();
-
-                    var matrixByItem = matrixDataRaw.GroupBy(m => m.Itemcode ?? 0)
-                        .ToDictionary(g => g.Key, g => g.ToList());
-
-                    // --- SORTING LOGIC ---
-                    var sortedItems = Req.Items.Select(item =>
-                    {
-                        double estimatedPrice = double.MaxValue;
-                        if (item.TargetPrice.HasValue) estimatedPrice = item.TargetPrice.Value;
-                        else
-                        {
-                            var firstBatch = allBatchesRaw.FirstOrDefault(b => b.Itemcode == item.ItemCode);
-                            if (firstBatch != null) estimatedPrice = firstBatch.SellingPrice ?? 0;
-                        }
-                        return new { Item = item, SortPrice = estimatedPrice };
-                    })
-                    .OrderBy(x => x.Item.BatchCode.HasValue ? 0 : 1)
-                    .ThenBy(x => x.SortPrice)
-                    .Select(x => x.Item)
-                    .ToList();
-
-                    // --- TAX RESOLUTION SETUP ---
-                    string jurisdictionCode = "HOME"; // Default to Source
-                    // Future Logic: if (!string.IsNullOrEmpty(pii.Country)) jurisdictionCode = pii.Country;
-
-                    var itemResults = new List<SimulateItemResult>();
-                    double grandTotalTax = 0;
-
-                    // --- PROCESS ITEMS ---
-                    foreach (var itemReq in sortedItems)
-                    {
-                        var itemBatches = allBatchesRaw.Where(b => b.Itemcode == itemReq.ItemCode).ToList();
-                        var itemMatrix = matrixByItem.GetValueOrDefault(itemReq.ItemCode, new List<VComprehensiveSalesFinalMatrix>());
-
-                        var result = ProcessItem(itemReq, itemBatches, virtualInventory, initialInventory, itemMatrix, ctx, jurisdictionCode);
-
-                        grandTotalTax += result.SelectedBatches.Sum(b => b.TaxAmount);
-                        itemResults.Add(result);
-                    }
-
-                    double totalRevenue = itemResults.Sum(r => r.SelectedBatches.Sum(b => b.Quantity * b.UnitPrice));
-                    double grandTotal = totalRevenue + grandTotalTax;
-
+                    // Map ProcessResult to SimulateOrderResponse
                     return new SimulateOrderResponse
                     {
-                        Success = itemResults.All(r => r.Success),
-                        Items = itemResults,
+                        Success = processResult.Success,
+                        Message = processResult.Message,
+                        Items = processResult.Items,
                         CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId),
-                        TotalTax = grandTotalTax,
-                        TaxJurisdiction = jurisdictionCode,
-
-                        // NEW INITIALIZATION
-                        GrandTotal = grandTotal,
-                        TotalPaid = 0, // Initial state
-                        Balance = -grandTotal, // Initial state (Amount Due)
-                        PaymentResults = new List<PaymentResult>(), // Empty list
-                        LoyaltyPointsFinal = 0
+                        TotalTax = processResult.TotalTax,
+                        TaxJurisdiction = "HOME", // ProcessResult uses default if not passed
+                        GrandTotal = processResult.GrandTotal,
+                        TotalPaid = processResult.TotalPaid, // Will be 0
+                        Balance = processResult.Balance,
+                        PaymentResults = processResult.PaymentResults, // Empty
+                        LoyaltyPointsFinal = processResult.LoyaltyPointsFinal
                     };
                 },
                 "Refresh"
@@ -490,6 +436,7 @@ namespace InvoicerBackend
         public double CurrentLoyaltyPoints { get; set; }
         public double TotalTax { get; set; }
         public string TaxJurisdiction { get; set; }
+        public string Message { get; set; }
 
         // NEW: Ensure these are always present
         public double GrandTotal { get; set; }
