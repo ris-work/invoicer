@@ -204,7 +204,7 @@ namespace InvoicerBackend
                         if (Req.TempId.HasValue)
                         {
                             var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
-                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTimeOffset.UtcNow; }
+                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTime.UtcNow; }
                         }
 
                         await ctx.SaveChangesAsync();
