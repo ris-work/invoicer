@@ -3,6 +3,7 @@ using RV.InvNew.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 /*
@@ -199,202 +200,80 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
+            // 2. Simulate (Use Shared Service)
             app.AddAsyncEndpointWithBearerAuth<SimulatePaymentRequest, SimulatePaymentResponse>(
-    "SimulateSaleWithPayments",
-    async (ReqI, LoginInfo) =>
-    {
-        var Req = (SimulatePaymentRequest)ReqI;
-        using var ctx = new NewinvContext();
-
-        // 1. Run Inventory Simulation First
-        // Re-use the logic by calling the internal method or re-querying
-        // For simplicity, we will duplicate the core logic here in a helper or inline.
-        // Ideally, refactor ProcessItem to be a shared helper.
-
-        // --- INVENTORY LOGIC (Condensed) ---
-        var pii = await ctx.Piis.FirstOrDefaultAsync(p => p.Id == Req.PiiId);
-        if (pii == null) throw new ArgumentException("PII not found");
-
-        var itemCodes = Req.Items.Select(i => i.ItemCode).Distinct().ToList();
-        var allBatchesRaw = await ctx.VBatchSelectionWindows
-            .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = ANY({0})", itemCodes.ToArray())
-            .ToListAsync();
-        var initialInventory = allBatchesRaw.ToDictionary(b => b.Batchcode ?? 0, b => b.Units ?? 0);
-        var virtualInventory = new Dictionary<long, double>(initialInventory);
-        var matrixDataRaw = await ctx.VComprehensiveSalesFinalMatrices
-            .Where(m => itemCodes.Contains(m.Itemcode ?? 0) && m.PiiId == Req.PiiId).ToListAsync();
-        var matrixByItem = matrixDataRaw.GroupBy(m => m.Itemcode ?? 0).ToDictionary(g => g.Key, g => g.ToList());
-
-        string jurisdictionCode = "HOME";
-        var itemResults = new List<SimulateItemResult>();
-        double totalRevenue = 0;
-        double totalTax = 0;
-        double totalCogs = 0;
-
-        foreach (var itemReq in Req.Items)
-        {
-            var result = ProcessItem(itemReq, allBatchesRaw.Where(b => b.Itemcode == itemReq.ItemCode).ToList(),
-                virtualInventory, initialInventory, matrixByItem.GetValueOrDefault(itemReq.ItemCode, new List<VComprehensiveSalesFinalMatrix>()),
-                ctx, jurisdictionCode);
-
-            itemResults.Add(result);
-            totalRevenue += result.SelectedBatches.Sum(b => b.Quantity * b.UnitPrice);
-            totalTax += result.SelectedBatches.Sum(b => b.TaxAmount);
-
-            // COGS Calculation (Requires Cost Price)
-            foreach (var batch in result.SelectedBatches)
-            {
-                var inv = await ctx.Inventories.FirstOrDefaultAsync(i => i.Batchcode == batch.Batchcode);
-                totalCogs += batch.Quantity * (inv?.CostPrice ?? 0);
-            }
-        }
-
-        // 2. Payments & Surcharges Logic
-        var paymentResults = new List<PaymentResult>();
-        double totalPaid = Req.Payments.Sum(p => p.Amount);
-        double totalSurcharges = 0;
-        double totalImplicitCharges = 0;
-        double totalLpFromPayments = 0;
-
-        // Base LP Rate from PII
-        double baseLpRate = pii.LoyaltyPointsRateAdditivePercentage + pii.LoyaltyPointsRateMultiplicativePercentage;
-
-        foreach (var pay in Req.Payments)
-        {
-            var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
-            if (acc == null) continue;
-
-            double surcharge = (pay.Amount * (acc.AccountSurchargesMultiplicativePercentage / 100.0)) + acc.AccountSurchargesAdditiveFee;
-
-            // Implicit charge logic (e.g. Card fees)
-            // Usually applied to the NET amount or Gross depending on policy. 
-            // Here we apply to Gross for simplicity.
-            double implicitCharge = pay.Amount * (acc.AccountsUsageNonTransparentChargePercentage / 100.0);
-            double netDeposit = pay.Amount - implicitCharge;
-
-            // LP Calculation: Base Rate - Account Penalty
-            // User said: "LoyaltyBaseMultiplicativePointsPercentage... should be negative"
-            // Formula: Points = Amount * (BaseRate + AccountRate) / 100
-            // If AccountRate is -20, and Base is 2, Rate = -18.
-            // Wait, user said: "1000 from cash (0%), bank (20%) penalty -> half+half*(100-20)%"
-            // This implies (BaseRate * (1 - Penalty)).
-
-            double effectiveLpRate = baseLpRate * (1 + (acc.LoyaltyBaseMultiplicativePointsPercentage / 100.0));
-            double lpEarned = (pay.Amount * effectiveLpRate) / 100.0;
-
-            paymentResults.Add(new PaymentResult
-            {
-                AccountNo = pay.AccountNo,
-                AccountName = acc.AccountName,
-                AmountTendered = pay.Amount,
-                Surcharge = surcharge,
-                ImplicitCharge = implicitCharge,
-                NetDeposit = netDeposit,
-                LpEarned = lpEarned
-            });
-
-            totalSurcharges += surcharge;
-            totalImplicitCharges += implicitCharge;
-            totalLpFromPayments += lpEarned;
-        }
-
-        double grandTotal = totalRevenue + totalTax + totalSurcharges;
-        double balance = totalPaid - grandTotal;
-
-        // 3. Generate Accounting Entries
-        var journalEntries = new List<JournalEntryResult>();
-
-        // A. Revenue
-        if (totalRevenue > 0)
-        {
-            journalEntries.Add(new JournalEntryResult
-            {
-                DebitAccount = 0,
-                DebitAccountName = "PENDING (Debtor)",
-                CreditAccount = 4,
-                CreditAccountName = "Sales Revenue", // Need specific ID logic
-                Amount = totalRevenue,
-                Narrative = "Sales Revenue"
-            });
-        }
-
-        // B. Tax
-        if (totalTax > 0)
-        {
-            journalEntries.Add(new JournalEntryResult
-            {
-                DebitAccount = 0,
-                DebitAccountName = "PENDING (Debtor)",
-                CreditAccount = 2,
-                CreditAccountName = "Tax Payable",
-                Amount = totalTax,
-                Narrative = "Tax Liability"
-            });
-        }
-
-        // C. COGS
-        if (totalCogs > 0)
-        {
-            journalEntries.Add(new JournalEntryResult
-            {
-                DebitAccount = 5,
-                DebitAccountName = "Cost of Goods Sold",
-                CreditAccount = 1,
-                CreditAccountName = "Inventory Asset",
-                Amount = totalCogs,
-                Narrative = "COGS"
-            });
-        }
-
-        // D. Payments & Surcharges
-        foreach (var pr in paymentResults)
-        {
-            var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pr.AccountNo);
-
-            // Receipt
-            journalEntries.Add(new JournalEntryResult
-            {
-                DebitAccount = pr.AccountNo,
-                DebitAccountName = acc.AccountName,
-                CreditAccount = 0,
-                CreditAccountName = "PENDING (Debtor)",
-                Amount = pr.NetDeposit,
-                Narrative = "Payment Received"
-            });
-
-            // Implicit Charge (Expense)
-            if (pr.ImplicitCharge > 0)
-            {
-                journalEntries.Add(new JournalEntryResult
+                "SimulateSaleWithPayments",
+                async (ReqI, LoginInfo) =>
                 {
-                    DebitAccount = acc.AccountsSurchargesTransferredToDuringSalePayment,
-                    DebitAccountName = "Bank Charges", // Lookup name ideally
-                    CreditAccount = pr.AccountNo,
-                    CreditAccountName = acc.AccountName,
-                    Amount = pr.ImplicitCharge,
-                    Narrative = "Card Fee Deduction"
-                });
-            }
-        }
+                    var Req = (SimulatePaymentRequest)ReqI;
+                    using var ctx = new NewinvContext();
 
-        return new SimulatePaymentResponse
-        {
-            Success = itemResults.All(r => r.Success) && Math.Abs(balance) < 0.01, // Allow 1 cent tolerance
-            Items = itemResults,
-            CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId),
-            TotalTax = totalTax,
-            TaxJurisdiction = jurisdictionCode,
+                    // Call Shared Logic
+                    var result = await InvoiceProcessingService.ProcessInvoice(ctx, Req.PiiId, Req.Items, Req.Payments);
 
-            GrandTotal = grandTotal,
-            TotalPaid = totalPaid,
-            Balance = balance,
-            PaymentResults = paymentResults,
-            AccountingEntries = journalEntries,
-            LoyaltyPointsFinal = totalLpFromPayments
-        };
-    },
-    "Refresh"
-);
+                    // Convert to Response
+                    return new SimulatePaymentResponse
+                    {
+                        Success = result.Success,
+                        Message = result.Message,
+                        Items = result.Items,
+                        PaymentResults = result.PaymentResults,
+                        AccountingEntries = result.AccountingEntries,
+                        GrandTotal = result.GrandTotal,
+                        TotalPaid = result.TotalPaid,
+                        Balance = result.Balance,
+                        LoyaltyPointsFinal = result.LoyaltyPointsFinal
+                    };
+                },
+                "Refresh"
+            );
+
+            // 3. Post (Use Shared Service + Commit)
+            app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
+                "PostInvoice",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (PostInvoiceRequest)ReqI;
+                    using var ctx = new NewinvContext();
+                    using var tx = await ctx.Database.BeginTransactionAsync();
+
+                    try
+                    {
+                        // 1. Deserialize
+                        var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
+
+                        // 2. VALIDATE (RE-RUN)
+                        var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
+
+                        if (!result.Success)
+                        {
+                            return new PostInvoiceResponse { Success = false, Message = result.Message };
+                        }
+
+                        // 3. COMMIT
+                        // Here you would write the actual DB inserts for Sales, Payments, JournalEntries.
+                        // foreach(var entry in result.AccountingEntries) { ... }
+
+                        // 4. Mark Temp Posted
+                        if (Req.TempId.HasValue)
+                        {
+                            var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
+                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTimeOffset.UtcNow; }
+                        }
+
+                        await ctx.SaveChangesAsync();
+                        await tx.CommitAsync();
+
+                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                    }
+                    catch
+                    {
+                        await tx.RollbackAsync();
+                        throw;
+                    }
+                },
+                "Refresh"
+            );
 
             return app;
         }

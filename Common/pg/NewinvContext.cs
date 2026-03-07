@@ -149,6 +149,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<TaxRate> TaxRates { get; set; }
 
+    public virtual DbSet<TempIssuedInvoice> TempIssuedInvoices { get; set; }
+
     public virtual DbSet<TieredDiscount> TieredDiscounts { get; set; }
 
     public virtual DbSet<Token> Tokens { get; set; }
@@ -1877,6 +1879,29 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.JurisdictionCode).HasColumnName("jurisdiction_code");
             entity.Property(e => e.RatePercentage).HasColumnName("rate_percentage");
             entity.Property(e => e.VatCategoryId).HasColumnName("vat_category_id");
+        });
+
+        modelBuilder.Entity<TempIssuedInvoice>(entity =>
+        {
+            entity.HasKey(e => e.TempInvoiceRunNo).HasName("temp_issued_invoices_pkey");
+
+            entity.ToTable("temp_issued_invoices");
+
+            entity.Property(e => e.TempInvoiceRunNo).HasColumnName("temp_invoice_run_no");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("time with time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.InvoiceContents).HasColumnName("invoice_contents");
+            entity.Property(e => e.ModifiedAt).HasColumnName("modified_at");
+            entity.Property(e => e.Posted)
+                .HasDefaultValue(false)
+                .HasColumnName("posted");
+            entity.Property(e => e.RequestId).HasColumnName("request_id");
+            entity.Property(e => e.RequestIds)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("request_ids");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
         modelBuilder.Entity<TieredDiscount>(entity =>
