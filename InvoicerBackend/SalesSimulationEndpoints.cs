@@ -117,15 +117,21 @@ namespace InvoicerBackend
                 async (ReqI, LoginInfo) =>
                 {
                     var Req = (SimulateOrderRequest)ReqI;
+                    ProcessResult processResult;
                     using var ctx = new NewinvContext();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    try
+                    {
 
-                    // Call the Unified Processor with Empty Payments
-                    var processResult = await InvoiceProcessingService.ProcessInvoice(
-                        ctx,
-                        Req.PiiId,
-                        Req.Items,
-                        new List<PaymentEntry>() // Payments are empty for simulation
-                    );
+                        // Call the Unified Processor with Empty Payments
+                        processResult = await InvoiceProcessingService.ProcessInvoice(
+                            ctx,
+                            Req.PiiId,
+                            Req.Items,
+                            new List<PaymentEntry>() // Payments are empty for simulation
+                        );
+                    }
+                    catch { await tx.RollbackAsync(); throw; }
 
                     // Map ProcessResult to SimulateOrderResponse
                     return new SimulateOrderResponse
@@ -152,10 +158,15 @@ namespace InvoicerBackend
                 async (ReqI, LoginInfo) =>
                 {
                     var Req = (SimulatePaymentRequest)ReqI;
+                    ProcessResult result;
                     using var ctx = new NewinvContext();
-
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
                     // Call Shared Logic
-                    var result = await InvoiceProcessingService.ProcessInvoice(ctx, Req.PiiId, Req.Items, Req.Payments);
+                    try
+                    {
+                        result = await InvoiceProcessingService.ProcessInvoice(ctx, Req.PiiId, Req.Items, Req.Payments);
+                    }
+                    catch { throw; }
 
                     // Convert to Response
                     return new SimulatePaymentResponse

@@ -85,7 +85,7 @@
         const flowId = params.get('flowId');
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
-                async function run() {
+        async function run() {
             const token = getCookie("auth-token");
             const contentDiv = document.getElementById('content');
 
@@ -107,18 +107,18 @@
             }
 
             try {
-                // 2. Load Payments (CRITICAL: We send this to the API)
+                // 2. Load Payments
                 const paymentsVal = await getFlowKey("payments");
                 const payments = paymentsVal ? JSON.parse(paymentsVal) : [];
 
-                // 3. Call FULL Simulation API (Includes Payments Logic)
+                // 3. Call FULL Simulation API (Re-validates everything)
                 const simRes = await fetch('/SimulateSaleWithPayments', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         PiiId: piiId,
                         Items: orderItems,
-                        Payments: payments // Send payments here!
+                        Payments: payments
                     })
                 });
 
@@ -143,7 +143,7 @@
                 html += `<p style="color: #28a745; font-weight: bold;">Order Ready for Execution</p>`;
             }
 
-            // --- 1. ITEMS LOOP ---
+            // Items
             result.items.forEach((item, index) => {
                 const statusClass = item.success ? "status-ok" : "status-fail";
                 const statusText = item.success ? "OK" : "FAILED";
@@ -202,7 +202,7 @@
                 html += `</tbody></table></details></div></div>`;
             });
 
-            // --- 2. PAYMENTS SECTION ---
+            // Payments
             html += `<h3>Payments</h3><div class="item-card"><div style="padding:10px;">`;
 
             const payments = result.paymentResults || [];
@@ -225,18 +225,8 @@
             html += `<button class="btn btn-primary" onclick="addPayment()">Add Payment</button>`;
             html += `</div></div>`;
 
-            // --- 3. TOTALS ---
+            // Totals
             let grandTotal = result.grandTotal || 0;
-            // Fallback calc if backend didn't provide it
-            if (!grandTotal && result.items) {
-                 result.items.forEach(item => {
-                     item.selectedBatches.forEach(b => {
-                         grandTotal += b.quantity * b.unitPrice;
-                         grandTotal += b.taxAmount || 0;
-                     });
-                 });
-            }
-
             const totalPaid = result.totalPaid || 0;
             const balance = (result.balance !== undefined) ? result.balance : (totalPaid - grandTotal);
             const lpFinal = result.loyaltyPointsFinal || 0;
@@ -249,16 +239,16 @@
                 <p><strong>Total LP:</strong> ${lpFinal.toFixed(2)}</p>
             </div>`;
 
-            // --- 4. ACTIONS ---
+            // Actions
             html += `<div style="margin-top: 15px;">
-                <button class="btn btn-success" onclick="pay()">PAY (Simulate)</button>
-                <button class="btn btn-secondary" onclick="addMore()">Add More Items</button>
+                <button class="btn btn-success" onclick="pay()">PAY (Post)</button>
+                <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
             </div>`;
 
             contentDiv.innerHTML = html;
         }
 
-        // --- ACTIONS LOGIC ---
+        // --- ACTIONS ---
 
         async function removeItem(index) {
             if (!confirm("Remove this item from the order?")) return;
@@ -291,26 +281,40 @@
         }
 
         async function addPayment() {
-            // We need to select an account.
-            // We use a generic AccountSelect page if available, or reuse logic.
-            // Assuming standard path: /Pages/SearchAndSelect/AccountSelect
-            // We pass a redirTo to come back here.
             const token = getCookie("auth-token");
             const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
-
-            // We can reuse the PII/Item select pattern if we have a generic AccountSelect.
-            // If not, we might need to build a quick selection here.
-            // Assuming you have or will have a generic selector at:
+            // Flow: Select Account -> Enter Amount -> Return here
             window.location.href = '/Pages/SearchAndSelect/AccountSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
         }
 
-        async function addMore() {
+        async function saveDraft() {
             const token = getCookie("auth-token");
-            await fetch('/SetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "1" })
-            });
-            window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+
+            const payload = {
+                PiiId: parseInt(await getFlowKey("selectedPiiId")),
+                Items: JSON.parse(await getFlowKey("orderItems")),
+                Payments: JSON.parse(await getFlowKey("payments") || "[]")
+            };
+
+            try {
+                const res = await fetch('/SaveDraftInvoice', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Payload: JSON.stringify(payload) })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const id = await res.json();
+
+                // Store ID so Pay can mark it posted
+                await fetch('/SetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "tempInvoiceId", Value: id.toString() })
+                });
+
+                alert("Draft Saved! ID: " + id);
+            } catch (err) {
+                alert("Error saving draft: " + err.message);
+            }
         }
 
         async function pay() {
@@ -319,15 +323,17 @@
             btn.disabled = true; btn.innerText = "Processing...";
 
             try {
+                const tempId = await getFlowKey("tempInvoiceId");
+
                 const payload = {
                     PiiId: parseInt(await getFlowKey("selectedPiiId")),
                     Items: JSON.parse(await getFlowKey("orderItems")),
                     Payments: JSON.parse(await getFlowKey("payments") || "[]")
                 };
 
-                const res = await fetch('/SimulateSaleWithPayments', {
+                const res = await fetch('/PostInvoice', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ Payload: JSON.stringify(payload), TempId: tempId ? parseInt(tempId) : null })
                 });
 
                 if (!res.ok) throw new Error(await res.text());
@@ -335,17 +341,17 @@
 
                 if (!result.success) {
                     alert("Validation Failed.");
-                    btn.disabled = false; btn.innerText = "PAY (Simulate)";
+                    btn.disabled = false; btn.innerText = "PAY (Post)";
                     run(); // Refresh to see errors
                     return;
                 }
 
-                alert("SUCCESS! Journal Entries Generated.");
+                alert("SUCCESS! Invoice Posted.");
                 showAccountingResult(result);
 
             } catch (err) {
                 alert("Error: " + err.message);
-                btn.disabled = false; btn.innerText = "PAY (Simulate)";
+                btn.disabled = false; btn.innerText = "PAY (Post)";
             }
         }
 
@@ -381,9 +387,8 @@
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: key })
             });
-            // Check if response is ok before parsing
             if (!res.ok) return null;
-            return await res.text(); // Returns stringified JSON { value: ... }
+            return await res.text();
         }
 
         run();

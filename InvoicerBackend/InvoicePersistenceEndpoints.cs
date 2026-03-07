@@ -88,7 +88,7 @@ namespace InvoicerBackend
                     var Req = (PostInvoiceRequest)ReqI;
                     using var ctx = new NewinvContext();
                     // Use Transaction for Atomicity
-                    using var tx = await ctx.Database.BeginTransactionAsync();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
                     try
                     {

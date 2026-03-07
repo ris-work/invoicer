@@ -271,6 +271,7 @@ app.AddSuggestedPriceEndpoints();
 app.AddEndpointsDefinitionEndpoint();
 app.AddSalesSimulationEndpoints();
 app.AddPrivilegeUtilities();
+app.AddInvoicePersistenceEndpoints();
 
 app.AddInventoryAdjustmentsEndpoints();
 
