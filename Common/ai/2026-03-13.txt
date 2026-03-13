@@ -5639,3 +5639,1630 @@ DATA TABLES:
 
 
 
+Taxes:
+using System;
+using System.Collections.Generic;
+
+namespace RV.InvNew.Common;
+
+public partial class TaxJurisdiction
+{
+    public long Id { get; set; }
+
+    public string Code { get; set; } = null!;
+
+    public string? Name { get; set; }
+
+    public bool? IsDefault { get; set; }
+}
+
+
+using System;
+using System.Collections.Generic;
+
+namespace RV.InvNew.Common;
+
+public partial class TaxRate
+{
+    public long Id { get; set; }
+
+    public string JurisdictionCode { get; set; } = null!;
+
+    public int VatCategoryId { get; set; }
+
+    public double RatePercentage { get; set; }
+}
+
+
+Sample Invoice Issuer:
+
+@page "/Pages/Sales/EnterPaymentAmount"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Payment</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Enter Payment Amount</h2>
+        <div id="status">Loading...</div>
+        <div id="content" style="display:none;">
+            <p>Account: <strong id="accName"></strong></p>
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="amount" step="0.01" class="form-control">
+            </div>
+            <button class="btn btn-success" onclick="save()">Add Payment</button>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+
+            // Load Selected Account
+            const resAcc = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+            });
+            const dataAcc = await resAcc.json();
+
+            // Load Name (Hack: usually name is also saved in flow or we search)
+            // For now, let's assume we search it
+            const resSearch = await fetch('/SearchAccountsWeb', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: dataAcc.value })
+            });
+            const list = await resSearch.json();
+            const acc = list.find(a => a.accountNo == dataAcc.value);
+
+            document.getElementById('accName').innerText = acc ? acc.accountName : "Unknown";
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        async function save() {
+            const token = getCookie("auth-token");
+            const amount = parseFloat(document.getElementById('amount').value);
+            if(!amount || amount <= 0) { alert("Invalid amount"); return; }
+
+            const resAcc = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+            });
+            const dataAcc = await resAcc.json();
+
+            // Load Current Payments
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            list.push({
+                AccountNo: parseInt(dataAcc.value),
+                Amount: amount
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+
+            window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
+@page "/Pages/Sales/EnterQuantity"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Quantity</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input { padding: 8px; font-size: 1.2em; width: 100px; }
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Enter Quantity</h2>
+    <div id="summary" style="background:#f0f0f0; padding:10px; margin-bottom:20px;"></div>
+    
+    <!-- ADDED step="1" -->
+    Quantity: <input type="number" id="qty" step="1" value="1">
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="addToList(true)">Add Another Item</button>
+        <button class="btn btn-success" onclick="addToList(false)">Review Order</button>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function loadContext() {
+            const token = getCookie("auth-token");
+            const keys = ["selectedItemCode", "selectedItemDescription", "selectedPrice", "isManualPrice"];
+            const data = {};
+            
+            for (const key of keys) {
+                const res = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: key })
+                });
+                data[key] = (await res.json()).value;
+            }
+
+            document.getElementById('summary').innerHTML = s`
+                <strong>Item:</strong> ${data.selectedItemDescription || data.selectedItemCode}<br>
+                <strong>Price:</strong> ${data.selectedPrice || 'Standard'} ${data.isManualPrice === 'true' ? '(Manual)' : ''}
+            `;
+        }
+
+        async function addToList(addMore) {
+            const token = getCookie("auth-token");
+            const qty = parseFloat(document.getElementById('qty').value);
+            if (!qty || qty <= 0) { alert("Invalid quantity."); return; }
+
+            // Get Current List
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            // Get Item Details
+            const itemCodeRes = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const priceRes = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPrice" })
+            });
+            const manualRes = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "isManualPrice" })
+            });
+
+            const itemCode = (await itemCodeRes.json()).value;
+            const price = (await priceRes.json()).value;
+            const manual = (await manualRes.json()).value;
+
+            list.push({
+                ItemCode: parseInt(itemCode),
+                Quantity: qty,
+                TargetPrice: price ? parseFloat(price) : null,
+                IsManualPrice: manual === 'true'
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
+            });
+
+            if (addMore) {
+                window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+            } else {
+                window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            }
+        }
+
+        loadContext();
+    </script>
+</body>
+</html>
+
+@page "/Pages/Sales/ReviewBatches"
+
+@*
+  FLOW: Sales Simulation / Sale Order
+  STEP: Final (Review & Payment)
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Sale Order</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        /* Page-specific styles */
+        .item-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .item-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-ok {
+            color: #28a745;
+        }
+
+        .status-fail {
+            color: #dc3545;
+        }
+
+        .debug-details {
+            border-top: 1px solid #eee;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+            .debug-details summary {
+                cursor: pointer;
+                color: #666;
+                font-size: 0.9em;
+            }
+
+        .row-selected {
+            background-color: #e8f5e9;
+        }
+
+        .row-skipped {
+            color: #999;
+            background-color: #fff;
+        }
+
+        .remove-btn {
+            margin-left: 15px;
+            color: #dc3545;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Review Sale Order</h2>
+        <div id="content" class="result-box"><p>Processing Order...</p></div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function run() {
+            const token = getCookie("auth-token");
+            const contentDiv = document.getElementById('content');
+
+            // 1. Load Order Data
+            const orderItemsVal = await getFlowKey("orderItems");
+            const piiIdVal = await getFlowKey("selectedPiiId");
+
+            if (!orderItemsVal || !piiIdVal) {
+                contentDiv.innerHTML = s`<p class="warning">Error: Missing flow data.</p>`;
+                return;
+            }
+
+            const orderItems = JSON.parse(orderItemsVal);
+            const piiId = parseInt(piiIdVal);
+
+            if (orderItems.length === 0) {
+                contentDiv.innerHTML = s`<p class="warning">Error: Order is empty.</p>`;
+                return;
+            }
+
+            try {
+                // 2. Load Payments
+                const paymentsVal = await getFlowKey("payments");
+                const payments = paymentsVal ? JSON.parse(paymentsVal) : [];
+
+                // 3. Call FULL Simulation API (Re-validates everything)
+                const simRes = await fetch('/SimulateSaleWithPayments', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        PiiId: piiId,
+                        Items: orderItems,
+                        Payments: payments
+                    })
+                });
+
+                if (!simRes.ok) throw new Error(await simRes.text());
+                const result = await simRes.json();
+
+                // 4. Render
+                render(result, orderItems);
+
+            } catch (err) {
+                contentDiv.innerHTML = s`<p class="warning">API Error: ${err.message}</p>`;
+            }
+        }
+
+        function render(result, orderItems) {
+            const contentDiv = document.getElementById('content');
+            let html = "";
+
+            if (!result.success) {
+                html += `<p class="warning">Order Cannot Be Fulfilled Completely</p>`;
+            } else {
+                html += `<p style="color: #28a745; font-weight: bold;">Order Ready for Execution</p>`;
+            }
+
+            // Items
+            result.items.forEach((item, index) => {
+                const statusClass = item.success ? "status-ok" : "status-fail";
+                const statusText = item.success ? "OK" : "FAILED";
+
+                html += `<div class="item-card">`;
+                html += s`<div class="item-header">
+                    <span>Item ${item.itemCode}</span>
+                    <div>
+                        <span class="${statusClass}">${statusText}: ${item.message}</span>
+                        <span class="remove-btn" onclick="removeItem(${index})">✕</span>
+                    </div>
+                </div>`;
+
+                html += `<div style="padding: 10px;">
+                    <h4>Selected Batches</h4>
+                    <table>
+                        <thead><tr><th>Batch</th><th>Qty</th><th>Price</th><th>Disc</th><th>Tax %</th><th>Tax Amt</th></tr></thead>
+                        <tbody>`;
+
+                item.selectedBatches.forEach(b => {
+                    const taxRate = b.taxRate || 0;
+                    const taxAmount = b.taxAmount || 0;
+                    const taxSource = b.taxSource || "N/A";
+
+                    html += s`<tr class="row-selected">
+                        <td>${b.batchcode}</td>
+                        <td>${b.quantity.toFixed(2)}</td>
+                        <td>${b.unitPrice.toFixed(2)}</td>
+                        <td>${b.unitDiscount.toFixed(2)}</td>
+                        <td>${taxRate.toFixed(1)}% <span style="font-size:0.8em;color:#888">(${taxSource})</span></td>
+                        <td>${taxAmount.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+
+                // Debug Details
+                html += `<details class="debug-details">
+                    <summary>All Batches (Debug Info)</summary>
+                    <table>
+                        <thead><tr><th>ID</th><th>Initial</th><th>VI Initial</th><th>Avail</th><th>Status</th><th>Eff. Price</th></tr></thead>
+                        <tbody>`;
+
+                item.allBatches.forEach(b => {
+                    let rowClass = b.status === "Selected" ? "row-selected" : "row-skipped";
+                    html += s`<tr class="${rowClass}">
+                        <td>${b.batchcode}</td>
+                        <td>${b.initialQty.toFixed(2)}</td>
+                        <td>${b.viInitialQty.toFixed(2)}</td>
+                        <td>${b.availableQty.toFixed(2)}</td>
+                        <td>${b.status}</td>
+                        <td>${b.effectivePrice ? b.effectivePrice.toFixed(2) : '-'}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table></details></div></div>`;
+            });
+
+            // Payments
+            html += `<h3>Payments</h3><div class="item-card"><div style="padding:10px;">`;
+
+            const payments = result.paymentResults || [];
+
+            if (payments.length > 0) {
+                html += `<table><thead><tr><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
+                payments.forEach((p, i) => {
+                    html += s`<tr>
+                        <td>${p.accountName}</td>
+                        <td>${p.amountTendered.toFixed(2)}</td>
+                        <td>${p.lpEarned.toFixed(2)}</td>
+                        <td><span class="remove-btn" onclick="removePayment(${i})">✕</span></td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+            } else {
+                html += `<p class="hint">No payments added yet.</p>`;
+            }
+
+            html += `<button class="btn btn-primary" onclick="addPayment()">Add Payment</button>`;
+            html += `</div></div>`;
+
+            // Totals
+            let grandTotal = result.grandTotal || 0;
+            const totalPaid = result.totalPaid || 0;
+            const balance = (result.balance !== undefined) ? result.balance : (totalPaid - grandTotal);
+            const lpFinal = result.loyaltyPointsFinal || 0;
+
+            html += s`<div class="summary">
+                <p><strong>Grand Total:</strong> ${grandTotal.toFixed(2)}</p>
+                <p><strong>Paid:</strong> ${totalPaid.toFixed(2)}</p>
+                <p style="color:${balance < 0 ? 'red' : 'green'}"><strong>Balance:</strong> ${balance.toFixed(2)}</p>
+                <hr>
+                <p><strong>Total LP:</strong> ${lpFinal.toFixed(2)}</p>
+            </div>`;
+
+            // Actions
+            html += `<div style="margin-top: 15px;">
+                <button class="btn btn-success" onclick="pay()">PAY (Post)</button>
+                <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+            </div>`;
+
+            contentDiv.innerHTML = html;
+        }
+
+        // --- ACTIONS ---
+
+        async function removeItem(index) {
+            if (!confirm("Remove this item from the order?")) return;
+            const token = getCookie("auth-token");
+
+            const dataList = await getFlowKeyRaw("orderItems");
+            let list = JSON.parse(dataList || "[]");
+            list.splice(index, 1);
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
+            });
+            run();
+        }
+
+        async function removePayment(index) {
+            if (!confirm("Remove payment?")) return;
+            const token = getCookie("auth-token");
+
+            const dataList = await getFlowKeyRaw("payments");
+            let list = JSON.parse(dataList || "[]");
+            list.splice(index, 1);
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+            run();
+        }
+
+        async function addPayment() {
+            const token = getCookie("auth-token");
+            const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
+            // Flow: Select Account -> Enter Amount -> Return here
+            window.location.href = '/Pages/SearchAndSelect/AccountSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
+        }
+
+        async function saveDraft() {
+            const token = getCookie("auth-token");
+
+            const payload = {
+                PiiId: parseInt(await getFlowKey("selectedPiiId")),
+                Items: JSON.parse(await getFlowKey("orderItems")),
+                Payments: JSON.parse(await getFlowKey("payments") || "[]")
+            };
+
+            try {
+                const res = await fetch('/SaveDraftInvoice', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Payload: JSON.stringify(payload) })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const id = await res.json();
+
+                // Store ID so Pay can mark it posted
+                await fetch('/SetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "tempInvoiceId", Value: id.toString() })
+                });
+
+                alert("Draft Saved! ID: " + id);
+            } catch (err) {
+                alert("Error saving draft: " + err.message);
+            }
+        }
+
+        async function pay() {
+            const token = getCookie("auth-token");
+            const btn = event.target;
+            btn.disabled = true; btn.innerText = "Processing...";
+
+            try {
+                const tempId = await getFlowKey("tempInvoiceId");
+
+                const payload = {
+                    PiiId: parseInt(await getFlowKey("selectedPiiId")),
+                    Items: JSON.parse(await getFlowKey("orderItems")),
+                    Payments: JSON.parse(await getFlowKey("payments") || "[]")
+                };
+
+                const res = await fetch('/PostInvoice', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Payload: JSON.stringify(payload), TempId: tempId ? parseInt(tempId) : null })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const result = await res.json();
+
+                if (!result.success) {
+                    alert("Validation Failed.");
+                    btn.disabled = false; btn.innerText = "PAY (Post)";
+                    run(); // Refresh to see errors
+                    return;
+                }
+
+                alert("SUCCESS! Invoice Posted.");
+                showAccountingResult(result);
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.disabled = false; btn.innerText = "PAY (Post)";
+            }
+        }
+
+        function showAccountingResult(result) {
+            const contentDiv = document.getElementById('content');
+            let html = `<h2>Transaction Complete</h2>`;
+            html += s`<p>LP Earned: ${result.loyaltyPointsFinal.toFixed(2)}</p>`;
+            html += `<h3>Accounting Entries</h3>`;
+            html += `<table class="card"><thead><tr><th>Dr</th><th>Cr</th><th>Amount</th><th>Narrative</th></tr></thead><tbody>`;
+
+            (result.accountingEntries || []).forEach(e => {
+                html += s`<tr>
+                    <td>${e.debitAccountName} (${e.debitAccount})</td>
+                    <td>${e.creditAccountName} (${e.creditAccount})</td>
+                    <td>${e.amount.toFixed(2)}</td>
+                    <td>${e.narrative}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+
+            contentDiv.innerHTML = html;
+        }
+
+        // --- HELPERS ---
+        async function getFlowKey(key) {
+            const val = await getFlowKeyRaw(key);
+            return val ? JSON.parse(val).value : null;
+        }
+
+        async function getFlowKeyRaw(key) {
+            const token = getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            if (!res.ok) return null;
+            return await res.text();
+        }
+
+        run();
+    </script>
+</body>
+</html>
+
+@page "/Pages/Sales/SelectBatchCodes"
+
+@*
+  FLOW: Sales Simulation (Precise)
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Batches</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Select Batches</h2>
+    <div id="status">Loading batches...</div>
+    <div id="content" style="display:none;">
+        <table>
+            <thead><tr><th>Batch ID</th><th>Avail Qty</th><th>Price</th><th>Select Qty</th></tr></thead>
+            <tbody id="batchList"></tbody>
+        </table>
+        <br>
+        <button class="btn btn-success" onclick="save(false)">Add to Order</button>
+        <button class="btn btn-primary" onclick="save(true)">Add & Select Another</button>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function init() {
+            const token = getCookie("auth-token");
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const dataItem = await resItem.json();
+            if (!dataItem.value) { alert("No item"); return; }
+
+            // Reuse API to get debug list (efficient hack)
+            const simReq = { PiiId: 2, Items: [{ ItemCode: parseInt(dataItem.value), Quantity: 0.01 }] };
+
+            const resSim = await fetch('/SimulateSaleOrder', {
+                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                 body: JSON.stringify(simReq)
+            });
+            const result = await resSim.json();
+
+            const batches = result.items[0].allBatches;
+            render(batches);
+        }
+
+        function render(batches) {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            const tbody = document.getElementById('batchList');
+            tbody.innerHTML = "";
+
+            batches.forEach(b => {
+                // ADDED step="1"
+                tbody.innerHTML += s`
+                    <tr>
+                        <td>${b.batchcode}</td>
+                        <td>${b.availableQty.toFixed(2)}</td>
+                        <td>${b.effectivePrice ? b.effectivePrice.toFixed(2) : '-'}</td>
+                        <td><input type="number" id="qty-${b.batchcode}" step="1" placeholder="0" max="${b.availableQty}"></td>
+                    </tr>`;
+            });
+        }
+
+        // Updated to support "Add Another"
+        async function save(addMore) {
+            const token = getCookie("auth-token");
+
+            const inputs = document.querySelectorAll('input[type=number]');
+            const selections = [];
+
+            inputs.forEach(inp => {
+                const val = parseFloat(inp.value);
+                if (val > 0) {
+                    const batchId = inp.id.replace('qty-', '');
+                    selections.push({ BatchCode: parseInt(batchId), Qty: val });
+                }
+            });
+
+            if (selections.length === 0) { alert("Select quantity"); return; }
+
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const itemCode = (await resItem.json()).value;
+
+            selections.forEach(sel => {
+                list.push({
+                    ItemCode: parseInt(itemCode),
+                    Quantity: sel.Qty,
+                    BatchCode: sel.BatchCode,
+                    TargetPrice: null,
+                    IsManualPrice: false
+                });
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
+            });
+
+            if (addMore) {
+                window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+            } else {
+                window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
+@page "/Pages/Sales/SelectMode"
+
+@*
+  FLOW: Sales Simulation
+  STEP: Branch Decision
+  READS: selectedItemCode
+  REDIRECTS: SelectBatchCodes (Precise) OR SelectPrice (Order)
+*@
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Mode</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .choice-container { display: flex; gap: 20px; justify-content: center; margin-top: 50px; }
+        .choice-card { border: 2px solid #007bff; padding: 30px; border-radius: 10px; width: 200px; cursor: pointer; }
+        .choice-card:hover { background: #f0f7ff; }
+    </style>
+</head>
+<body>
+    <h2>How would you like to select stock?</h2>
+    <div class="choice-container">
+        <div class="choice-card" onclick="go('order')">
+            <h3>Sale Order</h3>
+            <p>Auto-allocate from available batches (FEFO).</p>
+        </div>
+        <div class="choice-card" onclick="go('precise')">
+            <h3>Precise Batch</h3>
+            <p>Manually select specific batches.</p>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        async function go(mode) {
+            const token = getCookie("auth-token");
+
+            if (mode === 'order') {
+                // Continue to Price Selection
+                window.location.href = '/Pages/Sales/SelectPrice?flowId=' + flowId;
+            } else {
+                // Go to Batch Selection
+                window.location.href = '/Pages/Sales/SelectBatchCodes?flowId=' + flowId;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+@page "/Pages/Sales/SelectPrice"
+
+@*
+  FLOW: Sales Simulation
+  STEP: 3 (Price Selector)
+  SETS: selectedPrice, isManualPrice
+  READS: selectedItemCode, flowId
+*@
+
+@functions { }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Price</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Select Price</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="content">Loading pricing options...</div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "GetPricingContext"];
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
+
+            const resItem = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+            });
+            const dataItem = await resItem.json();
+
+            if (!dataItem.value) {
+                document.getElementById('content').innerText = "Error: No Item selected."; return;
+            }
+
+            const itemCode = dataItem.value;
+
+            const resCtx = await fetch('/GetPricingContext', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(parseInt(itemCode))
+            });
+            const ctx = await resCtx.json();
+
+            render(ctx, itemCode, token);
+        }
+
+        function render(ctx, itemCode, token) {
+            const container = document.getElementById('content');
+            let html = "";
+
+            if (!ctx.priceManual) {
+                html += s`<div class="card" onclick="selectDefault(${ctx.defaultSellingPrice}, ${itemCode})">
+                    <strong>Default Selling Price</strong><br>
+                    Price: ${ctx.defaultSellingPrice.toFixed(2)}
+                </div>`;
+            }
+
+            if (ctx.allowPriceSuggestions && ctx.suggestedPrices && ctx.suggestedPrices.length > 0) {
+                html += "<h3>Suggested Prices</h3>";
+                ctx.suggestedPrices.forEach(p => {
+                    html += s`<div class="card" onclick="selectSuggested(${p}, ${itemCode})">
+                        <strong>Suggested Price</strong>: ${p.toFixed(2)}
+                    </div>`;
+                });
+            }
+
+            html += `<div class="manual-input">
+                <h3>Manual Price</h3>
+                <div class="input-group">
+                    <input type="number" id="manualPrice" placeholder="Enter price..." step="0.01">
+                    <button class="btn btn-secondary" onclick="selectManual()">Set</button>
+                </div>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        async function selectDefault(price, itemCode) { await saveSelection(price, false); }
+        async function selectSuggested(price, itemCode) { await saveSelection(price, false); }
+
+        async function selectManual() {
+            const val = document.getElementById('manualPrice').value;
+            if (!val) return;
+            await saveSelection(parseFloat(val), true);
+        }
+
+        async function saveSelection(price, isManual) {
+            const token = await getCookie("auth-token");
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedPrice", Value: price.toString() })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "isManualPrice", Value: isManual.toString() })
+            });
+
+            navigateNext();
+        }
+
+        async function navigateNext() {
+            // Logic omitted for brevity, same pattern as others
+            window.location.href = '/Pages/Sales/EnterQuantity?flowId=' + flowId;
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
+
+@page "/Pages/Flows/BeginFlowSalesSimulation"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Sales Simulation</title>
+</head>
+<body>
+    <p>Initializing Sales Flow...</p>
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const flowId = 'flow-' + Date.now();
+            const token = getCookie("auth-token");
+
+            // FLOW: PII -> (Item -> Price -> Qty -> Loop?) -> Review
+                        // FLOW: PII -> Item -> MODE -> ...
+            const steps = [
+                "/Pages/SearchAndSelect/PiiSelect",
+                "/Pages/SearchAndSelect/ItemSelect",
+                "/Pages/Sales/SelectMode", // <--- NEW STEP
+                "/Pages/Sales/SelectPrice", // Used if 'Order' selected
+                "/Pages/Sales/EnterQuantity",
+                "/Pages/Sales/ReviewBatches"
+            ];
+
+            // Initialize Flow
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps", Value: JSON.stringify(steps) })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "0" })
+            });
+
+            // INITIALIZE EMPTY CART
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: "[]" })
+            });
+
+            window.location.href = steps[0] + "?flowId=" + flowId;
+        }
+        init();
+    </script>
+</body>
+</html>
+
+Current sales simulation endpoints:
+==== BEGIN SalesSimulationEndpoints.cs ====
+
+using Microsoft.EntityFrameworkCore;
+using RV.InvNew.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+/*
+ * ==============================================================================
+ * SALES SIMULATION & BATCH SELECTION ENGINE
+ * ==============================================================================
+ * 
+ * PURPOSE:
+ * Provides endpoints for simulating sales orders and selecting batches based on
+ * complex pricing rules and inventory availability. It supports both "Sale Order"
+ * (Auto-allocation) and "Precise Batch" (Manual selection) modes.
+ *
+ * CORE CONCEPT: VIRTUAL INVENTORY
+ * -------------------------------
+ * To prevent race conditions within a single order containing multiple line items,
+ * this engine uses a "Virtual Inventory" approach.
+ * 1. The engine fetches the current Real Inventory state from `v_batch_selection_window`.
+ * 2. It creates a mutable copy (Virtual Inventory) specific to the current API request.
+ * 3. As line items are processed, stock is "reserved" in the Virtual Inventory.
+ * 4. Subsequent line items in the same request see the reduced availability.
+ * 5. The Virtual Inventory is discarded after the response is sent. It is never cached.
+ *
+ * PROCESSING ORDER (CRITICAL FOR FAIRNESS):
+ * -----------------------------------------
+ * Incoming line items are sorted before processing to maximize fulfillment likelihood:
+ * 1. PRIORITY: "Precise Batch" requests are processed FIRST. (Hard Constraints)
+ * 2. PRIORITY: "Sale Order" requests are processed SECOND. (Soft Constraints)
+ * 3. SUB-SORT: Within each group, items are sorted by Price (Ascending).
+ *    Rationale: Lower prices (often discounts/manual overrides) are "harder" to fulfill
+ *    or represent higher value to the customer, so they get dibs on stock before
+ *    standard high-margin sales.
+ *
+ * PRICING LOGIC:
+ * --------------
+ * - Manual Price: Uses user input price. Checks MinPrice constraints.
+ * - Suggested Price: Matches `ISuggestedPrice` in the matrix.
+ * - Standard Price: Matches rows where `ISuggestedPrice` is NULL/0.
+ * - Loyalty Points: Calculated based on the Matrix's `OEffectiveLpRate`.
+ *
+ * ENDPOINTS:
+ * ----------
+ * 1. GetPricingContext (ItemCode)
+ *    - Returns pricing flags (Manual, Suggestions), default prices, and constraints.
+ *    - Used by the UI to render the Price Selection screen.
+ * 
+ * 2. SimulateSaleOrder (PiiId, List<SaleOrderLineItem>)
+ *    - The main engine. Accepts a mixed list of orders.
+ *    - Returns `SimulateItemResult` for each item:
+ *      - Selected Batches (The allocation plan).
+ *      - Debug Info (Real vs Virtual Inventory snapshots).
+ *
+ * VIEWS DEPENDENCY:
+ * -----------------
+ * - `public.v_batch_selection_window`: Must contain sorted batches (FEFO) with columns:
+ *   itemcode, batchcode, units, selling_price, min_price, exp_date, cumulative_quantity.
+ * - `public.v_comprehensive_sales_final_matrix`: Must contain pricing/lp data:
+ *   itemcode, batchcode, pii_id, i_suggested_price, o_effective_selling_price_per_unit, etc.
+ *
+ * DTOs:
+ * -----
+ * - SaleOrderLineItem: The input structure (ItemCode, Quantity, TargetPrice, BatchCode?).
+ * - BatchDebugInfo: The detailed snapshot for UI debugging (Initial, VI Before, VI After).
+ * 
+ */
+
+namespace InvoicerBackend
+{
+    public static class SalesSimulationEndpoints
+    {
+        public static WebApplication AddSalesSimulationEndpoints(this WebApplication app)
+        {
+            // 1. Get Pricing Context
+            app.AddAsyncEndpointWithBearerAuth<long, PricingContextResponse>(
+                "GetPricingContext",
+                async (ItemCodeI, LoginInfo) =>
+                {
+                    var ItemCode = (long)ItemCodeI;
+                    using var ctx = new NewinvContext();
+                    var item = await ctx.Catalogues.FirstOrDefaultAsync(c => c.Itemcode == ItemCode);
+                    if (item == null) throw new ArgumentException("Item not found");
+
+                    var inv = await ctx.Inventories
+                        .Where(i => i.Itemcode == ItemCode && i.Units > 0)
+                        .OrderBy(i => i.ExpDate ?? DateTime.MaxValue)
+                        .FirstOrDefaultAsync();
+
+                    var resp = new PricingContextResponse
+                    {
+                        PriceManual = item.PriceManual,
+                        AllowPriceSuggestions = item.AllowPriceSuggestions,
+                        DefaultSellingPrice = inv?.SellingPrice ?? 0,
+                        MinPrice = inv?.MinPrice ?? 0,
+                        EnforceMinPrice = inv?.EnforceMinPrice ?? true
+                    };
+
+                    if (item.AllowPriceSuggestions)
+                    {
+                        resp.SuggestedPrices = await ctx.SuggestedPrices
+                            .Where(s => s.Itemcode == ItemCode)
+                            .Select(s => s.Price)
+                            .ToListAsync();
+                    }
+                    return resp;
+                },
+                "Refresh"
+            );
+
+            // 2. Simulate Order (Re-using Shared Logic)
+            app.AddAsyncEndpointWithBearerAuth<SimulateOrderRequest, SimulateOrderResponse>(
+                "SimulateSaleOrder",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (SimulateOrderRequest)ReqI;
+                    ProcessResult processResult;
+                    using var ctx = new NewinvContext();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    try
+                    {
+
+                        // Call the Unified Processor with Empty Payments
+                        processResult = await InvoiceProcessingService.ProcessInvoice(
+                            ctx,
+                            Req.PiiId,
+                            Req.Items,
+                            new List<PaymentEntry>() // Payments are empty for simulation
+                        );
+                    }
+                    catch { await tx.RollbackAsync(); throw; }
+
+                    // Map ProcessResult to SimulateOrderResponse
+                    return new SimulateOrderResponse
+                    {
+                        Success = processResult.Success,
+                        Message = processResult.Message,
+                        Items = processResult.Items,
+                        CurrentLoyaltyPoints = LoyaltyPointsManager.GetTotalValidPoints(ctx, Req.PiiId),
+                        TotalTax = processResult.TotalTax,
+                        TaxJurisdiction = "HOME", // ProcessResult uses default if not passed
+                        GrandTotal = processResult.GrandTotal,
+                        TotalPaid = processResult.TotalPaid, // Will be 0
+                        Balance = processResult.Balance,
+                        PaymentResults = processResult.PaymentResults, // Empty
+                        LoyaltyPointsFinal = processResult.LoyaltyPointsFinal
+                    };
+                },
+                "Refresh"
+            );
+
+            // 2. Simulate (Use Shared Service)
+            app.AddAsyncEndpointWithBearerAuth<SimulatePaymentRequest, SimulatePaymentResponse>(
+                "SimulateSaleWithPayments",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (SimulatePaymentRequest)ReqI;
+                    ProcessResult result;
+                    using var ctx = new NewinvContext();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    // Call Shared Logic
+                    try
+                    {
+                        result = await InvoiceProcessingService.ProcessInvoice(ctx, Req.PiiId, Req.Items, Req.Payments);
+                    }
+                    catch { throw; }
+
+                    // Convert to Response
+                    return new SimulatePaymentResponse
+                    {
+                        Success = result.Success,
+                        Message = result.Message,
+                        Items = result.Items,
+                        PaymentResults = result.PaymentResults,
+                        AccountingEntries = result.AccountingEntries,
+                        GrandTotal = result.GrandTotal,
+                        TotalPaid = result.TotalPaid,
+                        Balance = result.Balance,
+                        LoyaltyPointsFinal = result.LoyaltyPointsFinal
+                    };
+                },
+                "Refresh"
+            );
+
+            // 3. Post (Use Shared Service + Commit)
+            app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
+                "PostInvoice",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (PostInvoiceRequest)ReqI;
+                    using var ctx = new NewinvContext();
+                    using var tx = await ctx.Database.BeginTransactionAsync();
+
+                    try
+                    {
+                        // 1. Deserialize
+                        var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
+
+                        // 2. VALIDATE (RE-RUN)
+                        var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
+
+                        if (!result.Success)
+                        {
+                            return new PostInvoiceResponse { Success = false, Message = result.Message };
+                        }
+
+                        // 3. COMMIT
+                        // Here you would write the actual DB inserts for Sales, Payments, JournalEntries.
+                        // foreach(var entry in result.AccountingEntries) { ... }
+
+                        // 4. Mark Temp Posted
+                        if (Req.TempId.HasValue)
+                        {
+                            var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
+                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTime.UtcNow; }
+                        }
+
+                        await ctx.SaveChangesAsync();
+                        await tx.CommitAsync();
+
+                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                    }
+                    catch
+                    {
+                        await tx.RollbackAsync();
+                        throw;
+                    }
+                },
+                "Refresh"
+            );
+
+            return app;
+        }
+
+        /// <summary>
+        /// Full Logic for Processing a Single Line Item (Now with Tax)
+        /// </summary>
+        private static SimulateItemResult ProcessItem(
+            SaleOrderLineItem req,
+            List<VBatchSelectionWindow> itemBatches,
+            Dictionary<long, double> virtualInventory,
+            Dictionary<long, double> initialInventory,
+            List<VComprehensiveSalesFinalMatrix> itemMatrix,
+            NewinvContext ctx, // ADDED Context
+            string jurisdictionCode) // ADDED Jurisdiction
+        {
+            double remainingQty = req.Quantity;
+            var selectedBatches = new List<SelectedBatchInfo>();
+            var allBatchDebug = new List<BatchDebugInfo>();
+
+            bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
+
+            // PRECISE BATCH SELECTION
+            if (req.BatchCode.HasValue)
+            {
+                var batchId = req.BatchCode.Value;
+                var batch = itemBatches.FirstOrDefault(b => b.Batchcode == batchId);
+                var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+                var priceInfo = itemMatrix.FirstOrDefault(m => m.Batchcode == batchId);
+
+                var dbg = new BatchDebugInfo
+                {
+                    Batchcode = batchId,
+                    InitialQty = initialQty,
+                    ViInitialQty = virtualQty,
+                    AvailableQty = virtualQty,
+                    EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                    Status = "Skipped"
+                };
+
+                if (batch == null) dbg.Status = "Batch Not Found";
+                else if (virtualQty < req.Quantity) dbg.Status = "Insufficient Stock";
+                else if (priceInfo == null) dbg.Status = "No Price Data";
+                else
+                {
+                    double unitPrice = req.IsManualPrice && req.TargetPrice.HasValue
+                        ? req.TargetPrice.Value
+                        : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
+
+                    // --- TAX CALCULATION ---
+                    var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, req.Quantity);
+
+                    selectedBatches.Add(new SelectedBatchInfo
+                    {
+                        Batchcode = batchId,
+                        Quantity = req.Quantity,
+                        UnitPrice = unitPrice,
+                        TaxRate = taxInfo.Rate,
+                        TaxAmount = taxInfo.Amount,
+                        TaxSource = taxInfo.Source
+                    });
+
+                    virtualInventory[batchId] -= req.Quantity;
+                    remainingQty = 0;
+                    dbg.Status = "Selected"; dbg.AvailableQty = virtualInventory[batchId];
+                }
+                allBatchDebug.Add(dbg);
+            }
+            // AUTO ALLOCATION
+            else
+            {
+                foreach (var batch in itemBatches)
+                {
+                    var batchId = batch.Batchcode ?? 0;
+                    var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                    var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+
+                    var priceInfo = itemMatrix.FirstOrDefault(m =>
+                        m.Batchcode == batchId &&
+                        ((isSuggested && m.ISuggestedPrice == req.TargetPrice) || (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0)))
+                    );
+
+                    var dbg = new BatchDebugInfo
+                    {
+                        Batchcode = batchId,
+                        InitialQty = initialQty,
+                        ViInitialQty = virtualQty,
+                        AvailableQty = virtualQty,
+                        EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                        Status = "Skipped"
+                    };
+
+                    if (virtualQty <= 0) { dbg.Status = "Empty/Reserved"; }
+                    else if (remainingQty <= 0) { dbg.Status = "Demand Satisfied"; }
+                    else if (priceInfo == null) { dbg.Status = "Price Mismatch"; }
+                    else
+                    {
+                        double takeQty = Math.Min(virtualQty, remainingQty);
+
+                        double unitPrice;
+                        double unitDiscount = 0;
+                        double lpRate;
+
+                        if (req.IsManualPrice && req.TargetPrice.HasValue)
+                        {
+                            unitPrice = req.TargetPrice.Value;
+                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+                        else
+                        {
+                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
+                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+
+                        // --- TAX CALCULATION ---
+                        var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, takeQty);
+
+                        selectedBatches.Add(new SelectedBatchInfo
+                        {
+                            Batchcode = batchId,
+                            Quantity = takeQty,
+                            UnitPrice = unitPrice,
+                            UnitDiscount = unitDiscount,
+                            LpRate = lpRate,
+                            TaxRate = taxInfo.Rate,
+                            TaxAmount = taxInfo.Amount,
+                            TaxSource = taxInfo.Source
+                        });
+
+                        virtualInventory[batchId] -= takeQty;
+                        remainingQty -= takeQty;
+
+                        dbg.Status = "Selected";
+                        dbg.AvailableQty = virtualInventory[batchId];
+                    }
+                    allBatchDebug.Add(dbg);
+                }
+            }
+
+            return new SimulateItemResult
+            {
+                ItemCode = req.ItemCode,
+                Success = remainingQty <= 0,
+                Message = remainingQty > 0 ? $"Insufficient stock" : "OK",
+                SelectedBatches = selectedBatches,
+                AllBatches = allBatchDebug
+            };
+        }
+
+
+        private static (double Rate, double Amount, string Source) CalculateTax(NewinvContext ctx, string jurisdiction, long itemCode, double unitPrice, double qty)
+        {
+            try
+            {
+                // 1. Get Item's Tax Category from Catalogue
+                // Note: In a high-perf scenario, fetch Catalogue data once in the main loop.
+                // Doing it here for simplicity of patching.
+                var category = ctx.Catalogues.Where(c => c.Itemcode == itemCode).Select(c => c.DefaultVatCategory).FirstOrDefault();
+
+                // 2. Query Resolution View
+                var rateInfo = ctx.VTaxResolutions
+                    .FirstOrDefault(t => t.JurisdictionCode == jurisdiction && t.VatCategoryId == (category));
+
+                if (rateInfo != null)
+                {
+                    double taxableAmount = unitPrice * qty;
+                    double taxAmount = taxableAmount * ((rateInfo.EffectiveRatePercentage??0) / 100.0);
+                    return (rateInfo.EffectiveRatePercentage??0, taxAmount, rateInfo.RateSource);
+                }
+            }
+            catch
+            {
+                // If view doesn't exist or error, fallback to 0
+                Console.WriteLine($"WARN: Tax lookup failed for item {itemCode} in {jurisdiction}");
+            }
+
+            return (0, 0, "ERROR");
+        }
+    }
+
+    // DTOs
+    public class PricingContextResponse
+    {
+        public bool PriceManual { get; set; }
+        public bool AllowPriceSuggestions { get; set; }
+        public double DefaultSellingPrice { get; set; }
+        public double MinPrice { get; set; }
+        public bool EnforceMinPrice { get; set; }
+        public List<double> SuggestedPrices { get; set; } = new List<double>();
+    }
+
+    public class SimulateOrderRequest
+    {
+        public long PiiId { get; set; }
+        public List<SaleOrderLineItem> Items { get; set; }
+    }
+
+    public class SaleOrderLineItem
+    {
+        public long ItemCode { get; set; }
+        public double Quantity { get; set; }
+        public double? TargetPrice { get; set; }
+        public bool IsManualPrice { get; set; }
+        public long? BatchCode { get; set; }
+    }
+
+    public class SimulateOrderResponse
+    {
+        public bool Success { get; set; }
+        public List<SimulateItemResult> Items { get; set; }
+        public double CurrentLoyaltyPoints { get; set; }
+        public double TotalTax { get; set; }
+        public string TaxJurisdiction { get; set; }
+        public string Message { get; set; }
+
+        // NEW: Ensure these are always present
+        public double GrandTotal { get; set; }
+        public double TotalPaid { get; set; } = 0;
+        public double Balance { get; set; } = 0;
+        public List<PaymentResult> PaymentResults { get; set; } = new List<PaymentResult>();
+        public double LoyaltyPointsFinal { get; set; } = 0;
+    }
+
+    public class SimulateItemResult
+    {
+        public long ItemCode { get; set; }
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public List<SelectedBatchInfo> SelectedBatches { get; set; }
+        public List<BatchDebugInfo> AllBatches { get; set; }
+    }
+
+    public class SelectedBatchInfo
+    {
+        public long Batchcode { get; set; }
+        public double Quantity { get; set; }
+        public double UnitPrice { get; set; }
+        public double UnitDiscount { get; set; }
+        public double LpRate { get; set; }
+        // TAX FIELDS
+        public double TaxRate { get; set; }
+        public double TaxAmount { get; set; }
+        public string TaxSource { get; set; } // "SOURCE_DEFAULT" or "OVERRIDE"
+    }
+
+    public class BatchDebugInfo
+    {
+        public long Batchcode { get; set; }
+        public double InitialQty { get; set; }
+        public double ViInitialQty { get; set; }
+        public double AvailableQty { get; set; }
+        public double? EffectivePrice { get; set; }
+        public string Status { get; set; }
+    }
+    // Add inside AddSalesSimulationEndpoints
+
+    // 3. Simulate Sale With Payments (Full Cycle)
+    public class SimulatePaymentRequest
+    {
+        public long PiiId { get; set; }
+        public List<SaleOrderLineItem> Items { get; set; }
+        public List<PaymentEntry> Payments { get; set; }
+    }
+
+    public class PaymentEntry
+    {
+        public long AccountNo { get; set; }
+        public double Amount { get; set; } // Amount the customer pays
+    }
+
+    public class SimulatePaymentResponse : SimulateOrderResponse
+    {
+        public double GrandTotal { get; set; }
+        public double TotalPaid { get; set; }
+        public double Balance { get; set; } // +/- 
+        public List<PaymentResult> PaymentResults { get; set; }
+        public List<JournalEntryResult> AccountingEntries { get; set; }
+        public double LoyaltyPointsFinal { get; set; }
+    }
+
+    public class PaymentResult
+    {
+        public long AccountNo { get; set; }
+        public string AccountName { get; set; }
+        public double AmountTendered { get; set; }
+        public double Surcharge { get; set; }
+        public double ImplicitCharge { get; set; }
+        public double NetDeposit { get; set; }
+        public double LpEarned { get; set; }
+    }
+
+    public class JournalEntryResult
+    {
+        public long DebitAccount { get; set; }
+        public string DebitAccountName { get; set; }
+        public long CreditAccount { get; set; }
+        public string CreditAccountName { get; set; }
+        public double Amount { get; set; }
+        public string Narrative { get; set; }
+    }
+
+}
+
+==== END SALES SIM ====
+
+==== BEGIN SAFETY.cs ====
+using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace InvoicerBackend
+{
+    public static class DbContextExtensions
+    {
+        /// <summary>
+        /// Ensures that the DbContext is currently inside a transaction with Serializable isolation level.
+        /// <para>
+        /// <b>CRITICAL:</b> This check is required to prevent data corruption in ERP/Inventory systems.
+        /// Failure to use Serializable transactions can result in:
+        /// <list type="bullet">
+        ///     <item><description>LOST ACCOUNTING ENTRIES</description></item>
+        ///     <item><description>INCORRECT INVENTORY COUNTS</description></item>
+        ///     <item><description>PHANTOM READS / DOUBLE SPENDING</description></item>
+        /// </list>
+        /// </para>
+        /// </summary>
+        /// <param name="context">The DbContext to check.</param>
+        /// <exception cref="InvalidOperationException">Thrown if no transaction exists or isolation level is not Serializable.</exception>
+        public static void EnsureSerializableTransaction(this DbContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            IDbContextTransaction? currentTransaction = context.Database.CurrentTransaction;
+
+            // 1. Check for Transaction Existence
+            if (currentTransaction == null)
+            {
+                throw new InvalidOperationException(
+                    "╔══════════════════════════════════════════════════════════════╗\n" +
+                    "║ CRITICAL DATA INTEGRITY ERROR: NO TRANSACTION DETECTED      ║\n" +
+                    "╠══════════════════════════════════════════════════════════════╣\n" +
+                    "║ This operation REQUIRES a transaction.                      ║\n" +
+                    "║ Running without a transaction risks:                        ║\n" +
+                    "║   > LOST ACCOUNTING ENTRIES                                 ║\n" +
+                    "║   > ORPHANED INVENTORY RECORDS                              ║\n" +
+                    "║   > DATA CORRUPTION                                         ║\n" +
+                    "╚══════════════════════════════════════════════════════════════╝"
+                );
+            }
+
+            // 2. Check Isolation Level
+            IsolationLevel isolationLevel = currentTransaction.GetDbTransaction().IsolationLevel;
+
+            if (isolationLevel != IsolationLevel.Serializable)
+            {
+                throw new InvalidOperationException(
+                    "╔══════════════════════════════════════════════════════════════╗\n" +
+                    "║ CRITICAL DATA INTEGRITY ERROR: INSUFFICIENT ISOLATION       ║\n" +
+                    "╠══════════════════════════════════════════════════════════════╣\n" +
+                    $"║ Current Level: {isolationLevel,-43}║\n" +
+                    "║ Required Level: Serializable                                ║\n" +
+                    "║                                                              ║\n" +
+                    "║ Non-Serializable transactions risk:                         ║\n" +
+                    "║   > PHANTOM READS (Inventory counts changing mid-process)   ║\n" +
+                    "║   > NON-REPEATABLE READS (Financial calculation errors)    ║\n" +
+                    "║   > LOST UPDATES (Overwriting other users' changes)        ║\n" +
+                    "╚══════════════════════════════════════════════════════════════╝"
+                );
+            }
+        }
+    }
+}
+
+==== END SAFETY.cs ====
