@@ -48,6 +48,4 @@ public partial class AccountsInformation
     public long AccountsSurchargesTransferredToDuringSalePayment { get; set; }
 
     public double AccountsUsageNonTransparentChargePercentage { get; set; }
-
-    public virtual IfrsCategory? IfrsCategory { get; set; }
 }

@@ -269,10 +269,6 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("is_reserve");
             entity.Property(e => e.LoyaltyBaseMultiplicativePointsPercentage).HasColumnName("loyalty_base_multiplicative_points_percentage");
-
-            entity.HasOne(d => d.IfrsCategory).WithMany(p => p.AccountsInformations)
-                .HasForeignKey(d => d.IfrsCategoryId)
-                .HasConstraintName("fk_accounts_ifrs_category");
         });
 
         modelBuilder.Entity<AccountsJournalEntry>(entity =>
