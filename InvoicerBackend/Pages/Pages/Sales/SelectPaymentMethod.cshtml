@@ -70,23 +70,12 @@
         const requiredEndpoints = ["GetTerminalAccounts", "GetFlowData", "SetFlowData"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-
-        // CHECK FOR FINALIZE FLAG (Return from AccountSelect)
-        const finalize = params.get('finalize');
-
         let terminalAccounts = {};
 
         async function init() {
             await checkPagePermissions(requiredEndpoints);
             const token = await getCookie("auth-token");
 
-            // LOGIC: If we are returning from AccountSelect to finalize an "On Account" payment
-            if (finalize === 'ACCOUNT') {
-                await handleFinalizeAccount(token);
-                return; // Stop here, we will redirect
-            }
-
-            // Normal Load
             const res = await fetch('/GetTerminalAccounts', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
@@ -96,68 +85,41 @@
 
             terminalAccounts = await res.json();
 
-            document.getElementById('cashName').innerText = terminalAccounts.cashAccountName;
-            document.getElementById('bankName').innerText = terminalAccounts.bankAccountName;
+            // STRICT CHECK: Only check if the property exists.
+            // If value is 0, we accept it.
+            if (terminalAccounts.cashAccountNo === null || terminalAccounts.cashAccountNo === undefined) {
+                document.getElementById('cashName').innerText = "Default Cash Not Configured";
+            } else {
+                document.getElementById('cashName').innerText = terminalAccounts.cashAccountName;
+            }
+
+            if (terminalAccounts.bankAccountNo === null || terminalAccounts.bankAccountNo === undefined) {
+                document.getElementById('bankName').innerText = "Default Bank Not Configured";
+            } else {
+                document.getElementById('bankName').innerText = terminalAccounts.bankAccountName;
+            }
 
             document.getElementById('status').style.display = 'none';
             document.getElementById('content').style.display = 'block';
         }
 
-        async function handleFinalizeAccount(token) {
-            // 1. Get the selected account
-            const resAcc = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
-            });
-            const dataAcc = await resAcc.json();
-
-            const resName = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountName" })
-            });
-            const dataName = await resName.json();
-
-            if (!dataAcc.value) {
-                alert("Account selection failed.");
-                window.location.href = `/Pages/Sales/ReviewBatches?flowId=${flowId}`;
-                return;
-            }
-
-            // 2. Construct Payment Object
-            const newPayment = {
-                Type: "ACCOUNT",
-                AccountNo: parseInt(dataAcc.value),
-                AccountName: dataName.value,
-                Amount: 0 // Amount is determined by invoice total
-            };
-
-            // 3. Save to flow
-            const resList = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
-            });
-            const dataList = await resList.json();
-            let list = JSON.parse(dataList.value || "[]");
-
-            list.push(newPayment);
-
-            await fetch('/SetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
-            });
-
-            // 4. Redirect to Review
-            window.location.href = `/Pages/Sales/ReviewBatches?flowId=${flowId}`;
-        }
-
-                async function selectMethod(type) {
+        async function selectMethod(type) {
             const token = await getCookie("auth-token");
 
             if (type === 'CASH') {
+                // If config missing (null), alert user. Else proceed (even if ID is 0).
+                if (terminalAccounts.cashAccountNo === null || terminalAccounts.cashAccountNo === undefined) {
+                    alert("Cash account not configured for this terminal.");
+                    return;
+                }
                 const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.cashAccountNo}&type=CASH`;
                 window.location.href = redir;
             }
             else if (type === 'BANK') {
+                if (terminalAccounts.bankAccountNo === null || terminalAccounts.bankAccountNo === undefined) {
+                    alert("Bank account not configured for this terminal.");
+                    return;
+                }
                 const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.bankAccountNo}&type=BANK`;
                 window.location.href = redir;
             }
@@ -165,12 +127,33 @@
                 window.location.href = `/Pages/Sales/RedeemLoyaltyPoints?flowId=${flowId}`;
             }
             else if (type === 'ACCOUNT') {
-                // CRITICAL: We want to go to AccountSelect, then come back here to EnterPaymentAmount
-                // with type=ACCOUNT explicitly set.
-                const callbackUrl = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`;
-                const encodedCallback = encodeURIComponent(callbackUrl);
+                // Redirect to Account Selector
+                const callbackUrl = encodeURIComponent(`/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`);
+                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${callbackUrl}`;
+            }
+        }
 
-                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${encodedCallback}`;
+        async function selectMethod(type) {
+            const token = await getCookie("auth-token");
+
+            if (type === 'CASH') {
+                // Direct shortcut for Cash
+                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.cashAccountNo}&type=CASH`;
+                window.location.href = redir;
+            }
+            else if (type === 'BANK') {
+                // Direct shortcut for Bank
+                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.bankAccountNo}&type=BANK`;
+                window.location.href = redir;
+            }
+            else if (type === 'LP') {
+                window.location.href = `/Pages/Sales/RedeemLoyaltyPoints?flowId=${flowId}`;
+            }
+            else if (type === 'ACCOUNT') {
+                // 1. Go to Account Selector
+                // 2. Come back to EnterPaymentAmount (NOT here)
+                const callbackUrl = encodeURIComponent(`/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`);
+                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${callbackUrl}`;
             }
         }
 

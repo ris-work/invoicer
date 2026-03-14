@@ -10,4 +10,6 @@ public partial class Terminal
     public long DefaultBank { get; set; }
 
     public long DefaultCash { get; set; }
+
+    public long RunId { get; set; }
 }

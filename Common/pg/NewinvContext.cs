@@ -1904,10 +1904,11 @@ public partial class NewinvContext : DbContext
 
         modelBuilder.Entity<Terminal>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("terminals");
+            entity.HasKey(e => e.RunId).HasName("terminals_pkey");
 
+            entity.ToTable("terminals");
+
+            entity.Property(e => e.RunId).HasColumnName("run_id");
             entity.Property(e => e.DefaultBank).HasColumnName("default_bank");
             entity.Property(e => e.DefaultCash).HasColumnName("default_cash");
             entity.Property(e => e.TerminalId).HasColumnName("terminal_id");

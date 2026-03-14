@@ -269,29 +269,68 @@ namespace InvoicerBackend
             );
 
             // Get Default Terminal Accounts for Quick Pay
-            app.AddAsyncEndpointWithBearerAuth<object, TerminalAccountsResponse>(
-                "GetTerminalAccounts",
-                async (DataIn, LoginInfo) =>
+            app.AddAsyncEndpointWithBearerAuth<TerminalAccountsRequest, TerminalAccountsResponse>(
+    "GetTerminalAccounts",
+    async (DataIn, LoginInfo) =>
+    {
+        var req = (TerminalAccountsRequest)DataIn;
+        var terminalId = req.TerminalId ?? Environment.MachineName;
+
+        using var ctx = new NewinvContext();
+        // MANDATORY: Serializable for auto-create logic
+        using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+        try
+        {
+            var terminal = await ctx.Terminals.FirstOrDefaultAsync(t => t.TerminalId == terminalId);
+
+            // 1. Resolve Cash
+            long cashNo = terminal?.DefaultCash ?? 0;
+            if (cashNo == 0)
+            {
+                // CREATE if missing
+                cashNo = await EnsureAccountExists(ctx, $"Cash - {terminalId}", 1, "CASH");
+                // Update terminal object
+                if (terminal == null)
                 {
-                    using var ctx = new NewinvContext();
-                    // Logic: Find accounts marked as IsDefaultCashRegister or specific HumanFriendlyId
-                    var cash = await ctx.AccountsInformations
-                        .FirstOrDefaultAsync(a => a.IsDefaultCashRegister && a.IsCash);
+                    terminal = new Terminal { TerminalId = terminalId };
+                    ctx.Terminals.Add(terminal);
+                }
+                terminal.DefaultCash = cashNo;
+            }
 
-                    // Logic: Find a "BANK" account tagged for the terminal (example logic)
-                    var bank = await ctx.AccountsInformations
-                        .FirstOrDefaultAsync(a => a.IsBank && a.HumanFriendlyId == "$TERMINAL_BANK");
+            // 2. Resolve Bank
+            long bankNo = terminal?.DefaultBank ?? 0;
+            if (bankNo == 0)
+            {
+                bankNo = await EnsureAccountExists(ctx, $"Bank - {terminalId}", 1, "CASH");
+                terminal.DefaultBank = bankNo;
+            }
 
-                    return new TerminalAccountsResponse
-                    {
-                        CashAccountNo = cash?.AccountNo ?? 0,
-                        CashAccountName = cash?.AccountName ?? "Cash",
-                        BankAccountNo = bank?.AccountNo ?? 0,
-                        BankAccountName = bank?.AccountName ?? "Bank"
-                    };
-                },
-                "Refresh"
-            );
+            // 3. Save Terminal changes if we created accounts
+            await ctx.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // 4. Fetch Names for UI
+            var cashAcc = await ctx.AccountsInformations.FindAsync(cashNo);
+            var bankAcc = await ctx.AccountsInformations.FindAsync(bankNo);
+
+            return new TerminalAccountsResponse
+            {
+                CashAccountNo = cashNo,
+                CashAccountName = cashAcc?.AccountName ?? "Cash",
+                BankAccountNo = bankNo,
+                BankAccountName = bankAcc?.AccountName ?? "Bank"
+            };
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    },
+    "Refresh"
+);
 
             return app;
         }
@@ -521,10 +560,10 @@ namespace InvoicerBackend
     public class PaymentEntry
     {
         public long AccountNo { get; set; }
+        public string? AccountName { get; set; } // ADDED
         public double Amount { get; set; }
-        // NEW FIELDS
-        public string Type { get; set; } = "CASH"; // CASH, BANK, LP, VOUCHER
-        public double? PointsRedeem { get; set; } // Used only if Type == LP
+        public string Type { get; set; } = "CASH";
+        public double? PointsRedeem { get; set; }
     }
     public class SimulatePaymentResponse : SimulateOrderResponse
     {
@@ -545,8 +584,11 @@ namespace InvoicerBackend
         public double ImplicitCharge { get; set; }
         public double NetDeposit { get; set; }
         public double LpEarned { get; set; }
-        public List<ProposedLpRedemption> LpBucketsUsed { get; set; } // Map from ProcessResult
-        public double PointsRedeemed { get; set; } // Actual points redeemed
+
+        // NEW FIELDS for LP and Type Support
+        public string Type { get; set; } // "CASH", "BANK", "LP", "ACCOUNT"
+        public double PointsRedeemed { get; set; } // Total points redeemed in this transaction
+        public List<ProposedLpRedemption> LpBucketsUsed { get; set; } // Detailed breakdown
     }
 
     public class JournalEntryResult

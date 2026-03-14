@@ -33,72 +33,83 @@
         const requiredEndpoints = ["GetFlowData", "SetFlowData", "SearchAccountsWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
+
+        // We might get accNo from URL (Cash/Bank) or we might not (Account)
         const accNoQS = params.get('accNo');
-        // IMPORTANT: Default to 'CASH' only if missing.
-        // For ACCOUNT flow, this URL MUST have type=ACCOUNT (set by SelectPaymentMethod)
         const typeQS = params.get('type') || 'CASH';
 
         async function init() {
             await checkPagePermissions(requiredEndpoints);
-
             const token = await getCookie("auth-token");
             if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
 
-            // 1. Determine Account Number
-            // Priority: URL Query String > Flow Data (from AccountSelect)
             let targetAccNo = accNoQS;
 
-            if (!targetAccNo) {
-                // Check if we are returning from AccountSelect
+            // If not in URL, check Flow Data
+            if (targetAccNo === null || targetAccNo === undefined) {
                 const resFlow = await fetch('/GetFlowData', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
                 });
                 const dataFlow = await resFlow.json();
-                if (dataFlow.value) targetAccNo = dataFlow.value;
+                if (dataFlow && (dataFlow.value !== null && dataFlow.value !== undefined)) {
+                    targetAccNo = dataFlow.value;
+                }
             }
 
-            // 2. Update UI
+            // VALIDATION: Did we get a value at all?
+            if (targetAccNo === null || targetAccNo === undefined) {
+                 document.getElementById('status').innerHTML = "<span style='color:red'>Error: No Account ID provided.</span>";
+                 return;
+            }
+
+            // UI Update
             const dispNo = document.getElementById('dispDebitNo');
             const dispName = document.getElementById('dispDebitName');
             const dispType = document.getElementById('dispType');
 
-            if (targetAccNo) {
-                if(dispNo) dispNo.textContent = targetAccNo;
-                if(dispType) dispType.textContent = typeQS; // Show ACCOUNT or CASH
+            if(dispNo) dispNo.textContent = targetAccNo;
+            if(dispType) dispType.textContent = typeQS;
 
-                // Fetch Name
-                try {
-                    const resSearch = await fetch('/SearchAccountsWeb', {
-                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ Query: targetAccNo })
-                    });
-                    const list = await resSearch.json();
-                    const acc = list.find(a => a.accountNo == targetAccNo);
+            // Fetch Name
+            try {
+                const resSearch = await fetch('/SearchAccountsWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: targetAccNo })
+                });
+                const list = await resSearch.json();
+                const acc = list.find(a => a.accountNo == targetAccNo);
 
-                    if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
-                } catch (e) {
-                    console.error(e);
-                    if(dispName) dispName.textContent = "Error Loading Name";
-                }
-
-                document.getElementById('status').style.display = 'none';
-                document.getElementById('form').style.display = 'block';
-            } else {
-                document.getElementById('status').innerText = "Error: No account found in URL or Flow.";
+                // If acc is undefined here, DB didn't find it.
+                // We show "Unknown" in UI, but Backend will throw error on Save.
+                if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
+            } catch (e) {
+                if(dispName) dispName.textContent = "Error Loading Name";
             }
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
         }
 
         async function save() {
             const token = await getCookie("auth-token");
             const amount = parseFloat(document.getElementById('amount').value);
-            if (!amount || amount <= 0) { alert("Invalid amount"); return; }
 
-            // We read from the spans to ensure we have what's displayed
-            const accNo = document.getElementById('dispDebitNo').textContent;
+            // READ FROM UI (What You See Is What You Get)
+            const accNoStr = document.getElementById('dispDebitNo').textContent;
+            const accName = document.getElementById('dispDebitName').textContent;
+
+            const accNo = parseInt(accNoStr);
+
+            // Debug
+            console.log("Saving Payment:", { AccountNo: accNo, AccountName: accName, Type: typeQS, Amount: amount });
+
+            if (!amount || amount <= 0) { alert("Invalid amount"); return; }
+            if (!accNo || accNo === 0) { alert("Invalid Account ID (0). Did the account load correctly?"); return; }
 
             const newPayment = {
-                AccountNo: parseInt(accNo),
+                AccountNo: accNo,
+                AccountName: accName, // PASS NAME EXPLICITLY
                 Amount: amount,
                 Type: typeQS
             };
