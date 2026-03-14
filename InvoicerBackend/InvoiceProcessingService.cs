@@ -252,27 +252,45 @@ namespace InvoicerBackend
                 }
 
                 // =================================================================
-                // BRANCH C: ACCOUNT (CREDIT SALE)
+                // BRANCH C: ACCOUNT (CREDIT SALE / HOUSE ACCOUNT PAYMENT)
                 // =================================================================
                 else if (pay.Type == "ACCOUNT")
                 {
                     // VALIDATION
                     if (pay.AccountNo == 0)
-                        throw new ArgumentException("Invalid Account ID (0) for Credit Sale.");
+                        throw new ArgumentException("Invalid Account ID for Account Payment.");
 
                     var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
                     if (acc == null)
                         throw new ArgumentException($"Account not found: {pay.AccountNo}");
 
-                    // "On Account" means NO payment is made now.
-                    // No Accounting Entry needed here. The AR from Sale remains open.
+                    // LOGIC: If user entered an amount, treat it as a payment from that account.
+                    // If amount is 0, it is a pure Credit Sale (leave open in AR).
+                    double amount = pay.Amount;
+
+                    if (amount > 0)
+                    {
+                        // Payment via Account (e.g. House Account)
+                        // Dr Selected Account, Cr Accounts Receivable
+                        result.AccountingEntries.Add(new JournalEntryResult
+                        {
+                            DebitAccount = pay.AccountNo,
+                            DebitAccountName = acc.AccountName,
+                            CreditAccount = accReceivable,
+                            CreditAccountName = "Accounts Receivable",
+                            Amount = amount,
+                            Narrative = "Payment via Account"
+                        });
+
+                        totalPaid += amount;
+                    }
 
                     result.PaymentResults.Add(new PaymentResult
                     {
                         AccountNo = pay.AccountNo,
-                        AccountName = acc.AccountName, // Name from DB
-                        AmountTendered = 0,
-                        Type = "ACCOUNT", // Explicitly set Type
+                        AccountName = acc.AccountName,
+                        AmountTendered = amount, // USE ACTUAL AMOUNT
+                        Type = "ACCOUNT",
                         LpEarned = 0
                     });
                 }
