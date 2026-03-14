@@ -935,7 +935,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Customer).HasColumnName("customer");
             entity.Property(e => e.DiscountTotal).HasColumnName("discount_total");
             entity.Property(e => e.EffectiveDiscountPercentage).HasColumnName("effective_discount_percentage");
-            entity.Property(e => e.ExtraData).HasColumnName("extra_data");
+            entity.Property(e => e.ExtraData)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("extra_data");
             entity.Property(e => e.GrandTotal).HasColumnName("grand_total");
             entity.Property(e => e.InvoiceHumanFriendly).HasColumnName("invoice_human_friendly");
             entity.Property(e => e.InvoiceTime)

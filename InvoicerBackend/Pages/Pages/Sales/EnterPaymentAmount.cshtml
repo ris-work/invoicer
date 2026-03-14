@@ -11,6 +11,18 @@
     <div class="container">
         <h2>Enter Payment Amount</h2>
         <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="orderBalance" style="margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fff;">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="font-size: 1.2em;"><strong>Total:</strong> <span id="totalAmt">0.00</span></div>
+                <div style="font-size: 1.2em;">
+                    <strong>Remaining:</strong>
+                    <span id="remainingAmt" style="color: #d9534f; font-weight: bold;">0.00</span>
+                </div>
+            </div>
+            <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                Paid so far: <span id="paidAmt">0.00</span>
+            </div>
+        </div>
         <div id="status">Loading...</div>
 
         <div id="form" style="display:none;">
@@ -42,6 +54,7 @@
             await checkPagePermissions(requiredEndpoints);
             const token = await getCookie("auth-token");
             if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
+            loadOrderSummary();
 
             let targetAccNo = accNoQS;
 
@@ -133,6 +146,60 @@
             } catch (err) {
                 alert("Error saving payment: " + err.message);
             }
+        }
+                async function loadOrderSummary() {
+            const token = await getCookie("auth-token");
+            const piiId = await getFlowKey("selectedPiiId");
+            const items = JSON.parse(await getFlowKey("orderItems") || "[]");
+            const payments = JSON.parse(await getFlowKey("payments") || "[]");
+
+            if (!piiId || items.length === 0) {
+                const balanceDiv = document.getElementById('orderBalance');
+                if(balanceDiv) balanceDiv.innerHTML = "<em>Add items to see total.</em>";
+                return;
+            }
+
+            try {
+                const res = await fetch('/SimulateSaleWithPayments', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ PiiId: parseInt(piiId), Items: items, Payments: payments })
+                });
+                const data = await res.json();
+
+                const total = data.grandTotal || 0;
+                const paid = data.totalPaid || 0;
+                const remaining = total - paid;
+
+                // Update specific elements
+                const totalEl = document.getElementById('totalAmt');
+                const paidEl = document.getElementById('paidAmt');
+                const remainingEl = document.getElementById('remainingAmt');
+
+                if (totalEl) totalEl.innerText = total.toFixed(2);
+                if (paidEl) paidEl.innerText = paid.toFixed(2);
+
+                if (remainingEl) {
+                    remainingEl.innerText = remaining.toFixed(2);
+                    // Color: Red if balance > 0, Green if 0 or less
+                    remainingEl.style.color = remaining > 0 ? '#d9534f' : '#5cb85c';
+                }
+
+            } catch (e) {
+                console.error("Error loading balance", e);
+                const balanceDiv = document.getElementById('orderBalance');
+                if(balanceDiv) balanceDiv.innerHTML = "<span style='color:red'>Error loading totals</span>";
+            }
+        }
+
+        // Helper to get Flow Data directly
+        async function getFlowKey(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            const data = await res.json();
+            return data.value;
         }
 
         init();

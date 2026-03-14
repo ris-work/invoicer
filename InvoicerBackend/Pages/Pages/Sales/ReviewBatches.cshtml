@@ -286,14 +286,21 @@
 
         // --- ACTIONS ---
 
-        async function removeItem(index) {
+                async function removeItem(index) {
             if (!confirm("Remove this item from the order?")) return;
             const token = await getCookie("auth-token");
 
-            const dataList = await getFlowKeyRaw("orderItems");
-            let list = JSON.parse(dataList || "[]");
+            // 1. Get Raw String
+            const rawData = await getFlowKeyRaw("orderItems");
+            const dataObj = JSON.parse(rawData);
+
+            // 2. Parse Inner Array
+            let list = JSON.parse(dataObj.value || "[]");
+
+            // 3. Splice
             list.splice(index, 1);
 
+            // 4. Save back
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
@@ -305,8 +312,10 @@
             if (!confirm("Remove payment?")) return;
             const token = await getCookie("auth-token");
 
-            const dataList = await getFlowKeyRaw("payments");
-            let list = JSON.parse(dataList || "[]");
+            const rawData = await getFlowKeyRaw("payments");
+            const dataObj = JSON.parse(rawData);
+            let list = JSON.parse(dataObj.value || "[]");
+
             list.splice(index, 1);
 
             await fetch('/SetFlowData', {
