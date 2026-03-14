@@ -151,6 +151,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<TempIssuedInvoice> TempIssuedInvoices { get; set; }
 
+    public virtual DbSet<Terminal> Terminals { get; set; }
+
     public virtual DbSet<TieredDiscount> TieredDiscounts { get; set; }
 
     public virtual DbSet<Token> Tokens { get; set; }
@@ -1898,6 +1900,17 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("request_ids");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+        });
+
+        modelBuilder.Entity<Terminal>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("terminals");
+
+            entity.Property(e => e.DefaultBank).HasColumnName("default_bank");
+            entity.Property(e => e.DefaultCash).HasColumnName("default_cash");
+            entity.Property(e => e.TerminalId).HasColumnName("terminal_id");
         });
 
         modelBuilder.Entity<TieredDiscount>(entity =>

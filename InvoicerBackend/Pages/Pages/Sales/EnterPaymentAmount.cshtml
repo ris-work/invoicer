@@ -28,53 +28,55 @@
         const flowId = params.get('flowId');
         function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
-        async function init() {
-            const token = getCookie("auth-token");
+                async function init() {
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
 
-            // Load Selected Account
-            const resAcc = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
-            });
-            const dataAcc = await resAcc.json();
+            // Check QueryString for Pre-fill (from SelectPaymentMethod)
+            const qsAccNo = params.get('accNo');
+            const qsType = params.get('type') || 'CASH';
 
-            // Load Name (Hack: usually name is also saved in flow or we search)
-            // For now, let's assume we search it
-            const resSearch = await fetch('/SearchAccountsWeb', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Query: dataAcc.value })
-            });
-            const list = await resSearch.json();
-            const acc = list.find(a => a.accountNo == dataAcc.value);
+            if (qsAccNo) {
+                // Direct Mode (Cash/Bank selected)
+                document.getElementById('dispDebitNo').textContent = qsAccNo;
 
-            document.getElementById('accName').innerText = acc ? acc.accountName : "Unknown";
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
+                // Fetch Name for display
+                const resSearch = await fetch('/SearchAccountsWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: qsAccNo })
+                });
+                const list = await resSearch.json();
+                const acc = list.find(a => a.accountNo == qsAccNo);
+
+                document.getElementById('dispDebitName').textContent = acc ? acc.accountName : "Account";
+
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('form').style.display = 'block';
+            } else {
+                // Fallback: Manual Selection Flow (Old Logic)
+                // ... (Keep existing manual flow logic here if needed)
+                document.getElementById('status').innerText = "No account specified.";
+            }
         }
 
-        async function save() {
-            const token = getCookie("auth-token");
+                async function save() {
+            const token = await getCookie("auth-token");
             const amount = parseFloat(document.getElementById('amount').value);
             if(!amount || amount <= 0) { alert("Invalid amount"); return; }
 
-            const resAcc = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
-            });
-            const dataAcc = await resAcc.json();
+            const accNo = parseInt(document.getElementById('dispDebitNo').textContent);
+            const type = params.get('type') || 'CASH'; // Get type from URL
 
-            // Load Current Payments
-            const resList = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
-            });
-            const dataList = await resList.json();
-            let list = JSON.parse(dataList.value || "[]");
+            const newPayment = {
+                AccountNo: accNo,
+                Amount: amount,
+                Type: type
+            };
 
-            list.push({
-                AccountNo: parseInt(dataAcc.value),
-                Amount: amount
-            });
+            // Save to flow
+            const dataList = await getFlowKeyRaw("payments");
+            let list = JSON.parse(dataList || "[]");
+            list.push(newPayment);
 
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

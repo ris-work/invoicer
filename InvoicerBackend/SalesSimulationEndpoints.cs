@@ -185,43 +185,79 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // 3. Post (Use Shared Service + Commit)
-            app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
-                "PostInvoice",
-                async (ReqI, LoginInfo) =>
+            
+            // Job: Expire Loyalty Points
+            app.AddAsyncEndpointWithBearerAuth<string, int>(
+                "ProcessExpiredLoyaltyPoints",
+                async (DataIn, LoginInfo) =>
                 {
-                    var Req = (PostInvoiceRequest)ReqI;
                     using var ctx = new NewinvContext();
-                    using var tx = await ctx.Database.BeginTransactionAsync();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
                     try
                     {
-                        // 1. Deserialize
-                        var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
+                        // 1. Find expired buckets that still have remaining balance
+                        // Logic: Bucket is expired (ValidUntil < Now) AND (Amount - Sum(Redemptions)) > 0
 
-                        // 2. VALIDATE (RE-RUN)
-                        var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
+                        var now = DateTime.UtcNow;
 
-                        if (!result.Success)
+                        // Fetch candidates (simplified, might need raw SQL for performance on large datasets)
+                        var expiredBuckets = await ctx.LoyaltyPoints
+                            .Where(lp => lp.ValidUntil < now)
+                            .ToListAsync();
+
+                        int processedCount = 0;
+                        long accLpLiability = await EnsureAccountExists(ctx, "Loyalty Points Liability", 2, "PROV_CUR");
+                        long accBreakage = await EnsureAccountExists(ctx, "Breakage Income", 4, "REV_OTHER");
+
+                        foreach (var bucket in expiredBuckets)
                         {
-                            return new PostInvoiceResponse { Success = false, Message = result.Message };
-                        }
+                            // Calculate remaining physically
+                            var redeemed = await ctx.LoyaltyPointsRedemptions
+                                .Where(r => r.LoyalityPointsId == bucket.PointsId)
+                                .SumAsync(r => r.Amount);
 
-                        // 3. COMMIT
-                        // Here you would write the actual DB inserts for Sales, Payments, JournalEntries.
-                        // foreach(var entry in result.AccountingEntries) { ... }
+                            double remaining = bucket.Amount - redeemed;
 
-                        // 4. Mark Temp Posted
-                        if (Req.TempId.HasValue)
-                        {
-                            var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
-                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTime.UtcNow; }
+                            if (remaining > 0)
+                            {
+                                // 1. "Burn" the remaining points physically by creating a final redemption record
+                                // This prevents re-processing.
+                                var burnRecord = new LoyaltyPointsRedemption
+                                {
+                                    CustId = bucket.CustId,
+                                    InvoiceId = 0, // System
+                                    Amount = remaining,
+                                    TimeIssued = DateTimeOffset.UtcNow,
+                                    LoyalityPointsId = bucket.PointsId,
+                                    RedeemedFor = "EXPIRATION"
+                                };
+                                ctx.LoyaltyPointsRedemptions.Add(burnRecord);
+
+                                // 2. Create Accounting Entry
+                                double value = GetLpMonetaryValue(remaining);
+
+                                var journal = new AccountsJournalEntry
+                                {
+                                    TimeAsEntered = now,
+                                    Amount = value,
+                                    JournalNo = 8, // Adjusting Journal
+                                    DebitAccountNo = accLpLiability,
+                                    DebitAccountType = 2,
+                                    CreditAccountNo = accBreakage,
+                                    CreditAccountType = 4,
+                                    Description = $"Expired Loyalty Points - Bucket {bucket.PointsId}",
+                                    PrincipalName = "SYSTEM_EXPIRY_JOB"
+                                };
+                                JournalEntries.AddJournalEntry(ctx, journal);
+
+                                processedCount++;
+                            }
                         }
 
                         await ctx.SaveChangesAsync();
                         await tx.CommitAsync();
-
-                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                        return processedCount;
                     }
                     catch
                     {
@@ -229,188 +265,172 @@ namespace InvoicerBackend
                         throw;
                     }
                 },
+                "Refresh" // Should probably be a higher privilege like "Admin"
+            );
+
+            // Get Default Terminal Accounts for Quick Pay
+            app.AddAsyncEndpointWithBearerAuth<object, TerminalAccountsResponse>(
+                "GetTerminalAccounts",
+                async (DataIn, LoginInfo) =>
+                {
+                    using var ctx = new NewinvContext();
+                    // Logic: Find accounts marked as IsDefaultCashRegister or specific HumanFriendlyId
+                    var cash = await ctx.AccountsInformations
+                        .FirstOrDefaultAsync(a => a.IsDefaultCashRegister && a.IsCash);
+
+                    // Logic: Find a "BANK" account tagged for the terminal (example logic)
+                    var bank = await ctx.AccountsInformations
+                        .FirstOrDefaultAsync(a => a.IsBank && a.HumanFriendlyId == "$TERMINAL_BANK");
+
+                    return new TerminalAccountsResponse
+                    {
+                        CashAccountNo = cash?.AccountNo ?? 0,
+                        CashAccountName = cash?.AccountName ?? "Cash",
+                        BankAccountNo = bank?.AccountNo ?? 0,
+                        BankAccountName = bank?.AccountName ?? "Bank"
+                    };
+                },
                 "Refresh"
             );
 
             return app;
         }
 
-        /// <summary>
-        /// Full Logic for Processing a Single Line Item (Now with Tax)
-        /// </summary>
-        private static SimulateItemResult ProcessItem(
-            SaleOrderLineItem req,
-            List<VBatchSelectionWindow> itemBatches,
-            Dictionary<long, double> virtualInventory,
-            Dictionary<long, double> initialInventory,
-            List<VComprehensiveSalesFinalMatrix> itemMatrix,
-            NewinvContext ctx, // ADDED Context
-            string jurisdictionCode) // ADDED Jurisdiction
+        private static double GetLpMonetaryValue(double points)
         {
-            double remainingQty = req.Quantity;
-            var selectedBatches = new List<SelectedBatchInfo>();
-            var allBatchDebug = new List<BatchDebugInfo>();
-
-            bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
-
-            // PRECISE BATCH SELECTION
-            if (req.BatchCode.HasValue)
-            {
-                var batchId = req.BatchCode.Value;
-                var batch = itemBatches.FirstOrDefault(b => b.Batchcode == batchId);
-                var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
-                var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
-                var priceInfo = itemMatrix.FirstOrDefault(m => m.Batchcode == batchId);
-
-                var dbg = new BatchDebugInfo
-                {
-                    Batchcode = batchId,
-                    InitialQty = initialQty,
-                    ViInitialQty = virtualQty,
-                    AvailableQty = virtualQty,
-                    EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
-                    Status = "Skipped"
-                };
-
-                if (batch == null) dbg.Status = "Batch Not Found";
-                else if (virtualQty < req.Quantity) dbg.Status = "Insufficient Stock";
-                else if (priceInfo == null) dbg.Status = "No Price Data";
-                else
-                {
-                    double unitPrice = req.IsManualPrice && req.TargetPrice.HasValue
-                        ? req.TargetPrice.Value
-                        : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
-
-                    // --- TAX CALCULATION ---
-                    var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, req.Quantity);
-
-                    selectedBatches.Add(new SelectedBatchInfo
-                    {
-                        Batchcode = batchId,
-                        Quantity = req.Quantity,
-                        UnitPrice = unitPrice,
-                        TaxRate = taxInfo.Rate,
-                        TaxAmount = taxInfo.Amount,
-                        TaxSource = taxInfo.Source
-                    });
-
-                    virtualInventory[batchId] -= req.Quantity;
-                    remainingQty = 0;
-                    dbg.Status = "Selected"; dbg.AvailableQty = virtualInventory[batchId];
-                }
-                allBatchDebug.Add(dbg);
-            }
-            // AUTO ALLOCATION
-            else
-            {
-                foreach (var batch in itemBatches)
-                {
-                    var batchId = batch.Batchcode ?? 0;
-                    var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
-                    var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
-
-                    var priceInfo = itemMatrix.FirstOrDefault(m =>
-                        m.Batchcode == batchId &&
-                        ((isSuggested && m.ISuggestedPrice == req.TargetPrice) || (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0)))
-                    );
-
-                    var dbg = new BatchDebugInfo
-                    {
-                        Batchcode = batchId,
-                        InitialQty = initialQty,
-                        ViInitialQty = virtualQty,
-                        AvailableQty = virtualQty,
-                        EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
-                        Status = "Skipped"
-                    };
-
-                    if (virtualQty <= 0) { dbg.Status = "Empty/Reserved"; }
-                    else if (remainingQty <= 0) { dbg.Status = "Demand Satisfied"; }
-                    else if (priceInfo == null) { dbg.Status = "Price Mismatch"; }
-                    else
-                    {
-                        double takeQty = Math.Min(virtualQty, remainingQty);
-
-                        double unitPrice;
-                        double unitDiscount = 0;
-                        double lpRate;
-
-                        if (req.IsManualPrice && req.TargetPrice.HasValue)
-                        {
-                            unitPrice = req.TargetPrice.Value;
-                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice;
-                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
-                        }
-                        else
-                        {
-                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
-                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
-                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
-                        }
-
-                        // --- TAX CALCULATION ---
-                        var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, takeQty);
-
-                        selectedBatches.Add(new SelectedBatchInfo
-                        {
-                            Batchcode = batchId,
-                            Quantity = takeQty,
-                            UnitPrice = unitPrice,
-                            UnitDiscount = unitDiscount,
-                            LpRate = lpRate,
-                            TaxRate = taxInfo.Rate,
-                            TaxAmount = taxInfo.Amount,
-                            TaxSource = taxInfo.Source
-                        });
-
-                        virtualInventory[batchId] -= takeQty;
-                        remainingQty -= takeQty;
-
-                        dbg.Status = "Selected";
-                        dbg.AvailableQty = virtualInventory[batchId];
-                    }
-                    allBatchDebug.Add(dbg);
-                }
-            }
-
-            return new SimulateItemResult
-            {
-                ItemCode = req.ItemCode,
-                Success = remainingQty <= 0,
-                Message = remainingQty > 0 ? $"Insufficient stock" : "OK",
-                SelectedBatches = selectedBatches,
-                AllBatches = allBatchDebug
-            };
+            // Example: 100 points = $1.00 => Rate 0.01
+            const double rate = 1;
+            return points * rate;
         }
 
+        
 
-        private static (double Rate, double Amount, string Source) CalculateTax(NewinvContext ctx, string jurisdiction, long itemCode, double unitPrice, double qty)
+
+        
+
+        private static async Task<long> EnsureAccountExists(
+            NewinvContext ctx,
+            string accountName,
+            int accountType,
+            string? ifrsCode = null)
         {
-            try
+            ctx.EnsureSerializableTransaction();
+
+            // 1. SMART DEFAULTS: Infer IFRS Code if not provided
+            if (string.IsNullOrEmpty(ifrsCode))
             {
-                // 1. Get Item's Tax Category from Catalogue
-                // Note: In a high-perf scenario, fetch Catalogue data once in the main loop.
-                // Doing it here for simplicity of patching.
-                var category = ctx.Catalogues.Where(c => c.Itemcode == itemCode).Select(c => c.DefaultVatCategory).FirstOrDefault();
+                ifrsCode = InferIfrsCodeFromName(accountName, accountType);
+            }
 
-                // 2. Query Resolution View
-                var rateInfo = ctx.VTaxResolutions
-                    .FirstOrDefault(t => t.JurisdictionCode == jurisdiction && t.VatCategoryId == (category));
+            // 2. Resolve IFRS Category from DB
+            var ifrsCategory = await ctx.IfrsCategories
+                .FirstOrDefaultAsync(c => c.Code == ifrsCode);
 
-                if (rateInfo != null)
+            // Fallback: If code not found, try to find generic 'UNMAP' for the type
+            if (ifrsCategory == null)
+            {
+                ifrsCategory = await ctx.IfrsCategories
+                    .FirstOrDefaultAsync(c => c.ValidAccountType == accountType && c.Code.StartsWith("UNMAP"));
+            }
+
+            // 3. Check/Create AccountsInformation
+            var account = await ctx.AccountsInformations
+                .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
+
+            long accountNo;
+
+            if (account != null)
+            {
+                accountNo = account.AccountNo;
+                // Update IFRS Category if we found a better match
+                if (ifrsCategory != null && account.IfrsCategoryId != ifrsCategory.Id)
                 {
-                    double taxableAmount = unitPrice * qty;
-                    double taxAmount = taxableAmount * ((rateInfo.EffectiveRatePercentage??0) / 100.0);
-                    return (rateInfo.EffectiveRatePercentage??0, taxAmount, rateInfo.RateSource);
+                    account.IfrsCategoryId = ifrsCategory.Id;
                 }
             }
-            catch
+            else
             {
-                // If view doesn't exist or error, fallback to 0
-                Console.WriteLine($"WARN: Tax lookup failed for item {itemCode} in {jurisdiction}");
+                var newAccount = new AccountsInformation
+                {
+                    AccountName = accountName,
+                    AccountType = accountType,
+                    AccountMin = -1000000000,
+                    AccountMax = 1000000000,
+                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_").Replace("-", "_")}_{accountType}",
+                    IfrsCategoryId = ifrsCategory?.Id ?? 1,
+                    // Set flags based on type/name
+                    IsCash = accountType == 1 && accountName.ToLower().Contains("cash"),
+                    IsBank = accountType == 1 && accountName.ToLower().Contains("bank")
+                };
+
+                ctx.AccountsInformations.Add(newAccount);
+                await ctx.SaveChangesAsync();
+                accountNo = newAccount.AccountNo;
             }
 
-            return (0, 0, "ERROR");
+            // 4. Check/Create AccountsBalance
+            var balance = await ctx.AccountsBalances
+                .FirstOrDefaultAsync(b => b.AccountType == accountType && b.AccountNo == accountNo);
+
+            if (balance == null)
+            {
+                var newBalance = new AccountsBalance
+                {
+                    AccountType = accountType,
+                    AccountNo = accountNo,
+                    Amount = 0
+                };
+                ctx.AccountsBalances.Add(newBalance);
+                await ctx.SaveChangesAsync();
+            }
+
+            return accountNo;
+        }
+
+        private static string InferIfrsCodeFromName(string name, int type)
+        {
+            string upper = name.ToUpperInvariant();
+
+            // Type 1: Assets
+            if (type == 1)
+            {
+                if (upper.Contains("CASH") || upper.Contains("BANK")) return "CASH";
+                if (upper.Contains("RECEIVABLE") || upper.Contains("DEBTOR")) return "RECV_TRADE";
+                if (upper.Contains("INVENTORY") || upper.Contains("STOCK")) return "INVENTORY";
+                return "UNMAP_ASSET";
+            }
+
+            // Type 2: Liabilities
+            if (type == 2)
+            {
+                if (upper.Contains("PAYABLE") || upper.Contains("CREDITOR")) return "PAY_TRADE";
+                if (upper.Contains("TAX")) return "TAX_CUR";
+                if (upper.Contains("LOYALTY") || upper.Contains("POINTS")) return "PROV_CUR"; // Loyalty usually current provision
+                return "UNMAP_LIAB";
+            }
+
+            // Type 3: Equity
+            if (type == 3)
+            {
+                if (upper.Contains("CAPITAL") || upper.Contains("SHARE")) return "EQ_CAPITAL";
+                return "UNMAP_EQUITY";
+            }
+
+            // Type 4: Income
+            if (type == 4)
+            {
+                if (upper.Contains("SALE") || upper.Contains("REVENUE")) return "REV_SALES";
+                return "UNMAP_INC";
+            }
+
+            // Type 5: Expenses
+            if (type == 5)
+            {
+                if (upper.Contains("COST OF SALES") || upper.Contains("COGS")) return "COGS";
+                return "UNMAP_EXP";
+            }
+
+            return "NONE";
         }
     }
 
@@ -501,9 +521,11 @@ namespace InvoicerBackend
     public class PaymentEntry
     {
         public long AccountNo { get; set; }
-        public double Amount { get; set; } // Amount the customer pays
+        public double Amount { get; set; }
+        // NEW FIELDS
+        public string Type { get; set; } = "CASH"; // CASH, BANK, LP, VOUCHER
+        public double? PointsRedeem { get; set; } // Used only if Type == LP
     }
-
     public class SimulatePaymentResponse : SimulateOrderResponse
     {
         public double GrandTotal { get; set; }
@@ -523,6 +545,8 @@ namespace InvoicerBackend
         public double ImplicitCharge { get; set; }
         public double NetDeposit { get; set; }
         public double LpEarned { get; set; }
+        public List<ProposedLpRedemption> LpBucketsUsed { get; set; } // Map from ProcessResult
+        public double PointsRedeemed { get; set; } // Actual points redeemed
     }
 
     public class JournalEntryResult
@@ -534,5 +558,22 @@ namespace InvoicerBackend
         public double Amount { get; set; }
         public string Narrative { get; set; }
     }
+    public class TerminalAccountsRequest
+    {
+        public string? TerminalId { get; set; }
+    }
+
+    public class TerminalAccountsResponse
+    {
+        public long CashAccountNo { get; set; }
+        public string CashAccountName { get; set; }
+        public long BankAccountNo { get; set; }
+        public string BankAccountName { get; set; }
+    }
+    public class LoyaltyPointsBalanceResponse
+    {
+        public double Balance { get; set; }
+    }
+
 
 }

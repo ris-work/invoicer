@@ -203,15 +203,30 @@
             });
 
             // Payments
+                        // Payments
             html += `<h3>Payments</h3><div class="item-card"><div style="padding:10px;">`;
 
             const payments = result.paymentResults || [];
 
             if (payments.length > 0) {
-                html += `<table><thead><tr><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
+                html += `<table><thead><tr><th>Type</th><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
                 payments.forEach((p, i) => {
+
+                    let typeDisplay = s`<span class="badge-check">${p.type || 'CASH'}</span>`;
+                    let details = "";
+
+                    // Special Rendering for LP
+                    if (p.type === 'LP') {
+                        details = s`<br><small style="color:#666">${p.pointsRedeemed.toFixed(0)} Points</small>`;
+                    }
+                    // Special Rendering for Account
+                    else if (p.type === 'ACCOUNT') {
+                        details = s`<br><small style="color:#dc3545">Credit Sale</small>`;
+                    }
+
                     html += s`<tr>
-                        <td>${p.accountName}</td>
+                        <td>${typeDisplay}</td>
+                        <td>${p.accountName} ${details}</td>
                         <td>${p.amountTendered.toFixed(2)}</td>
                         <td>${p.lpEarned.toFixed(2)}</td>
                         <td><span class="remove-btn" onclick="removePayment(${i})">✕</span></td>
@@ -224,6 +239,8 @@
 
             html += `<button class="btn btn-primary" onclick="addPayment()">Add Payment</button>`;
             html += `</div></div>`;
+
+
 
             // Totals
             let grandTotal = result.grandTotal || 0;
@@ -282,9 +299,9 @@
 
         async function addPayment() {
             const token = getCookie("auth-token");
-            const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
-            // Flow: Select Account -> Enter Amount -> Return here
-            window.location.href = '/Pages/SearchAndSelect/AccountSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
+            //const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
+            // Redirect to the new Method Selector
+            window.location.href = '/Pages/Sales/SelectPaymentMethod?flowId=' + flowId;
         }
 
         async function saveDraft() {

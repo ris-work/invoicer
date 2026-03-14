@@ -20,6 +20,13 @@ namespace InvoicerBackend
         public double Balance { get; set; }
         public double LoyaltyPointsFinal { get; set; }
         public double TotalTax { get; set; }
+        public List<ProposedLpRedemption> LpProposedRedemptions { get; set; } = new();
+    }
+
+    public class ProposedLpRedemption
+    {
+        public long BucketId { get; set; }
+        public double Amount { get; set; }
     }
 
     public static class InvoiceProcessingService
@@ -88,53 +95,198 @@ namespace InvoicerBackend
                 totalTax += processResult.SelectedBatches.Sum(b => b.TaxAmount);
             }
 
+            // =====================================================================
+            // 4. LP VIRTUAL STATE INITIALIZATION
+            // =====================================================================
+
+            // 1. Fetch Real Buckets
+            var rawLpBuckets = LoyaltyPointsManager.GetValidNonEmptyPointsBuckets(ctx, piiId).ToList();
+
+            // 2. Create Virtual State (BucketID -> RemainingAmount)
+            var virtualLpState = rawLpBuckets.ToDictionary(b => b.Point.PointsId, b => b.RemainingPoints);
+
+            // Container for proposed redemptions (to be returned to UI)
+            var proposedRedemptions = new List<ProposedLpRedemption>();
+
+
+
             // 5. Process Payments
+            // =====================================================================
+            // PROCESS PAYMENTS
+            // =====================================================================
+
             result.PaymentResults = new List<PaymentResult>();
+            result.AccountingEntries = new List<JournalEntryResult>();
+
             double totalPaid = 0;
             double totalSurcharges = 0;
-            double totalLp = 0;
+            double totalLpIssued = 0; // For LP Issuance calculation later
             double baseLpRate = pii.LoyaltyPointsRateAdditivePercentage + pii.LoyaltyPointsRateMultiplicativePercentage;
+
+            // Resolve Accounts needed for payments
+            long accReceivable = await EnsureAccountExists(ctx, "Accounts Receivable", 1, "RECV_TRADE");
+            long accLpLiability = await EnsureAccountExists(ctx, "Loyalty Points Liability", 2, "PROV_CUR");
+            long accBankCharges = await EnsureAccountExists(ctx, "Bank Charges", 5, "EXP_ADMIN");
 
             foreach (var pay in payments)
             {
-                var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
-                if (acc == null) continue;
-
-                double implicitCharge = pay.Amount * (acc.AccountsUsageNonTransparentChargePercentage / 100.0);
-                double surcharge = (pay.Amount * (acc.AccountSurchargesMultiplicativePercentage / 100.0)) + acc.AccountSurchargesAdditiveFee;
-                double netDeposit = pay.Amount - implicitCharge;
-
-                // LP Calculation
-                double effectiveLpRate = baseLpRate * (1 + (acc.LoyaltyBaseMultiplicativePointsPercentage / 100.0));
-                double lpEarned = (pay.Amount * effectiveLpRate) / 100.0;
-
-                result.PaymentResults.Add(new PaymentResult
+                // =================================================================
+                // BRANCH A: LOYALTY POINTS (REDEMPTION)
+                // =================================================================
+                if (pay.Type == "LP")
                 {
-                    AccountNo = pay.AccountNo,
-                    AccountName = acc.AccountName,
-                    AmountTendered = pay.Amount,
-                    Surcharge = surcharge,
-                    ImplicitCharge = implicitCharge,
-                    NetDeposit = netDeposit,
-                    LpEarned = lpEarned
-                });
+                    double pointsToRedeem = pay.PointsRedeem ?? 0;
+                    if (pointsToRedeem <= 0) continue;
 
-                totalPaid += pay.Amount;
-                totalSurcharges += surcharge;
-                totalLp += lpEarned;
+                    // 1. Virtual Redemption
+                    var (success, actualRedeemedAmount, simulationEntries) = VirtualRedeemLp(rawLpBuckets, virtualLpState, pointsToRedeem);
+
+                    if (!success)
+                    {
+                        result.Success = false;
+                        result.Message = $"Insufficient valid points. Needed: {pointsToRedeem}, Found: {actualRedeemedAmount}";
+                        return result;
+                    }
+
+                    proposedRedemptions.AddRange(simulationEntries);
+                    double redemptionValue = GetLpMonetaryValue(actualRedeemedAmount);
+
+                    // 2. Accounting Entry: Dr Liability, Cr AR (Clearing the debt)
+                    result.AccountingEntries.Add(new JournalEntryResult
+                    {
+                        DebitAccount = accLpLiability,
+                        DebitAccountName = "Loyalty Points Liability",
+                        CreditAccount = accReceivable,
+                        CreditAccountName = "Accounts Receivable",
+                        Amount = redemptionValue,
+                        Narrative = $"Loyalty Redemption ({actualRedeemedAmount} pts)"
+                    });
+
+                    // 3. UI Result
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = 0,
+                        AccountName = "Loyalty Points",
+                        AmountTendered = redemptionValue,
+                        PointsRedeemed = actualRedeemedAmount,
+                        LpBucketsUsed = simulationEntries,
+                        LpEarned = 0
+                    });
+
+                    totalPaid += redemptionValue;
+                }
+
+                // =================================================================
+                // BRANCH B: CASH / BANK
+                // =================================================================
+                else if (pay.Type == "CASH" || pay.Type == "BANK")
+                {
+                    var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
+                    if (acc == null) continue;
+
+                    double implicitCharge = pay.Amount * (acc.AccountsUsageNonTransparentChargePercentage / 100.0);
+                    double surcharge = (pay.Amount * (acc.AccountSurchargesMultiplicativePercentage / 100.0)) + acc.AccountSurchargesAdditiveFee;
+                    double netDeposit = pay.Amount - implicitCharge;
+
+                    // LP Issuance Calculation (Cash/Bank generates LP)
+                    double effectiveLpRate = baseLpRate * (1 + (acc.LoyaltyBaseMultiplicativePointsPercentage / 100.0));
+                    double lpEarned = (pay.Amount * effectiveLpRate) / 100.0;
+                    totalLpIssued += lpEarned;
+
+                    // 1. Receipt Entry: Dr Bank, Cr AR
+                    result.AccountingEntries.Add(new JournalEntryResult
+                    {
+                        DebitAccount = pay.AccountNo,
+                        DebitAccountName = acc.AccountName,
+                        CreditAccount = accReceivable,
+                        CreditAccountName = "Accounts Receivable",
+                        Amount = netDeposit,
+                        Narrative = "Payment Received"
+                    });
+
+                    // 2. Implicit Charge Entry (Card Fees)
+                    if (implicitCharge > 0)
+                    {
+                        long chargeAccId = acc.AccountsSurchargesTransferredToDuringSalePayment;
+                        if (chargeAccId == 0) chargeAccId = accBankCharges;
+
+                        result.AccountingEntries.Add(new JournalEntryResult
+                        {
+                            DebitAccount = chargeAccId,
+                            DebitAccountName = "Bank Charges",
+                            CreditAccount = pay.AccountNo,
+                            CreditAccountName = acc.AccountName,
+                            Amount = implicitCharge,
+                            Narrative = "Card Fee Deduction"
+                        });
+                    }
+
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = pay.AccountNo,
+                        AccountName = acc.AccountName,
+                        AmountTendered = pay.Amount,
+                        Surcharge = surcharge,
+                        ImplicitCharge = implicitCharge,
+                        NetDeposit = netDeposit,
+                        LpEarned = lpEarned
+                    });
+
+                    totalPaid += netDeposit;
+                    totalSurcharges += surcharge;
+                }
+
+                // =================================================================
+                // BRANCH C: ACCOUNT (CREDIT SALE / ON ACCOUNT)
+                // =================================================================
+                else if (pay.Type == "ACCOUNT")
+                {
+                    // "On Account" means we are NOT paying now.
+                    // We verify the customer is allowed credit (PII check stub).
+                    // No Accounting Entry is generated here. The AR generated by the sale remains open.
+
+                    // UI Result (Shows $0.00 paid, balance remains)
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = piiId, // Link to Customer
+                        AccountName = "On Account",
+                        AmountTendered = 0,
+                        LpEarned = 0
+                    });
+
+                    // totalPaid += 0; 
+                }
+
+                // =================================================================
+                // BRANCH D: VOUCHER / PREPAID (FUTURE IMPLEMENTATION)
+                // =================================================================
+                else if (pay.Type == "VOUCHER")
+                {
+                    // TODO: Logic to validate voucher code
+                    // Accounting: Dr Deferred Revenue (Voucher Liability), Cr AR
+                    // For now, just a placeholder
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = 0,
+                        AccountName = "Voucher",
+                        AmountTendered = pay.Amount,
+                        LpEarned = 0
+                    });
+                    totalPaid += pay.Amount;
+                }
             }
 
             result.GrandTotal = totalRevenue + totalTax + totalSurcharges;
             result.Balance = totalPaid - result.GrandTotal;
             result.TotalPaid = totalPaid;
-            result.LoyaltyPointsFinal = totalLp;
+            result.LoyaltyPointsFinal = totalLpIssued;
             result.TotalTax = totalTax;
 
             // 6. Generate Accounting Entries (NO HARDCODING)
             result.AccountingEntries = new List<JournalEntryResult>();
 
             // Get Dynamic Accounts
-            long accReceivable = await EnsureAccountExists(ctx, "Accounts Receivable", 1, "RECV_TRADE");
+            //long accReceivable = await EnsureAccountExists(ctx, "Accounts Receivable", 1, "RECV_TRADE");
             long accRevenue = await EnsureAccountExists(ctx, "Sales Revenue", 4, "REV_SALES");
             long accTax = await EnsureAccountExists(ctx, "Tax Payable", 2, "TAX_CUR");
 
@@ -463,6 +615,69 @@ namespace InvoicerBackend
             }
 
             return accountNo;
+        }
+
+        /// <summary>
+        /// Converts Loyalty Points to Monetary Value.
+        /// TODO: Move rate to Database/GlobalConfig.
+        /// </summary>
+        private static double GetLpMonetaryValue(double points)
+        {
+            // Standard: 100 Points = $1.00
+            const double conversionRate = 1;
+
+            return points * conversionRate;
+        }
+
+        /// <summary>
+        /// Pure function to simulate LP Redemption without DB side-effects.
+        /// Uses FEFO (First-Expiry-First-Out) logic based on the sorted bucket list.
+        /// </summary>
+        /// <param name="sortedBuckets">The list of valid buckets sorted by Expiry (earliest first).</param>
+        /// <param name="virtualState">The mutable dictionary tracking currently available points in memory.</param>
+        /// <param name="amountNeeded">The total points requested for this payment.</param>
+        /// <returns>Tuple: Success, Actual Redeemed Amount, List of Redemption Details</returns>
+        private static (bool Success, double TotalRedeemed, List<ProposedLpRedemption> Entries) VirtualRedeemLp(
+            List<(LoyaltyPoint Point, double RemainingPoints)> sortedBuckets,
+            Dictionary<long, double> virtualState,
+            double amountNeeded)
+        {
+            double remainingNeed = amountNeeded;
+            var entries = new List<ProposedLpRedemption>();
+
+            // Iterate through buckets (Assumed sorted by Expiry Date from LoyaltyPointsManager)
+            foreach (var bucket in sortedBuckets)
+            {
+                if (remainingNeed <= 0) break;
+
+                long bucketId = bucket.Point.PointsId;
+
+                // Check current availability in Virtual State (not the original DB amount)
+                if (!virtualState.ContainsKey(bucketId)) continue;
+
+                double availableInVirtual = virtualState[bucketId];
+                if (availableInVirtual <= 0) continue;
+
+                // Calculate how much to take from this bucket
+                double takeAmount = Math.Min(availableInVirtual, remainingNeed);
+
+                // 1. Update Virtual State (Mutates the dictionary for subsequent payments)
+                virtualState[bucketId] -= takeAmount;
+
+                // 2. Record the Proposal
+                entries.Add(new ProposedLpRedemption
+                {
+                    BucketId = bucketId,
+                    Amount = takeAmount
+                });
+
+                remainingNeed -= takeAmount;
+            }
+
+            double totalRedeemed = amountNeeded - remainingNeed;
+            bool success = remainingNeed <= 0; // Success if we fulfilled the full request
+
+            return (success, totalRedeemed, entries);
         }
 
         /// <summary>

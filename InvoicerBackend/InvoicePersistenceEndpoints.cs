@@ -119,6 +119,23 @@ namespace InvoicerBackend
                             }
                         }
 
+                        if (result.LpProposedRedemptions.Any())
+                        {
+                            foreach (var prop in result.LpProposedRedemptions)
+                            {
+                                // Create the actual DB record
+                                ctx.LoyaltyPointsRedemptions.Add(new LoyaltyPointsRedemption
+                                {
+                                    LoyalityPointsId = prop.BucketId,
+                                    Amount = prop.Amount,
+                                    CustId = invoiceData.PiiId, // Resolve from context if needed
+                                    InvoiceId = 0, // Update with actual Invoice ID if generated
+                                    RedeemedFor = "Invoice Payment",
+                                    TimeIssued = DateTimeOffset.UtcNow
+                                });
+                            }
+                        }
+
                         // 4. CREATE ISSUED INVOICE HEADER
                         var invoice = new IssuedInvoice
                         {

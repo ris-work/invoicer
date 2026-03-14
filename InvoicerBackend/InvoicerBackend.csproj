@@ -38,9 +38,11 @@
 		<RazorSlice Include="Slices\**\*.cshtml" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Content Remove="Pages\Pages\Sales\RedeemLoyaltyPoints.cshtml" />
 	  <Content Remove="Pages\Pages\Tags\Edit.cshtml" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Include="Pages\Pages\Sales\RedeemLoyaltyPoints.cshtml" />
 	  <None Include="Pages\Pages\Tags\Edit.cshtml" />
 	</ItemGroup>
     <ItemGroup>
