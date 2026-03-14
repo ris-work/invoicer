@@ -1,0 +1,121 @@
+﻿@page "/Pages/Sales/RedeemLoyaltyPoints"
+@functions { }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redeem Loyalty Points</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Redeem Loyalty Points</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="status">Checking balance...</div>
+        <div id="content" style="display:none;">
+            <div class="card">
+                <p><strong>Available Points:</strong> <span id="availPts">0</span></p>
+                <p><strong>Current Grand Total:</strong> <span id="grandTotal">0.00</span></p>
+                <hr>
+                <div class="form-group">
+                    <label>Points to Redeem</label>
+                    <input type="number" id="pointsInput" step="1" placeholder="Enter points" class="form-control">
+                </div>
+                <p class="hint" id="conversionHint">Estimated Value: 0.00</p>
+                <button class="btn btn-success" onclick="apply()">Apply Redemption</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "GetLoyaltyPointsBalance", "SimulateSaleWithPayments"];
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const CONVERSION_RATE = 0.01; // Should match backend
+
+        async function init() {
+            const token = await getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            
+            // 1. Get Customer ID
+            const piiIdVal = await getFlowKey("selectedPiiId");
+            if(!piiIdVal) { alert("No customer selected."); return; }
+
+            // 2. Get Balance
+            const resLP = await fetch('/GetLoyaltyPointsBalance', {
+                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ PiiId: parseInt(piiIdVal) })
+            });
+            const lpData = await resLP.json();
+
+            // 3. Get Current Order Total (Approx)
+            const orderItemsVal = await getFlowKey("orderItems");
+            const simRes = await fetch('/SimulateSaleWithPayments', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    PiiId: parseInt(piiIdVal),
+                    Items: JSON.parse(orderItemsVal || "[]"),
+                    Payments: [] // Empty to get total
+                })
+            });
+            const simData = await simRes.json();
+
+            document.getElementById('availPts').innerText = lpData.balance.toFixed(0);
+            document.getElementById('grandTotal').innerText = simData.grandTotal.toFixed(2);
+            
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            // Live update hint
+            document.getElementById('pointsInput').addEventListener('input', (e) => {
+                const pts = parseFloat(e.target.value || 0);
+                document.getElementById('conversionHint').innerText = `Estimated Value: ${(pts * CONVERSION_RATE).toFixed(2)}`;
+            });
+        }
+
+        async function apply() {
+            const token = await getCookie("auth-token");
+            const points = parseInt(document.getElementById('pointsInput').value);
+            const avail = parseInt(document.getElementById('availPts').innerText);
+
+            if (points <= 0) { alert("Invalid points."); return; }
+            if (points > avail) { alert("Insufficient points."); return; }
+
+            const newPayment = {
+                Type: "LP",
+                PointsRedeem: points,
+                Amount: points * CONVERSION_RATE // Client estimate
+            };
+
+            // Save to flow
+            const dataList = await getFlowKeyRaw("payments");
+            let list = JSON.parse(dataList || "[]");
+            list.push(newPayment);
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+
+            window.location.href = `/Pages/Sales/ReviewBatches?flowId=${flowId}`;
+        }
+
+        async function getFlowKey(key) {
+            const val = await getFlowKeyRaw(key);
+            return val ? JSON.parse(val).value : null;
+        }
+        async function getFlowKeyRaw(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            if (!res.ok) return null;
+            return await res.text();
+        }
+
+        init();
+    </script>
+</body>
+</html>

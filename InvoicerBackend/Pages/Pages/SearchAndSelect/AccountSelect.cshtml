@@ -1,9 +1,21 @@
 ﻿@page "/Pages/SearchAndSelect/AccountSelect"
 
 @*
+  ====================================================================
   FLOW: Generic Selector (Account)
-  SETS: selectedAccountNo, selectedAccountName
-  READS: flowId, redirTo (query param)
+  ====================================================================
+  PURPOSE:
+  Allows user to search and select a GL Account. Used for Journal Entries, 
+  Payment Methods, etc.
+
+  FLOW VARIABLES:
+  - SETS: selectedAccountNo (long), selectedAccountName (string)
+  - READS: flowId, redirTo (Query String)
+
+  REDIRECTION:
+  - On selection or 'Proceed', redirects to URL provided in 'redirTo'.
+  - 'redirTo' must be URL encoded if it contains parameters.
+  ====================================================================
 *@
 
 @functions { }
@@ -14,30 +26,6 @@
     <title>Select Account</title>
     <link rel="stylesheet" href="/Pages/static/u.css">
     <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-
-        .card {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-            .card:hover {
-                background: #f0f0f0;
-            }
-
         .current-bar {
             background: #e3f2fd;
             padding: 10px;
@@ -48,42 +36,43 @@
             justify-content: space-between;
             align-items: center;
         }
-
-            .current-bar button {
-                padding: 5px 10px;
-                cursor: pointer;
-                background: #1976d2;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
     </style>
 </head>
 <body>
-    <h2>Select Account</h2>
+    <div class="container">
+        <h2>Select Account</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
 
-    <!-- Current Selection Bar -->
-    <div id="currentBar" style="display:none;" class="current-bar">
-        <div>
-            <strong>Current:</strong> <span id="currentName"></span> (<span id="currentId"></span>)
+        <!-- Current Selection Bar -->
+        <div id="currentBar" style="display:none;" class="current-bar">
+            <div>
+                <strong>Current:</strong> <span id="currentName"></span> (<span id="currentId"></span>)
+            </div>
+            <button class="btn btn-primary" onclick="proceedWithCurrent()">Proceed</button>
         </div>
-        <button onclick="proceedWithCurrent()">Proceed</button>
-    </div>
 
-    <input type="text" id="query" placeholder="Search Account Name or No..." oninput="search()">
-    <div id="results">Start typing to search...</div>
+        <div class="form-group">
+            <input type="text" id="query" class="form-control" placeholder="Search Account Name or No..." oninput="search()">
+        </div>
+
+        <div id="results" class="result-box">Start typing to search...</div>
+    </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "SearchAccountsWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        // The URL to redirect to AFTER selection
         const redirTo = params.get('redirTo');
 
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
-
         async function init() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
+
+            if (!flowId) {
+                document.getElementById('results').innerHTML = "<p class='warning'>Error: FlowId missing.</p>";
+                return;
+            }
 
             // Check if already set
             const resId = await fetch('/GetFlowData', {
@@ -92,7 +81,7 @@
             });
             const dataId = await resId.json();
 
-            if(dataId.value) {
+            if (dataId.value) {
                 const resName = await fetch('/GetFlowData', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountName" })
@@ -106,34 +95,46 @@
         }
 
         async function search() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const q = document.getElementById('query').value;
 
-            const res = await fetch('/SearchAccountsWeb', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Query: q })
-            });
-
-            const data = await res.json();
-            const resultsDiv = document.getElementById('results');
-
-            if (!data || data.length === 0) {
-                resultsDiv.innerHTML = "<p>No accounts found.</p>";
+            if (!q) {
+                document.getElementById('results').innerHTML = "Start typing to search...";
                 return;
             }
 
-            let html = "";
-            data.forEach(a => {
-                html += s`<div class="card" onclick="select(${a.accountNo}, '${a.accountName.replace(/'/g, "\\'")}')">
-                    <strong>${a.accountName}</strong> (ID: ${a.accountNo})<br>
-                    <small>Type: ${a.accountType} | Bal: ${a.balance || 0}</small>
-                </div>`;
-            });
-            resultsDiv.innerHTML = html;
+            try {
+                const res = await fetch('/SearchAccountsWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: q })
+                });
+
+                if (!res.ok) throw new Error("Search failed");
+                const data = await res.json();
+                const resultsDiv = document.getElementById('results');
+
+                if (!data || data.length === 0) {
+                    resultsDiv.innerHTML = "<p>No accounts found.</p>";
+                    return;
+                }
+
+                let html = "";
+                data.forEach(a => {
+                    // Using he() for safety inside onclick string generation
+                    const safeName = he(a.accountName);
+                    html += s`<div class="card" onclick="select(${a.accountNo}, '${safeName}')">
+                        <strong>${a.accountName}</strong> (ID: ${a.accountNo})<br>
+                        <small>Type: ${a.accountType}</small>
+                    </div>`;
+                });
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                document.getElementById('results').innerHTML = s`<p class="warning">Error: ${err.message}</p>`;
+            }
         }
 
         async function select(id, name) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -153,11 +154,9 @@
 
         function proceed() {
             if (redirTo) {
-                // redirTo already contains flowId in this specific usage, but we check just in case
-                // usually redirTo = "/Path/Page?flowId=..."
                 window.location.href = redirTo;
             } else {
-                alert("No redirect target specified.");
+                alert("Error: No redirect target specified.");
             }
         }
 

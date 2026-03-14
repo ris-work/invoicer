@@ -1,0 +1,180 @@
+﻿@page "/Pages/Sales/SelectPaymentMethod"
+@functions { }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Payment Method</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .method-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .method-card {
+            border: 2px solid #eee;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .method-card:hover {
+                border-color: #007bff;
+                background: #f8f9fa;
+            }
+
+        .method-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Select Payment Method</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="status">Loading options...</div>
+        <div id="content" style="display:none;">
+            <div class="method-grid">
+                <div class="method-card" onclick="selectMethod('CASH')">
+                    <span class="method-icon">💵</span>
+                    <strong>Cash</strong>
+                    <p id="cashName" style="font-size:0.8em; color:#666;"></p>
+                </div>
+                <div class="method-card" onclick="selectMethod('BANK')">
+                    <span class="method-icon">💳</span>
+                    <strong>Card / Bank</strong>
+                    <p id="bankName" style="font-size:0.8em; color:#666;"></p>
+                </div>
+                <div class="method-card" onclick="selectMethod('LP')">
+                    <span class="method-icon">⭐</span>
+                    <strong>Loyalty Points</strong>
+                    <p style="font-size:0.8em; color:#666;">Redeem points</p>
+                </div>
+                <div class="method-card" onclick="selectMethod('ACCOUNT')">
+                    <span class="method-icon">📄</span>
+                    <strong>On Account</strong>
+                    <p style="font-size:0.8em; color:#666;">Credit Sale</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const requiredEndpoints = ["GetTerminalAccounts", "GetFlowData", "SetFlowData"];
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+
+        // CHECK FOR FINALIZE FLAG (Return from AccountSelect)
+        const finalize = params.get('finalize');
+
+        let terminalAccounts = {};
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
+
+            // LOGIC: If we are returning from AccountSelect to finalize an "On Account" payment
+            if (finalize === 'ACCOUNT') {
+                await handleFinalizeAccount(token);
+                return; // Stop here, we will redirect
+            }
+
+            // Normal Load
+            const res = await fetch('/GetTerminalAccounts', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            if (!res.ok) { document.getElementById('status').innerText = "Error loading terminal config."; return; }
+
+            terminalAccounts = await res.json();
+
+            document.getElementById('cashName').innerText = terminalAccounts.cashAccountName;
+            document.getElementById('bankName').innerText = terminalAccounts.bankAccountName;
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        async function handleFinalizeAccount(token) {
+            // 1. Get the selected account
+            const resAcc = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+            });
+            const dataAcc = await resAcc.json();
+
+            const resName = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountName" })
+            });
+            const dataName = await resName.json();
+
+            if (!dataAcc.value) {
+                alert("Account selection failed.");
+                window.location.href = `/Pages/Sales/ReviewBatches?flowId=${flowId}`;
+                return;
+            }
+
+            // 2. Construct Payment Object
+            const newPayment = {
+                Type: "ACCOUNT",
+                AccountNo: parseInt(dataAcc.value),
+                AccountName: dataName.value,
+                Amount: 0 // Amount is determined by invoice total
+            };
+
+            // 3. Save to flow
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            list.push(newPayment);
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+
+            // 4. Redirect to Review
+            window.location.href = `/Pages/Sales/ReviewBatches?flowId=${flowId}`;
+        }
+
+                async function selectMethod(type) {
+            const token = await getCookie("auth-token");
+
+            if (type === 'CASH') {
+                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.cashAccountNo}&type=CASH`;
+                window.location.href = redir;
+            }
+            else if (type === 'BANK') {
+                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.bankAccountNo}&type=BANK`;
+                window.location.href = redir;
+            }
+            else if (type === 'LP') {
+                window.location.href = `/Pages/Sales/RedeemLoyaltyPoints?flowId=${flowId}`;
+            }
+            else if (type === 'ACCOUNT') {
+                // CRITICAL: We want to go to AccountSelect, then come back here to EnterPaymentAmount
+                // with type=ACCOUNT explicitly set.
+                const callbackUrl = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`;
+                const encodedCallback = encodeURIComponent(callbackUrl);
+
+                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${encodedCallback}`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

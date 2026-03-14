@@ -71,6 +71,26 @@
             color: #666;
             font-size: 0.9em;
         }
+
+        /* Payment Badges */
+        .badge-check {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .badge-lp {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-account {
+            background: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -83,10 +103,9 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function run() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const contentDiv = document.getElementById('content');
 
             // 1. Load Order Data
@@ -143,7 +162,9 @@
                 html += `<p style="color: #28a745; font-weight: bold;">Order Ready for Execution</p>`;
             }
 
-            // Items
+            // ==============================================
+            // ITEMS RENDER
+            // ==============================================
             result.items.forEach((item, index) => {
                 const statusClass = item.success ? "status-ok" : "status-fail";
                 const statusText = item.success ? "OK" : "FAILED";
@@ -202,8 +223,9 @@
                 html += `</tbody></table></details></div></div>`;
             });
 
-            // Payments
-                        // Payments
+            // ==============================================
+            // PAYMENTS RENDER
+            // ==============================================
             html += `<h3>Payments</h3><div class="item-card"><div style="padding:10px;">`;
 
             const payments = result.paymentResults || [];
@@ -211,22 +233,19 @@
             if (payments.length > 0) {
                 html += `<table><thead><tr><th>Type</th><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
                 payments.forEach((p, i) => {
+                    let badgeClass = "badge-check";
+                    if (p.type === 'LP') badgeClass = "badge-lp";
+                    if (p.type === 'ACCOUNT') badgeClass = "badge-account";
 
-                    let typeDisplay = s`<span class="badge-check">${p.type || 'CASH'}</span>`;
-                    let details = "";
+                    // Safe HTML construction
+                    const typeBadge = `<span class="${badgeClass}">${he(p.type || 'CASH')}</span>`;
+                    const details = p.type === 'LP'
+                        ? `<br><small style="color:#666">${he(p.pointsRedeemed)} Points Redeemed</small>`
+                        : '';
 
-                    // Special Rendering for LP
-                    if (p.type === 'LP') {
-                        details = s`<br><small style="color:#666">${p.pointsRedeemed.toFixed(0)} Points</small>`;
-                    }
-                    // Special Rendering for Account
-                    else if (p.type === 'ACCOUNT') {
-                        details = s`<br><small style="color:#dc3545">Credit Sale</small>`;
-                    }
-
-                    html += s`<tr>
-                        <td>${typeDisplay}</td>
-                        <td>${p.accountName} ${details}</td>
+                    html += `<tr>
+                        <td>${typeBadge}</td>
+                        <td>${he(p.accountName)} ${details}</td>
                         <td>${p.amountTendered.toFixed(2)}</td>
                         <td>${p.lpEarned.toFixed(2)}</td>
                         <td><span class="remove-btn" onclick="removePayment(${i})">✕</span></td>
@@ -240,9 +259,9 @@
             html += `<button class="btn btn-primary" onclick="addPayment()">Add Payment</button>`;
             html += `</div></div>`;
 
-
-
-            // Totals
+            // ==============================================
+            // TOTALS RENDER
+            // ==============================================
             let grandTotal = result.grandTotal || 0;
             const totalPaid = result.totalPaid || 0;
             const balance = (result.balance !== undefined) ? result.balance : (totalPaid - grandTotal);
@@ -253,7 +272,7 @@
                 <p><strong>Paid:</strong> ${totalPaid.toFixed(2)}</p>
                 <p style="color:${balance < 0 ? 'red' : 'green'}"><strong>Balance:</strong> ${balance.toFixed(2)}</p>
                 <hr>
-                <p><strong>Total LP:</strong> ${lpFinal.toFixed(2)}</p>
+                <p><strong>Total LP Earned:</strong> ${lpFinal.toFixed(2)}</p>
             </div>`;
 
             // Actions
@@ -269,7 +288,7 @@
 
         async function removeItem(index) {
             if (!confirm("Remove this item from the order?")) return;
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
             const dataList = await getFlowKeyRaw("orderItems");
             let list = JSON.parse(dataList || "[]");
@@ -284,7 +303,7 @@
 
         async function removePayment(index) {
             if (!confirm("Remove payment?")) return;
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
             const dataList = await getFlowKeyRaw("payments");
             let list = JSON.parse(dataList || "[]");
@@ -298,14 +317,11 @@
         }
 
         async function addPayment() {
-            const token = getCookie("auth-token");
-            //const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
-            // Redirect to the new Method Selector
             window.location.href = '/Pages/Sales/SelectPaymentMethod?flowId=' + flowId;
         }
 
         async function saveDraft() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
             const payload = {
                 PiiId: parseInt(await getFlowKey("selectedPiiId")),
@@ -335,7 +351,7 @@
         }
 
         async function pay() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const btn = event.target;
             btn.disabled = true; btn.innerText = "Processing...";
 
@@ -399,7 +415,7 @@
         }
 
         async function getFlowKeyRaw(key) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: key })

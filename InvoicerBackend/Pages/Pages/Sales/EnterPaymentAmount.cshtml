@@ -1,5 +1,4 @@
 ﻿@page "/Pages/Sales/EnterPaymentAmount"
-
 @functions { }
 
 <!DOCTYPE html>
@@ -11,79 +10,118 @@
 <body>
     <div class="container">
         <h2>Enter Payment Amount</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
         <div id="status">Loading...</div>
-        <div id="content" style="display:none;">
-            <p>Account: <strong id="accName"></strong></p>
+
+        <div id="form" style="display:none;">
+            <div class="summary">
+                <p><strong>Account:</strong> <span id="dispDebitName">N/A</span> (<span id="dispDebitNo">0</span>)</p>
+                <p><strong>Type:</strong> <span id="dispType">CASH</span></p>
+            </div>
+
             <div class="form-group">
                 <label>Amount</label>
-                <input type="number" id="amount" step="0.01" class="form-control">
+                <input type="number" id="amount" step="0.01" class="form-control" placeholder="0.00">
             </div>
-            <button class="btn btn-success" onclick="save()">Add Payment</button>
+
+            <button class="btn btn-success" onclick="save()">Confirm Payment</button>
         </div>
     </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "SearchAccountsWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+        const accNoQS = params.get('accNo');
+        // IMPORTANT: Default to 'CASH' only if missing.
+        // For ACCOUNT flow, this URL MUST have type=ACCOUNT (set by SelectPaymentMethod)
+        const typeQS = params.get('type') || 'CASH';
 
-                async function init() {
+        async function init() {
             await checkPagePermissions(requiredEndpoints);
+
             const token = await getCookie("auth-token");
+            if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
 
-            // Check QueryString for Pre-fill (from SelectPaymentMethod)
-            const qsAccNo = params.get('accNo');
-            const qsType = params.get('type') || 'CASH';
+            // 1. Determine Account Number
+            // Priority: URL Query String > Flow Data (from AccountSelect)
+            let targetAccNo = accNoQS;
 
-            if (qsAccNo) {
-                // Direct Mode (Cash/Bank selected)
-                document.getElementById('dispDebitNo').textContent = qsAccNo;
-
-                // Fetch Name for display
-                const resSearch = await fetch('/SearchAccountsWeb', {
+            if (!targetAccNo) {
+                // Check if we are returning from AccountSelect
+                const resFlow = await fetch('/GetFlowData', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Query: qsAccNo })
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
                 });
-                const list = await resSearch.json();
-                const acc = list.find(a => a.accountNo == qsAccNo);
+                const dataFlow = await resFlow.json();
+                if (dataFlow.value) targetAccNo = dataFlow.value;
+            }
 
-                document.getElementById('dispDebitName').textContent = acc ? acc.accountName : "Account";
+            // 2. Update UI
+            const dispNo = document.getElementById('dispDebitNo');
+            const dispName = document.getElementById('dispDebitName');
+            const dispType = document.getElementById('dispType');
+
+            if (targetAccNo) {
+                if(dispNo) dispNo.textContent = targetAccNo;
+                if(dispType) dispType.textContent = typeQS; // Show ACCOUNT or CASH
+
+                // Fetch Name
+                try {
+                    const resSearch = await fetch('/SearchAccountsWeb', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Query: targetAccNo })
+                    });
+                    const list = await resSearch.json();
+                    const acc = list.find(a => a.accountNo == targetAccNo);
+
+                    if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
+                } catch (e) {
+                    console.error(e);
+                    if(dispName) dispName.textContent = "Error Loading Name";
+                }
 
                 document.getElementById('status').style.display = 'none';
                 document.getElementById('form').style.display = 'block';
             } else {
-                // Fallback: Manual Selection Flow (Old Logic)
-                // ... (Keep existing manual flow logic here if needed)
-                document.getElementById('status').innerText = "No account specified.";
+                document.getElementById('status').innerText = "Error: No account found in URL or Flow.";
             }
         }
 
-                async function save() {
+        async function save() {
             const token = await getCookie("auth-token");
             const amount = parseFloat(document.getElementById('amount').value);
-            if(!amount || amount <= 0) { alert("Invalid amount"); return; }
+            if (!amount || amount <= 0) { alert("Invalid amount"); return; }
 
-            const accNo = parseInt(document.getElementById('dispDebitNo').textContent);
-            const type = params.get('type') || 'CASH'; // Get type from URL
+            // We read from the spans to ensure we have what's displayed
+            const accNo = document.getElementById('dispDebitNo').textContent;
 
             const newPayment = {
-                AccountNo: accNo,
+                AccountNo: parseInt(accNo),
                 Amount: amount,
-                Type: type
+                Type: typeQS
             };
 
-            // Save to flow
-            const dataList = await getFlowKeyRaw("payments");
-            let list = JSON.parse(dataList || "[]");
-            list.push(newPayment);
+            try {
+                const resList = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "payments" })
+                });
+                const dataList = await resList.json();
+                let list = JSON.parse(dataList.value || "[]");
 
-            await fetch('/SetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
-            });
+                list.push(newPayment);
 
-            window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+                await fetch('/SetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+                });
+
+                window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            } catch (err) {
+                alert("Error saving payment: " + err.message);
+            }
         }
 
         init();
