@@ -72,6 +72,7 @@
                 border-radius: 3px;
             }
     </style>
+    <script src="/Pages/static/u.js"></script>
 </head>
 <body>
     <h2>Select an Item</h2>
@@ -172,9 +173,10 @@
                 if (!searchRes.ok) return;
                 const items = await searchRes.json();
 
-                resultsDiv.innerHTML = items.map(i => `
+                resultsDiv.innerHTML = items.map(i => s`
                     <div class="result-card" onclick="select(${i.itemcode}, '${(i.description || 'No Desc').replace(/'/g, "\\'")}')">
-                        <strong>${i.itemcode}</strong>: ${i.description || 'No Desc'}
+                        <strong>${i.itemcode}</strong>: ${i.description || 'No Desc'}<strong style='float: right'>${i.lowestAvailablePrice != null ? i.lowestAvailablePrice.toFixed(2): 'NO VALID STOCK'}</strong><br />
+                        <strong>Available: ${i.validStockQuantity}</strong>
                     </div>
                 `).join('');
 

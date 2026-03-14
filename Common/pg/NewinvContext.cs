@@ -39,6 +39,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<Catalogue> Catalogues { get; set; }
 
+    public virtual DbSet<CatalogueInventoryView> CatalogueInventoryViews { get; set; }
+
     public virtual DbSet<CategoriesBitmask> CategoriesBitmasks { get; set; }
 
     public virtual DbSet<ChequeBook> ChequeBooks { get; set; }
@@ -494,6 +496,52 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.VatDependsOnUser)
                 .HasDefaultValue(false)
                 .HasColumnName("vat_depends_on_user");
+            entity.Property(e => e.WeightPerUnitKg).HasColumnName("weight_per_unit_kg");
+            entity.Property(e => e.WidthM).HasColumnName("width_m");
+        });
+
+        modelBuilder.Entity<CatalogueInventoryView>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("catalogue_inventory_view");
+
+            entity.Property(e => e.Active).HasColumnName("active");
+            entity.Property(e => e.ActiveWeb).HasColumnName("active_web");
+            entity.Property(e => e.AllowPriceSuggestions).HasColumnName("allow_price_suggestions");
+            entity.Property(e => e.CategoriesBitmask).HasColumnName("categories_bitmask");
+            entity.Property(e => e.CreatedOn).HasColumnName("created_on");
+            entity.Property(e => e.DefaultVatCategory).HasColumnName("default_vat_category");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DescriptionPos).HasColumnName("description_pos");
+            entity.Property(e => e.DescriptionWeb).HasColumnName("description_web");
+            entity.Property(e => e.DescriptionsOtherLanguages).HasColumnName("descriptions_other_languages");
+            entity.Property(e => e.DiscountMethodIsMaximum).HasColumnName("discount_method_is_maximum");
+            entity.Property(e => e.EnforceAboveCost).HasColumnName("enforce_above_cost");
+            entity.Property(e => e.ExpiryTrackingEnabled).HasColumnName("expiry_tracking_enabled");
+            entity.Property(e => e.ExtraStructured).HasColumnName("extra_structured");
+            entity.Property(e => e.HeightM).HasColumnName("height_m");
+            entity.Property(e => e.IsLossLeader).HasColumnName("is_loss_leader");
+            entity.Property(e => e.Itemcode).HasColumnName("itemcode");
+            entity.Property(e => e.LengthM).HasColumnName("length_m");
+            entity.Property(e => e.LowestAvailablePrice).HasColumnName("lowest_available_price");
+            entity.Property(e => e.MaxPerInvoice).HasColumnName("max_per_invoice");
+            entity.Property(e => e.MaxPerPerson).HasColumnName("max_per_person");
+            entity.Property(e => e.MinPerInvoice).HasColumnName("min_per_invoice");
+            entity.Property(e => e.PerInvoiceQuotaEnabled).HasColumnName("per_invoice_quota_enabled");
+            entity.Property(e => e.PermissionsCategory).HasColumnName("permissions_category");
+            entity.Property(e => e.PriceManual).HasColumnName("price_manual");
+            entity.Property(e => e.ProcessDiscounts).HasColumnName("process_discounts");
+            entity.Property(e => e.QuotaPerInvoice).HasColumnName("quota_per_invoice");
+            entity.Property(e => e.QuotaPerQuotaPeriod).HasColumnName("quota_per_quota_period");
+            entity.Property(e => e.RefDocId).HasColumnName("ref_doc_id");
+            entity.Property(e => e.RefLink).HasColumnName("ref_link");
+            entity.Property(e => e.Remarks).HasColumnName("remarks");
+            entity.Property(e => e.Tags).HasColumnName("tags");
+            entity.Property(e => e.TimeBasedQuotaEnabled).HasColumnName("time_based_quota_enabled");
+            entity.Property(e => e.ValidStockQuantity).HasColumnName("valid_stock_quantity");
+            entity.Property(e => e.VatCategoryAdjustable).HasColumnName("vat_category_adjustable");
+            entity.Property(e => e.VatDependsOnUser).HasColumnName("vat_depends_on_user");
             entity.Property(e => e.WeightPerUnitKg).HasColumnName("weight_per_unit_kg");
             entity.Property(e => e.WidthM).HasColumnName("width_m");
         });
@@ -1579,7 +1627,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("product_name");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.Remarks).HasColumnName("remarks");
+            entity.Property(e => e.Remarks)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("remarks");
             entity.Property(e => e.SalesHumanFriendly).HasColumnName("sales_human_friendly");
             entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
             entity.Property(e => e.TotalEffectiveSellingPrice).HasColumnName("total_effective_selling_price");

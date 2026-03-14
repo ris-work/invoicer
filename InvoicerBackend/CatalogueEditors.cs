@@ -108,14 +108,14 @@ namespace InvoicerBackend
             );
 
             // 3. Search Catalogue Web
-            app.AddAsyncEndpointWithBearerAuth<SearchRequest, List<Catalogue>>(
+            app.AddAsyncEndpointWithBearerAuth<SearchRequest, List<CatalogueInventoryView>>(
                 "SearchCatalogueWeb",
                 async (DataIn, LoginInfo) =>
                 {
                     var req = (SearchRequest)DataIn;
                     using (var ctx = new NewinvContext())
                     {
-                        var query = ctx.Catalogues.AsQueryable();
+                        var query = ctx.CatalogueInventoryViews.AsQueryable();
 
                         if (!string.IsNullOrWhiteSpace(req.Query))
                         {
@@ -202,6 +202,11 @@ namespace InvoicerBackend
     public class CatalogueGetRequest
     {
         public long ItemCode { get; set; }
+    }
+    public class SearchCatalogueResult
+    {
+        public long Itemcode { get; set; }
+        public string Description { get; set; }
     }
 }
 
