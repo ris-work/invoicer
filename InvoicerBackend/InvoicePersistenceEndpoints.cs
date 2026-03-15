@@ -80,24 +80,22 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // 4. Post Invoice (Strict Re-Validation + Commit)
+            // 4. Post Invoice (FULL LOGIC)
             app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
                 "PostInvoice",
                 async (ReqI, LoginInfo) =>
                 {
                     var Req = (PostInvoiceRequest)ReqI;
                     using var ctx = new NewinvContext();
-                    // Use Transaction for Atomicity
                     using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
                     try
                     {
-                        // 1. Deserialize Payload
+                        // 1. Deserialize & Validate
                         var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
                         if (invoiceData == null) throw new ArgumentException("Invalid payload.");
 
-                        // 2. RE-RUN VALIDATION (CRITICAL)
-                        // This ensures inventory, tax, and payments are valid RIGHT NOW.
+                        // Re-run full logic (Inventory, Pricing, Tax, Accounts)
                         var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
 
                         if (!result.Success)
@@ -105,8 +103,23 @@ namespace InvoicerBackend
                             return new PostInvoiceResponse { Success = false, Message = result.Message };
                         }
 
-                        // 3. DEDUCT REAL INVENTORY
-                        // We use the SelectedBatches from the result to perform actual DB deductions
+                        // 2. Discrepancy Check (Backend Validation)
+                        // We allow a tiny tolerance for floating point math.
+                        bool isSettled = result.Balance >= -0.01;
+                        double discrepancy = result.Balance;
+
+                        if (result.Balance < -0.01)
+                        {
+                            // TRANSACTION ROLLBACK IS HANDLED BY THE CATCH BLOCK OR EXPLICIT RETURN
+                            // We return a specific error so the UI stays on the payment screen.
+                            return new PostInvoiceResponse
+                            {
+                                Success = false,
+                                Message = $"Payment validation failed: Invoice is unpaid by {Math.Abs(result.Balance):F2}."
+                            };
+                        }
+
+                        // 3. Deduct Inventory
                         foreach (var item in result.Items)
                         {
                             foreach (var batch in item.SelectedBatches)
@@ -116,41 +129,45 @@ namespace InvoicerBackend
                                 if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}.");
 
                                 dbBatch.Units -= batch.Quantity;
+                                dbBatch.LastCountedAt = DateTime.UtcNow;
                             }
                         }
 
-                        if (result.LpProposedRedemptions.Any())
+                        // 4. Persist LP Redemptions
+                        if (result.LpProposedRedemptions != null)
                         {
                             foreach (var prop in result.LpProposedRedemptions)
                             {
-                                // Create the actual DB record
                                 ctx.LoyaltyPointsRedemptions.Add(new LoyaltyPointsRedemption
                                 {
                                     LoyalityPointsId = prop.BucketId,
                                     Amount = prop.Amount,
-                                    CustId = invoiceData.PiiId, // Resolve from context if needed
-                                    InvoiceId = 0, // Update with actual Invoice ID if generated
+                                    CustId = invoiceData.PiiId,
+                                    InvoiceId = 0, // Updated after Invoice Save
                                     RedeemedFor = "Invoice Payment",
                                     TimeIssued = DateTimeOffset.UtcNow
                                 });
                             }
                         }
 
-                        // 4. CREATE ISSUED INVOICE HEADER
+                        // 5. Create Invoice Header
                         var invoice = new IssuedInvoice
                         {
                             InvoiceTime = DateTime.UtcNow,
                             Customer = invoiceData.PiiId,
                             IssuedValue = result.GrandTotal,
-                            IsSettled = false, // Depends on Balance
+                            IsSettled = isSettled,
                             PaidValue = result.TotalPaid,
-                            // ... other fields
+                            SubTotal = result.GrandTotal - result.TotalTax,
+                            DiscountTotal = result.Items.Sum(i => i.SelectedBatches.Sum(b => b.UnitDiscount * b.Quantity)),
+                            TaxTotal = result.TotalTax,
+                            GrandTotal = result.GrandTotal,
                             IsPosted = true
                         };
                         ctx.IssuedInvoices.Add(invoice);
-                        await ctx.SaveChangesAsync(); // Get InvoiceId
+                        await ctx.SaveChangesAsync(); // Generates InvoiceId
 
-                        // 5. CREATE SALES RECORDS
+                        // 6. Create Sales Records
                         foreach (var item in result.Items)
                         {
                             foreach (var batch in item.SelectedBatches)
@@ -163,30 +180,32 @@ namespace InvoicerBackend
                                     Quantity = batch.Quantity,
                                     SellingPrice = batch.UnitPrice,
                                     Discount = batch.UnitDiscount,
-                                    // Map other fields...
-                                    VatAsCharged = batch.TaxAmount, // Approx mapping
-                                    EnteredAt = DateTime.UtcNow
+                                    VatAsCharged = batch.TaxAmount,
+                                    EnteredAt = DateTime.UtcNow,
+                                    VatCategory = 0, // TODO: Map from batch/item if needed
+                                    VatRatePercentage = batch.TaxRate,
+                                    TotalEffectiveSellingPrice = batch.Quantity * batch.UnitPrice
                                 };
                                 ctx.Sales.Add(sale);
                             }
                         }
                         await ctx.SaveChangesAsync();
 
-                        // 6. CREATE PAYMENT RECORDS (Receipts)
+                        // 7. Create Payment Records (Receipts)
                         foreach (var pay in result.PaymentResults)
                         {
                             var receipt = new Receipt
                             {
                                 InvoiceId = invoice.InvoiceId,
                                 AccountId = pay.AccountNo,
-                                Amount = pay.NetDeposit, // Actual cash received
+                                Amount = pay.NetDeposit,
                                 TimeReceived = DateTimeOffset.UtcNow
                             };
                             ctx.Receipts.Add(receipt);
                         }
                         await ctx.SaveChangesAsync();
 
-                        // 7. CREATE JOURNAL ENTRIES
+                        // 8. Create Journal Entries
                         foreach (var entry in result.AccountingEntries)
                         {
                             var je = new AccountsJournalEntry
@@ -196,19 +215,19 @@ namespace InvoicerBackend
                                 PrincipalId = (long)LoginInfo.UserId,
                                 PrincipalName = LoginInfo.Principal,
                                 Description = entry.Narrative,
-                                Ref = invoice.InvoiceId.ToString(), // Link to Invoice
+                                Ref = invoice.InvoiceId.ToString(),
                                 Amount = entry.Amount,
                                 DebitAccountNo = entry.DebitAccount,
+                                DebitAccountName = entry.DebitAccountName,
                                 CreditAccountNo = entry.CreditAccount,
-                                // ... Set DebitAccountName, etc from entry object
+                                CreditAccountName = entry.CreditAccountName,
+                                JournalNo = 2 // Sales Journal
                             };
-                            // Use helper: JournalEntries.AddJournalEntry(ctx, je);
-                            // For now, direct add:
                             ctx.AccountsJournalEntries.Add(je);
                         }
                         await ctx.SaveChangesAsync();
 
-                        // 8. MARK TEMP INVOICE AS POSTED
+                        // 9. Finalize
                         if (Req.TempId.HasValue)
                         {
                             var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
@@ -222,7 +241,18 @@ namespace InvoicerBackend
                         await ctx.SaveChangesAsync();
                         await tx.CommitAsync();
 
-                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                        return new PostInvoiceResponse
+                        {
+                            Success = true,
+                            Message = "Posted",
+                            InvoiceId = invoice.InvoiceId,
+                            AccountingEntries = result.AccountingEntries,
+                            GrandTotal = result.GrandTotal,
+                            TotalPaid = result.TotalPaid,
+                            Discrepancy = discrepancy,
+                            IsSettled = isSettled,
+                            LoyaltyPointsFinal = result.LoyaltyPointsFinal
+                        };
                     }
                     catch
                     {
@@ -241,5 +271,17 @@ namespace InvoicerBackend
     public class SaveDraftRequest { public string Payload { get; set; } }
     public class RestoreDraftResponse { public long TempId { get; set; } public string Payload { get; set; } }
     public class PostInvoiceRequest { public string Payload { get; set; } public long? TempId { get; set; } }
-    public class PostInvoiceResponse { public bool Success { get; set; } public string Message { get; set; } }
+    // UPDATED DTO
+    public class PostInvoiceResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public long InvoiceId { get; set; }
+        public List<JournalEntryResult> AccountingEntries { get; set; }
+        public double GrandTotal { get; set; }
+        public double TotalPaid { get; set; }
+        public double Discrepancy { get; set; } // NEW: The balance (negative = unpaid)
+        public bool IsSettled { get; set; }     // NEW: True if paid in full
+        public double LoyaltyPointsFinal { get; set; }
+    }
 }

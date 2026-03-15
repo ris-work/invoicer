@@ -91,6 +91,56 @@
             background: #6c757d;
             color: white;
         }
+
+        /* BADGES FOR DISCREPANCY */
+        .discrepancy-badge {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .badge-unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-overpaid {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .badge-settled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* RESULT BOXES */
+        .result-warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .result-error-box {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .result-success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +409,14 @@
             }
         }
 
+                // Safe Number Formatter (Fixes toFixed errors)
+        function fmtNum(val, decimals = 2) {
+            if (val === null || val === undefined || isNaN(val)) return "0.00";
+            return Number(val).toFixed(decimals);
+        }
+
+
+
         async function pay() {
             const token = await getCookie("auth-token");
             const btn = event.target;
@@ -366,7 +424,6 @@
 
             try {
                 const tempId = await getFlowKey("tempInvoiceId");
-
                 const payload = {
                     PiiId: parseInt(await getFlowKey("selectedPiiId")),
                     Items: JSON.parse(await getFlowKey("orderItems")),
@@ -381,38 +438,69 @@
                 if (!res.ok) throw new Error(await res.text());
                 const result = await res.json();
 
+                // CRITICAL: If Success is false (Validation Error OR Unpaid), DO NOT change screen.
                 if (!result.success) {
-                    alert("Validation Failed.");
+                    alert("Error: " + result.message); // Show exact error from backend (e.g. "Unpaid by...")
                     btn.disabled = false; btn.innerText = "PAY (Post)";
-                    run(); // Refresh to see errors
                     return;
                 }
 
-                alert("SUCCESS! Invoice Posted.");
+                // ONLY show success screen if truly successful
                 showAccountingResult(result);
 
             } catch (err) {
-                alert("Error: " + err.message);
+                alert("Network Error: " + err.message);
                 btn.disabled = false; btn.innerText = "PAY (Post)";
             }
         }
 
         function showAccountingResult(result) {
             const contentDiv = document.getElementById('content');
-            let html = `<h2>Transaction Complete</h2>`;
-            html += s`<p>LP Earned: ${result.loyaltyPointsFinal.toFixed(2)}</p>`;
-            html += `<h3>Accounting Entries</h3>`;
-            html += `<table class="card"><thead><tr><th>Dr</th><th>Cr</th><th>Amount</th><th>Narrative</th></tr></thead><tbody>`;
 
-            (result.accountingEntries || []).forEach(e => {
-                html += s`<tr>
-                    <td>${e.debitAccountName} (${e.debitAccount})</td>
-                    <td>${e.creditAccountName} (${e.creditAccount})</td>
-                    <td>${e.amount.toFixed(2)}</td>
-                    <td>${e.narrative}</td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
+            // SAFE NUMBER FORMATTING
+            const fmtNum = (val) => (val === null || val === undefined || isNaN(val)) ? "0.00" : Number(val).toFixed(2);
+
+            // 1. RENDER HEADER (Using standard concatenation so our HTML tags render correctly)
+            // We only use he() or s`` for dynamic data inside the tags.
+
+            let html = "";
+            html += '<div class="result-success-box">'; // We know it's success if we reached here
+            html += '<h2>✅ Transaction Complete</h2>';
+            html += '<p>Invoice ID: <strong>' + he(result.invoiceId) + '</strong></p>';
+            html += '<p>Grand Total: ' + fmtNum(result.grandTotal) + ' | Paid: ' + fmtNum(result.totalPaid) + '</p>';
+            html += '<p>LP Earned: <strong>' + fmtNum(result.loyaltyPointsFinal) + '</strong></p>';
+            html += '</div>';
+
+            // 2. RENDER ACCOUNTING ENTRIES
+            html += '<h3>Accounting Entries</h3>';
+            const entries = result.accountingEntries || [];
+
+            if (entries.length === 0) {
+                html += '<p class="warning">NO ACCOUNTING ENTRIES GENERATED. (OMISSION DETECTED)</p>';
+            } else {
+                html += '<table class="card" style="width:100%;"><thead><tr><th>Debit</th><th>Credit</th><th>Amount</th><th>Narrative</th></tr></thead><tbody>';
+
+                entries.forEach(e => {
+                    // Use he() for dynamic data inside the manually constructed HTML strings
+                    const dName = he(e.debitAccountName || "UNKNOWN");
+                    const dNo = he(e.debitAccount || "N/A");
+                    const cName = he(e.creditAccountName || "UNKNOWN");
+                    const cNo = he(e.creditAccount || "N/A");
+                    const amt = fmtNum(e.amount);
+                    const narr = he(e.narrative || "N/A");
+
+                    html += `<tr>
+                        <td>${dName}<br><small style="color:#666">${dNo}</small></td>
+                        <td>${cName}<br><small style="color:#666">${cNo}</small></td>
+                        <td style="text-align:right;">${amt}</td>
+                        <td>${narr}</td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+            }
+
+            html += '<div style="margin-top:20px;"><button class="btn btn-secondary" onclick="location.href=\'/Pages/Sales/BeginFlowSalesSimulation\'">New Sale</button></div>';
 
             contentDiv.innerHTML = html;
         }
