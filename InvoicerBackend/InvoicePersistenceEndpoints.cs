@@ -205,6 +205,36 @@ namespace InvoicerBackend
                         }
                         await ctx.SaveChangesAsync();
 
+                        foreach (var lpPayment in result.PaymentResults.Where(p => p.Type == "LP"))
+                        {
+                            // A. CHECK BALANCE (Fresh from DB)
+                            double currentBalance = LoyaltyPointsManager.GetTotalValidPoints(ctx, invoiceData.PiiId);
+
+                            if (currentBalance < lpPayment.PointsRedeemed)
+                            {
+                                throw new InvalidOperationException($"Insufficient Loyalty Points. " +
+                                    $"Requested: {lpPayment.PointsRedeemed}, Available: {currentBalance}");
+                            }
+
+                            // B. REDEEM (Generate Records)
+                            var redemptions = LoyaltyPointsManager.Redeem(
+                                ctx,
+                                lpPayment.PointsRedeemed,
+                                invoiceData.PiiId,
+                                invoice.InvoiceId,
+                                "Invoice Payment"
+                            );
+
+                            // C. APPLY TO CONTEXT
+                            ctx.LoyaltyPointsRedemptions.AddRange(redemptions);
+
+                            // D. SAVE IMMEDIATELY
+                            // This ensures the next iteration (or the Issuing step) sees the updated balance
+                            // reflected in the database.
+                            await ctx.SaveChangesAsync();
+                        }
+
+
                         // 8. Create Journal Entries
                         foreach (var entry in result.AccountingEntries)
                         {
