@@ -365,7 +365,7 @@ namespace InvoicerBackend
 
         
 
-        private static async Task<long> EnsureAccountExists(
+        public static async Task<long> EnsureAccountExists(
             NewinvContext ctx,
             string accountName,
             int accountType,

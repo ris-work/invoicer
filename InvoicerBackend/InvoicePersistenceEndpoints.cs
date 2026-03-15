@@ -277,6 +277,35 @@ namespace InvoicerBackend
                         }
 
                         await ctx.SaveChangesAsync();
+                        double lpValue = result.LoyaltyPointsFinal;
+
+                        // Resolve Accounts
+                        long accRevenue = await SalesSimulationEndpoints.EnsureAccountExists(ctx, "Sales Revenue", 4, "REV_SALES");
+                        long accLpLiability = await SalesSimulationEndpoints.EnsureAccountExists(ctx, "Loyalty Points Liability", 2, "PROV_CUR");
+
+                        var lpJournal = new AccountsJournalEntry
+                        {
+                            TimeAsEntered = DateTime.UtcNow,
+                            TimeTai = DateTime.UtcNow,
+                            Amount = lpValue,
+                            JournalNo = 2, // Sales Journal
+
+                            // DEBIT: Sales Revenue (Reduces recognized revenue)
+                            DebitAccountNo = accRevenue,
+                            DebitAccountType = 4,
+                            DebitAccountName = "Sales Revenue",
+
+                            // CREDIT: Loyalty Points Liability (Increases obligation)
+                            CreditAccountNo = accLpLiability,
+                            CreditAccountType = 2,
+                            CreditAccountName = "Loyalty Points Liability",
+
+                            Description = $"Loyalty Points Issued - Invoice #{invoice.InvoiceId}",
+                            Ref = invoice.InvoiceId.ToString(),
+                            PrincipalId = (long)LoginInfo.UserId,
+                            PrincipalName = LoginInfo.Principal
+                        };
+                        ctx.AccountsJournalEntries.Add(lpJournal);
 
                         // 9. Finalize
                         if (Req.TempId.HasValue)
