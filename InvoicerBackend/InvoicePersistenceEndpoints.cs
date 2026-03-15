@@ -248,13 +248,13 @@ namespace InvoicerBackend
                                     INSERT INTO inventory_movements 
                                     (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
                                      reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
-                                     volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled, action_type) 
+                                     volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
                                     VALUES 
                                     ({dbBatch.Itemcode}, {dbBatch.Batchcode}, {oldQty}, {newQty}, {newQty}, {DateTime.UtcNow}, 
                                      {DateTime.UtcNow}, {binCardRef}, 'Sale', {false}, {dbBatch.CostPrice}, {dbBatch.SellingPrice}, 
                                      {dbBatch.MarkedPrice}, {dbBatch.Suppliercode}, {dbBatch.VolumeDiscounts}, {dbBatch.UserDiscounts}, 
                                      {dbBatch.MeasurementUnit}, {dbBatch.PackedSize}, {dbBatch.MfgDate}, {dbBatch.ExpDate}, 
-                                     {dbBatch.BatchEnabled}, 'SALE')
+                                     {dbBatch.BatchEnabled})
                                 ");
                             }
                         }
