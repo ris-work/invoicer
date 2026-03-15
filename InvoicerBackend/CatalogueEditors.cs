@@ -161,7 +161,7 @@ namespace InvoicerBackend
                         }
 
                         return await query
-                            .OrderByDescending(c => c.CreatedOn)
+                            //.OrderByDescending(c => c.CreatedOn)
                             .Take(10)
                             .ToListAsync();
                     }
