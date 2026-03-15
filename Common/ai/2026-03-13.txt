@@ -195,6 +195,7 @@ public partial class Inventory
 }
 
 
+
 using System;
 using System.Collections.Generic;
 
@@ -274,6 +275,7 @@ public partial class Catalogue
 
     public long? RefDocId { get; set; }
 }
+
 
 
 using System;
@@ -416,9 +418,10 @@ public partial class AccountsInformation
 
 
 
+
 This is the thing. There we have the base rate. But now the problem is that LP is tied to the money's debit account. That means we cannot ascertain the LP beforehand unless the payment is done. So we'll use the cash's default one.
 
-Also write me the class for a Sale DTO.
+
 
 using System;
 using System.Collections.Generic;
@@ -427,73 +430,73 @@ namespace RV.InvNew.Common;
 
 public partial class Payment
 {
-public long Id { get; set; }
+    public long Id { get; set; }
 
+    public long? ScheduledPaymentId { get; set; }
 
-public long? ScheduledPaymentId { get; set; }
+    public long CompanyId { get; set; }
 
-public long CompanyId { get; set; }
+    public long? VendorId { get; set; }
 
-public long? VendorId { get; set; }
+    public long? InvoiceId { get; set; }
 
-public long? InvoiceId { get; set; }
+    public string PaymentReference { get; set; } = null!;
 
-public string PaymentReference { get; set; } = null!;
+    public string? Description { get; set; }
 
-public string? Description { get; set; }
+    public string Currency { get; set; } = null!;
 
-public string Currency { get; set; } = null!;
+    public double Amount { get; set; }
 
-public double Amount { get; set; }
+    public double ExchangeRate { get; set; }
 
-public double ExchangeRate { get; set; }
+    public long DebitAccountId { get; set; }
 
-public long DebitAccountId { get; set; }
+    public long CreditAccountId { get; set; }
 
-public long CreditAccountId { get; set; }
+    public long BankAccountId { get; set; }
 
-public long BankAccountId { get; set; }
+    public string? BeneficiaryName { get; set; }
 
-public string? BeneficiaryName { get; set; }
+    public string? BeneficiaryBankName { get; set; }
 
-public string? BeneficiaryBankName { get; set; }
+    public string? BeneficiaryBranch { get; set; }
 
-public string? BeneficiaryBranch { get; set; }
+    public string? BeneficiaryAccountNo { get; set; }
 
-public string? BeneficiaryAccountNo { get; set; }
+    public string? BeneficiaryRoutingNo { get; set; }
 
-public string? BeneficiaryRoutingNo { get; set; }
+    public string PaymentMethod { get; set; } = null!;
 
-public string PaymentMethod { get; set; } = null!;
+    public DateOnly PaymentDate { get; set; }
 
-public DateOnly PaymentDate { get; set; }
+    public string? ExternalPaymentId { get; set; }
 
-public string? ExternalPaymentId { get; set; }
+    public double? FeeAmount { get; set; }
 
-public double? FeeAmount { get; set; }
+    public double? NetAmount { get; set; }
 
-public double? NetAmount { get; set; }
+    public bool IsReconciled { get; set; }
 
-public bool IsReconciled { get; set; }
+    public bool IsExcluded { get; set; }
 
-public bool IsExcluded { get; set; }
+    public DateOnly? ReconciliationDate { get; set; }
 
-public DateOnly? ReconciliationDate { get; set; }
+    public string? ReconciliationRef { get; set; }
 
-public string? ReconciliationRef { get; set; }
+    public long CreatedBy { get; set; }
 
-public long CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-public DateTime CreatedAt { get; set; }
+    public long? UpdatedBy { get; set; }
 
-public long? UpdatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
-public DateTime? UpdatedAt { get; set; }
+    public long VersionNumber { get; set; }
 
-public long VersionNumber { get; set; }
-
-public bool AutoApply { get; set; }
+    public bool AutoApply { get; set; }
 }
+
 
 using System;
 using System.Collections.Generic;
@@ -502,113 +505,123 @@ namespace RV.InvNew.Common;
 
 public partial class Receipt
 {
-public long ReceiptId { get; set; }
+    public long ReceiptId { get; set; }
 
+    public long InvoiceId { get; set; }
 
-public long InvoiceId { get; set; }
+    public long AccountId { get; set; }
 
-public long AccountId { get; set; }
+    public double Amount { get; set; }
 
-public double Amount { get; set; }
+    public DateTimeOffset TimeReceived { get; set; }
 
-public DateTimeOffset TimeReceived { get; set; }
+    public string? ExtraData { get; set; }
 }
+
 
 using System;
 using System.Collections.Generic;
 
 namespace RV.InvNew.Common;
 
-///
-
-
+/// <summary>
+/// Issued invoices only
+/// </summary>
 public partial class IssuedInvoice
 {
-public long InvoiceId { get; set; }
+    public long InvoiceId { get; set; }
 
-public DateTime InvoiceTime { get; set; }
+    public DateTime InvoiceTime { get; set; }
 
-public long? Customer { get; set; }
+    public long? Customer { get; set; }
 
-public double IssuedValue { get; set; }
+    public double IssuedValue { get; set; }
 
-public bool IsSettled { get; set; }
+    public bool IsSettled { get; set; }
 
-public double PaidValue { get; set; }
+    public double PaidValue { get; set; }
 
-public string? InvoiceHumanFriendly { get; set; }
+    public string? InvoiceHumanFriendly { get; set; }
 
-public DateTimeOffset InvoiceTimePosted { get; set; }
+    public DateTimeOffset InvoiceTimePosted { get; set; }
 
-public bool IsPosted { get; set; }
+    public bool IsPosted { get; set; }
 
-public double SubTotal { get; set; }
+    public double SubTotal { get; set; }
 
-public double DiscountTotal { get; set; }
+    public double DiscountTotal { get; set; }
 
-public double EffectiveDiscountPercentage { get; set; }
+    public double EffectiveDiscountPercentage { get; set; }
 
-public double TaxTotal { get; set; }
+    public double TaxTotal { get; set; }
 
-public double GrandTotal { get; set; }
+    public double GrandTotal { get; set; }
 
-public long SalesPersonId { get; set; }
+    public long SalesPersonId { get; set; }
 
-public string? CurrencyCode { get; set; }
+    public string? CurrencyCode { get; set; }
 
-public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public string ExtraData { get; set; } = null!;
+
+    public long? RefDocId { get; set; }
 }
+
 
 using System;
 using System.Collections.Generic;
 
 namespace RV.InvNew.Common;
 
-///
-
-
+/// <summary>
+/// Sales data go here
+/// </summary>
 public partial class Sale
 {
-public long SaleId { get; set; }
+    public long SaleId { get; set; }
 
-public long InvoiceId { get; set; }
+    public long InvoiceId { get; set; }
 
-public DateTime EnteredAt { get; set; }
+    public DateTime EnteredAt { get; set; }
 
-public long Itemcode { get; set; }
+    public long Itemcode { get; set; }
 
-public long Batchcode { get; set; }
+    public long Batchcode { get; set; }
 
-public double Quantity { get; set; }
+    public double Quantity { get; set; }
 
-public double SellingPrice { get; set; }
+    public double SellingPrice { get; set; }
 
-public long VatCategory { get; set; }
+    public long VatCategory { get; set; }
 
-public double VatRatePercentage { get; set; }
+    public double VatRatePercentage { get; set; }
 
-public double DiscountRate { get; set; }
+    public double DiscountRate { get; set; }
 
-public double Discount { get; set; }
+    public double Discount { get; set; }
 
-public double VatAsCharged { get; set; }
+    public double VatAsCharged { get; set; }
 
-public double TotalEffectiveSellingPrice { get; set; }
+    public double TotalEffectiveSellingPrice { get; set; }
 
-public string Remarks { get; set; } = null!;
+    public string Remarks { get; set; } = null!;
 
-public DateTime? ClientRecordedTimeOpening { get; set; }
+    public DateTime? ClientRecordedTimeOpening { get; set; }
 
-public DateTime? ClientRecordedTimeClosing { get; set; }
+    public DateTime? ClientRecordedTimeClosing { get; set; }
 
-public string? SalesHumanFriendly { get; set; }
+    public string? SalesHumanFriendly { get; set; }
 
-public double LoyalityPointsPercentage { get; set; }
+    public double LoyalityPointsPercentage { get; set; }
 
-public double LoyalityPointsIssued { get; set; }
+    public double LoyalityPointsIssued { get; set; }
 
-public string ProductName { get; set; } = null!;
+    public string ProductName { get; set; } = null!;
+
+    public bool IsOneOff { get; set; }
 }
+
 
 These are the things. Let's go! I think you have all the info required to issue an invoice, have it stored and make a sale.
 
@@ -621,7 +634,6 @@ I'll create a new panel class that auto-refreshes journal entries and the corres
 
 First, let's add the backend endpoint for getting journal entries:
 
-```csharp
 app.AddEndpointWithBearerAuth<string>(
     "GetNJournalEntries",
     (AS, LoginInfo) =>
@@ -635,13 +647,11 @@ app.AddEndpointWithBearerAuth<string>(
     },
     "Refresh"
 );
-```
 
 ## AccountingLiveView Panel
 
 Now, let's create the auto-refreshing panel:
 
-```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -833,7 +843,6 @@ namespace EtoFE.Panels
         }
     }
 }
-```
 
 ## Key Features
 
@@ -5677,7 +5686,6 @@ public partial class TaxRate
 Sample Invoice Issuer:
 
 @page "/Pages/Sales/EnterPaymentAmount"
-
 @functions { }
 
 <!DOCTYPE html>
@@ -5689,77 +5697,196 @@ Sample Invoice Issuer:
 <body>
     <div class="container">
         <h2>Enter Payment Amount</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+        <div id="orderBalance" style="margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fff;">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="font-size: 1.2em;"><strong>Total:</strong> <span id="totalAmt">0.00</span></div>
+                <div style="font-size: 1.2em;">
+                    <strong>Remaining:</strong>
+                    <span id="remainingAmt" style="color: #d9534f; font-weight: bold;">0.00</span>
+                </div>
+            </div>
+            <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                Paid so far: <span id="paidAmt">0.00</span>
+            </div>
+        </div>
         <div id="status">Loading...</div>
-        <div id="content" style="display:none;">
-            <p>Account: <strong id="accName"></strong></p>
+
+        <div id="form" style="display:none;">
+            <div class="summary">
+                <p><strong>Account:</strong> <span id="dispDebitName">N/A</span> (<span id="dispDebitNo">0</span>)</p>
+                <p><strong>Type:</strong> <span id="dispType">CASH</span></p>
+            </div>
+
             <div class="form-group">
                 <label>Amount</label>
-                <input type="number" id="amount" step="0.01" class="form-control">
+                <input type="number" id="amount" step="0.01" class="form-control" placeholder="0.00">
             </div>
-            <button class="btn btn-success" onclick="save()">Add Payment</button>
+
+            <button class="btn btn-success" onclick="save()">Confirm Payment</button>
         </div>
     </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
+        const requiredEndpoints = ["GetFlowData", "SetFlowData", "SearchAccountsWeb"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
+
+        // We might get accNo from URL (Cash/Bank) or we might not (Account)
+        const accNoQS = params.get('accNo');
+        const typeQS = params.get('type') || 'CASH';
 
         async function init() {
-            const token = getCookie("auth-token");
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
+            if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
+            loadOrderSummary();
 
-            // Load Selected Account
-            const resAcc = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
-            });
-            const dataAcc = await resAcc.json();
+            let targetAccNo = accNoQS;
 
-            // Load Name (Hack: usually name is also saved in flow or we search)
-            // For now, let's assume we search it
-            const resSearch = await fetch('/SearchAccountsWeb', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Query: dataAcc.value })
-            });
-            const list = await resSearch.json();
-            const acc = list.find(a => a.accountNo == dataAcc.value);
+            // If not in URL, check Flow Data
+            if (targetAccNo === null || targetAccNo === undefined) {
+                const resFlow = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+                });
+                const dataFlow = await resFlow.json();
+                if (dataFlow && (dataFlow.value !== null && dataFlow.value !== undefined)) {
+                    targetAccNo = dataFlow.value;
+                }
+            }
 
-            document.getElementById('accName').innerText = acc ? acc.accountName : "Unknown";
+            // VALIDATION: Did we get a value at all?
+            if (targetAccNo === null || targetAccNo === undefined) {
+                 document.getElementById('status').innerHTML = "<span style='color:red'>Error: No Account ID provided.</span>";
+                 return;
+            }
+
+            // UI Update
+            const dispNo = document.getElementById('dispDebitNo');
+            const dispName = document.getElementById('dispDebitName');
+            const dispType = document.getElementById('dispType');
+
+            if(dispNo) dispNo.textContent = targetAccNo;
+            if(dispType) dispType.textContent = typeQS;
+
+            // Fetch Name
+            try {
+                const resSearch = await fetch('/SearchAccountsWeb', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Query: targetAccNo })
+                });
+                const list = await resSearch.json();
+                const acc = list.find(a => a.accountNo == targetAccNo);
+
+                // If acc is undefined here, DB didn't find it.
+                // We show "Unknown" in UI, but Backend will throw error on Save.
+                if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
+            } catch (e) {
+                if(dispName) dispName.textContent = "Error Loading Name";
+            }
+
             document.getElementById('status').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
+            document.getElementById('form').style.display = 'block';
         }
 
         async function save() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const amount = parseFloat(document.getElementById('amount').value);
-            if(!amount || amount <= 0) { alert("Invalid amount"); return; }
 
-            const resAcc = await fetch('/GetFlowData', {
+            // READ FROM UI (What You See Is What You Get)
+            const accNoStr = document.getElementById('dispDebitNo').textContent;
+            const accName = document.getElementById('dispDebitName').textContent;
+
+            const accNo = parseInt(accNoStr);
+
+            // Debug
+            console.log("Saving Payment:", { AccountNo: accNo, AccountName: accName, Type: typeQS, Amount: amount });
+
+            if (!amount || amount <= 0) { alert("Invalid amount"); return; }
+            if (!accNo || accNo === 0) { alert("Invalid Account ID (0). Did the account load correctly?"); return; }
+
+            const newPayment = {
+                AccountNo: accNo,
+                AccountName: accName, // PASS NAME EXPLICITLY
+                Amount: amount,
+                Type: typeQS
+            };
+
+            try {
+                const resList = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "payments" })
+                });
+                const dataList = await resList.json();
+                let list = JSON.parse(dataList.value || "[]");
+
+                list.push(newPayment);
+
+                await fetch('/SetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+                });
+
+                window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            } catch (err) {
+                alert("Error saving payment: " + err.message);
+            }
+        }
+                async function loadOrderSummary() {
+            const token = await getCookie("auth-token");
+            const piiId = await getFlowKey("selectedPiiId");
+            const items = JSON.parse(await getFlowKey("orderItems") || "[]");
+            const payments = JSON.parse(await getFlowKey("payments") || "[]");
+
+            if (!piiId || items.length === 0) {
+                const balanceDiv = document.getElementById('orderBalance');
+                if(balanceDiv) balanceDiv.innerHTML = "<em>Add items to see total.</em>";
+                return;
+            }
+
+            try {
+                const res = await fetch('/SimulateSaleWithPayments', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ PiiId: parseInt(piiId), Items: items, Payments: payments })
+                });
+                const data = await res.json();
+
+                const total = data.grandTotal || 0;
+                const paid = data.totalPaid || 0;
+                const remaining = total - paid;
+
+                // Update specific elements
+                const totalEl = document.getElementById('totalAmt');
+                const paidEl = document.getElementById('paidAmt');
+                const remainingEl = document.getElementById('remainingAmt');
+
+                if (totalEl) totalEl.innerText = total.toFixed(2);
+                if (paidEl) paidEl.innerText = paid.toFixed(2);
+
+                if (remainingEl) {
+                    remainingEl.innerText = remaining.toFixed(2);
+                    // Color: Red if balance > 0, Green if 0 or less
+                    remainingEl.style.color = remaining > 0 ? '#d9534f' : '#5cb85c';
+                }
+
+            } catch (e) {
+                console.error("Error loading balance", e);
+                const balanceDiv = document.getElementById('orderBalance');
+                if(balanceDiv) balanceDiv.innerHTML = "<span style='color:red'>Error loading totals</span>";
+            }
+        }
+
+        // Helper to get Flow Data directly
+        async function getFlowKey(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+                body: JSON.stringify({ FlowId: flowId, Key: key })
             });
-            const dataAcc = await resAcc.json();
-
-            // Load Current Payments
-            const resList = await fetch('/GetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments" })
-            });
-            const dataList = await resList.json();
-            let list = JSON.parse(dataList.value || "[]");
-
-            list.push({
-                AccountNo: parseInt(dataAcc.value),
-                Amount: amount
-            });
-
-            await fetch('/SetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
-            });
-
-            window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+            const data = await res.json();
+            return data.value;
         }
 
         init();
@@ -5873,6 +6000,7 @@ Sample Invoice Issuer:
 </body>
 </html>
 
+
 @page "/Pages/Sales/ReviewBatches"
 
 @*
@@ -5946,6 +6074,26 @@ Sample Invoice Issuer:
             color: #666;
             font-size: 0.9em;
         }
+
+        /* Payment Badges */
+        .badge-check {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .badge-lp {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-account {
+            background: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -5958,10 +6106,9 @@ Sample Invoice Issuer:
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        function getCookie(n) { const v = `; ${document.cookie}`; const p = v.split(`; ${n}=`); return p.length === 2 ? p.pop().split(';').shift() : null; }
 
         async function run() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const contentDiv = document.getElementById('content');
 
             // 1. Load Order Data
@@ -6018,7 +6165,9 @@ Sample Invoice Issuer:
                 html += `<p style="color: #28a745; font-weight: bold;">Order Ready for Execution</p>`;
             }
 
-            // Items
+            // ==============================================
+            // ITEMS RENDER
+            // ==============================================
             result.items.forEach((item, index) => {
                 const statusClass = item.success ? "status-ok" : "status-fail";
                 const statusText = item.success ? "OK" : "FAILED";
@@ -6077,16 +6226,29 @@ Sample Invoice Issuer:
                 html += `</tbody></table></details></div></div>`;
             });
 
-            // Payments
+            // ==============================================
+            // PAYMENTS RENDER
+            // ==============================================
             html += `<h3>Payments</h3><div class="item-card"><div style="padding:10px;">`;
 
             const payments = result.paymentResults || [];
 
             if (payments.length > 0) {
-                html += `<table><thead><tr><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
+                html += `<table><thead><tr><th>Type</th><th>Account</th><th>Amount</th><th>LP Earned</th><th></th></tr></thead><tbody>`;
                 payments.forEach((p, i) => {
-                    html += s`<tr>
-                        <td>${p.accountName}</td>
+                    let badgeClass = "badge-check";
+                    if (p.type === 'LP') badgeClass = "badge-lp";
+                    if (p.type === 'ACCOUNT') badgeClass = "badge-account";
+
+                    // Safe HTML construction
+                    const typeBadge = `<span class="${badgeClass}">${he(p.type || 'CASH')}</span>`;
+                    const details = p.type === 'LP'
+                        ? `<br><small style="color:#666">${he(p.pointsRedeemed)} Points Redeemed</small>`
+                        : '';
+
+                    html += `<tr>
+                        <td>${typeBadge}</td>
+                        <td>${he(p.accountName)} ${details}</td>
                         <td>${p.amountTendered.toFixed(2)}</td>
                         <td>${p.lpEarned.toFixed(2)}</td>
                         <td><span class="remove-btn" onclick="removePayment(${i})">✕</span></td>
@@ -6100,7 +6262,9 @@ Sample Invoice Issuer:
             html += `<button class="btn btn-primary" onclick="addPayment()">Add Payment</button>`;
             html += `</div></div>`;
 
-            // Totals
+            // ==============================================
+            // TOTALS RENDER
+            // ==============================================
             let grandTotal = result.grandTotal || 0;
             const totalPaid = result.totalPaid || 0;
             const balance = (result.balance !== undefined) ? result.balance : (totalPaid - grandTotal);
@@ -6111,7 +6275,7 @@ Sample Invoice Issuer:
                 <p><strong>Paid:</strong> ${totalPaid.toFixed(2)}</p>
                 <p style="color:${balance < 0 ? 'red' : 'green'}"><strong>Balance:</strong> ${balance.toFixed(2)}</p>
                 <hr>
-                <p><strong>Total LP:</strong> ${lpFinal.toFixed(2)}</p>
+                <p><strong>Total LP Earned:</strong> ${lpFinal.toFixed(2)}</p>
             </div>`;
 
             // Actions
@@ -6125,14 +6289,21 @@ Sample Invoice Issuer:
 
         // --- ACTIONS ---
 
-        async function removeItem(index) {
+                async function removeItem(index) {
             if (!confirm("Remove this item from the order?")) return;
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
-            const dataList = await getFlowKeyRaw("orderItems");
-            let list = JSON.parse(dataList || "[]");
+            // 1. Get Raw String
+            const rawData = await getFlowKeyRaw("orderItems");
+            const dataObj = JSON.parse(rawData);
+
+            // 2. Parse Inner Array
+            let list = JSON.parse(dataObj.value || "[]");
+
+            // 3. Splice
             list.splice(index, 1);
 
+            // 4. Save back
             await fetch('/SetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: "orderItems", Value: JSON.stringify(list) })
@@ -6142,10 +6313,12 @@ Sample Invoice Issuer:
 
         async function removePayment(index) {
             if (!confirm("Remove payment?")) return;
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
-            const dataList = await getFlowKeyRaw("payments");
-            let list = JSON.parse(dataList || "[]");
+            const rawData = await getFlowKeyRaw("payments");
+            const dataObj = JSON.parse(rawData);
+            let list = JSON.parse(dataObj.value || "[]");
+
             list.splice(index, 1);
 
             await fetch('/SetFlowData', {
@@ -6156,14 +6329,11 @@ Sample Invoice Issuer:
         }
 
         async function addPayment() {
-            const token = getCookie("auth-token");
-            const redirTo = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId;
-            // Flow: Select Account -> Enter Amount -> Return here
-            window.location.href = '/Pages/SearchAndSelect/AccountSelect?flowId=' + flowId + '&redirTo=' + encodeURIComponent(redirTo);
+            window.location.href = '/Pages/Sales/SelectPaymentMethod?flowId=' + flowId;
         }
 
         async function saveDraft() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
 
             const payload = {
                 PiiId: parseInt(await getFlowKey("selectedPiiId")),
@@ -6193,7 +6363,7 @@ Sample Invoice Issuer:
         }
 
         async function pay() {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const btn = event.target;
             btn.disabled = true; btn.innerText = "Processing...";
 
@@ -6257,7 +6427,7 @@ Sample Invoice Issuer:
         }
 
         async function getFlowKeyRaw(key) {
-            const token = getCookie("auth-token");
+            const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: key })
@@ -6840,43 +7010,79 @@ namespace InvoicerBackend
                 "Refresh"
             );
 
-            // 3. Post (Use Shared Service + Commit)
-            app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
-                "PostInvoice",
-                async (ReqI, LoginInfo) =>
+            
+            // Job: Expire Loyalty Points
+            app.AddAsyncEndpointWithBearerAuth<string, int>(
+                "ProcessExpiredLoyaltyPoints",
+                async (DataIn, LoginInfo) =>
                 {
-                    var Req = (PostInvoiceRequest)ReqI;
                     using var ctx = new NewinvContext();
-                    using var tx = await ctx.Database.BeginTransactionAsync();
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
                     try
                     {
-                        // 1. Deserialize
-                        var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
+                        // 1. Find expired buckets that still have remaining balance
+                        // Logic: Bucket is expired (ValidUntil < Now) AND (Amount - Sum(Redemptions)) > 0
 
-                        // 2. VALIDATE (RE-RUN)
-                        var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
+                        var now = DateTime.UtcNow;
 
-                        if (!result.Success)
+                        // Fetch candidates (simplified, might need raw SQL for performance on large datasets)
+                        var expiredBuckets = await ctx.LoyaltyPoints
+                            .Where(lp => lp.ValidUntil < now)
+                            .ToListAsync();
+
+                        int processedCount = 0;
+                        long accLpLiability = await EnsureAccountExists(ctx, "Loyalty Points Liability", 2, "PROV_CUR");
+                        long accBreakage = await EnsureAccountExists(ctx, "Breakage Income", 4, "REV_OTHER");
+
+                        foreach (var bucket in expiredBuckets)
                         {
-                            return new PostInvoiceResponse { Success = false, Message = result.Message };
-                        }
+                            // Calculate remaining physically
+                            var redeemed = await ctx.LoyaltyPointsRedemptions
+                                .Where(r => r.LoyalityPointsId == bucket.PointsId)
+                                .SumAsync(r => r.Amount);
 
-                        // 3. COMMIT
-                        // Here you would write the actual DB inserts for Sales, Payments, JournalEntries.
-                        // foreach(var entry in result.AccountingEntries) { ... }
+                            double remaining = bucket.Amount - redeemed;
 
-                        // 4. Mark Temp Posted
-                        if (Req.TempId.HasValue)
-                        {
-                            var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
-                            if (temp != null) { temp.Posted = true; temp.ModifiedAt = DateTime.UtcNow; }
+                            if (remaining > 0)
+                            {
+                                // 1. "Burn" the remaining points physically by creating a final redemption record
+                                // This prevents re-processing.
+                                var burnRecord = new LoyaltyPointsRedemption
+                                {
+                                    CustId = bucket.CustId,
+                                    InvoiceId = 0, // System
+                                    Amount = remaining,
+                                    TimeIssued = DateTimeOffset.UtcNow,
+                                    LoyalityPointsId = bucket.PointsId,
+                                    RedeemedFor = "EXPIRATION"
+                                };
+                                ctx.LoyaltyPointsRedemptions.Add(burnRecord);
+
+                                // 2. Create Accounting Entry
+                                double value = GetLpMonetaryValue(remaining);
+
+                                var journal = new AccountsJournalEntry
+                                {
+                                    TimeAsEntered = now,
+                                    Amount = value,
+                                    JournalNo = 8, // Adjusting Journal
+                                    DebitAccountNo = accLpLiability,
+                                    DebitAccountType = 2,
+                                    CreditAccountNo = accBreakage,
+                                    CreditAccountType = 4,
+                                    Description = $"Expired Loyalty Points - Bucket {bucket.PointsId}",
+                                    PrincipalName = "SYSTEM_EXPIRY_JOB"
+                                };
+                                JournalEntries.AddJournalEntry(ctx, journal);
+
+                                processedCount++;
+                            }
                         }
 
                         await ctx.SaveChangesAsync();
                         await tx.CommitAsync();
-
-                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                        return processedCount;
                     }
                     catch
                     {
@@ -6884,188 +7090,211 @@ namespace InvoicerBackend
                         throw;
                     }
                 },
-                "Refresh"
+                "Refresh" // Should probably be a higher privilege like "Admin"
             );
+
+            // Get Default Terminal Accounts for Quick Pay
+            app.AddAsyncEndpointWithBearerAuth<TerminalAccountsRequest, TerminalAccountsResponse>(
+    "GetTerminalAccounts",
+    async (DataIn, LoginInfo) =>
+    {
+        var req = (TerminalAccountsRequest)DataIn;
+        var terminalId = req.TerminalId ?? Environment.MachineName;
+
+        using var ctx = new NewinvContext();
+        // MANDATORY: Serializable for auto-create logic
+        using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+        try
+        {
+            var terminal = await ctx.Terminals.FirstOrDefaultAsync(t => t.TerminalId == terminalId);
+
+            // 1. Resolve Cash
+            long cashNo = terminal?.DefaultCash ?? 0;
+            if (cashNo == 0)
+            {
+                // CREATE if missing
+                cashNo = await EnsureAccountExists(ctx, $"Cash - {terminalId}", 1, "CASH");
+                // Update terminal object
+                if (terminal == null)
+                {
+                    terminal = new Terminal { TerminalId = terminalId };
+                    ctx.Terminals.Add(terminal);
+                }
+                terminal.DefaultCash = cashNo;
+            }
+
+            // 2. Resolve Bank
+            long bankNo = terminal?.DefaultBank ?? 0;
+            if (bankNo == 0)
+            {
+                bankNo = await EnsureAccountExists(ctx, $"Bank - {terminalId}", 1, "CASH");
+                terminal.DefaultBank = bankNo;
+            }
+
+            // 3. Save Terminal changes if we created accounts
+            await ctx.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // 4. Fetch Names for UI
+            var cashAcc = await ctx.AccountsInformations.FindAsync(cashNo);
+            var bankAcc = await ctx.AccountsInformations.FindAsync(bankNo);
+
+            return new TerminalAccountsResponse
+            {
+                CashAccountNo = cashNo,
+                CashAccountName = cashAcc?.AccountName ?? "Cash",
+                BankAccountNo = bankNo,
+                BankAccountName = bankAcc?.AccountName ?? "Bank"
+            };
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    },
+    "Refresh"
+);
 
             return app;
         }
 
-        /// <summary>
-        /// Full Logic for Processing a Single Line Item (Now with Tax)
-        /// </summary>
-        private static SimulateItemResult ProcessItem(
-            SaleOrderLineItem req,
-            List<VBatchSelectionWindow> itemBatches,
-            Dictionary<long, double> virtualInventory,
-            Dictionary<long, double> initialInventory,
-            List<VComprehensiveSalesFinalMatrix> itemMatrix,
-            NewinvContext ctx, // ADDED Context
-            string jurisdictionCode) // ADDED Jurisdiction
+        private static double GetLpMonetaryValue(double points)
         {
-            double remainingQty = req.Quantity;
-            var selectedBatches = new List<SelectedBatchInfo>();
-            var allBatchDebug = new List<BatchDebugInfo>();
-
-            bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
-
-            // PRECISE BATCH SELECTION
-            if (req.BatchCode.HasValue)
-            {
-                var batchId = req.BatchCode.Value;
-                var batch = itemBatches.FirstOrDefault(b => b.Batchcode == batchId);
-                var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
-                var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
-                var priceInfo = itemMatrix.FirstOrDefault(m => m.Batchcode == batchId);
-
-                var dbg = new BatchDebugInfo
-                {
-                    Batchcode = batchId,
-                    InitialQty = initialQty,
-                    ViInitialQty = virtualQty,
-                    AvailableQty = virtualQty,
-                    EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
-                    Status = "Skipped"
-                };
-
-                if (batch == null) dbg.Status = "Batch Not Found";
-                else if (virtualQty < req.Quantity) dbg.Status = "Insufficient Stock";
-                else if (priceInfo == null) dbg.Status = "No Price Data";
-                else
-                {
-                    double unitPrice = req.IsManualPrice && req.TargetPrice.HasValue
-                        ? req.TargetPrice.Value
-                        : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
-
-                    // --- TAX CALCULATION ---
-                    var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, req.Quantity);
-
-                    selectedBatches.Add(new SelectedBatchInfo
-                    {
-                        Batchcode = batchId,
-                        Quantity = req.Quantity,
-                        UnitPrice = unitPrice,
-                        TaxRate = taxInfo.Rate,
-                        TaxAmount = taxInfo.Amount,
-                        TaxSource = taxInfo.Source
-                    });
-
-                    virtualInventory[batchId] -= req.Quantity;
-                    remainingQty = 0;
-                    dbg.Status = "Selected"; dbg.AvailableQty = virtualInventory[batchId];
-                }
-                allBatchDebug.Add(dbg);
-            }
-            // AUTO ALLOCATION
-            else
-            {
-                foreach (var batch in itemBatches)
-                {
-                    var batchId = batch.Batchcode ?? 0;
-                    var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
-                    var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
-
-                    var priceInfo = itemMatrix.FirstOrDefault(m =>
-                        m.Batchcode == batchId &&
-                        ((isSuggested && m.ISuggestedPrice == req.TargetPrice) || (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0)))
-                    );
-
-                    var dbg = new BatchDebugInfo
-                    {
-                        Batchcode = batchId,
-                        InitialQty = initialQty,
-                        ViInitialQty = virtualQty,
-                        AvailableQty = virtualQty,
-                        EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
-                        Status = "Skipped"
-                    };
-
-                    if (virtualQty <= 0) { dbg.Status = "Empty/Reserved"; }
-                    else if (remainingQty <= 0) { dbg.Status = "Demand Satisfied"; }
-                    else if (priceInfo == null) { dbg.Status = "Price Mismatch"; }
-                    else
-                    {
-                        double takeQty = Math.Min(virtualQty, remainingQty);
-
-                        double unitPrice;
-                        double unitDiscount = 0;
-                        double lpRate;
-
-                        if (req.IsManualPrice && req.TargetPrice.HasValue)
-                        {
-                            unitPrice = req.TargetPrice.Value;
-                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice;
-                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
-                        }
-                        else
-                        {
-                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
-                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
-                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
-                        }
-
-                        // --- TAX CALCULATION ---
-                        var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, takeQty);
-
-                        selectedBatches.Add(new SelectedBatchInfo
-                        {
-                            Batchcode = batchId,
-                            Quantity = takeQty,
-                            UnitPrice = unitPrice,
-                            UnitDiscount = unitDiscount,
-                            LpRate = lpRate,
-                            TaxRate = taxInfo.Rate,
-                            TaxAmount = taxInfo.Amount,
-                            TaxSource = taxInfo.Source
-                        });
-
-                        virtualInventory[batchId] -= takeQty;
-                        remainingQty -= takeQty;
-
-                        dbg.Status = "Selected";
-                        dbg.AvailableQty = virtualInventory[batchId];
-                    }
-                    allBatchDebug.Add(dbg);
-                }
-            }
-
-            return new SimulateItemResult
-            {
-                ItemCode = req.ItemCode,
-                Success = remainingQty <= 0,
-                Message = remainingQty > 0 ? $"Insufficient stock" : "OK",
-                SelectedBatches = selectedBatches,
-                AllBatches = allBatchDebug
-            };
+            // Example: 100 points = $1.00 => Rate 0.01
+            const double rate = 1;
+            return points * rate;
         }
 
+        
 
-        private static (double Rate, double Amount, string Source) CalculateTax(NewinvContext ctx, string jurisdiction, long itemCode, double unitPrice, double qty)
+
+        
+
+        private static async Task<long> EnsureAccountExists(
+            NewinvContext ctx,
+            string accountName,
+            int accountType,
+            string? ifrsCode = null)
         {
-            try
+            ctx.EnsureSerializableTransaction();
+
+            // 1. SMART DEFAULTS: Infer IFRS Code if not provided
+            if (string.IsNullOrEmpty(ifrsCode))
             {
-                // 1. Get Item's Tax Category from Catalogue
-                // Note: In a high-perf scenario, fetch Catalogue data once in the main loop.
-                // Doing it here for simplicity of patching.
-                var category = ctx.Catalogues.Where(c => c.Itemcode == itemCode).Select(c => c.DefaultVatCategory).FirstOrDefault();
+                ifrsCode = InferIfrsCodeFromName(accountName, accountType);
+            }
 
-                // 2. Query Resolution View
-                var rateInfo = ctx.VTaxResolutions
-                    .FirstOrDefault(t => t.JurisdictionCode == jurisdiction && t.VatCategoryId == (category));
+            // 2. Resolve IFRS Category from DB
+            var ifrsCategory = await ctx.IfrsCategories
+                .FirstOrDefaultAsync(c => c.Code == ifrsCode);
 
-                if (rateInfo != null)
+            // Fallback: If code not found, try to find generic 'UNMAP' for the type
+            if (ifrsCategory == null)
+            {
+                ifrsCategory = await ctx.IfrsCategories
+                    .FirstOrDefaultAsync(c => c.ValidAccountType == accountType && c.Code.StartsWith("UNMAP"));
+            }
+
+            // 3. Check/Create AccountsInformation
+            var account = await ctx.AccountsInformations
+                .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
+
+            long accountNo;
+
+            if (account != null)
+            {
+                accountNo = account.AccountNo;
+                // Update IFRS Category if we found a better match
+                if (ifrsCategory != null && account.IfrsCategoryId != ifrsCategory.Id)
                 {
-                    double taxableAmount = unitPrice * qty;
-                    double taxAmount = taxableAmount * ((rateInfo.EffectiveRatePercentage??0) / 100.0);
-                    return (rateInfo.EffectiveRatePercentage??0, taxAmount, rateInfo.RateSource);
+                    account.IfrsCategoryId = ifrsCategory.Id;
                 }
             }
-            catch
+            else
             {
-                // If view doesn't exist or error, fallback to 0
-                Console.WriteLine($"WARN: Tax lookup failed for item {itemCode} in {jurisdiction}");
+                var newAccount = new AccountsInformation
+                {
+                    AccountName = accountName,
+                    AccountType = accountType,
+                    AccountMin = -1000000000,
+                    AccountMax = 1000000000,
+                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_").Replace("-", "_")}_{accountType}",
+                    IfrsCategoryId = ifrsCategory?.Id ?? 1,
+                    // Set flags based on type/name
+                    IsCash = accountType == 1 && accountName.ToLower().Contains("cash"),
+                    IsBank = accountType == 1 && accountName.ToLower().Contains("bank")
+                };
+
+                ctx.AccountsInformations.Add(newAccount);
+                await ctx.SaveChangesAsync();
+                accountNo = newAccount.AccountNo;
             }
 
-            return (0, 0, "ERROR");
+            // 4. Check/Create AccountsBalance
+            var balance = await ctx.AccountsBalances
+                .FirstOrDefaultAsync(b => b.AccountType == accountType && b.AccountNo == accountNo);
+
+            if (balance == null)
+            {
+                var newBalance = new AccountsBalance
+                {
+                    AccountType = accountType,
+                    AccountNo = accountNo,
+                    Amount = 0
+                };
+                ctx.AccountsBalances.Add(newBalance);
+                await ctx.SaveChangesAsync();
+            }
+
+            return accountNo;
+        }
+
+        private static string InferIfrsCodeFromName(string name, int type)
+        {
+            string upper = name.ToUpperInvariant();
+
+            // Type 1: Assets
+            if (type == 1)
+            {
+                if (upper.Contains("CASH") || upper.Contains("BANK")) return "CASH";
+                if (upper.Contains("RECEIVABLE") || upper.Contains("DEBTOR")) return "RECV_TRADE";
+                if (upper.Contains("INVENTORY") || upper.Contains("STOCK")) return "INVENTORY";
+                return "UNMAP_ASSET";
+            }
+
+            // Type 2: Liabilities
+            if (type == 2)
+            {
+                if (upper.Contains("PAYABLE") || upper.Contains("CREDITOR")) return "PAY_TRADE";
+                if (upper.Contains("TAX")) return "TAX_CUR";
+                if (upper.Contains("LOYALTY") || upper.Contains("POINTS")) return "PROV_CUR"; // Loyalty usually current provision
+                return "UNMAP_LIAB";
+            }
+
+            // Type 3: Equity
+            if (type == 3)
+            {
+                if (upper.Contains("CAPITAL") || upper.Contains("SHARE")) return "EQ_CAPITAL";
+                return "UNMAP_EQUITY";
+            }
+
+            // Type 4: Income
+            if (type == 4)
+            {
+                if (upper.Contains("SALE") || upper.Contains("REVENUE")) return "REV_SALES";
+                return "UNMAP_INC";
+            }
+
+            // Type 5: Expenses
+            if (type == 5)
+            {
+                if (upper.Contains("COST OF SALES") || upper.Contains("COGS")) return "COGS";
+                return "UNMAP_EXP";
+            }
+
+            return "NONE";
         }
     }
 
@@ -7156,9 +7385,11 @@ namespace InvoicerBackend
     public class PaymentEntry
     {
         public long AccountNo { get; set; }
-        public double Amount { get; set; } // Amount the customer pays
+        public string? AccountName { get; set; } // ADDED
+        public double Amount { get; set; }
+        public string Type { get; set; } = "CASH";
+        public double? PointsRedeem { get; set; }
     }
-
     public class SimulatePaymentResponse : SimulateOrderResponse
     {
         public double GrandTotal { get; set; }
@@ -7178,6 +7409,11 @@ namespace InvoicerBackend
         public double ImplicitCharge { get; set; }
         public double NetDeposit { get; set; }
         public double LpEarned { get; set; }
+
+        // NEW FIELDS for LP and Type Support
+        public string Type { get; set; } // "CASH", "BANK", "LP", "ACCOUNT"
+        public double PointsRedeemed { get; set; } // Total points redeemed in this transaction
+        public List<ProposedLpRedemption> LpBucketsUsed { get; set; } // Detailed breakdown
     }
 
     public class JournalEntryResult
@@ -7189,10 +7425,1041 @@ namespace InvoicerBackend
         public double Amount { get; set; }
         public string Narrative { get; set; }
     }
+    public class TerminalAccountsRequest
+    {
+        public string? TerminalId { get; set; }
+    }
+
+    public class TerminalAccountsResponse
+    {
+        public long CashAccountNo { get; set; }
+        public string CashAccountName { get; set; }
+        public long BankAccountNo { get; set; }
+        public string BankAccountName { get; set; }
+    }
+    public class LoyaltyPointsBalanceResponse
+    {
+        public double Balance { get; set; }
+    }
+
 
 }
 
 ==== END SALES SIM ====
+
+==== BEGIN INVOICE PROCESSOR ====
+using Microsoft.EntityFrameworkCore;
+using RV.InvNew.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace InvoicerBackend
+{
+    // Result Container
+    public class ProcessResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public List<SimulateItemResult> Items { get; set; }
+        public List<PaymentResult> PaymentResults { get; set; }
+        public List<JournalEntryResult> AccountingEntries { get; set; }
+        public double GrandTotal { get; set; }
+        public double TotalPaid { get; set; }
+        public double Balance { get; set; }
+        public double LoyaltyPointsFinal { get; set; }
+        public double TotalTax { get; set; }
+        public List<ProposedLpRedemption> LpProposedRedemptions { get; set; } = new();
+    }
+
+    public class ProposedLpRedemption
+    {
+        public long BucketId { get; set; }    // Maps to LoyaltyPoints.PointsId
+        public double Amount { get; set; }    // Points taken from this bucket
+    }
+
+    public static class InvoiceProcessingService
+    {
+        // Main Entry Point: Validation + Calculation
+        public static async Task<ProcessResult> ProcessInvoice(
+            NewinvContext ctx,
+            long piiId,
+            List<SaleOrderLineItem> items,
+            List<PaymentEntry> payments)
+        {
+            var result = new ProcessResult { Success = true, Message = "OK" };
+
+            // 1. Load Dependencies
+            var pii = await ctx.Piis.FirstOrDefaultAsync(p => p.Id == piiId);
+            if (pii == null) throw new ArgumentException("PII not found");
+
+            var itemCodes = items.Select(i => i.ItemCode).Distinct().ToList();
+
+            // 2. Inventory Reservation (Virtual)
+            var allBatchesRaw = await ctx.VBatchSelectionWindows
+                .FromSqlRaw(@"SELECT * FROM public.v_batch_selection_window WHERE itemcode = ANY({0})", itemCodes.ToArray())
+                .ToListAsync();
+
+            var initialInventory = allBatchesRaw.ToDictionary(b => b.Batchcode ?? 0, b => b.Units ?? 0);
+            var virtualInventory = new Dictionary<long, double>(initialInventory);
+
+            var matrixDataRaw = await ctx.VComprehensiveSalesFinalMatrices
+                .Where(m => itemCodes.Contains(m.Itemcode ?? 0) && m.PiiId == piiId)
+                .ToListAsync();
+            var matrixByItem = matrixDataRaw.GroupBy(m => m.Itemcode ?? 0).ToDictionary(g => g.Key, g => g.ToList());
+
+            // 3. Tax Resolution
+            string jurisdictionCode = "HOME"; // Default to Source
+
+            // 4. Process Items (Batch Selection)
+            result.Items = new List<SimulateItemResult>();
+            double totalRevenue = 0;
+            double totalTax = 0;
+
+            // SORTING LOGIC (Precise first, then low price first)
+            var sortedItems = items.Select(item =>
+            {
+                double estimatedPrice = double.MaxValue;
+                if (item.TargetPrice.HasValue) estimatedPrice = item.TargetPrice.Value;
+                else
+                {
+                    var firstBatch = allBatchesRaw.FirstOrDefault(b => b.Itemcode == item.ItemCode);
+                    if (firstBatch != null) estimatedPrice = firstBatch.SellingPrice ?? 0;
+                }
+                return new { Item = item, SortPrice = estimatedPrice };
+            })
+            .OrderBy(x => x.Item.BatchCode.HasValue ? 0 : 1)
+            .ThenBy(x => x.SortPrice)
+            .Select(x => x.Item)
+            .ToList();
+
+            foreach (var itemReq in sortedItems)
+            {
+                var processResult = ProcessItem(itemReq, allBatchesRaw, virtualInventory, initialInventory, matrixByItem, ctx, jurisdictionCode);
+                result.Items.Add(processResult);
+
+                if (!processResult.Success) result.Success = false;
+
+                totalRevenue += processResult.SelectedBatches.Sum(b => b.Quantity * b.UnitPrice);
+                totalTax += processResult.SelectedBatches.Sum(b => b.TaxAmount);
+            }
+
+            // =====================================================================
+            // 4. LP VIRTUAL STATE INITIALIZATION
+            // =====================================================================
+
+            // 1. Fetch Real Buckets
+            var rawLpBuckets = LoyaltyPointsManager.GetValidNonEmptyPointsBuckets(ctx, piiId).ToList();
+
+            // 2. Create Virtual State (BucketID -> RemainingAmount)
+            var virtualLpState = rawLpBuckets.ToDictionary(b => b.Point.PointsId, b => b.RemainingPoints);
+
+            // Container for proposed redemptions (to be returned to UI)
+            var proposedRedemptions = new List<ProposedLpRedemption>();
+
+
+
+            // 5. Process Payments
+            // =====================================================================
+            // PROCESS PAYMENTS
+            // =====================================================================
+
+            // =====================================================================
+            // PROCESS PAYMENTS
+            // =====================================================================
+
+            result.PaymentResults = new List<PaymentResult>();
+            result.AccountingEntries = new List<JournalEntryResult>();
+
+            double totalPaid = 0;
+            double totalSurcharges = 0;
+            double totalLpIssued = 0;
+            double baseLpRate = pii.LoyaltyPointsRateAdditivePercentage + pii.LoyaltyPointsRateMultiplicativePercentage;
+
+            // Resolve Accounts needed for payments
+            long accReceivable = await EnsureAccountExists(ctx, "Accounts Receivable", 1, "RECV_TRADE");
+            long accLpLiability = await EnsureAccountExists(ctx, "Loyalty Points Liability", 2, "PROV_CUR");
+            long accBankCharges = await EnsureAccountExists(ctx, "Bank Charges", 5, "EXP_ADMIN");
+
+            foreach (var pay in payments)
+            {
+                // =================================================================
+                // BRANCH A: LOYALTY POINTS (REDEMPTION)
+                // =================================================================
+                if (pay.Type == "LP")
+                {
+                    double pointsToRedeem = pay.PointsRedeem ?? 0;
+                    if (pointsToRedeem <= 0) continue;
+
+                    // 1. Virtual Redemption
+                    var (success, actualRedeemedAmount, simulationEntries) = VirtualRedeemLp(
+                        rawLpBuckets,
+                        virtualLpState,
+                        pointsToRedeem
+                    );
+
+                    if (!success)
+                    {
+                        result.Success = false;
+                        result.Message = $"Insufficient valid points. Needed: {pointsToRedeem}, Found: {actualRedeemedAmount}";
+                        return result;
+                    }
+
+                    proposedRedemptions.AddRange(simulationEntries);
+                    double redemptionValue = GetLpMonetaryValue(actualRedeemedAmount);
+
+                    // 2. Accounting Entry: Dr Liability, Cr AR (Clearing the debt)
+                    result.AccountingEntries.Add(new JournalEntryResult
+                    {
+                        DebitAccount = accLpLiability,
+                        DebitAccountName = "Loyalty Points Liability",
+                        CreditAccount = accReceivable,
+                        CreditAccountName = "Accounts Receivable",
+                        Amount = redemptionValue,
+                        Narrative = $"Loyalty Redemption ({actualRedeemedAmount} pts)"
+                    });
+
+                    // 3. UI Result
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = 0,
+                        AccountName = "Loyalty Points",
+                        AmountTendered = redemptionValue,
+                        PointsRedeemed = actualRedeemedAmount,
+                        LpBucketsUsed = simulationEntries,
+                        LpEarned = 0,
+                        Type = "LP" // Explicitly set Type
+                    });
+
+                    totalPaid += redemptionValue;
+                }
+
+                // =================================================================
+                // BRANCH B: CASH / BANK
+                // =================================================================
+                else if (pay.Type == "CASH" || pay.Type == "BANK")
+                {
+                    // VALIDATION
+                    if (pay.AccountNo == 0)
+                        throw new ArgumentException("Invalid Account ID (0) for Cash/Bank payment.");
+
+                    var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
+                    if (acc == null)
+                        throw new ArgumentException($"Account not found: {pay.AccountNo}");
+
+                    double implicitCharge = pay.Amount * (acc.AccountsUsageNonTransparentChargePercentage / 100.0);
+                    double surcharge = (pay.Amount * (acc.AccountSurchargesMultiplicativePercentage / 100.0)) + acc.AccountSurchargesAdditiveFee;
+                    double netDeposit = pay.Amount - implicitCharge;
+
+                    // LP Issuance Calculation
+                    double effectiveLpRate = baseLpRate * (1 + (acc.LoyaltyBaseMultiplicativePointsPercentage / 100.0));
+                    double lpEarned = (pay.Amount * effectiveLpRate) / 100.0;
+                    totalLpIssued += lpEarned;
+
+                    // 1. Receipt Entry: Dr Bank, Cr AR
+                    result.AccountingEntries.Add(new JournalEntryResult
+                    {
+                        DebitAccount = pay.AccountNo,
+                        DebitAccountName = acc.AccountName,
+                        CreditAccount = accReceivable,
+                        CreditAccountName = "Accounts Receivable",
+                        Amount = netDeposit,
+                        Narrative = "Payment Received"
+                    });
+
+                    // 2. Implicit Charge Entry (Card Fees)
+                    if (implicitCharge > 0)
+                    {
+                        long chargeAccId = acc.AccountsSurchargesTransferredToDuringSalePayment;
+                        if (chargeAccId == 0) chargeAccId = accBankCharges;
+
+                        result.AccountingEntries.Add(new JournalEntryResult
+                        {
+                            DebitAccount = chargeAccId,
+                            DebitAccountName = "Bank Charges",
+                            CreditAccount = pay.AccountNo,
+                            CreditAccountName = acc.AccountName,
+                            Amount = implicitCharge,
+                            Narrative = "Card Fee Deduction"
+                        });
+                    }
+
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = pay.AccountNo,
+                        AccountName = acc.AccountName, // Name from DB
+                        AmountTendered = pay.Amount,
+                        Type = pay.Type, // "CASH" or "BANK"
+                        Surcharge = surcharge,
+                        ImplicitCharge = implicitCharge,
+                        NetDeposit = netDeposit,
+                        LpEarned = lpEarned
+                    });
+
+                    totalPaid += netDeposit;
+                    totalSurcharges += surcharge;
+                }
+
+                // =================================================================
+                // BRANCH C: ACCOUNT (CREDIT SALE / HOUSE ACCOUNT PAYMENT)
+                // =================================================================
+                else if (pay.Type == "ACCOUNT")
+                {
+                    // VALIDATION
+                    if (pay.AccountNo == 0)
+                        throw new ArgumentException("Invalid Account ID for Account Payment.");
+
+                    var acc = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pay.AccountNo);
+                    if (acc == null)
+                        throw new ArgumentException($"Account not found: {pay.AccountNo}");
+
+                    // LOGIC: If user entered an amount, treat it as a payment from that account.
+                    // If amount is 0, it is a pure Credit Sale (leave open in AR).
+                    double amount = pay.Amount;
+
+                    if (amount > 0)
+                    {
+                        // Payment via Account (e.g. House Account)
+                        // Dr Selected Account, Cr Accounts Receivable
+                        result.AccountingEntries.Add(new JournalEntryResult
+                        {
+                            DebitAccount = pay.AccountNo,
+                            DebitAccountName = acc.AccountName,
+                            CreditAccount = accReceivable,
+                            CreditAccountName = "Accounts Receivable",
+                            Amount = amount,
+                            Narrative = "Payment via Account"
+                        });
+
+                        totalPaid += amount;
+                    }
+
+                    result.PaymentResults.Add(new PaymentResult
+                    {
+                        AccountNo = pay.AccountNo,
+                        AccountName = acc.AccountName,
+                        AmountTendered = amount, // USE ACTUAL AMOUNT
+                        Type = "ACCOUNT",
+                        LpEarned = 0
+                    });
+                }
+            }
+
+            result.GrandTotal = totalRevenue + totalTax + totalSurcharges;
+            result.Balance = totalPaid - result.GrandTotal;
+            result.TotalPaid = totalPaid;
+            result.LoyaltyPointsFinal = totalLpIssued;
+            result.TotalTax = totalTax;
+
+            // 6. Generate Accounting Entries (NO HARDCODING)
+            result.AccountingEntries = new List<JournalEntryResult>();
+
+            // Get Dynamic Accounts
+            //long accReceivable = await EnsureAccountExists(ctx, "Accounts Receivable", 1, "RECV_TRADE");
+            long accRevenue = await EnsureAccountExists(ctx, "Sales Revenue", 4, "REV_SALES");
+            long accTax = await EnsureAccountExists(ctx, "Tax Payable", 2, "TAX_CUR");
+
+            // 6a. Revenue Entry
+            if (totalRevenue > 0)
+            {
+                result.AccountingEntries.Add(new JournalEntryResult
+                {
+                    DebitAccount = accReceivable,
+                    DebitAccountName = "Accounts Receivable",
+                    CreditAccount = accRevenue,
+                    CreditAccountName = "Sales Revenue",
+                    Amount = totalRevenue,
+                    Narrative = "Sales Revenue"
+                });
+            }
+
+            // 6b. Tax Entry
+            if (totalTax > 0)
+            {
+                result.AccountingEntries.Add(new JournalEntryResult
+                {
+                    DebitAccount = accReceivable,
+                    DebitAccountName = "Accounts Receivable",
+                    CreditAccount = accTax,
+                    CreditAccountName = "Tax Payable",
+                    Amount = totalTax,
+                    Narrative = "Tax Liability"
+                });
+            }
+
+            // 6c. Payments & Surcharges
+            foreach (var pr in result.PaymentResults)
+            {
+                // Receipt Entry
+                result.AccountingEntries.Add(new JournalEntryResult
+                {
+                    DebitAccount = pr.AccountNo,
+                    DebitAccountName = pr.AccountName,
+                    CreditAccount = accReceivable,
+                    CreditAccountName = "Accounts Receivable",
+                    Amount = pr.NetDeposit,
+                    Narrative = "Payment Received"
+                });
+
+                // Implicit Charge Entry (if applicable)
+                if (pr.ImplicitCharge > 0)
+                {
+                    // Use the configured transfer account from the payment method, or fallback to "Bank Charges"
+                    long chargeAccId = pr.AccountNo; // Fallback to same account (contra)
+                    var accConfig = await ctx.AccountsInformations.FirstOrDefaultAsync(a => a.AccountNo == pr.AccountNo);
+                    if (accConfig != null && accConfig.AccountsSurchargesTransferredToDuringSalePayment != 0)
+                    {
+                        chargeAccId = accConfig.AccountsSurchargesTransferredToDuringSalePayment;
+                    }
+                    else
+                    {
+                        chargeAccId = await EnsureAccountExists(ctx, "Bank Charges", 5, "EXP_ADMIN");
+                    }
+
+                    result.AccountingEntries.Add(new JournalEntryResult
+                    {
+                        DebitAccount = chargeAccId,
+                        DebitAccountName = "Bank Charges", // Name lookup ideally
+                        CreditAccount = pr.AccountNo,
+                        CreditAccountName = pr.AccountName,
+                        Amount = pr.ImplicitCharge,
+                        Narrative = "Card Fee Deduction"
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        // --- CORE ITEM PROCESSOR (FULL LOGIC) ---
+        public static SimulateItemResult ProcessItem(
+            SaleOrderLineItem req,
+            List<VBatchSelectionWindow> allBatchesRaw,
+            Dictionary<long, double> virtualInventory,
+            Dictionary<long, double> initialInventory,
+            Dictionary<long, List<VComprehensiveSalesFinalMatrix>> matrixByItem,
+            NewinvContext ctx,
+            string jurisdictionCode)
+        {
+            double remainingQty = req.Quantity;
+            var selectedBatches = new List<SelectedBatchInfo>();
+            var allBatchDebug = new List<BatchDebugInfo>();
+
+            bool isSuggested = req.TargetPrice.HasValue && !req.IsManualPrice;
+
+            // Get batches for this item
+            var itemBatches = allBatchesRaw.Where(b => b.Itemcode == req.ItemCode).ToList();
+            var itemMatrix = matrixByItem.ContainsKey(req.ItemCode) ? matrixByItem[req.ItemCode] : new List<VComprehensiveSalesFinalMatrix>();
+
+            // PRECISE BATCH SELECTION
+            if (req.BatchCode.HasValue)
+            {
+                var batchId = req.BatchCode.Value;
+                var batch = itemBatches.FirstOrDefault(b => b.Batchcode == batchId);
+                var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+                var priceInfo = itemMatrix.FirstOrDefault(m => m.Batchcode == batchId);
+
+                var dbg = new BatchDebugInfo
+                {
+                    Batchcode = batchId,
+                    InitialQty = initialQty,
+                    ViInitialQty = virtualQty,
+                    AvailableQty = virtualQty,
+                    EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                    Status = "Skipped"
+                };
+
+                if (batch == null) dbg.Status = "Batch Not Found";
+                else if (virtualQty < req.Quantity) dbg.Status = "Insufficient Stock";
+                else if (priceInfo == null) dbg.Status = "No Price Data";
+                else
+                {
+                    double unitPrice = req.IsManualPrice && req.TargetPrice.HasValue
+                        ? req.TargetPrice.Value
+                        : (priceInfo.OEffectiveSellingPricePerUnit ?? 0);
+
+                    var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, req.Quantity);
+
+                    selectedBatches.Add(new SelectedBatchInfo
+                    {
+                        Batchcode = batchId,
+                        Quantity = req.Quantity,
+                        UnitPrice = unitPrice,
+                        TaxRate = taxInfo.Rate,
+                        TaxAmount = taxInfo.Amount,
+                        TaxSource = taxInfo.Source
+                    });
+
+                    virtualInventory[batchId] -= req.Quantity;
+                    remainingQty = 0;
+                    dbg.Status = "Selected";
+                    dbg.AvailableQty = virtualInventory[batchId];
+                }
+                allBatchDebug.Add(dbg);
+            }
+            // AUTO ALLOCATION
+            else
+            {
+                foreach (var batch in itemBatches)
+                {
+                    var batchId = batch.Batchcode ?? 0;
+                    var virtualQty = virtualInventory.ContainsKey(batchId) ? virtualInventory[batchId] : 0;
+                    var initialQty = initialInventory.ContainsKey(batchId) ? initialInventory[batchId] : 0;
+
+                    var priceInfo = itemMatrix.FirstOrDefault(m =>
+                        m.Batchcode == batchId &&
+                        ((isSuggested && m.ISuggestedPrice == req.TargetPrice) || (!isSuggested && (m.ISuggestedPrice == null || m.ISuggestedPrice == 0)))
+                    );
+
+                    var dbg = new BatchDebugInfo
+                    {
+                        Batchcode = batchId,
+                        InitialQty = initialQty,
+                        ViInitialQty = virtualQty,
+                        AvailableQty = virtualQty,
+                        EffectivePrice = priceInfo?.OEffectiveSellingPricePerUnit,
+                        Status = "Skipped"
+                    };
+
+                    if (virtualQty <= 0) { dbg.Status = "Empty/Reserved"; }
+                    else if (remainingQty <= 0) { dbg.Status = "Demand Satisfied"; }
+                    else if (priceInfo == null) { dbg.Status = "Price Mismatch"; }
+                    else
+                    {
+                        double takeQty = Math.Min(virtualQty, remainingQty);
+
+                        double unitPrice;
+                        double unitDiscount = 0;
+                        double lpRate;
+
+                        if (req.IsManualPrice && req.TargetPrice.HasValue)
+                        {
+                            unitPrice = req.TargetPrice.Value;
+                            unitDiscount = (priceInfo.ISellingPrice ?? 0) - unitPrice;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+                        else
+                        {
+                            unitPrice = priceInfo.OEffectiveSellingPricePerUnit ?? 0;
+                            unitDiscount = priceInfo.OEffectiveDiscountPerUnit ?? 0;
+                            lpRate = priceInfo.OEffectiveLpRate ?? 0;
+                        }
+
+                        var taxInfo = CalculateTax(ctx, jurisdictionCode, (long)batch.Itemcode, unitPrice, takeQty);
+
+                        selectedBatches.Add(new SelectedBatchInfo
+                        {
+                            Batchcode = batchId,
+                            Quantity = takeQty,
+                            UnitPrice = unitPrice,
+                            UnitDiscount = unitDiscount,
+                            LpRate = lpRate,
+                            TaxRate = taxInfo.Rate,
+                            TaxAmount = taxInfo.Amount,
+                            TaxSource = taxInfo.Source
+                        });
+
+                        virtualInventory[batchId] -= takeQty;
+                        remainingQty -= takeQty;
+
+                        dbg.Status = "Selected";
+                        dbg.AvailableQty = virtualInventory[batchId];
+                    }
+                    allBatchDebug.Add(dbg);
+                }
+            }
+
+            return new SimulateItemResult
+            {
+                ItemCode = req.ItemCode,
+                Success = remainingQty <= 0,
+                Message = remainingQty > 0 ? "Insufficient stock" : "OK",
+                SelectedBatches = selectedBatches,
+                AllBatches = allBatchDebug
+            };
+        }
+
+        // --- HELPERS ---
+
+        private static (double Rate, double Amount, string Source) CalculateTax(NewinvContext ctx, string jurisdiction, long itemCode, double unitPrice, double qty)
+        {
+            try
+            {
+                var category = ctx.Catalogues.Where(c => c.Itemcode == itemCode).Select(c => c.DefaultVatCategory).FirstOrDefault();
+                var rateInfo = ctx.VTaxResolutions.FirstOrDefault(t => t.JurisdictionCode == jurisdiction && t.VatCategoryId == category);
+
+                if (rateInfo != null)
+                {
+                    double taxableAmount = unitPrice * qty;
+                    double taxAmount = taxableAmount * ((rateInfo.EffectiveRatePercentage ?? 0) / 100.0);
+                    return (rateInfo.EffectiveRatePercentage ?? 0, taxAmount, rateInfo.RateSource);
+                }
+            }
+            catch { /* Ignore */ }
+
+            return (0, 0, "ERROR");
+        }
+
+        // Helper to ensure account exists AND has a balance record
+        private static async Task<long> EnsureAccountExists(
+        NewinvContext ctx,
+        string accountName,
+        int accountType,
+        string? ifrsCode = null)
+        {
+            ctx.EnsureSerializableTransaction();
+
+            // 1. SMART DEFAULTS: Infer IFRS Code if not provided
+            if (string.IsNullOrEmpty(ifrsCode))
+            {
+                ifrsCode = InferIfrsCodeFromName(accountName, accountType);
+            }
+
+            // 2. Resolve IFRS Category from DB
+            var ifrsCategory = await ctx.IfrsCategories
+                .FirstOrDefaultAsync(c => c.Code == ifrsCode);
+
+            // Fallback: If code not found, try to find generic 'UNMAP' for the type
+            if (ifrsCategory == null)
+            {
+                ifrsCategory = await ctx.IfrsCategories
+                    .FirstOrDefaultAsync(c => c.ValidAccountType == accountType && c.Code.StartsWith("UNMAP"));
+            }
+
+            // 3. Check/Create AccountsInformation
+            var account = await ctx.AccountsInformations
+                .FirstOrDefaultAsync(a => a.AccountName == accountName && a.AccountType == accountType);
+
+            long accountNo;
+
+            if (account != null)
+            {
+                accountNo = account.AccountNo;
+
+                // Update IFRS Category if we found a better match
+                if (ifrsCategory != null && account.IfrsCategoryId != ifrsCategory.Id)
+                {
+                    account.IfrsCategoryId = ifrsCategory.Id;
+                    // No IsCurrent to update here anymore
+                }
+            }
+            else
+            {
+                var newAccount = new AccountsInformation
+                {
+                    AccountName = accountName,
+                    AccountType = accountType,
+
+                    // Standard Limits
+                    AccountMin = -1000000000,
+                    AccountMax = 1000000000,
+
+                    // Human Friendly ID
+                    HumanFriendlyId = $"{accountName.ToUpper().Replace(" ", "_").Replace("-", "_")}_{accountType}",
+
+                    // IFRS Mapping (The only column we need now)
+                    IfrsCategoryId = ifrsCategory?.Id ?? 1
+                };
+
+                ctx.AccountsInformations.Add(newAccount);
+                await ctx.SaveChangesAsync();
+                accountNo = newAccount.AccountNo;
+            }
+
+            // 4. Check/Create AccountsBalance
+            var balance = await ctx.AccountsBalances
+                .FirstOrDefaultAsync(b => b.AccountType == accountType && b.AccountNo == accountNo);
+
+            if (balance == null)
+            {
+                var newBalance = new AccountsBalance
+                {
+                    AccountType = accountType,
+                    AccountNo = accountNo,
+                    Amount = 0
+                };
+                ctx.AccountsBalances.Add(newBalance);
+                await ctx.SaveChangesAsync();
+            }
+
+            return accountNo;
+        }
+
+        /// <summary>
+        /// Converts Loyalty Points to Monetary Value.
+        /// TODO: Move rate to Database/GlobalConfig.
+        /// </summary>
+        private static double GetLpMonetaryValue(double points)
+        {
+            // Standard: 100 Points = $1.00
+            const double conversionRate = 1;
+
+            return points * conversionRate;
+        }
+
+        /// <summary>
+        /// Pure function to simulate LP Redemption without DB side-effects.
+        /// Uses FEFO (First-Expiry-First-Out) logic based on the sorted bucket list.
+        /// </summary>
+        /// <param name="sortedBuckets">The list of valid buckets sorted by Expiry (earliest first).</param>
+        /// <param name="virtualState">The mutable dictionary tracking currently available points in memory.</param>
+        /// <param name="amountNeeded">The total points requested for this payment.</param>
+        /// <returns>Tuple: Success, Actual Redeemed Amount, List of Redemption Details</returns>
+        private static (bool Success, double TotalRedeemed, List<ProposedLpRedemption> Entries) VirtualRedeemLp(
+            List<(LoyaltyPoint Point, double RemainingPoints)> sortedBuckets,
+            Dictionary<long, double> virtualState,
+            double amountNeeded)
+        {
+            double remainingNeed = amountNeeded;
+            var entries = new List<ProposedLpRedemption>();
+
+            // Iterate through buckets (Assumed sorted by Expiry Date from LoyaltyPointsManager)
+            foreach (var bucket in sortedBuckets)
+            {
+                if (remainingNeed <= 0) break;
+
+                long bucketId = bucket.Point.PointsId;
+
+                // Check current availability in Virtual State (not the original DB amount)
+                if (!virtualState.ContainsKey(bucketId)) continue;
+
+                double availableInVirtual = virtualState[bucketId];
+                if (availableInVirtual <= 0) continue;
+
+                // Calculate how much to take from this bucket
+                double takeAmount = Math.Min(availableInVirtual, remainingNeed);
+
+                // 1. Update Virtual State (Mutates the dictionary for subsequent payments)
+                virtualState[bucketId] -= takeAmount;
+
+                // 2. Record the Proposal
+                entries.Add(new ProposedLpRedemption
+                {
+                    BucketId = bucketId,
+                    Amount = takeAmount
+                });
+
+                remainingNeed -= takeAmount;
+            }
+
+            double totalRedeemed = amountNeeded - remainingNeed;
+            bool success = remainingNeed <= 0; // Success if we fulfilled the full request
+
+            return (success, totalRedeemed, entries);
+        }
+
+        /// <summary>
+        /// Heuristic to determine IFRS Code from Account Name.
+        /// </summary>
+        private static string InferIfrsCodeFromName(string name, int type)
+        {
+            string upper = name.ToUpperInvariant();
+
+            // Type 1: Assets
+            if (type == 1)
+            {
+                if (upper.Contains("CASH") || upper.Contains("BANK")) return "CASH";
+                if (upper.Contains("RECEIVABLE") || upper.Contains("DEBTOR")) return "RECV_TRADE";
+                if (upper.Contains("INVENTORY") || upper.Contains("STOCK")) return "INVENTORY";
+                if (upper.Contains("EQUIPMENT") || upper.Contains("FURNITURE") || upper.Contains("MACHINERY")) return "PPE_PLANT";
+                if (upper.Contains("BUILDING") || upper.Contains("LAND")) return "PPE_LAND";
+                if (upper.Contains("INTANGIBLE") || upper.Contains("GOODWILL")) return "INTANG";
+                return "UNMAP_ASSET";
+            }
+
+            // Type 2: Liabilities
+            if (type == 2)
+            {
+                if (upper.Contains("PAYABLE") || upper.Contains("CREDITOR")) return "PAY_TRADE";
+                if (upper.Contains("TAX")) return "TAX_CUR";
+                if (upper.Contains("LOAN") || upper.Contains("BORROW")) return "LOAN_NC";
+                if (upper.Contains("PROVISION")) return "PROV_NC";
+                return "UNMAP_LIAB";
+            }
+
+            // Type 3: Equity
+            if (type == 3)
+            {
+                if (upper.Contains("CAPITAL") || upper.Contains("SHARE")) return "EQ_CAPITAL";
+                if (upper.Contains("RETAINED")) return "EQ_RETAINED";
+                if (upper.Contains("RESERVE")) return "EQ_REVAL";
+                return "UNMAP_EQUITY";
+            }
+
+            // Type 4: Income
+            if (type == 4)
+            {
+                if (upper.Contains("SALE") || upper.Contains("REVENUE")) return "REV_SALES";
+                if (upper.Contains("INTEREST") || upper.Contains("DIVIDEND")) return "FIN_INC";
+                return "UNMAP_INC";
+            }
+
+            // Type 5: Expenses
+            if (type == 5)
+            {
+                if (upper.Contains("COST OF SALES") || upper.Contains("COST OF GOODS") || upper.Contains("COGS")) return "COGS";
+                if (upper.Contains("DEPRECIATION")) return "EXP_DEPR";
+                if (upper.Contains("INTEREST") || upper.Contains("FINANCE")) return "EXP_FIN";
+                if (upper.Contains("TAX")) return "EXP_TAX";
+                if (upper.Contains("RENT") || upper.Contains("SALARY") || upper.Contains("ADMIN")) return "EXP_ADMIN";
+                return "UNMAP_EXP";
+            }
+
+            return "NONE";
+        }
+    }
+}
+==== END INVOICE PROCESSOR ====
+
+====BEGIN INVOICE PERSISTENCE====
+using Microsoft.EntityFrameworkCore;
+using RV.InvNew.Common;
+using System;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace InvoicerBackend
+{
+    public static class InvoicePersistenceEndpoints
+    {
+        public static WebApplication AddInvoicePersistenceEndpoints(this WebApplication app)
+        {
+            // 1. Save Draft (WIP)
+            app.AddAsyncEndpointWithBearerAuth<SaveDraftRequest, long>(
+                "SaveDraftInvoice",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (SaveDraftRequest)ReqI;
+                    using var ctx = new NewinvContext();
+
+                    // We just save the payload as-is. 
+                    // Validation happens on Post/Simulate.
+                    var json = Req.Payload;
+                    var userId = (long)LoginInfo.UserId;
+
+                    var entity = new TempIssuedInvoice
+                    {
+                        InvoiceContents = json,
+                        Posted = false,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        UserId = userId,
+                        RequestId = LoginInfo.RequestId,
+                        RequestIds = " " + LoginInfo.RequestId
+                    };
+
+                    ctx.TempIssuedInvoices.Add(entity);
+                    await ctx.SaveChangesAsync();
+
+                    return entity.TempInvoiceRunNo;
+                },
+                "Refresh"
+            );
+
+            // 2. Load Draft
+            app.AddAsyncEndpointWithBearerAuth<long, RestoreDraftResponse>(
+                "LoadDraftInvoice",
+                async (TempIdI, LoginInfo) =>
+                {
+                    var TempId = (long)TempIdI;
+                    using var ctx = new NewinvContext();
+
+                    var entity = await ctx.TempIssuedInvoices
+                        .FirstOrDefaultAsync(t => t.TempInvoiceRunNo == TempId && t.UserId == (long)LoginInfo.UserId);
+
+                    if (entity == null) throw new ArgumentException("Draft not found or access denied.");
+
+                    return new RestoreDraftResponse
+                    {
+                        TempId = entity.TempInvoiceRunNo,
+                        Payload = entity.InvoiceContents
+                    };
+                },
+                "Refresh"
+            );
+
+            // 3. List Unposted
+            app.AddAsyncEndpointWithBearerAuth<string, List<TempIssuedInvoice>>(
+                "ListUnpostedInvoices",
+                async (_, LoginInfo) =>
+                {
+                    using var ctx = new NewinvContext();
+
+                    return await ctx.TempIssuedInvoices
+                        .Where(t => t.UserId == (long)LoginInfo.UserId && !t.Posted)
+                        .OrderByDescending(t => t.CreatedAt)
+                        .Take(100)
+                        .ToListAsync();
+                },
+                "Refresh"
+            );
+
+            // 4. Post Invoice (Strict Re-Validation + Commit)
+            app.AddAsyncEndpointWithBearerAuth<PostInvoiceRequest, PostInvoiceResponse>(
+                "PostInvoice",
+                async (ReqI, LoginInfo) =>
+                {
+                    var Req = (PostInvoiceRequest)ReqI;
+                    using var ctx = new NewinvContext();
+                    // Use Transaction for Atomicity
+                    using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+                    try
+                    {
+                        // 1. Deserialize Payload
+                        var invoiceData = JsonSerializer.Deserialize<SimulatePaymentRequest>(Req.Payload);
+                        if (invoiceData == null) throw new ArgumentException("Invalid payload.");
+
+                        // 2. RE-RUN VALIDATION (CRITICAL)
+                        // This ensures inventory, tax, and payments are valid RIGHT NOW.
+                        var result = await InvoiceProcessingService.ProcessInvoice(ctx, invoiceData.PiiId, invoiceData.Items, invoiceData.Payments);
+
+                        if (!result.Success)
+                        {
+                            return new PostInvoiceResponse { Success = false, Message = result.Message };
+                        }
+
+                        // 3. DEDUCT REAL INVENTORY
+                        // We use the SelectedBatches from the result to perform actual DB deductions
+                        foreach (var item in result.Items)
+                        {
+                            foreach (var batch in item.SelectedBatches)
+                            {
+                                var dbBatch = await ctx.Inventories.FirstOrDefaultAsync(b => b.Batchcode == batch.Batchcode);
+                                if (dbBatch == null) throw new Exception($"Batch {batch.Batchcode} disappeared during transaction.");
+                                if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}.");
+
+                                dbBatch.Units -= batch.Quantity;
+                            }
+                        }
+
+                        if (result.LpProposedRedemptions.Any())
+                        {
+                            foreach (var prop in result.LpProposedRedemptions)
+                            {
+                                // Create the actual DB record
+                                ctx.LoyaltyPointsRedemptions.Add(new LoyaltyPointsRedemption
+                                {
+                                    LoyalityPointsId = prop.BucketId,
+                                    Amount = prop.Amount,
+                                    CustId = invoiceData.PiiId, // Resolve from context if needed
+                                    InvoiceId = 0, // Update with actual Invoice ID if generated
+                                    RedeemedFor = "Invoice Payment",
+                                    TimeIssued = DateTimeOffset.UtcNow
+                                });
+                            }
+                        }
+
+                        // 4. CREATE ISSUED INVOICE HEADER
+                        var invoice = new IssuedInvoice
+                        {
+                            InvoiceTime = DateTime.UtcNow,
+                            Customer = invoiceData.PiiId,
+                            IssuedValue = result.GrandTotal,
+                            IsSettled = false, // Depends on Balance
+                            PaidValue = result.TotalPaid,
+                            // ... other fields
+                            IsPosted = true
+                        };
+                        ctx.IssuedInvoices.Add(invoice);
+                        await ctx.SaveChangesAsync(); // Get InvoiceId
+
+                        // 5. CREATE SALES RECORDS
+                        foreach (var item in result.Items)
+                        {
+                            foreach (var batch in item.SelectedBatches)
+                            {
+                                var sale = new Sale
+                                {
+                                    InvoiceId = invoice.InvoiceId,
+                                    Itemcode = item.ItemCode,
+                                    Batchcode = batch.Batchcode,
+                                    Quantity = batch.Quantity,
+                                    SellingPrice = batch.UnitPrice,
+                                    Discount = batch.UnitDiscount,
+                                    // Map other fields...
+                                    VatAsCharged = batch.TaxAmount, // Approx mapping
+                                    EnteredAt = DateTime.UtcNow
+                                };
+                                ctx.Sales.Add(sale);
+                            }
+                        }
+                        await ctx.SaveChangesAsync();
+
+                        // 6. CREATE PAYMENT RECORDS (Receipts)
+                        foreach (var pay in result.PaymentResults)
+                        {
+                            var receipt = new Receipt
+                            {
+                                InvoiceId = invoice.InvoiceId,
+                                AccountId = pay.AccountNo,
+                                Amount = pay.NetDeposit, // Actual cash received
+                                TimeReceived = DateTimeOffset.UtcNow
+                            };
+                            ctx.Receipts.Add(receipt);
+                        }
+                        await ctx.SaveChangesAsync();
+
+                        // 7. CREATE JOURNAL ENTRIES
+                        foreach (var entry in result.AccountingEntries)
+                        {
+                            var je = new AccountsJournalEntry
+                            {
+                                TimeAsEntered = DateTime.UtcNow,
+                                TimeTai = DateTime.UtcNow,
+                                PrincipalId = (long)LoginInfo.UserId,
+                                PrincipalName = LoginInfo.Principal,
+                                Description = entry.Narrative,
+                                Ref = invoice.InvoiceId.ToString(), // Link to Invoice
+                                Amount = entry.Amount,
+                                DebitAccountNo = entry.DebitAccount,
+                                CreditAccountNo = entry.CreditAccount,
+                                // ... Set DebitAccountName, etc from entry object
+                            };
+                            // Use helper: JournalEntries.AddJournalEntry(ctx, je);
+                            // For now, direct add:
+                            ctx.AccountsJournalEntries.Add(je);
+                        }
+                        await ctx.SaveChangesAsync();
+
+                        // 8. MARK TEMP INVOICE AS POSTED
+                        if (Req.TempId.HasValue)
+                        {
+                            var temp = await ctx.TempIssuedInvoices.FindAsync(Req.TempId.Value);
+                            if (temp != null)
+                            {
+                                temp.Posted = true;
+                                temp.ModifiedAt = DateTime.UtcNow;
+                            }
+                        }
+
+                        await ctx.SaveChangesAsync();
+                        await tx.CommitAsync();
+
+                        return new PostInvoiceResponse { Success = true, Message = "Posted" };
+                    }
+                    catch
+                    {
+                        await tx.RollbackAsync();
+                        throw;
+                    }
+                },
+                "Refresh"
+            );
+
+            return app;
+        }
+    }
+
+    // DTOs
+    public class SaveDraftRequest { public string Payload { get; set; } }
+    public class RestoreDraftResponse { public long TempId { get; set; } public string Payload { get; set; } }
+    public class PostInvoiceRequest { public string Payload { get; set; } public long? TempId { get; set; } }
+    public class PostInvoiceResponse { public bool Success { get; set; } public string Message { get; set; } }
+}
+====END INVOICE PERSISTENCE====
 
 ==== BEGIN SAFETY.cs ====
 using System.Data;
