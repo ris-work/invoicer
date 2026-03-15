@@ -57,22 +57,40 @@
             loadOrderSummary();
 
             let targetAccNo = accNoQS;
+            let targetAccName = null;
 
-            // If not in URL, check Flow Data
+            // IF NO ACCOUNT ID PROVIDED, LOOKUP DEFAULTS
             if (targetAccNo === null || targetAccNo === undefined) {
+                // 1. Check Flow Data (in case coming from Account Selector)
                 const resFlow = await fetch('/GetFlowData', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ FlowId: flowId, Key: "selectedAccountNo" })
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedDebitAccountNo" })
                 });
                 const dataFlow = await resFlow.json();
-                if (dataFlow && (dataFlow.value !== null && dataFlow.value !== undefined)) {
+
+                if (dataFlow && dataFlow.value) {
                     targetAccNo = dataFlow.value;
+                } else {
+                    // 2. If still null, ask Backend for Default Terminal Accounts
+                    const resTerm = await fetch('/GetTerminalAccounts', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({}) // Empty request uses MachineName
+                    });
+                    const termData = await resTerm.json();
+
+                    if (typeQS === 'CASH') {
+                        targetAccNo = termData.cashAccountNo;
+                        targetAccName = termData.cashAccountName;
+                    } else if (typeQS === 'BANK') {
+                        targetAccNo = termData.bankAccountNo;
+                        targetAccName = termData.bankAccountName;
+                    }
                 }
             }
 
             // VALIDATION: Did we get a value at all?
             if (targetAccNo === null || targetAccNo === undefined) {
-                 document.getElementById('status').innerHTML = "<span style='color:red'>Error: No Account ID provided.</span>";
+                 document.getElementById('status').innerHTML = "<span style='color:red'>Error: No Account ID provided and no default found.</span>";
                  return;
             }
 
@@ -84,20 +102,21 @@
             if(dispNo) dispNo.textContent = targetAccNo;
             if(dispType) dispType.textContent = typeQS;
 
-            // Fetch Name
-            try {
-                const resSearch = await fetch('/SearchAccountsWeb', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Query: targetAccNo })
-                });
-                const list = await resSearch.json();
-                const acc = list.find(a => a.accountNo == targetAccNo);
-
-                // If acc is undefined here, DB didn't find it.
-                // We show "Unknown" in UI, but Backend will throw error on Save.
-                if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
-            } catch (e) {
-                if(dispName) dispName.textContent = "Error Loading Name";
+            // Fetch Name only if not already resolved by Terminal Lookup
+            if (!targetAccName) {
+                try {
+                    const resSearch = await fetch('/SearchAccountsWeb', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Query: targetAccNo })
+                    });
+                    const list = await resSearch.json();
+                    const acc = list.find(a => a.accountNo == targetAccNo);
+                    if(dispName) dispName.textContent = acc ? acc.accountName : "Unknown Account";
+                } catch (e) {
+                    if(dispName) dispName.textContent = "Error Loading Name";
+                }
+            } else {
+                if(dispName) dispName.textContent = targetAccName;
             }
 
             document.getElementById('status').style.display = 'none';

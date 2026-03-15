@@ -1,5 +1,6 @@
 ﻿@page "/Pages/Sales/SelectPaymentMethod"
 @functions { }
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,210 +20,141 @@
             text-align: center;
             border-radius: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
+            background: white;
         }
 
             .method-card:hover {
                 border-color: #007bff;
                 background: #f8f9fa;
+                transform: translateY(-2px);
             }
 
-        .method-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-            display: block;
-        }
+            .method-card h3 {
+                margin-bottom: 10px;
+                color: #333;
+            }
+
+            .method-card p {
+                font-size: 0.9em;
+                color: #666;
+            }
+
+            .method-card.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+                background: #f0f0f0;
+            }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Select Payment Method</h2>
         <div id="permWarning" class="perm-warning" style="display:none;"></div>
-        <div id="orderBalance" style="margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fff;">
-            <div style="display: flex; justify-content: space-between;">
-                <div style="font-size: 1.2em;"><strong>Total:</strong> <span id="totalAmt">0.00</span></div>
-                <div style="font-size: 1.2em;">
-                    <strong>Remaining:</strong>
-                    <span id="remainingAmt" style="color: #d9534f; font-weight: bold;">0.00</span>
-                </div>
-            </div>
-            <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
-                Paid so far: <span id="paidAmt">0.00</span>
-            </div>
+
+        <div id="summary" class="summary" style="margin-bottom:20px;">
+            <p><strong>Total Due:</strong> <span id="totalDue">Loading...</span></p>
+            <p><strong>Remaining:</strong> <span id="remainingDue" style="color:#d9534f;">Loading...</span></p>
         </div>
-        <div id="status">Loading options...</div>
-        <div id="content" style="display:none;">
-            <div class="method-grid">
-                <div class="method-card" onclick="selectMethod('CASH')">
-                    <span class="method-icon">💵</span>
-                    <strong>Cash</strong>
-                    <p id="cashName" style="font-size:0.8em; color:#666;"></p>
-                </div>
-                <div class="method-card" onclick="selectMethod('BANK')">
-                    <span class="method-icon">💳</span>
-                    <strong>Card / Bank</strong>
-                    <p id="bankName" style="font-size:0.8em; color:#666;"></p>
-                </div>
-                <div class="method-card" onclick="selectMethod('LP')">
-                    <span class="method-icon">⭐</span>
-                    <strong>Loyalty Points</strong>
-                    <p style="font-size:0.8em; color:#666;">Redeem points</p>
-                </div>
-                <div class="method-card" onclick="selectMethod('ACCOUNT')">
-                    <span class="method-icon">📄</span>
-                    <strong>On Account</strong>
-                    <p style="font-size:0.8em; color:#666;">Credit Sale</p>
-                </div>
+
+        <div class="method-grid">
+            <!-- Cash -->
+            <div class="method-card" onclick="selectCash()">
+                <h3>💵 Cash</h3>
+                <p>Physical currency</p>
             </div>
+
+            <!-- Bank / Card -->
+            <div class="method-card" onclick="selectBank()">
+                <h3>💳 Card / Bank</h3>
+                <p>Credit, Debit, or Transfer</p>
+            </div>
+
+            <!-- Loyalty Points -->
+            <div class="method-card" onclick="selectLP()">
+                <h3>⭐ Loyalty Points</h3>
+                <p>Redeem points (1pt = $1.00)</p>
+            </div>
+
+            <!-- Account / Credit Sale -->
+            <div class="method-card" onclick="selectAccount()">
+                <h3>🏠 House Account</h3>
+                <p>Charge to customer account</p>
+            </div>
+
+            <!-- Voucher (Placeholder) -->
+            <!--
+            <div class="method-card disabled">
+                <h3>🎟️ Voucher</h3>
+                <p>Gift cards / Coupons</p>
+            </div>
+            -->
         </div>
     </div>
 
     <script src="/Pages/static/u.js"></script>
     <script>
-        const requiredEndpoints = ["GetTerminalAccounts", "GetFlowData", "SetFlowData"];
+        const requiredEndpoints = ["GetFlowData", "SimulateSaleWithPayments"];
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
-        let terminalAccounts = {};
 
         async function init() {
             await checkPagePermissions(requiredEndpoints);
             const token = await getCookie("auth-token");
 
-            const res = await fetch('/GetTerminalAccounts', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-
-            if (!res.ok) { document.getElementById('status').innerText = "Error loading terminal config."; return; }
-
-            terminalAccounts = await res.json();
-
-            // STRICT CHECK: Only check if the property exists.
-            // If value is 0, we accept it.
-            if (terminalAccounts.cashAccountNo === null || terminalAccounts.cashAccountNo === undefined) {
-                document.getElementById('cashName').innerText = "Default Cash Not Configured";
-            } else {
-                document.getElementById('cashName').innerText = terminalAccounts.cashAccountName;
-            }
-
-            if (terminalAccounts.bankAccountNo === null || terminalAccounts.bankAccountNo === undefined) {
-                document.getElementById('bankName').innerText = "Default Bank Not Configured";
-            } else {
-                document.getElementById('bankName').innerText = terminalAccounts.bankAccountName;
-            }
-
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-            loadOrderSummary();
-        }
-
-        async function selectMethod(type) {
-            const token = await getCookie("auth-token");
-
-            if (type === 'CASH') {
-                // If config missing (null), alert user. Else proceed (even if ID is 0).
-                if (terminalAccounts.cashAccountNo === null || terminalAccounts.cashAccountNo === undefined) {
-                    alert("Cash account not configured for this terminal.");
-                    return;
-                }
-                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.cashAccountNo}&type=CASH`;
-                window.location.href = redir;
-            }
-            else if (type === 'BANK') {
-                if (terminalAccounts.bankAccountNo === null || terminalAccounts.bankAccountNo === undefined) {
-                    alert("Bank account not configured for this terminal.");
-                    return;
-                }
-                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.bankAccountNo}&type=BANK`;
-                window.location.href = redir;
-            }
-            else if (type === 'LP') {
-                window.location.href = `/Pages/Sales/RedeemLoyaltyPoints?flowId=${flowId}`;
-            }
-            else if (type === 'ACCOUNT') {
-                // Redirect to Account Selector
-                const callbackUrl = encodeURIComponent(`/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`);
-                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${callbackUrl}`;
-            }
-        }
-
-        async function selectMethod(type) {
-            const token = await getCookie("auth-token");
-
-            if (type === 'CASH') {
-                // Direct shortcut for Cash
-                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.cashAccountNo}&type=CASH`;
-                window.location.href = redir;
-            }
-            else if (type === 'BANK') {
-                // Direct shortcut for Bank
-                const redir = `/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&accNo=${terminalAccounts.bankAccountNo}&type=BANK`;
-                window.location.href = redir;
-            }
-            else if (type === 'LP') {
-                window.location.href = `/Pages/Sales/RedeemLoyaltyPoints?flowId=${flowId}`;
-            }
-            else if (type === 'ACCOUNT') {
-                // 1. Go to Account Selector
-                // 2. Come back to EnterPaymentAmount (NOT here)
-                const callbackUrl = encodeURIComponent(`/Pages/Sales/EnterPaymentAmount?flowId=${flowId}&type=ACCOUNT`);
-                window.location.href = `/Pages/SearchAndSelect/AccountSelect?flowId=${flowId}&redirTo=${callbackUrl}`;
-            }
-        }
-
-                        async function loadOrderSummary() {
-            const token = await getCookie("auth-token");
             const piiId = await getFlowKey("selectedPiiId");
             const items = JSON.parse(await getFlowKey("orderItems") || "[]");
             const payments = JSON.parse(await getFlowKey("payments") || "[]");
 
             if (!piiId || items.length === 0) {
-                const balanceDiv = document.getElementById('orderBalance');
-                if(balanceDiv) balanceDiv.innerHTML = "<em>Add items to see total.</em>";
+                document.getElementById('summary').innerHTML = "<em>No items in order.</em>";
                 return;
             }
 
-            try {
-                const res = await fetch('/SimulateSaleWithPayments', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ PiiId: parseInt(piiId), Items: items, Payments: payments })
-                });
-                const data = await res.json();
+            const res = await fetch('/SimulateSaleWithPayments', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ PiiId: parseInt(piiId), Items: items, Payments: payments })
+            });
+            const data = await res.json();
 
-                const total = data.grandTotal || 0;
-                const paid = data.totalPaid || 0;
-                const remaining = total - paid;
-
-                // Update specific elements
-                const totalEl = document.getElementById('totalAmt');
-                const paidEl = document.getElementById('paidAmt');
-                const remainingEl = document.getElementById('remainingAmt');
-
-                if (totalEl) totalEl.innerText = total.toFixed(2);
-                if (paidEl) paidEl.innerText = paid.toFixed(2);
-
-                if (remainingEl) {
-                    remainingEl.innerText = remaining.toFixed(2);
-                    // Color: Red if balance > 0, Green if 0 or less
-                    remainingEl.style.color = remaining > 0 ? '#d9534f' : '#5cb85c';
-                }
-
-            } catch (e) {
-                console.error("Error loading balance", e);
-                const balanceDiv = document.getElementById('orderBalance');
-                if(balanceDiv) balanceDiv.innerHTML = "<span style='color:red'>Error loading totals</span>";
-            }
+            document.getElementById('totalDue').innerText = data.grandTotal.toFixed(2);
+            document.getElementById('remainingDue').innerText = (data.grandTotal - data.totalPaid).toFixed(2);
         }
 
-        // Helper to get Flow Data directly
+        async function selectCash() {
+            // Redirect to standard payment entry, defaulting to Cash logic
+            window.location.href = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId + '&type=CASH';
+        }
+
+        async function selectBank() {
+            window.location.href = '/Pages/Sales/EnterPaymentAmount?flowId=' + flowId + '&type=BANK';
+        }
+
+        async function selectLP() {
+            window.location.href = '/Pages/Sales/EnterLoyaltyPoints?flowId=' + flowId;
+        }
+
+        async function selectAccount() {
+            // We need to select WHICH account to charge.
+            // Redirect to the generic Account Selector used in flows.
+            // Set a flag so we know we are paying, not just selecting a journal debit.
+            const token = await getCookie("auth-token");
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "paymentAccountSelect", Value: "true" })
+            });
+
+            // Use the existing Account Selection page
+            window.location.href = '/Pages/Journal/SelectDebitAccount?flowId=' + flowId;
+        }
+
         async function getFlowKey(key) {
             const token = await getCookie("auth-token");
             const res = await fetch('/GetFlowData', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ FlowId: flowId, Key: key })
             });
-            const data = await res.json();
-            return data.value;
+            return (await res.json()).value;
         }
 
         init();

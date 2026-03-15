@@ -197,6 +197,8 @@ public partial class NewinvContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("pg_trgm");
+
         modelBuilder.Entity<AccountsBalance>(entity =>
         {
             entity.HasKey(e => new { e.AccountType, e.AccountNo }).HasName("accounts_balances_pkey");
@@ -812,6 +814,8 @@ public partial class NewinvContext : DbContext
 
             entity.ToTable("inventory", tb => tb.HasComment("Internal inventory management functions"));
 
+            entity.HasIndex(e => e.Itemcode, "idx_inventory_fast_view").HasFilter("(units > (0)::double precision)");
+
             entity.Property(e => e.Batchcode).HasColumnName("batchcode");
             entity.Property(e => e.AdditiveDiscountPercentage).HasColumnName("additive_discount_percentage");
             entity.Property(e => e.BatchEnabled)
@@ -1053,6 +1057,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CustId).HasColumnName("cust_id");
             entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+            entity.Property(e => e.SourceType)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("source_type");
             entity.Property(e => e.ValidFrom)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("valid_from");

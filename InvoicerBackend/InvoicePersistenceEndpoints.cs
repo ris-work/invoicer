@@ -227,6 +227,57 @@ namespace InvoicerBackend
                         }
                         await ctx.SaveChangesAsync();
 
+                        //BIN CARD
+                        string binCardRef = $"sales:{invoice.InvoiceId}";
+
+                        foreach (var item in result.Items)
+                        {
+                            foreach (var batch in item.SelectedBatches)
+                            {
+                                var dbBatch = await ctx.Inventories.FirstOrDefaultAsync(b => b.Batchcode == batch.Batchcode);
+                                if (dbBatch == null) throw new Exception($"Batch {batch.Batchcode} disappeared during transaction.");
+                                if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}.");
+
+                                double oldQty = dbBatch.Units;
+                                dbBatch.Units -= batch.Quantity;
+                                double newQty = dbBatch.Units;
+
+                                // LOG TO BIN CARD (Append-Only)
+                                // Using interpolated SQL for readability and safety (parameters generated automatically)
+                                await ctx.Database.ExecuteSqlAsync($@"
+                                    INSERT INTO inventory_movements 
+                                    (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
+                                     reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
+                                     volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled, action_type) 
+                                    VALUES 
+                                    ({dbBatch.Itemcode}, {dbBatch.Batchcode}, {oldQty}, {newQty}, {newQty}, {DateTime.UtcNow}, 
+                                     {DateTime.UtcNow}, {binCardRef}, 'Sale', {false}, {dbBatch.CostPrice}, {dbBatch.SellingPrice}, 
+                                     {dbBatch.MarkedPrice}, {dbBatch.Suppliercode}, {dbBatch.VolumeDiscounts}, {dbBatch.UserDiscounts}, 
+                                     {dbBatch.MeasurementUnit}, {dbBatch.PackedSize}, {dbBatch.MfgDate}, {dbBatch.ExpDate}, 
+                                     {dbBatch.BatchEnabled}, 'SALE')
+                                ");
+                            }
+                        }
+
+                        // 8. ISSUE LOYALTY POINTS (NEW ISSUANCE)
+                        if (result.LoyaltyPointsFinal > 0)
+                        {
+                            // Determine expiry (e.g., 1 year from now, or null for no expiry)
+                            // Using DateTime.UtcNow.AddYears(1) for standard expiry policy.
+                            var newPoints = new LoyaltyPoint
+                            {
+                                CustId = invoiceData.PiiId,
+                                Amount = result.LoyaltyPointsFinal,
+                                ValidUntil = DateTime.UtcNow.AddYears(1),
+                                ValidFrom = DateTime.UtcNow,
+                                InvoiceId = invoice.InvoiceId,
+                                SourceType = "INVOICE"
+                            };
+                            ctx.LoyaltyPoints.Add(newPoints);
+                        }
+
+                        await ctx.SaveChangesAsync();
+
                         // 9. Finalize
                         if (Req.TempId.HasValue)
                         {

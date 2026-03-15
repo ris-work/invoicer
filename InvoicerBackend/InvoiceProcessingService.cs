@@ -379,6 +379,8 @@ namespace InvoicerBackend
                 }
             }
 
+            
+
             return result;
         }
 

@@ -332,6 +332,24 @@ namespace InvoicerBackend
     "Refresh"
 );
 
+            // Get Loyalty Point Balance
+            app.AddAsyncEndpointWithBearerAuth<long, LoyaltyPointsBalanceResponse>(
+                "GetLoyaltyPointsBalance",
+                async (PiiIdI, LoginInfo) =>
+                {
+                    var PiiId = (long)PiiIdI;
+                    using var ctx = new NewinvContext();
+
+                    // Use the helper to calculate valid points
+                    double balance = LoyaltyPointsManager.GetTotalValidPoints(ctx, PiiId);
+
+                    return new LoyaltyPointsBalanceResponse { Balance = balance };
+                },
+                "Refresh"
+            );
+
+
+
             return app;
         }
 

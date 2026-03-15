@@ -16,4 +16,6 @@ public partial class LoyaltyPoint
     public long CustId { get; set; }
 
     public double Amount { get; set; }
+
+    public string SourceType { get; set; } = null!;
 }
