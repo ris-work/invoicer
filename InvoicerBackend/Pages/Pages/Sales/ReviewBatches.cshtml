@@ -325,8 +325,10 @@
                 <p><strong>Total LP Earned:</strong> ${lpFinal.toFixed(2)}</p>
             </div>`;
 
+
             // Actions
             html += `<div style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="addMore()">Add More Items</button>
                 <button class="btn btn-success" onclick="pay()">PAY (Post)</button>
                 <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
             </div>`;
@@ -336,7 +338,12 @@
 
         // --- ACTIONS ---
 
-                async function removeItem(index) {
+        async function addMore() {
+            // Simply redirect back to the Item Selection step
+            window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+        }
+
+        async function removeItem(index) {
             if (!confirm("Remove this item from the order?")) return;
             const token = await getCookie("auth-token");
 
