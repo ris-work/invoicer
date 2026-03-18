@@ -10,11 +10,11 @@ namespace InvoicerBackend
             ctx.EnsureSerializableTransaction();
             var DECount = ctx
                 .AccountsBalances.Where(a =>
-                    a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo
+                    a.AccountNo == AccJE.DebitAccountNo
                 ).Count();
             var CECount = ctx
                 .AccountsBalances.Where(a =>
-                    a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo
+                    a.AccountNo == AccJE.CreditAccountNo
                 )
                 .Count();
             Console.WriteLine($"Journal Entry: Debit Account Matched Count: {DECount} Credit Account Matched Count: {CECount}");
@@ -33,15 +33,15 @@ namespace InvoicerBackend
             );
             ctx
                 .AccountsBalances.Where(a =>
-                    a.AccountType == AccJE.CreditAccountType && a.AccountNo == AccJE.CreditAccountNo
+                    a.AccountNo == AccJE.CreditAccountNo
                 )
-                .First()
+                .Single()
                 .Amount -= AccJE.Amount;
             ctx
                 .AccountsBalances.Where(a =>
-                    a.AccountType == AccJE.DebitAccountType && a.AccountNo == AccJE.DebitAccountNo
+                    a.AccountNo == AccJE.DebitAccountNo
                 )
-                .First()
+                .Single()
                 .Amount += AccJE.Amount;
         }
 

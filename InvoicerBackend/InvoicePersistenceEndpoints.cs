@@ -88,6 +88,8 @@ namespace InvoicerBackend
                     var Req = (PostInvoiceRequest)ReqI;
                     using var ctx = new NewinvContext();
                     using var tx = await ctx.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    // Initialize this at the start of your processing logic
+                    var pendingMovements = new List<InventoryMovement>();
 
                     try
                     {
@@ -119,6 +121,8 @@ namespace InvoicerBackend
                             };
                         }
 
+                        
+
                         // 3. Deduct Inventory
                         foreach (var item in result.Items)
                         {
@@ -126,10 +130,45 @@ namespace InvoicerBackend
                             {
                                 var dbBatch = await ctx.Inventories.FirstOrDefaultAsync(b => b.Batchcode == batch.Batchcode);
                                 if (dbBatch == null) throw new Exception($"Batch {batch.Batchcode} disappeared during transaction.");
-                                if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}.");
+                                if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}, found: {dbBatch.Units} instead of {batch.Quantity}.");
 
+                                double oldQty = dbBatch.Units;
                                 dbBatch.Units -= batch.Quantity;
                                 dbBatch.LastCountedAt = DateTime.UtcNow;
+                                double newQty = dbBatch.Units;
+
+                                // Capture the current time once to ensure consistency
+                                var currentTime = DateTime.UtcNow;
+
+                                var movement = new InventoryMovement
+                                {
+                                    Itemcode = dbBatch.Itemcode,
+                                    Batchcode = dbBatch.Batchcode,
+                                    FromUnits = oldQty,
+                                    ToUnits = newQty,
+                                    Units = newQty, // Matching your SQL logic where units = newQty
+                                    EnteredTime = currentTime,
+                                    LastCountedAt = currentTime,
+                                    Reference = "binCardRef - To be filled, this is an error", // You can update this property later if needed
+                                    Remarks = "Sale",
+                                    IsOneOff = false,
+                                    CostPrice = dbBatch.CostPrice,
+                                    SellingPrice = dbBatch.SellingPrice,
+                                    MarkedPrice = dbBatch.MarkedPrice,
+                                    Suppliercode = dbBatch.Suppliercode,
+                                    VolumeDiscounts = dbBatch.VolumeDiscounts,
+                                    UserDiscounts = dbBatch.UserDiscounts,
+                                    MeasurementUnit = dbBatch.MeasurementUnit,
+                                    PackedSize = dbBatch.PackedSize,
+                                    MfgDate = dbBatch.MfgDate,
+                                    ExpDate = dbBatch.ExpDate,
+                                    BatchEnabled = dbBatch.BatchEnabled
+                                };
+
+                                // Add to the pending list
+                                pendingMovements.Add(movement);
+
+                                
                             }
                         }
 
@@ -260,33 +299,21 @@ namespace InvoicerBackend
                         //BIN CARD
                         string binCardRef = $"sales:{invoice.InvoiceId}";
 
-                        foreach (var item in result.Items)
+                        foreach (var m in pendingMovements)
                         {
-                            foreach (var batch in item.SelectedBatches)
-                            {
-                                var dbBatch = await ctx.Inventories.FirstOrDefaultAsync(b => b.Batchcode == batch.Batchcode);
-                                if (dbBatch == null) throw new Exception($"Batch {batch.Batchcode} disappeared during transaction.");
-                                if (dbBatch.Units < batch.Quantity) throw new Exception($"Race condition: Insufficient stock for Batch {batch.Batchcode}.");
+                            // If you have the invoice number now, you can inject it into m.Reference before this call
 
-                                double oldQty = dbBatch.Units;
-                                dbBatch.Units -= batch.Quantity;
-                                double newQty = dbBatch.Units;
-
-                                // LOG TO BIN CARD (Append-Only)
-                                // Using interpolated SQL for readability and safety (parameters generated automatically)
-                                await ctx.Database.ExecuteSqlAsync($@"
-                                    INSERT INTO inventory_movements 
-                                    (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
-                                     reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
-                                     volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
-                                    VALUES 
-                                    ({dbBatch.Itemcode}, {dbBatch.Batchcode}, {oldQty}, {newQty}, {newQty}, {DateTime.UtcNow}, 
-                                     {DateTime.UtcNow}, {binCardRef}, 'Sale', {false}, {dbBatch.CostPrice}, {dbBatch.SellingPrice}, 
-                                     {dbBatch.MarkedPrice}, {dbBatch.Suppliercode}, {dbBatch.VolumeDiscounts}, {dbBatch.UserDiscounts}, 
-                                     {dbBatch.MeasurementUnit}, {dbBatch.PackedSize}, {dbBatch.MfgDate}, {dbBatch.ExpDate}, 
-                                     {dbBatch.BatchEnabled})
-                                ");
-                            }
+                            await ctx.Database.ExecuteSqlAsync($@"
+                                INSERT INTO inventory_movements 
+                             (itemcode, batchcode, from_units, to_units, units, entered_time, last_counted_at, 
+                                 reference, remarks, is_one_off, cost_price, selling_price, marked_price, suppliercode, 
+                                volume_discounts, user_discounts, measurement_unit, packed_size, mfg_date, exp_date, batch_enabled) 
+                                VALUES 
+                                ({m.Itemcode}, {m.Batchcode}, {m.FromUnits}, {m.ToUnits}, {m.Units}, {m.EnteredTime}, 
+                                 {m.LastCountedAt}, {binCardRef}, {m.Remarks}, {m.IsOneOff}, {m.CostPrice}, {m.SellingPrice}, 
+                                {m.MarkedPrice}, {m.Suppliercode}, {m.VolumeDiscounts}, {m.UserDiscounts}, 
+                                {m.MeasurementUnit}, {m.PackedSize}, {m.MfgDate}, {m.ExpDate}, {m.BatchEnabled})
+                            ");
                         }
 
                         // 8. ISSUE LOYALTY POINTS (NEW ISSUANCE)
@@ -393,5 +420,10 @@ namespace InvoicerBackend
         public double Discrepancy { get; set; } // NEW: The balance (negative = unpaid)
         public bool IsSettled { get; set; }     // NEW: True if paid in full
         public double LoyaltyPointsFinal { get; set; }
+    }
+
+    public class BinCardEntry
+    {
+        //public bool 
     }
 }

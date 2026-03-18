@@ -139,7 +139,9 @@ namespace InvoicerBackend
                     }
 
                     journalEntry.DebitAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.DebitAccountNo))?.AccountName;
+                    
                     journalEntry.CreditAccountName = (await ctx.AccountsInformations.FindAsync(journalEntry.CreditAccountNo))?.AccountName;
+                    System.Console.WriteLine($"Adjustment: AssetAccountNo: {assetAccountNo} AdjAccountNo: {adjAccountNo}");
 
                     JournalEntries.AddJournalEntry(ctx, journalEntry);
                 }
