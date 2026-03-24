@@ -121,8 +121,17 @@ namespace InvoicerBackend
                             System.Console.WriteLine(
                                 $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
                             );
+                            // In your JSOptions configuration
+                            var JSOptions = new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true
+                            };
+
+                            // Add this line to your existing options setup
+                            JSOptions.Converters.Add(new FlexibleDateTimeOffsetConverter());
                             var AuthenticatedInner = JsonSerializer.Deserialize<T>(
-                                VerificationResultAndMessage.RequestBody
+                                VerificationResultAndMessage.RequestBody, JSOptions
                             );
                             if (AuthenticatedInner != null)
                             {
@@ -175,8 +184,17 @@ namespace InvoicerBackend
                             System.Console.WriteLine(
                                 $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
                             );
+                            // In your JSOptions configuration
+                            var JSOptions = new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true
+                            };
+
+                            // Add this line to your existing options setup
+                            JSOptions.Converters.Add(new FlexibleDateTimeOffsetConverter());
                             var AuthenticatedInner = JsonSerializer.Deserialize<T>(
-                                VerificationResultAndMessage.RequestBody
+                                VerificationResultAndMessage.RequestBody, JSOptions
                             );
                             if (AuthenticatedInner != null)
                             {
@@ -395,8 +413,17 @@ namespace InvoicerBackend
                             System.Console.WriteLine(
                                 $"Authenticated Request Content: {VerificationResultAndMessage.RequestBody}, Length: {VerificationResultAndMessage.RequestBody.Length}"
                             );
+                            // In your JSOptions configuration
+                            var JSOptions = new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true
+                            };
+
+                            // Add this line to your existing options setup
+                            JSOptions.Converters.Add(new FlexibleDateTimeOffsetConverter());
                             var AuthenticatedInner = JsonSerializer.Deserialize<T>(
-                                VerificationResultAndMessage.RequestBody
+                                VerificationResultAndMessage.RequestBody, JSOptions
                             );
                             if (AuthenticatedInner != null)
                             {

@@ -274,6 +274,7 @@ app.AddPrivilegeUtilities();
 app.AddInvoicePersistenceEndpoints();
 
 app.AddInventoryAdjustmentsEndpoints();
+app.AddPurchaseEndpoints();
 
 
 app.AddDiagnosticEndpoints();

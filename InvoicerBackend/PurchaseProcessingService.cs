@@ -22,72 +22,39 @@ namespace InvoicerBackend
 
     public static class PurchaseProcessingService
     {
-        /// <summary>
-        /// Runs the calculation engine and validation for a purchase invoice.
-        /// </summary>
         public static PurchaseProcessResult ProcessPurchase(
             NewinvContext ctx,
             ReceivedInvoice header,
             List<Purchase> items)
         {
-            // 1. Run Reactive Calculations per Item
             foreach (var item in items)
             {
-                // A. Quantities
+                // 1. Total Units (Paid + Free)
                 item.TotalUnits = ((item.PackQuantity + item.FreePacks) * item.PackSize)
                                   + item.ReceivedAsUnitQuantity
                                   + item.FreeUnits;
 
-                // B. Costs & Gross
+                // 2. Gross Total (Sum of independent costs)
+                // FIX: Do not derive CostPerUnit from CostPerPack or vice versa.
                 item.GrossTotal = (item.PackQuantity * item.CostPerPack)
                                   + (item.ReceivedAsUnitQuantity * item.CostPerUnit);
 
-                // C. Discounts
-                // Note: If Percentage is provided, Absolute takes precedence in our logic usually, 
-                // but here we assume the UI sends us the calculated Absolute.
-                // We re-calc % just to be sure or vice-versa. 
-                // For backend, we trust the Absolute from UI but verify logic.
-                if (item.GrossTotal > 0 && item.DiscountPercentage > 0 && item.DiscountAbsolute == 0)
-                {
-                    item.DiscountAbsolute = item.GrossTotal * (item.DiscountPercentage / 100.0);
-                }
-
-                // D. Net Price & VAT
+                // 3. Discounts
                 item.NetTotalPrice = item.GrossTotal - item.DiscountAbsolute;
 
-                // VAT Logic
-                if (item.VatPercentage > 0 && item.VatAbsolute == 0)
-                {
-                    item.VatAbsolute = item.NetTotalPrice * (item.VatPercentage / 100.0);
-                }
-
+                // 4. VAT
                 item.TotalAmountDue = item.NetTotalPrice + item.VatAbsolute;
 
-                // E. Unit Costs
+                // 5. Net Total Cost (Accounting for Disallowed VAT)
+                item.NetTotalCost = item.IsVatADisallowedInputTax ? item.TotalAmountDue : item.NetTotalPrice;
+
+                // 6. Effective Unit Cost (NetCostPerUnit)
+                // FIX: This is the key metric for management. 
+                // It spreads the NetTotalCost over ALL units (Paid + Free).
                 item.GrossCostPerUnit = item.TotalUnits > 0 ? item.GrossTotal / item.TotalUnits : 0;
+                item.NetCostPerUnit = item.TotalUnits > 0 ? item.NetTotalCost / item.TotalUnits : 0;
 
-                // F. Net Cost Per Unit (Critical Logic)
-                if (item.TotalUnits > 0)
-                {
-                    if (item.IsVatADisallowedInputTax)
-                    {
-                        // VAT is absorbed into cost
-                        item.NetCostPerUnit = item.TotalAmountDue / item.TotalUnits;
-                        item.NetTotalCost = item.TotalAmountDue;
-                    }
-                    else
-                    {
-                        item.NetCostPerUnit = item.NetTotalPrice / item.TotalUnits;
-                        item.NetTotalCost = item.NetTotalPrice;
-                    }
-                }
-                else
-                {
-                    item.NetCostPerUnit = 0;
-                    item.NetTotalCost = 0;
-                }
-
-                // G. Markup
+                // 7. Markup
                 if (item.SellingPrice > 0 && item.NetCostPerUnit > 0)
                 {
                     item.GrossMarkupAbsolute = item.SellingPrice - item.NetCostPerUnit;
@@ -95,10 +62,10 @@ namespace InvoicerBackend
                 }
             }
 
-            // 2. Aggregate Header
+            // Header Aggregation
             items.CalculateInvoice(header);
 
-            // 3. Validation
+            // Validation
             var validation = header.ValidateInvoice(items);
             if (!validation.Valid)
             {
