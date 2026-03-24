@@ -1,0 +1,51 @@
+﻿@page "/Pages/Flows/BeginFlowPurchase"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Purchase</title>
+</head>
+<body>
+    <p>Initializing Purchase Flow...</p>
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function init() {
+            const flowId = 'flow-' + Date.now();
+            const token = getCookie("auth-token");
+
+            const steps = [
+                "/Pages/SearchAndSelect/PiiSelect", // Select Supplier
+                "/Pages/SearchAndSelect/ItemSelect", // Select Item
+                "/Pages/Purchase/Entry",             // Enter Details
+                "/Pages/Purchase/Review"             // Review & Post
+            ];
+
+            // Init
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowSteps", Value: JSON.stringify(steps) })
+            });
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "0" })
+            });
+
+            // Init Items List
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "purchaseItems", Value: "[]" })
+            });
+
+            window.location.href = steps[0] + "?flowId=" + flowId;
+        }
+        init();
+    </script>
+</body>
+</html>

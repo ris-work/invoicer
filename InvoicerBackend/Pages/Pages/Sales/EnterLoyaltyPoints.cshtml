@@ -1,0 +1,153 @@
+﻿@page "/Pages/Sales/EnterLoyaltyPoints"
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redeem Loyalty Points</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .lp-balance {
+            font-size: 1.5em;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .lp-equivalent {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Redeem Loyalty Points</h2>
+        <div id="permWarning" class="perm-warning" style="display:none;"></div>
+
+        <div id="status">Loading Balance...</div>
+
+        <div id="form" style="display:none;">
+            <div class="summary">
+                <p>Your Current Balance:</p>
+                <div class="lp-balance"><span id="lpBalance">0.00</span> Points</div>
+                <div class="lp-equivalent">(Equivalent to $<span id="lpValue">0.00</span>)</div>
+            </div>
+
+            <div class="summary" style="background:#e9ecef;">
+                <p>Order Remaining Total:</p>
+                <div style="font-size: 1.2em; color:#d9534f;">$<span id="orderRemaining">0.00</span></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Points to Redeem</label>
+                <!-- step="1" ensures integer points -->
+                <input type="number" id="pointsInput" step="1" min="0" class="form-control" placeholder="Enter points...">
+            </div>
+
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                You will receive $<span id="convertPreview">0.00</span> credit.
+            </p>
+
+            <button class="btn btn-success" onclick="redeem()">Apply Points</button>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const requiredEndpoints = ["GetLoyaltyPointsBalance", "SimulateSaleWithPayments", "SetFlowData"];
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        let maxPoints = 0; // Store balance
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+            const token = await getCookie("auth-token");
+
+            // 1. Get PII ID
+            const piiId = await getFlowKey("selectedPiiId");
+            if (!piiId) { document.getElementById('status').innerText = "Error: No customer selected."; return; }
+
+            // 2. Get LP Balance
+            const resLP = await fetch('/GetLoyaltyPointsBalance', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(parseInt(piiId))
+            });
+            const dataLP = await resLP.json();
+            maxPoints = dataLP.balance || 0;
+
+            document.getElementById('lpBalance').innerText = maxPoints.toFixed(0); // Points usually integer
+            document.getElementById('lpValue').innerText = maxPoints.toFixed(2);   // Value is 1:1
+
+            // 3. Get Order Remaining
+            const items = JSON.parse(await getFlowKey("orderItems") || "[]");
+            const payments = JSON.parse(await getFlowKey("payments") || "[]");
+            const resSim = await fetch('/SimulateSaleWithPayments', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ PiiId: parseInt(piiId), Items: items, Payments: payments })
+            });
+            const dataSim = await resSim.json();
+            const remaining = dataSim.grandTotal - dataSim.totalPaid;
+
+            document.getElementById('orderRemaining').innerText = remaining.toFixed(2);
+
+            // 4. Setup UI
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+
+            // Auto-fill max possible (limit by balance AND remaining total)
+            // The max points we can use is limited by the order total (since 1pt=$1)
+            // And obviously limited by balance.
+            const maxUsable = Math.min(maxPoints, remaining);
+            document.getElementById('pointsInput').max = maxUsable;
+            // Optional: Auto-fill max
+            // document.getElementById('pointsInput').value = Math.floor(maxUsable);
+
+            // Live Preview
+            document.getElementById('pointsInput').addEventListener('input', (e) => {
+                const pts = parseFloat(e.target.value) || 0;
+                document.getElementById('convertPreview').innerText = pts.toFixed(2);
+            });
+        }
+
+        async function redeem() {
+            const token = await getCookie("auth-token");
+            const points = parseFloat(document.getElementById('pointsInput').value);
+
+            if (!points || points <= 0) { alert("Enter valid points."); return; }
+            if (points > maxPoints) { alert("Insufficient balance."); return; }
+
+            // Save Payment
+            const payment = {
+                Type: "LP",
+                PointsRedeem: points,
+                // Amount is calculated backend side, but we can send 0 or the expected value
+                Amount: points, // 1:1 Rate assumption for payload structure
+                AccountNo: 0    // Not needed for LP, but structure requires it
+            };
+
+            const paymentsRaw = await getFlowKey("payments");
+            let payments = paymentsRaw ? JSON.parse(paymentsRaw) : [];
+            payments.push(payment);
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(payments) })
+            });
+
+            window.location.href = '/Pages/Sales/ReviewBatches?flowId=' + flowId;
+        }
+
+        async function getFlowKey(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            return (await res.json()).value;
+        }
+
+        init();
+    </script>
+</body>
+</html>

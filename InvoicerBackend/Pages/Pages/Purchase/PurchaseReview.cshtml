@@ -1,0 +1,208 @@
+﻿@page "/Pages/Purchase/Review"
+
+@*
+  FLOW: Purchase Invoice
+  STEP: Review & Post
+*@
+
+@functions { }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Purchase</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .summary-box {
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .item-list {
+            margin-top: 10px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .item-row:hover {
+                background: #fafafa;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Review Purchase Invoice</h2>
+        <div id="content" class="result-box">Loading...</div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+
+        async function run() {
+            const token = await getCookie("auth-token");
+            const contentDiv = document.getElementById('content');
+
+            const itemsVal = await getFlowKey("purchaseItems");
+            if (!itemsVal) { contentDiv.innerHTML = s`<p class="warning">No items found.</p>`; return; }
+
+            const items = JSON.parse(itemsVal);
+            if (items.length === 0) { contentDiv.innerHTML = s`<p class="warning">Item list is empty.</p>`; return; }
+
+            // Simulate with Dummy Header (First Pass)
+            let header = {
+                SupplierId: 1, // Dummy
+                SupplierName: "Unknown",
+                CreatedAt: new Date().toISOString(),
+                GrossTotal: 0,
+                VatTotal: 0,
+                TotalAmountDue: 0
+            };
+
+            // We need a supplier. Check flow.
+            const piiVal = await getFlowKey("selectedPiiId");
+            if (piiVal) {
+                header.SupplierId = parseInt(piiVal);
+                // Fetch name...
+            }
+
+            // Call Backend
+            try {
+                const res = await fetch('/SimulatePurchase', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Header: header, Items: items })
+                });
+                const result = await res.json();
+                render(result);
+            } catch (e) {
+                contentDiv.innerHTML = s`<p class="warning">Error: ${e.message}</p>`;
+            }
+        }
+
+        function render(result) {
+            const contentDiv = document.getElementById('content');
+            let html = "";
+
+            if (!result.success) {
+                html += `<p class="warning">${he(result.message)}</p>`;
+            }
+
+            // Items List
+            html += `<h3>Items</h3><div class="item-list">`;
+            result.items.forEach((item, i) => {
+                html += s`<div class="item-row">
+                    <div><strong>${item.productName}</strong> (${item.itemcode})</div>
+                    <div>Qty: ${item.totalUnits.toFixed(2)}</div>
+                    <div>Cost/Unit: ${item.netCostPerUnit.toFixed(2)}</div>
+                    <div>Total: ${item.totalAmountDue.toFixed(2)}</div>
+                    <div>
+                        <a href="/Pages/Purchase/Entry?flowId=${flowId}&editIndex=${i}" class="btn-sm btn-primary">Edit</a>
+                        <span class="remove-btn" onclick="removeItem(${i})">✕</span>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+
+            // Totals
+            const header = result.header;
+            html += s`
+                <div class="summary-box">
+                    <p><strong>Gross Total:</strong> ${header.grossTotal.toFixed(2)}</p>
+                    <p><strong>Total Discount:</strong> ${header.effectiveDiscountAbsoluteTotal.toFixed(2)}</p>
+                    <p><strong>VAT Total:</strong> ${header.vatTotal.toFixed(2)}</p>
+                    <h3><strong>Total Amount Due:</strong> ${header.totalAmountDue.toFixed(2)}</h3>
+                </div>
+            `;
+
+            html += `<div style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="addItem()">Add More Items</button>
+                <button class="btn btn-warning" onclick="saveDraft()">Save Draft</button>
+                <button class="btn btn-success" onclick="post()">POST INVOICE</button>
+            </div>`;
+
+            contentDiv.innerHTML = html;
+        }
+
+        async function addItem() {
+            window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+        }
+
+        async function removeItem(index) {
+            if(!confirm("Remove item?")) return;
+            const token = await getCookie("auth-token");
+            const data = JSON.parse(await getFlowKeyRaw("purchaseItems"));
+            let list = JSON.parse(data.value || "[]");
+            list.splice(index, 1);
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "purchaseItems", Value: JSON.stringify(list) })
+            });
+            run();
+        }
+
+        async function saveDraft() {
+            const token = await getCookie("auth-token");
+            const payload = {
+                Header: {}, // In real app, gather header inputs
+                Items: JSON.parse(await getFlowKey("purchaseItems"))
+            };
+
+            const res = await fetch('/SavePurchaseDraft', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Payload: JSON.stringify(payload) })
+            });
+            const id = await res.json();
+            alert("Draft Saved! ID: " + id);
+        }
+
+        async function post() {
+            const token = await getCookie("auth-token");
+            if(!confirm("Post this invoice? This will update inventory.")) return;
+
+            const payload = {
+                Header: { SupplierId: 1, Remarks: "Purchase via Web UI" }, // Simplified
+                Items: JSON.parse(await getFlowKey("purchaseItems"))
+            };
+
+            try {
+                const res = await fetch('/PostPurchase', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Payload: JSON.stringify(payload) })
+                });
+                const result = await res.json();
+
+                if(result.success) {
+                    alert("Invoice Posted! ID: " + result.invoiceId);
+                    window.location.href = '/Pages/Flows/BeginFlowPurchase'; // Restart
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch(e) { alert("Network Error: " + e.message); }
+        }
+
+        // Helpers
+        async function getFlowKey(key) {
+            const val = await getFlowKeyRaw(key);
+            return val ? JSON.parse(val).value : null;
+        }
+        async function getFlowKeyRaw(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            if (!res.ok) return null;
+            return await res.text();
+        }
+
+        run();
+    </script>
+</body>
+</html>

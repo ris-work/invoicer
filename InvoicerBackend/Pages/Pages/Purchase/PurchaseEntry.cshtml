@@ -1,0 +1,428 @@
+﻿@page "/Pages/Purchase/Entry"
+
+@*
+  FLOW: Purchase Invoice
+  STEP: Item Entry
+  SETS: purchaseItems (List)
+*@
+
+@functions { }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Purchase Entry</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .calc-box {
+            background: #e9ecef;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        label {
+            font-size: 0.85em;
+            color: #666;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 5px;
+        }
+
+        .header {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Purchase Entry</h2>
+        <div id="status">Loading...</div>
+        <div id="form" style="display:none;">
+
+            <!-- Item Info -->
+            <div class="header">
+                <h3 id="itemName">Select Item</h3>
+                <p>Item Code: <span id="itemCode">-</span></p>
+            </div>
+
+            <!-- Quantities -->
+            <div class="row">
+                <div class="col">
+                    <label>Pack Size</label>
+                    <input type="number" id="PackSize" oninput="recalculate('PackSize')">
+                </div>
+                <div class="col">
+                    <label>Pack Qty</label>
+                    <input type="number" id="PackQuantity" oninput="recalculate('PackQuantity')">
+                </div>
+                <div class="col">
+                    <label>Free Packs</label>
+                    <input type="number" id="FreePacks" oninput="recalculate('FreePacks')">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label>Loose Units (Add)</label>
+                    <input type="number" id="ReceivedAsUnitQuantity" oninput="recalculate('ReceivedAsUnitQuantity')">
+                </div>
+                <div class="col">
+                    <label>Free Units</label>
+                    <input type="number" id="FreeUnits" oninput="recalculate('FreeUnits')">
+                </div>
+                <div class="col" style="background: #d4edda; padding: 10px;">
+                    <label>Total Units</label>
+                    <div class="calc-box" id="TotalUnits">0</div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Costs -->
+            <div class="row">
+                <div class="col">
+                    <label>Cost Per Pack</label>
+                    <input type="number" step="0.01" id="CostPerPack" oninput="recalculate('CostPerPack')">
+                </div>
+                <div class="col">
+                    <label>Cost Per Unit</label>
+                    <input type="number" step="0.01" id="CostPerUnit" oninput="recalculate('CostPerUnit')">
+                </div>
+                <div class="col" style="background: #e8f5e9; padding: 10px;">
+                    <label>Gross Total</label>
+                    <div class="calc-box" id="GrossTotal">0.00</div>
+                </div>
+            </div>
+
+            <!-- Discount -->
+            <div class="row">
+                <div class="col">
+                    <label>Discount %</label>
+                    <input type="number" step="0.01" id="DiscountPercentage" oninput="recalculate('DiscountPercentage')">
+                </div>
+                <div class="col">
+                    <label>Discount (Abs)</label>
+                    <input type="number" step="0.01" id="DiscountAbsolute" oninput="recalculate('DiscountAbsolute')">
+                </div>
+                <div class="col" style="background: #fff3cd; padding: 10px;">
+                    <label>Net Price</label>
+                    <div class="calc-box" id="NetTotalPrice">0.00</div>
+                </div>
+            </div>
+
+            <!-- VAT -->
+            <div class="row">
+                <div class="col">
+                    <label>VAT %</label>
+                    <input type="number" step="0.01" id="VatPercentage" oninput="recalculate('VatPercentage')">
+                </div>
+                <div class="col">
+                    <label>VAT (Abs)</label>
+                    <input type="number" step="0.01" id="VatAbsolute" oninput="recalculate('VatAbsolute')">
+                </div>
+                <div class="col">
+                    <label>VAT Disallowed?</label>
+                    <select id="IsVatADisallowedInputTax" onchange="recalculate('IsVatADisallowedInputTax')">
+                        <option value="false">No (Reclaimable)</option>
+                        <option value="true">Yes (Absorb into Cost)</option>
+                    </select>
+                </div>
+                <div class="col" style="background: #cce5ff; padding: 10px;">
+                    <label>Total Due</label>
+                    <div class="calc-box" id="TotalAmountDue">0.00</div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Costing & Pricing -->
+            <div class="row">
+                <div class="col" style="background: #f8d7da; padding: 10px;">
+                    <label>Net Cost/Unit</label>
+                    <div class="calc-box" id="NetCostPerUnit">0.00</div>
+                </div>
+                <div class="col">
+                    <label>Markup %</label>
+                    <input type="number" step="0.01" id="GrossMarkupPercentage" oninput="recalculate('GrossMarkupPercentage')">
+                </div>
+                <div class="col">
+                    <label>Selling Price</label>
+                    <input type="number" step="0.01" id="SellingPrice" oninput="recalculate('SellingPrice')">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label>Expiry Date</label>
+                    <input type="date" id="ExpiryDate">
+                </div>
+                <div class="col">
+                    <label>Batch ID</label>
+                    <input type="text" id="ManufacturerBatchId">
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" onclick="addItem(true)">Add & Next</button>
+                <button class="btn btn-primary" onclick="addItem(false)">Add & Review</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        let currentItem = null;
+
+        async function init() {
+            const token = await getCookie("auth-token");
+
+            // Check if we are editing an existing item or new
+            const editIndex = params.get('editIndex');
+
+            if (editIndex !== null) {
+                // Load existing item
+                const res = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "purchaseItems" })
+                });
+                const data = await res.json();
+                const items = JSON.parse(data.value || "[]");
+                currentItem = items[parseInt(editIndex)];
+            } else {
+                // Load Item Details from Flow
+                const resItem = await fetch('/GetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "selectedItemCode" })
+                });
+                const dataItem = await resItem.json();
+                if (!dataItem.value) { alert("No item selected."); return; }
+
+                currentItem = {
+                    Itemcode: parseInt(dataItem.value),
+                    ProductName: "Loading...",
+                    PackSize: 1, PackQuantity: 0, FreePacks: 0, ReceivedAsUnitQuantity: 0, FreeUnits: 0,
+                    CostPerPack: 0, CostPerUnit: 0, DiscountPercentage: 0, DiscountAbsolute: 0,
+                    VatPercentage: 0, VatAbsolute: 0, IsVatADisallowedInputTax: false,
+                    GrossMarkupPercentage: 20, SellingPrice: 0,
+                    TotalUnits: 0, GrossTotal: 0, NetTotalPrice: 0, TotalAmountDue: 0, NetCostPerUnit: 0
+                };
+
+                // Fetch Catalogue Details
+                const ctxRes = await fetch('/GetPricingContext', { // Reusing endpoint
+                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                     body: JSON.stringify(currentItem.Itemcode)
+                });
+                const ctx = await ctxRes.json();
+                currentItem.ProductName = ctx.DefaultSellingPrice || "Item " + currentItem.Itemcode; // Placeholder
+                currentItem.SellingPrice = ctx.DefaultSellingPrice || 0;
+            }
+
+            // Render
+            renderForm();
+            recalculate('Init');
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        }
+
+        function renderForm() {
+            // Map currentItem to DOM
+            document.getElementById('itemCode').textContent = currentItem.Itemcode;
+            document.getElementById('itemName').textContent = currentItem.ProductName;
+
+            const fields = ["PackSize", "PackQuantity", "FreePacks", "ReceivedAsUnitQuantity", "FreeUnits",
+                            "CostPerPack", "CostPerUnit", "DiscountPercentage", "DiscountAbsolute",
+                            "VatPercentage", "VatAbsolute", "IsVatADisallowedInputTax",
+                            "GrossMarkupPercentage", "SellingPrice", "ExpiryDate", "ManufacturerBatchId"];
+
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) {
+                    if(el.type === 'checkbox' || el.tagName === 'SELECT')
+                        el.value = currentItem[f];
+                    else
+                        el.value = currentItem[f];
+                }
+            });
+
+            updateCalculatedFields();
+        }
+
+        function updateCalculatedFields() {
+            document.getElementById('TotalUnits').textContent = currentItem.TotalUnits.toFixed(2);
+            document.getElementById('GrossTotal').textContent = currentItem.GrossTotal.toFixed(2);
+            document.getElementById('NetTotalPrice').textContent = currentItem.NetTotalPrice.toFixed(2);
+            document.getElementById('TotalAmountDue').textContent = currentItem.TotalAmountDue.toFixed(2);
+            document.getElementById('NetCostPerUnit').textContent = currentItem.NetCostPerUnit.toFixed(4);
+        }
+
+        // REACTIVE ENGINE
+        function recalculate(origin) {
+            // 1. Read Inputs
+            const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+            currentItem.PackSize = getVal('PackSize');
+            currentItem.PackQuantity = getVal('PackQuantity');
+            currentItem.FreePacks = getVal('FreePacks');
+            currentItem.ReceivedAsUnitQuantity = getVal('ReceivedAsUnitQuantity');
+            currentItem.FreeUnits = getVal('FreeUnits');
+
+            currentItem.CostPerPack = getVal('CostPerPack');
+            currentItem.CostPerUnit = getVal('CostPerUnit');
+
+            currentItem.IsVatADisallowedInputTax = document.getElementById('IsVatADisallowedInputTax').value === 'true';
+
+            // 2. Quantities
+            currentItem.TotalUnits =
+                ((currentItem.PackQuantity + currentItem.FreePacks) * currentItem.PackSize)
+                + currentItem.ReceivedAsUnitQuantity
+                + currentItem.FreeUnits;
+
+            // 3. Costs & Gross
+            currentItem.GrossTotal = (currentItem.PackQuantity * currentItem.CostPerPack)
+                                     + (currentItem.ReceivedAsUnitQuantity * currentItem.CostPerUnit);
+
+            // 4. Discounts (Cycle Prevention)
+            if (origin === 'DiscountPercentage') {
+                currentItem.DiscountPercentage = getVal('DiscountPercentage');
+                currentItem.DiscountAbsolute = currentItem.GrossTotal * (currentItem.DiscountPercentage / 100.0);
+                document.getElementById('DiscountAbsolute').value = currentItem.DiscountAbsolute.toFixed(2);
+            } else {
+                // Default behavior: Absolute dominates
+                currentItem.DiscountAbsolute = getVal('DiscountAbsolute');
+                if (currentItem.GrossTotal > 0) {
+                    currentItem.DiscountPercentage = (currentItem.DiscountAbsolute / currentItem.GrossTotal) * 100.0;
+                    if (origin !== 'DiscountAbsolute') { // Don't loop back if we just typed it
+                         document.getElementById('DiscountPercentage').value = currentItem.DiscountPercentage.toFixed(2);
+                    }
+                }
+            }
+
+            currentItem.NetTotalPrice = currentItem.GrossTotal - currentItem.DiscountAbsolute;
+
+            // 5. VAT (Cycle Prevention)
+            if (origin === 'VatPercentage') {
+                currentItem.VatPercentage = getVal('VatPercentage');
+                currentItem.VatAbsolute = currentItem.NetTotalPrice * (currentItem.VatPercentage / 100.0);
+                document.getElementById('VatAbsolute').value = currentItem.VatAbsolute.toFixed(2);
+            } else {
+                currentItem.VatAbsolute = getVal('VatAbsolute');
+                if (currentItem.NetTotalPrice > 0) {
+                    currentItem.VatPercentage = (currentItem.VatAbsolute / currentItem.NetTotalPrice) * 100.0;
+                    if (origin !== 'VatAbsolute') {
+                        document.getElementById('VatPercentage').value = currentItem.VatPercentage.toFixed(2);
+                    }
+                }
+            }
+
+            currentItem.TotalAmountDue = currentItem.NetTotalPrice + currentItem.VatAbsolute;
+
+            // 6. Net Costs
+            if (currentItem.TotalUnits > 0) {
+                if (currentItem.IsVatADisallowedInputTax) {
+                    currentItem.NetCostPerUnit = currentItem.TotalAmountDue / currentItem.TotalUnits;
+                } else {
+                    currentItem.NetCostPerUnit = currentItem.NetTotalPrice / currentItem.TotalUnits;
+                }
+            } else {
+                currentItem.NetCostPerUnit = 0;
+            }
+
+            // 7. Pricing (Cycle Prevention)
+            if (origin === 'GrossMarkupPercentage') {
+                currentItem.GrossMarkupPercentage = getVal('GrossMarkupPercentage');
+                currentItem.SellingPrice = currentItem.NetCostPerUnit * (1 + (currentItem.GrossMarkupPercentage / 100.0));
+                document.getElementById('SellingPrice').value = currentItem.SellingPrice.toFixed(2);
+            } else if (origin === 'SellingPrice') {
+                currentItem.SellingPrice = getVal('SellingPrice');
+                if (currentItem.NetCostPerUnit > 0) {
+                    currentItem.GrossMarkupPercentage = ((currentItem.SellingPrice - currentItem.NetCostPerUnit) / currentItem.NetCostPerUnit) * 100.0;
+                    document.getElementById('GrossMarkupPercentage').value = currentItem.GrossMarkupPercentage.toFixed(2);
+                }
+            }
+
+            // 8. Cost Per Unit / Pack Sync
+            if (origin === 'CostPerPack' && currentItem.PackSize > 0) {
+                currentItem.CostPerUnit = currentItem.CostPerPack / currentItem.PackSize;
+                document.getElementById('CostPerUnit').value = currentItem.CostPerUnit.toFixed(4);
+            } else if (origin === 'CostPerUnit') {
+                currentItem.CostPerPack = currentItem.CostPerUnit * currentItem.PackSize;
+                document.getElementById('CostPerPack').value = currentItem.CostPerPack.toFixed(2);
+            }
+
+            updateCalculatedFields();
+        }
+
+        async function addItem(addMore) {
+            const token = await getCookie("auth-token");
+
+            // Capture remaining fields
+            currentItem.ExpiryDate = document.getElementById('ExpiryDate').value;
+            currentItem.ManufacturerBatchId = document.getElementById('ManufacturerBatchId').value;
+
+            // Backend Validation (Optional but recommended)
+            const simRes = await fetch('/SimulatePurchase', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Header: {}, Items: [currentItem] }) // Header empty for item check
+            });
+            const sim = await simRes.json();
+
+            // We allow saving even with warnings, but block on hard errors
+            // Note: Header validation will fail here, we ignore it.
+            // Purchase validation returns specific messages.
+            if (!sim.success && sim.message && !sim.message.includes("SupplierId")) {
+                alert("Validation Error: " + sim.message);
+                return;
+            }
+
+            // Load existing list
+            const resList = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "purchaseItems" })
+            });
+            const dataList = await resList.json();
+            let list = JSON.parse(dataList.value || "[]");
+
+            // Append or Update
+            const editIndex = params.get('editIndex');
+            if (editIndex !== null) {
+                list[parseInt(editIndex)] = currentItem;
+            } else {
+                list.push(currentItem);
+            }
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "purchaseItems", Value: JSON.stringify(list) })
+            });
+
+            if (addMore) {
+                window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
+            } else {
+                window.location.href = '/Pages/Purchase/Review?flowId=' + flowId;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
