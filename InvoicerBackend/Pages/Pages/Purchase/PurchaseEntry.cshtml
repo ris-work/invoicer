@@ -187,6 +187,9 @@
                 const ctx = await ctxRes.json();
                 currentItem.ProductName = ctx.DefaultSellingPrice || "Item " + currentItem.Itemcode;
                 currentItem.SellingPrice = ctx.DefaultSellingPrice || 0;
+                currentItem.ProductName = ctx.itemName || "Item " + currentItem.Itemcode;
+                currentItem.CurrentStock = ctx.currentStock || 0;
+                currentItem.SellingPrice = ctx.defaultSellingPrice || 0;
             }
 
             renderForm();
@@ -220,7 +223,7 @@
             document.getElementById('NetTotalCost').textContent = currentItem.NetTotalCost.toFixed(2);
         }
 
-        function recalculate(origin) {
+                function recalculate(origin) {
             const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
 
             // 1. Inputs
@@ -242,44 +245,88 @@
                 + currentItem.ReceivedAsUnitQuantity
                 + currentItem.FreeUnits;
 
-            // 4. Gross Total (Independent Sum)
+            // 4. Gross Total
             currentItem.GrossTotal = (currentItem.PackQuantity * currentItem.CostPerPack)
                                      + (currentItem.ReceivedAsUnitQuantity * currentItem.CostPerUnit);
 
-            // 5. Discounts
+            // --- DISCOUNT REACTIVITY FIX ---
+            const discPctField = document.getElementById('DiscountPercentage');
+            const discAbsField = document.getElementById('DiscountAbsolute');
+
+            // Helper to safely calculate percentage
+            const calcDiscPct = () => {
+                if (currentItem.GrossTotal === 0) return 0; // Default to 0 if no base
+                return (currentItem.DiscountAbsolute / currentItem.GrossTotal) * 100.0;
+            };
+
             if (origin === 'DiscountPercentage') {
                 currentItem.DiscountPercentage = getVal('DiscountPercentage');
                 currentItem.DiscountAbsolute = currentItem.GrossTotal * (currentItem.DiscountPercentage / 100.0);
-                document.getElementById('DiscountAbsolute').value = currentItem.DiscountAbsolute.toFixed(2);
-            } else {
+                discAbsField.value = currentItem.DiscountAbsolute.toFixed(2);
+            }
+            else if (origin === 'DiscountAbsolute') {
                 currentItem.DiscountAbsolute = getVal('DiscountAbsolute');
-                if (currentItem.GrossTotal > 0) {
-                    currentItem.DiscountPercentage = (currentItem.DiscountAbsolute / currentItem.GrossTotal) * 100.0;
-                    if (origin !== 'DiscountAbsolute') document.getElementById('DiscountPercentage').value = currentItem.DiscountPercentage.toFixed(2);
+                // FIX: Always update percentage, even if Gross is 0 (results in 0)
+                currentItem.DiscountPercentage = calcDiscPct();
+                discPctField.value = currentItem.DiscountPercentage.toFixed(2);
+            }
+            else {
+                // If Cost/Qty changed:
+                // We try to preserve the user's last intent.
+                // If they typed Absolute recently, Abs is in the box. We recalc %.
+                // If they typed Percentage recently, % is in the box. We recalc Abs.
+
+                // Heuristic: If Abs field is non-zero, assume Abs is the master.
+                if (getVal('DiscountAbsolute') !== 0) {
+                    currentItem.DiscountAbsolute = getVal('DiscountAbsolute');
+                    currentItem.DiscountPercentage = calcDiscPct();
+                    discPctField.value = currentItem.DiscountPercentage.toFixed(2);
+                } else {
+                    // Else assume Percentage is master (or both are 0)
+                    currentItem.DiscountPercentage = getVal('DiscountPercentage');
+                    currentItem.DiscountAbsolute = currentItem.GrossTotal * (currentItem.DiscountPercentage / 100.0);
+                    discAbsField.value = currentItem.DiscountAbsolute.toFixed(2);
                 }
             }
 
             currentItem.NetTotalPrice = currentItem.GrossTotal - currentItem.DiscountAbsolute;
 
-            // 6. VAT
+            // --- VAT REACTIVITY FIX ---
+            const vatPctField = document.getElementById('VatPercentage');
+            const vatAbsField = document.getElementById('VatAbsolute');
+
+            const calcVatPct = () => {
+                if (currentItem.NetTotalPrice === 0) return 0;
+                return (currentItem.VatAbsolute / currentItem.NetTotalPrice) * 100.0;
+            };
+
             if (origin === 'VatPercentage') {
                 currentItem.VatPercentage = getVal('VatPercentage');
                 currentItem.VatAbsolute = currentItem.NetTotalPrice * (currentItem.VatPercentage / 100.0);
-                document.getElementById('VatAbsolute').value = currentItem.VatAbsolute.toFixed(2);
-            } else {
+                vatAbsField.value = currentItem.VatAbsolute.toFixed(2);
+            }
+            else if (origin === 'VatAbsolute') {
                 currentItem.VatAbsolute = getVal('VatAbsolute');
-                if (currentItem.NetTotalPrice > 0) {
-                    currentItem.VatPercentage = (currentItem.VatAbsolute / currentItem.NetTotalPrice) * 100.0;
-                    if (origin !== 'VatAbsolute') document.getElementById('VatPercentage').value = currentItem.VatPercentage.toFixed(2);
+                // FIX: Always update percentage
+                currentItem.VatPercentage = calcVatPct();
+                vatPctField.value = currentItem.VatPercentage.toFixed(2);
+            }
+            else {
+                if (getVal('VatAbsolute') !== 0) {
+                    currentItem.VatAbsolute = getVal('VatAbsolute');
+                    currentItem.VatPercentage = calcVatPct();
+                    vatPctField.value = currentItem.VatPercentage.toFixed(2);
+                } else {
+                    currentItem.VatPercentage = getVal('VatPercentage');
+                    currentItem.VatAbsolute = currentItem.NetTotalPrice * (currentItem.VatPercentage / 100.0);
+                    vatAbsField.value = currentItem.VatAbsolute.toFixed(2);
                 }
             }
 
             currentItem.TotalAmountDue = currentItem.NetTotalPrice + currentItem.VatAbsolute;
 
-            // 7. Net Costs (Effective Values)
+            // 7. Net costs (Effective Values)
             currentItem.NetTotalCost = currentItem.IsVatADisallowedInputTax ? currentItem.TotalAmountDue : currentItem.NetTotalPrice;
-
-            // EFFECTIVE UNIT COST: Spreads NetTotalCost over ALL units (Paid + Free)
             currentItem.NetCostPerUnit = currentItem.TotalUnits > 0 ? currentItem.NetTotalCost / currentItem.TotalUnits : 0;
 
             // 8. Pricing

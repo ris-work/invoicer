@@ -82,31 +82,33 @@ namespace InvoicerBackend
                 {
                     var ItemCode = (long)ItemCodeI;
                     using var ctx = new NewinvContext();
+
                     var item = await ctx.Catalogues.FirstOrDefaultAsync(c => c.Itemcode == ItemCode);
                     if (item == null) throw new ArgumentException("Item not found");
+
+                    // Calculate Current Stock (SIH)
+                    var currentStock = await ctx.Inventories
+                        .Where(i => i.Itemcode == ItemCode)
+                        .SumAsync(i => i.Units);
 
                     var inv = await ctx.Inventories
                         .Where(i => i.Itemcode == ItemCode && i.Units > 0)
                         .OrderBy(i => i.ExpDate ?? DateTime.MaxValue)
                         .FirstOrDefaultAsync();
 
-                    var resp = new PricingContextResponse
+                    return new PricingContextResponse
                     {
+                        ItemName = item.Description, // ADDED
+                        CurrentStock = currentStock, // ADDED
                         PriceManual = item.PriceManual,
                         AllowPriceSuggestions = item.AllowPriceSuggestions,
                         DefaultSellingPrice = inv?.SellingPrice ?? 0,
                         MinPrice = inv?.MinPrice ?? 0,
-                        EnforceMinPrice = inv?.EnforceMinPrice ?? true
+                        EnforceMinPrice = inv?.EnforceMinPrice ?? true,
+                        SuggestedPrices = item.AllowPriceSuggestions
+                            ? await ctx.SuggestedPrices.Where(s => s.Itemcode == ItemCode).Select(s => s.Price).ToListAsync()
+                            : new List<double>()
                     };
-
-                    if (item.AllowPriceSuggestions)
-                    {
-                        resp.SuggestedPrices = await ctx.SuggestedPrices
-                            .Where(s => s.Itemcode == ItemCode)
-                            .Select(s => s.Price)
-                            .ToListAsync();
-                    }
-                    return resp;
                 },
                 "Refresh"
             );
@@ -492,8 +494,11 @@ namespace InvoicerBackend
     }
 
     // DTOs
+    // 1. Update DTO
     public class PricingContextResponse
     {
+        public string ItemName { get; set; } // ADDED
+        public double CurrentStock { get; set; } // ADDED
         public bool PriceManual { get; set; }
         public bool AllowPriceSuggestions { get; set; }
         public double DefaultSellingPrice { get; set; }
