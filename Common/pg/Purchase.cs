@@ -19,7 +19,7 @@ public partial class Purchase
 
     public double FreeUnits { get; set; }
 
-    public DateTimeOffset ExpiryDate { get; set; }
+    public DateTimeOffset? ExpiryDate { get; set; }
 
     public DateTimeOffset? ManufacturingDate { get; set; }
 

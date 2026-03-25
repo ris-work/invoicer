@@ -108,7 +108,7 @@ namespace InvoicerBackend
                                 SellingPrice = item.SellingPrice,
                                 MarkedPrice = item.SellingPrice,
                                 Suppliercode = invoice.SupplierId,
-                                ExpDate = item.ExpiryDate.DateTime,
+                                ExpDate = item.ExpiryDate?.DateTime,
                                 MfgDate = item.ManufacturingDate?.DateTime,
                                 LastCountedAt = DateTime.UtcNow,
                                 BatchEnabled = true,
@@ -178,6 +178,30 @@ namespace InvoicerBackend
                         await tx.RollbackAsync();
                         throw;
                     }
+                },
+                "Refresh"
+            );
+
+            // DTO is just the primitive dictionary, so we don't need a specific class.
+            // Input: List<long>, Output: Dictionary<long, double>
+
+            app.AddAsyncEndpointWithBearerAuth<List<long>, Dictionary<long, double>>(
+                "GetStockInfo",
+                async (ItemCodes, LoginInfo) =>
+                {
+                    var codes = (List<long>)ItemCodes;
+                    if (codes == null || codes.Count == 0) return new Dictionary<long, double>();
+
+                    using var ctx = new NewinvContext();
+
+                    // Efficient aggregation at DB level
+                    var stockData = await ctx.Inventories
+                        .Where(i => codes.Contains(i.Itemcode))
+                        .GroupBy(i => i.Itemcode)
+                        .Select(g => new { Itemcode = g.Key, Stock = g.Sum(x => x.Units) })
+                        .ToDictionaryAsync(x => x.Itemcode, x => x.Stock);
+
+                    return stockData;
                 },
                 "Refresh"
             );

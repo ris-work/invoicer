@@ -56,6 +56,17 @@
             const items = JSON.parse(itemsVal);
             if (items.length === 0) { contentDiv.innerHTML = s`<p class="warning">Item list is empty.</p>`; return; }
 
+            // --- 1. FETCH STOCK DATA SEPARATELY ---
+            let stockMap = {};
+            try {
+                const itemCodes = items.map(i => i.Itemcode);
+                const stockRes = await fetch('/GetStockInfo', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(itemCodes)
+                });
+                if (stockRes.ok) stockMap = await stockRes.json();
+            } catch (e) { console.error("Failed to load stock info", e); }
+
             // Simulate with Dummy Header (First Pass)
             let header = {
                 SupplierId: 1, // Dummy
@@ -80,13 +91,13 @@
                     body: JSON.stringify({ Header: header, Items: items })
                 });
                 const result = await res.json();
-                render(result);
+                render(result, stockMap);
             } catch (e) {
                 contentDiv.innerHTML = s`<p class="warning">Error: ${e.message}</p>`;
             }
         }
 
-        function render(result) {
+        function render(result, stockMap) {
             const contentDiv = document.getElementById('content');
             let html = "";
 
@@ -97,10 +108,12 @@
             // Items List
             html += `<h3>Items</h3><div class="item-list">`;
             result.items.forEach((item, i) => {
+                // Safe lookup from our separate Stock API call
+                const sih = (stockMap && stockMap[item.itemcode]) ? stockMap[item.itemcode].toFixed(2) : "0.00";
                 html += s`<div class="item-row">
                     <div style="flex: 2;">
                         <strong>${he(item.productName)}</strong><br>
-                        <small>Code: ${item.itemcode} | SIH: ${item.currentStock.toFixed(2)}</small>
+                        <small>Code: ${item.itemcode} | SIH: ${sih}</small>
                     </div>
                     <div>Qty: ${item.totalUnits.toFixed(2)}</div>
                     <div>Cost/Unit: ${item.netCostPerUnit.toFixed(2)}</div>
