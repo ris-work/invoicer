@@ -1,10 +1,4 @@
 ﻿@page "/Pages/Purchase/Review"
-
-@*
-  FLOW: Purchase Invoice
-  STEP: Review & Post
-*@
-
 @functions { }
 <!DOCTYPE html>
 <html>
@@ -12,26 +6,33 @@
     <title>Review Purchase</title>
     <link rel="stylesheet" href="/Pages/static/u.css">
     <style>
-        .summary-box {
-            background: #f8f9fa;
-            border: 1px solid #ccc;
+        .section-box {
+            background: #fff;
+            border: 1px solid #dee2e6;
             padding: 15px;
             margin-bottom: 20px;
+            border-radius: 5px;
         }
 
-        .item-list {
-            margin-top: 10px;
+        .expense-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
         }
 
-        .item-row {
+        .payment-row {
             display: flex;
             justify-content: space-between;
             padding: 8px;
             border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+            margin-bottom: 5px;
         }
 
-            .item-row:hover {
-                background: #fafafa;
+            .payment-row.credit {
+                background: #e3f2fd;
+                border-left: 4px solid #2196f3;
             }
     </style>
 </head>
@@ -45,98 +46,140 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const flowId = params.get('flowId');
+        let currentSupplierId = 0;
 
         async function run() {
             const token = await getCookie("auth-token");
             const contentDiv = document.getElementById('content');
 
+            // 1. Load Data
             const itemsVal = await getFlowKey("purchaseItems");
-            if (!itemsVal) { contentDiv.innerHTML = s`<p class="warning">No items found.</p>`; return; }
+            const paymentsVal = await getFlowKey("payments"); // NEW
+            const expensesVal = await getFlowKey("expenses"); // NEW
+            const piiVal = await getFlowKey("selectedPiiId");
 
+            if (!itemsVal) { contentDiv.innerHTML = `<p class="warning">No items found.</p>`; return; }
             const items = JSON.parse(itemsVal);
-            if (items.length === 0) { contentDiv.innerHTML = s`<p class="warning">Item list is empty.</p>`; return; }
+            if (items.length === 0) { contentDiv.innerHTML = `<p class="warning">Item list is empty.</p>`; return; }
 
-            // --- 1. FETCH STOCK DATA SEPARATELY ---
+            currentSupplierId = piiVal ? parseInt(piiVal) : 0;
+
+            // 2. Fetch Stock
             let stockMap = {};
             try {
-                const itemCodes = items.map(i => i.Itemcode);
+                const itemCodes = items.map(i => i.Itemcode); // PascalCase fix
                 const stockRes = await fetch('/GetStockInfo', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(itemCodes)
                 });
                 if (stockRes.ok) stockMap = await stockRes.json();
-            } catch (e) { console.error("Failed to load stock info", e); }
+            } catch (e) { console.error("Stock fetch failed", e); }
 
-            // Simulate with Dummy Header (First Pass)
+            // 3. Load Data
+            const payments = paymentsVal ? JSON.parse(paymentsVal) : [];
+            const expenses = expensesVal ? JSON.parse(expensesVal) : [];
+
+            // 4. Prepare Header
             let header = {
-                SupplierId: 1, // Dummy
-                SupplierName: "Unknown",
-                CreatedAt: new Date().toISOString(),
-                GrossTotal: 0,
-                VatTotal: 0,
-                TotalAmountDue: 0
+                SupplierId: currentSupplierId, SupplierName: "Unknown",
+                CreatedAt: new Date().toISOString()
             };
 
-            // We need a supplier. Check flow.
-            const piiVal = await getFlowKey("selectedPiiId");
-            if (piiVal) {
-                header.SupplierId = parseInt(piiVal);
-                // Fetch name...
-            }
-
-            // Call Backend
+            // 5. Simulate (Pass Payments/Expenses)
             try {
                 const res = await fetch('/SimulatePurchase', {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Header: header, Items: items })
+                    body: JSON.stringify({ Header: header, Items: items, Payments: payments, Expenses: expenses })
                 });
                 const result = await res.json();
-                render(result, stockMap);
+                render(result, stockMap, payments, expenses);
             } catch (e) {
-                contentDiv.innerHTML = s`<p class="warning">Error: ${e.message}</p>`;
+                contentDiv.innerHTML = `<p class="warning">Error: ${e.message}</p>`;
             }
         }
 
-        function render(result, stockMap) {
+        function render(result, stockMap, payments, expenses) {
             const contentDiv = document.getElementById('content');
             let html = "";
 
-            if (!result.success) {
-                html += `<p class="warning">${he(result.message)}</p>`;
-            }
+            if (!result.success && result.message) html += `<p class="warning">${he(result.message)}</p>`;
 
-            // Items List
-            html += `<h3>Items</h3><div class="item-list">`;
+            // --- ITEMS ---
+            html += `<div class="section-box"><h3>Items</h3><div class="item-list">`;
             result.items.forEach((item, i) => {
-                // Safe lookup from our separate Stock API call
-                const sih = (stockMap && stockMap[item.itemcode]) ? stockMap[item.itemcode].toFixed(2) : "0.00";
-                html += s`<div class="item-row">
-                    <div style="flex: 2;">
-                        <strong>${he(item.productName)}</strong><br>
-                        <small>Code: ${item.itemcode} | SIH: ${sih}</small>
-                    </div>
-                    <div>Qty: ${item.totalUnits.toFixed(2)}</div>
-                    <div>Cost/Unit: ${item.netCostPerUnit.toFixed(2)}</div>
-                    <div>Total: ${item.totalAmountDue.toFixed(2)}</div>
+                const sih = (stockMap && stockMap[item.Itemcode]) ? stockMap[item.Itemcode].toFixed(2) : "0.00";
+                html += `<div class="item-row">
+                    <div style="flex: 2;"><strong>${he(item.ProductName)}</strong><br><small>Code: ${item.Itemcode} | SIH: ${sih}</small></div>
+                    <div>Qty: ${item.TotalUnits.toFixed(2)}</div>
+                    <div>Cost: ${item.NetCostPerUnit.toFixed(2)}</div>
+                    <div>Total: ${item.TotalAmountDue.toFixed(2)}</div>
                     <div>
                         <a href="/Pages/Purchase/Entry?flowId=${flowId}&editIndex=${i}" class="btn-sm btn-primary">Edit</a>
                         <span class="remove-btn" onclick="removeItem(${i})">✕</span>
                     </div>
                 </div>`;
             });
-            html += `</div>`;
+            html += `</div></div>`;
 
-            // Totals
-            const header = result.header;
-            html += s`
-                <div class="summary-box">
-                    <p><strong>Gross Total:</strong> ${header.grossTotal.toFixed(2)}</p>
-                    <p><strong>Total Discount:</strong> ${header.effectiveDiscountAbsoluteTotal.toFixed(2)}</p>
-                    <p><strong>VAT Total:</strong> ${header.vatTotal.toFixed(2)}</p>
-                    <h3><strong>Total Amount Due:</strong> ${header.totalAmountDue.toFixed(2)}</h3>
+            // --- MISC EXPENSES ---
+            html += `<div class="section-box">
+                <h3>Misc. Expenses (Shipping/Labour)</h3>
+                <div id="expenseList">`;
+
+            expenses.forEach((exp, i) => {
+                html += `<div class="expense-row">
+                    <input type="text" value="${he(exp.description)}" style="flex:3" onchange="updateExpense(${i}, 'description', this.value)">
+                    <input type="number" value="${exp.amount}" step="0.01" style="flex:1" onchange="updateExpense(${i}, 'amount', parseFloat(this.value))">
+                    <span class="remove-btn" onclick="removeExpense(${i})">✕</span>
+                </div>`;
+            });
+
+            html += `</div>
+                <button class="btn btn-secondary" onclick="addExpense()">Add Expense Row</button>
+            </div>`;
+
+            // --- PAYMENTS ---
+            const totalPaid = payments.reduce((sum, p) => sum + p.Amount, 0);
+            const grandTotal = result.header.totalAmountDue || 0; // Assuming backend sums expenses now
+            const balance = grandTotal - totalPaid;
+
+            html += `<div class="section-box">
+                <h3>Payments & Settlement</h3>
+                <div id="paymentList">`;
+
+            payments.forEach((p, i) => {
+                const isCredit = p.Type === "ACCOUNT" && p.AccountNo !== 0; // Heuristic for "On Account"
+                const cls = isCredit ? "payment-row credit" : "payment-row";
+                html += `<div class="${cls}">
+                    <div><strong>${he(p.AccountName || 'Cash/Bank')}</strong>
+                         ${isCredit ? '<span style="color:#2196f3; font-size:0.8em">(On Account / Credit)</span>' : ''}
+                    </div>
+                    <div>${p.Amount.toFixed(2)}</div>
+                    <div><span class="remove-btn" onclick="removePayment(${i})">✕</span></div>
+                </div>`;
+            });
+
+            html += `</div>
+                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="addPayment('CASH')">Add Cash Payment</button>
+                    <button class="btn btn-primary" onclick="addPayment('BANK')">Add Bank Payment</button>
+                    <button class="btn btn-warning" onclick="addCreditPayment()" ${currentSupplierId === 0 ? 'disabled title="No Supplier Selected"' : ''}>
+                        Auto-Add Credit (On Account)
+                    </button>
                 </div>
-            `;
+            </div>`;
 
+            // --- TOTALS ---
+            html += `<div class="summary-box">
+                <p><strong>Gross Total:</strong> ${result.header.grossTotal.toFixed(2)}</p>
+                <p><strong>VAT Total:</strong> ${result.header.vatTotal.toFixed(2)}</p>
+                <h3><strong>Total Amount Due:</strong> ${grandTotal.toFixed(2)}</h3>
+                <hr>
+                <p><strong>Paid/Allocated:</strong> ${totalPaid.toFixed(2)}</p>
+                <p style="color:${balance > 0 ? 'red' : 'green'}"><strong>Balance:</strong> ${balance.toFixed(2)}</p>
+            </div>`;
+
+            // --- ACTIONS ---
             html += `<div style="margin-top: 15px;">
                 <button class="btn btn-primary" onclick="addItem()">Add More Items</button>
                 <button class="btn btn-warning" onclick="saveDraft()">Save Draft</button>
@@ -144,6 +187,124 @@
             </div>`;
 
             contentDiv.innerHTML = html;
+        }
+
+        // --- ACTIONS ---
+
+        async function addExpense() {
+            const token = await getCookie("auth-token");
+            const rawData = await getFlowKeyRaw("expenses");
+            const dataObj = JSON.parse(rawData || '{"value":"[]"}');
+            let list = JSON.parse(dataObj.value || "[]");
+            list.push({ description: "New Expense", amount: 0 });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "expenses", Value: JSON.stringify(list) })
+            });
+            run();
+        }
+
+        async function updateExpense(index, field, value) {
+            const token = await getCookie("auth-token");
+            const rawData = await getFlowKeyRaw("expenses");
+            const dataObj = JSON.parse(rawData || '{"value":"[]"}');
+            let list = JSON.parse(dataObj.value || "[]");
+            if (list[index]) list[index][field] = value;
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "expenses", Value: JSON.stringify(list) })
+            });
+            run(); // Re-run to update totals
+        }
+
+        async function removeExpense(index) {
+            if(!confirm("Remove expense?")) return;
+            const token = await getCookie("auth-token");
+            const rawData = await getFlowKeyRaw("expenses");
+            const dataObj = JSON.parse(rawData || '{"value":"[]"}');
+            let list = JSON.parse(dataObj.value || "[]");
+            list.splice(index, 1);
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "expenses", Value: JSON.stringify(list) })
+            });
+            run();
+        }
+
+        async function addPayment(type) {
+            // Redirect to generic account selector, then amount entry
+            // For simplicity, we redirect to the Sales payment selector (works for generic accounts)
+            // We pass a flag to indicate it's for Purchase
+            window.location.href = `/Pages/Sales/SelectPaymentMethod?flowId=${flowId}&mode=purchase`;
+        }
+
+        async function addCreditPayment() {
+            const token = await getCookie("auth-token");
+
+            // 1. Fetch Supplier Account
+            const res = await fetch('/GetSupplierAccount', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentSupplierId)
+            });
+            const acc = await res.json();
+
+            if (!acc || acc.accountNo === 0) {
+                alert("Could not find a Creditor Account for this supplier.");
+                return;
+            }
+
+            // 2. Calculate Balance
+            // We need current totals to know how much credit to apply
+            const itemsVal = await getFlowKey("purchaseItems");
+            const expensesVal = await getFlowKey("expenses");
+            const paymentsVal = await getFlowKey("payments");
+
+            // Simple client-side sum for UI reactivity (Backend will do final check)
+            const items = JSON.parse(itemsVal || "[]");
+            const expenses = JSON.parse(expensesVal || "[]");
+            const payments = JSON.parse(paymentsVal || "[]");
+
+            const totalItems = items.reduce((s, i) => s + i.TotalAmountDue, 0);
+            const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+            const totalPaid = payments.reduce((s, p) => s + p.Amount, 0);
+            const balance = (totalItems + totalExp) - totalPaid;
+
+            if (balance <= 0) {
+                alert("Balance is already zero or negative.");
+                return;
+            }
+
+            // 3. Add Payment Entry
+            let list = payments;
+            list.push({
+                AccountNo: acc.accountNo,
+                AccountName: acc.accountName + " (Credit)",
+                Amount: balance,
+                Type: "ACCOUNT"
+            });
+
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+
+            run();
+        }
+
+        async function removePayment(index) {
+            if(!confirm("Remove payment?")) return;
+            const token = await getCookie("auth-token");
+            const rawData = await getFlowKeyRaw("payments");
+            const dataObj = JSON.parse(rawData || '{"value":"[]"}');
+            let list = JSON.parse(dataObj.value || "[]");
+            list.splice(index, 1);
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+            });
+            run();
         }
 
         async function addItem() {
@@ -163,28 +324,15 @@
             run();
         }
 
-        async function saveDraft() {
-            const token = await getCookie("auth-token");
-            const payload = {
-                Header: {}, // In real app, gather header inputs
-                Items: JSON.parse(await getFlowKey("purchaseItems"))
-            };
-
-            const res = await fetch('/SavePurchaseDraft', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Payload: JSON.stringify(payload) })
-            });
-            const id = await res.json();
-            alert("Draft Saved! ID: " + id);
-        }
-
         async function post() {
             const token = await getCookie("auth-token");
-            if(!confirm("Post this invoice? This will update inventory.")) return;
+            if(!confirm("Post this invoice? This will update inventory and accounts.")) return;
 
             const payload = {
-                Header: { SupplierId: 1, Remarks: "Purchase via Web UI" }, // Simplified
-                Items: JSON.parse(await getFlowKey("purchaseItems"))
+                Header: { SupplierId: currentSupplierId, Remarks: "Purchase via Web UI" },
+                Items: JSON.parse(await getFlowKey("purchaseItems")),
+                Payments: JSON.parse(await getFlowKey("payments") || "[]"),
+                Expenses: JSON.parse(await getFlowKey("expenses") || "[]")
             };
 
             try {
@@ -196,14 +344,14 @@
 
                 if(result.success) {
                     alert("Invoice Posted! ID: " + result.invoiceId);
-                    window.location.href = '/Pages/Flows/BeginFlowPurchase'; // Restart
+                    window.location.href = '/Pages/Flows/BeginFlowPurchase';
                 } else {
                     alert("Error: " + result.message);
                 }
             } catch(e) { alert("Network Error: " + e.message); }
         }
 
-        // Helpers
+        // --- HELPERS ---
         async function getFlowKey(key) {
             const val = await getFlowKeyRaw(key);
             return val ? JSON.parse(val).value : null;

@@ -15,9 +15,10 @@ namespace InvoicerBackend
         public string Message { get; set; }
         public ReceivedInvoice Header { get; set; }
         public List<Purchase> Items { get; set; }
-        public List<JournalEntryResult> AccountingEntries { get; set; }
-        public double GrandTotal { get; set; }
-        public double TotalPaid { get; set; }
+        public double TotalExpenses { get; set; } // NEW
+        public double TotalPaid { get; set; } // NEW
+        public double Balance { get; set; } // NEW
+        public List<JournalEntryResult> AccountingEntries { get; set; } // For preview if needed
     }
 
     public static class PurchaseProcessingService
@@ -25,7 +26,10 @@ namespace InvoicerBackend
         public static PurchaseProcessResult ProcessPurchase(
             NewinvContext ctx,
             ReceivedInvoice header,
-            List<Purchase> items)
+            List<Purchase> items,
+            List<PurchaseExpense> expenses, // NEW
+            List<PaymentEntry> payments
+        ) // NEW)
         {
             foreach (var item in items)
             {
@@ -64,6 +68,35 @@ namespace InvoicerBackend
 
             // Header Aggregation
             items.CalculateInvoice(header);
+
+            // 3. Process Expenses
+            double totalExpenses = 0;
+            if (expenses != null)
+            {
+                totalExpenses = expenses.Sum(e => e.Amount);
+                // Add to Invoice Header (using TransportCharges as the bucket for now)
+                header.TransportCharges = totalExpenses;
+            }
+
+            // 4. Adjust Grand Total
+            // TotalAmountDue was calculated from items. Add Expenses.
+            // Note: Header.TotalAmountDue from CalculateInvoice might just be items.
+            // We rely on the object being updated. Let's re-calc explicitly to be safe.
+            double itemsTotal = header.TotalAmountDue;
+            double grandTotal = itemsTotal + totalExpenses;
+
+            // Update header for consistency (TotalAmountDue includes transport now)
+            header.TotalAmountDue = grandTotal;
+
+            // 5. Process Payments
+            double totalPaid = 0;
+            if (payments != null)
+            {
+                totalPaid = payments.Sum(p => p.Amount);
+            }
+
+            double balance = grandTotal - totalPaid;
+
 
             // Validation
             var validation = header.ValidateInvoice(items);
