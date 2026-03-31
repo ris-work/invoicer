@@ -9,3 +9,7 @@ Title = "Health Monitor (logging service), © Rishikeshan S/L, License: Open Sof
 WebUI = true
 WebUIAddress = "localhost"
 WebUIPort = 8888
+AuthMode = "Optional"
+AuthType = "Basic"
+AuthUser = "admin"
+AuthPass = "password"

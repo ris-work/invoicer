@@ -115,13 +115,88 @@ void StartServer()
     app.UseStaticFiles(); // For d3.js in wwwroot/static
     app.MapRazorPages();
 
+
+    // --- 1. Ad-Hoc Auth Middleware ---
+    app.Use(async (context, next) =>
+    {
+        // Parse Authorization Header manually
+        string authHeader = context.Request.Headers["Authorization"];
+        bool isAuthenticated = false;
+        string username = "Anonymous";
+
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Basic "))
+        {
+            var encodedCredentials = authHeader.Substring("Basic ".Length).Trim();
+            try
+            {
+                var decodedCredentials = Encoding.UTF8.GetString(Convert.FromBase64String(encodedCredentials));
+                var parts = decodedCredentials.Split(':', 2);
+
+                // Simple string check against Config
+                if (parts.Length == 2 && parts[0] == Config.AuthUser && parts[1] == Config.AuthPass)
+                {
+                    isAuthenticated = true;
+                    username = parts[0];
+                }
+            }
+            catch { /* Ignore decoding errors */ }
+        }
+
+        // Store state in HttpContext.Items (simple dictionary)
+        context.Items["IsAuthenticated"] = isAuthenticated;
+        context.Items["Username"] = username;
+
+        // Enforce Mandatory Mode
+        if (!isAuthenticated && Config.AuthMode == "Mandatory")
+        {
+            context.Response.StatusCode = 401;
+            context.Response.Headers.Append("WWW-Authenticate", "Basic realm=\"HealthMonitor\"");
+            await context.Response.WriteAsync("Authorization Required");
+            return; // Stop pipeline
+        }
+
+        await next();
+    });
+
     // --- API Endpoints ---
 
-    // API: Get Ping Stats (Latency and Success Rate grouped by Decaminute)
-    app.MapGet("/api/pings", (int days) =>
+    // --- 2. Helper Endpoint to check status for UI ---
+    app.MapGet("/api/auth/status", (HttpContext ctx) =>
     {
+        return Results.Json(new
+        {
+            authenticated = ctx.Items["IsAuthenticated"],
+            user = ctx.Items["Username"]
+        });
+    });
+
+    // --- 3. Endpoint to Force Login (for Optional mode) ---
+    app.MapGet("/Auth", (HttpContext ctx) =>
+    {
+        bool isAuth = ctx.Items.ContainsKey("IsAuthenticated") && (bool)ctx.Items["IsAuthenticated"];
+
+        // If already auth, just show status
+        if (isAuth)
+        {
+            ctx.Response.ContentType = "text/html";
+            return ctx.Response.WriteAsync($"<html><body style='background:#1e1e1e;color:white;font-family:sans-serif;padding:20px;'><h1>Authenticated as {ctx.Items["Username"]}</h1><p>You can close this or <a href='/' style='color:#add8e6'>Go Back</a>.</p></body></html>");
+        }
+
+        // If not auth, force the prompt by sending 401
+        ctx.Response.StatusCode = 401;
+        ctx.Response.Headers.Append("WWW-Authenticate", "Basic realm=\"HealthMonitor\"");
+        return ctx.Response.WriteAsync("Please authenticate.");
+    });
+
+
+    // API: Get Ping Stats (Latency and Success Rate grouped by Decaminute)
+    app.MapGet("/api/pings", (int days, HttpContext hctx) =>
+    {
+
+        bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
+        int maxDays = isAuth ? 365 : 7;
         // --- ADD THIS CHECK ---
-        if (days > 7)
+        if (days > maxDays)
         {
             return Results.BadRequest(new { error = "Web UI limited to last 7 days. Please use the desktop application for historical data." });
         }
@@ -196,10 +271,12 @@ void StartServer()
     });
 
     // API: Get hourly stats for a specific process path
-    app.MapGet("/api/processes/stats", (string path, int days) =>
+    app.MapGet("/api/processes/stats", (string path, int days, HttpContext hctx) =>
     {
+        bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
+        int maxDays = isAuth ? 365 : 7;
         // --- ADD THIS CHECK ---
-        if (days > 7)
+        if (days > maxDays)
         {
             return Results.BadRequest(new { error = "Web UI limited to last 7 days. Please use the desktop application for historical data." });
         }
@@ -295,6 +372,10 @@ if (TM.ContainsKey("WebUIPort"))
 {
     Config.WebUIPort = (((int)((long)TM["WebUIPort"])));
 }
+if (TM.ContainsKey("AuthMode")) Config.AuthMode = (string)TM["AuthMode"];
+if (TM.ContainsKey("AuthType")) Config.AuthType = (string)TM["AuthType"];
+if (TM.ContainsKey("AuthUser")) Config.AuthUser = (string)TM["AuthUser"];
+if (TM.ContainsKey("AuthPass")) Config.AuthPass = (string)TM["AuthPass"];
 Console.WriteLine(
     $"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, \nSleepTimeMsBetweenPointsProc (time waited for next proc stats collection): {Config.SleepTimeMsBetweenPointsProc}ms, \nSleepTimeMsBetweenPointsPing (likewise for pings): {Config.SleepTimeMsBetweenPointsPing}ms."
 );
@@ -478,4 +559,8 @@ public static class Config
     public static bool WebUI = false;
     public static string WebUIAddress = "localhost";
     public static int WebUIPort = 8888;
+    public static string AuthMode = "None"; // Options: "None", "Optional", "Mandatory"
+    public static string AuthType = "Basic"; // Options: "Basic", "Digest"
+    public static string AuthUser = "admin";
+    public static string AuthPass = "password";
 }

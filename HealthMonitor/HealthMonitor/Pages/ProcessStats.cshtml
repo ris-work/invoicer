@@ -149,6 +149,10 @@
     </style>
 </head>
 <body>
+    <!-- Add this right after <body> tag -->
+    <div id="authBar" style="background-color: #333; padding: 5px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #555;">
+        <span id="authStatus">Checking auth...</span>
+    </div>
 
     <!-- Navigation Bar -->
     <div class="nav-bar">
@@ -213,6 +217,48 @@
         const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         let allProcesses = []; // Cache for all processes
 
+                // Check Auth Status
+        async function checkAuth() {
+        try {
+            const resp = await fetch('/api/auth/status');
+            const data = await resp.json();
+            const bar = document.getElementById('authStatus');
+            const daysInput = document.getElementById('daysInput');
+
+            if (data.authenticated) {
+                bar.innerHTML = `<span style="color: #4caf50;">✔ Authenticated: ${data.user}</span>`;
+
+                // --- SET UI LIMIT FOR AUTHENTICATED USERS ---
+                if (daysInput) {
+                    daysInput.max = 365; // Allow full range
+                    daysInput.title = "Authenticated: Up to 365 days allowed.";
+                }
+                // --------------------------------------------
+            } else {
+                // --- SET UI LIMIT FOR ANONYMOUS USERS ---
+                if (daysInput) {
+                    daysInput.max = 7; // Restrict to 7
+                    daysInput.title = "Anonymous: Up to 7 days allowed. Login for more.";
+
+                    // Reset value if current value is too high
+                    if (parseInt(daysInput.value) > 7) {
+                        daysInput.value = 7;
+                    }
+                }
+                // ----------------------------------------
+
+                if ("@Config.AuthMode" === "None") {
+                     bar.innerHTML = `<span style="color: #888;">Auth Disabled</span>`;
+                } else {
+                     bar.innerHTML = `<span style="color: #ffcc00;">⚠ Anonymous</span> | <a href="/Auth" style="color: #add8e6;">Login</a>`;
+                }
+            }
+        } catch (e) {
+            console.error("Auth check failed", e);
+        }
+        }
+        checkAuth();
+
         // --- 1. Time Indicator ---
         function updateTime() {
             const now = new Date();
@@ -263,7 +309,13 @@
 
         // --- 3. Data Loading & Aggregation ---
         async function loadStats() {
-            const days = document.getElementById('daysInput').value;
+            // 1. Get the elements and values
+            const daysInput = document.getElementById('daysInput');
+            const days = parseInt(daysInput.value);
+
+            // 2. Get the max attribute (set by checkAuth)
+            const maxDays = parseInt(daysInput.max) || 7;
+            
             const isAggregate = document.getElementById('aggregateCheck').checked;
             const select = document.getElementById('processSelect');
             const btn = document.getElementById('loadBtn');
@@ -282,8 +334,8 @@
             if (targets.length === 0) { alert("No processes selected/filtered."); return; }
 
             // --- ADD CLIENT SIDE CHECK ---
-            if (days > 7) {
-                alert("Error: Maximum retention is 7 days for the Web UI.");
+            if (days > maxDays) {
+                alert(`Error: Maximum retention is ${maxDays} days. Login for more history.`);
                 return;
             }
             // -----------------------------
