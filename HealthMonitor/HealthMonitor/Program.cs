@@ -75,7 +75,8 @@ void StartServer()
 {
     var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(new WebApplicationOptions
     {
-        ContentRootPath = Directory.GetCurrentDirectory(),
+        //ContentRootPath = Directory.GetCurrentDirectory(),
+        ContentRootPath = AppContext.BaseDirectory,
         Args = Array.Empty<string>()
     });
 
@@ -96,7 +97,12 @@ void StartServer()
     });
 
     // Add Services
-    builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+    builder.Services.AddRazorPages().AddRazorRuntimeCompilation(options =>
+    {
+        options.FileProviders.Clear();
+        options.FileProviders.Add(new PhysicalFileProvider(AppContext.BaseDirectory));
+        options.FileProviders.Add(new EmbeddedFileProvider(typeof(Program).Assembly));
+    });
     builder.Services.AddResponseCompression(options =>
     {
         options.EnableForHttps = true;
@@ -107,13 +113,14 @@ void StartServer()
     var app = builder.Build();
 
     // Configure HTTP Pipeline
-    
+    app.UseRouting();
     var StaticFilePath = Path.Combine(builder.Environment.ContentRootPath, "Pages", "static");
     app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(StaticFilePath), RequestPath = "/static" });
-    app.UseRouting();
+    
     app.UseResponseCompression();
     app.UseStaticFiles(); // For d3.js in wwwroot/static
     app.MapRazorPages();
+    Console.WriteLine($"[App] Starting from: {AppContext.BaseDirectory}");
 
 
     // --- 1. Ad-Hoc Auth Middleware ---

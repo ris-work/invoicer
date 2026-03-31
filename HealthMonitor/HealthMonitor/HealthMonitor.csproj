@@ -7,7 +7,7 @@
         <Nullable>enable</Nullable>
         <!--<PublishAot>true</PublishAot>-->
         <!--<PublishTrimmed>true</PublishTrimmed>-->
-        <PublishSingleFile>true</PublishSingleFile>
+        <!--<PublishSingleFile>true</PublishSingleFile>-->
         <InvariantGlobalization>true</InvariantGlobalization>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <ApplicationIcon>log_2.ico</ApplicationIcon>
@@ -24,8 +24,10 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<RazorCompileOnBuild>true</RazorCompileOnBuild>
 		<RazorCompileOnPublish>true</RazorCompileOnPublish>
-		<UseRazorSourceGenerator>true</UseRazorSourceGenerator>
-		
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<IncludeRazorContent>true</IncludeRazorContent>
+		<MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
+		<DebugType>embedded</DebugType>
     </PropertyGroup>
     <ItemGroup>
         <Content Include="log_2.ico" />
@@ -49,34 +51,33 @@
 		
 	</ItemGroup>
     <ItemGroup>
-        <None Update="HealthMonitor.toml">
+		<Content Include="HealthMonitor.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="logs.sqlite3">
+        </Content>
+		<Content Include="logs.sqlite3">
             <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-        </None>
-        <None Update="logs.sqlite3.rvhealthmonitorlogfile">
+        </Content>
+		<Content Include="logs.sqlite3.rvhealthmonitorlogfile">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+        <Content Include="new.logs.sqlite3.rvhealthmonitorlogfile">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="new.logs.sqlite3.rvhealthmonitorlogfile">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        </Content>
 		<!-- 1. Compile .cshtml files AND copy them to output -->
 		<Content Update="Pages\**\*.cshtml">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+		
 
 		<!-- 2. Explicitly copy static assets (js/css) from Pages/static -->
 		<Content Include="Pages\static\**">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
     </ItemGroup>
-    <ItemGroup>
-      <Content Remove="Pages\ProcessStats.cshtml" />
-    </ItemGroup>
-    <ItemGroup>
-      <None Include="Pages\ProcessStats.cshtml" />
-    </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Pages\**\*.cshtml" />
+	</ItemGroup>
+
    <!--<ItemGroup>
       <Folder Include="Pages\Pages\" />
     </ItemGroup>-->
