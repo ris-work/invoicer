@@ -120,6 +120,11 @@ void StartServer()
     // API: Get Ping Stats (Latency and Success Rate grouped by Decaminute)
     app.MapGet("/api/pings", (int days) =>
     {
+        // --- ADD THIS CHECK ---
+        if (days > 7)
+        {
+            return Results.BadRequest(new { error = "Web UI limited to last 7 days. Please use the desktop application for historical data." });
+        }
         var cutoff = DateTime.UtcNow.AddDays(-days);
         using var ctx = new LogsContext();
 
@@ -193,6 +198,11 @@ void StartServer()
     // API: Get hourly stats for a specific process path
     app.MapGet("/api/processes/stats", (string path, int days) =>
     {
+        // --- ADD THIS CHECK ---
+        if (days > 7)
+        {
+            return Results.BadRequest(new { error = "Web UI limited to last 7 days. Please use the desktop application for historical data." });
+        }
         var cutoff = DateTime.UtcNow.AddDays(-days);
         using var ctx = new LogsContext();
 

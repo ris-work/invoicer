@@ -96,7 +96,7 @@
 <body>
     <!-- Add this Navigation Bar -->
     <div class="nav-bar" style="background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
-        <a href="/" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor</a>
+        <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor</a>
         <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats</a>
     </div>
     <!-- End Navigation Bar -->
@@ -142,10 +142,21 @@
 
         async function loadData() {
             const days = document.getElementById('daysInput').value;
+                // --- ADD CLIENT SIDE CHECK ---
+            if (days > 7) {
+                alert("Error: Maximum retention is 7 days for the Web UI.");
+                return;
+            }
             console.log(`Fetching data for ${days} days...`);
 
             try {
                 const response = await fetch(`/api/pings?days=${days}`);
+                // --- ADD ERROR HANDLING ---
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Server error");
+                }
+                // --------------------------
                 cachedData = await response.json();
                 console.log("Raw Data Received:", cachedData);
                 applyFilterAndRender();

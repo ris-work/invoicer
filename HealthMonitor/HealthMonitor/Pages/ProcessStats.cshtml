@@ -152,7 +152,7 @@
 
     <!-- Navigation Bar -->
     <div class="nav-bar">
-        <a href="/">Ping Monitor</a>
+        <a href="/Index">Ping Monitor</a>
         <a href="/ProcessStats">Process Stats</a>
     </div>
 
@@ -281,15 +281,30 @@
 
             if (targets.length === 0) { alert("No processes selected/filtered."); return; }
 
+            // --- ADD CLIENT SIDE CHECK ---
+            if (days > 7) {
+                alert("Error: Maximum retention is 7 days for the Web UI.");
+                return;
+            }
+            // -----------------------------
+
             btn.disabled = true;
             btn.innerText = "Loading...";
 
             try {
                 // Fetch all required data
-                const promises = targets.map(path =>
-                    fetch(`/api/processes/stats?path=${encodeURIComponent(path)}&days=${days}`)
-                        .then(r => r.json())
-                );
+                    const promises = targets.map(path =>
+                        fetch(`/api/processes/stats?path=${encodeURIComponent(path)}&days=${days}`)
+                        .then(async r => {
+                        // --- ADD ERROR HANDLING HERE ---
+                        if (!r.ok) {
+                            const errData = await r.json();
+                            throw new Error(errData.error || "Server error");
+                        }
+                        // --------------------------------
+                        return r.json();
+                    })
+            );
 
                 const results = await Promise.all(promises);
 
