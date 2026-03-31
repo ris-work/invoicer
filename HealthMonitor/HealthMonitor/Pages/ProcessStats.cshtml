@@ -1,32 +1,151 @@
-﻿@page "/ProcessStats"
+﻿@page
 <!DOCTYPE html>
 <html>
 <head>
     <title>Process Stats</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
-        body { background-color: #1e1e1e; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; }
-        h1 { color: #ffcc00; }
-        
-        .nav-bar { background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        .nav-bar a { color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold; }
-        .nav-bar a:hover { text-decoration: underline; }
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
 
-        .chart-container { background-color: #252526; border: 1px solid #3e3e42; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        
-        .controls { margin-bottom: 20px; padding: 15px; background-color: #333; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; border-radius: 5px; }
-        label { margin-right: 5px; }
-        input, select, button { background-color: #3c3c3c; color: white; border: 1px solid #555; padding: 5px; border-radius: 3px; }
-        select { min-width: 300px; }
-        button { cursor: pointer; }
-        button:hover { background-color: #505050; }
-        
-        svg { background-color: black; width: 100%; height: 450px; }
-        .axis-label { fill: white; font-size: 12px; }
-        .legend { font-size: 12px; }
-        .line { fill: none; stroke-width: 2px; }
-        .grid line { stroke: #444; stroke-opacity: 0.7; shape-rendering: crispEdges; }
-        .grid path { stroke-width: 0; }
+        h1 {
+            color: #ffcc00;
+            margin-bottom: 5px;
+        }
+
+        /* Time Indicator Styles */
+        .time-bar {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+
+        .time-span {
+            margin-right: 20px;
+            padding: 5px;
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .nav-bar {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+            .nav-bar a {
+                color: #add8e6;
+                text-decoration: none;
+                margin-right: 15px;
+                font-weight: bold;
+            }
+
+                .nav-bar a:hover {
+                    text-decoration: underline;
+                }
+
+        .chart-container {
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input, select, button {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        select {
+            min-width: 200px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #505050;
+        }
+
+            button:hover {
+                background-color: #666;
+            }
+
+            button:disabled {
+                background-color: #333;
+                color: #555;
+                cursor: not-allowed;
+            }
+
+        .helper-text {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        svg {
+            background-color: black;
+            width: 100%;
+            height: 400px;
+        }
+
+        .axis-label {
+            fill: white;
+            font-size: 12px;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        .grid line {
+            stroke: #444;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
     </style>
 </head>
 <body>
@@ -37,91 +156,202 @@
         <a href="/ProcessStats">Process Stats</a>
     </div>
 
+    <!-- Time Indicator -->
+    <div class="time-bar">
+        <span class="time-span" id="localTime">Local: --:--:--</span>
+        <span class="time-span" id="utcTime">UTC: --:--:--</span>
+    </div>
+
     <h1>Process Statistics (Hourly)</h1>
 
     <div class="controls">
-        <div>
-            <label>Process:</label>
-            <select id="processSelect">
-                <option value="">Select a process...</option>
-            </select>
+        <!-- Left Column: Filtering -->
+        <div class="control-group">
+            <div class="control-row">
+                <label style="width: 80px;">Filter:</label>
+                <input type="text" id="processFilterInput" placeholder="Type to filter processes..." oninput="filterProcessList()">
+            </div>
+            <div class="control-row">
+                <label style="width: 80px;">Process:</label>
+                <select id="processSelect" size="5" style="height: 150px;">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div class="helper-text">
+                Showing <span id="filterCount">0</span> of <span id="totalCount">0</span> processes.
+            </div>
         </div>
-        <div>
-            <label>Retention (Days):</label>
-            <input type="number" id="daysInput" value="7" min="1" max="365" style="width: 60px;">
-        </div>
-        <div>
-            <button onclick="loadStats()">Load Stats</button>
-        </div>
-        <div>
-            <button onclick="saveSvg('cpuChart')">💾 Save CPU</button>
-            <button onclick="saveSvg('memChart')">💾 Save MEM</button>
+
+        <!-- Right Column: Actions -->
+        <div class="control-group">
+            <div class="control-row">
+                <label style="width: 80px;">Days:</label>
+                <input type="number" id="daysInput" value="7" min="1" max="365" style="width: 60px;">
+            </div>
+            <div class="control-row" style="align-items: center;">
+                <input type="checkbox" id="aggregateCheck" style="width: auto;">
+                <label for="aggregateCheck" style="color: #ffcc00; font-weight: bold;">Aggregate Filtered Processes</label>
+            </div>
+            <div class="control-row">
+                <button onclick="loadStats()" id="loadBtn" style="flex-grow: 1;">Load Stats</button>
+            </div>
+            <div class="control-row">
+                <button onclick="saveSvg('cpuChart')">💾 Save CPU</button>
+                <button onclick="saveSvg('memChart')">💾 Save MEM</button>
+            </div>
         </div>
     </div>
 
     <h3>CPU Usage (%)</h3>
-    <div class="chart-container">
-        <svg id="cpuChart"></svg>
-    </div>
+    <div class="chart-container"><svg id="cpuChart"></svg></div>
 
     <h3>Memory Usage (MiB)</h3>
-    <div class="chart-container">
-        <svg id="memChart"></svg>
-    </div>
+    <div class="chart-container"><svg id="memChart"></svg></div>
 
     <script src="/static/d3.js"></script>
     <script>
         const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        let allProcesses = []; // Cache for all processes
 
-        // Populate process list on load
+        // --- 1. Time Indicator ---
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('localTime').innerText = "Local: " + now.toLocaleTimeString();
+            document.getElementById('utcTime').innerText = "UTC: " + now.toISOString().substr(11, 8);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // --- 2. Initialization & Filtering ---
         async function init() {
             try {
                 const response = await fetch('/api/processes/list');
-                const data = await response.json();
-                const select = document.getElementById('processSelect');
-                
-                data.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.mainModulePath;
-                    opt.text = p.mainModulePath; // You can add windowName if you want
-                    select.appendChild(opt);
-                });
+                allProcesses = await response.json(); // Assuming [{ mainModulePath: "...", windowName: "..." }]
+
+                // Sort alphabetically
+                allProcesses.sort((a, b) => (a.mainModulePath || "").localeCompare(b.mainModulePath || ""));
+
+                filterProcessList(); // Initial population
             } catch (e) {
                 console.error("Failed to load process list", e);
             }
         }
 
-        async function loadStats() {
-            const path = document.getElementById('processSelect').value;
-            const days = document.getElementById('daysInput').value;
+        function filterProcessList() {
+            const text = document.getElementById('processFilterInput').value.toLowerCase();
+            const select = document.getElementById('processSelect');
 
-            if (!path) {
-                alert("Please select a process.");
-                return;
+            // Clear current options
+            select.innerHTML = "";
+
+            let count = 0;
+            allProcesses.forEach(p => {
+                const path = (p.mainModulePath || "").toLowerCase();
+                if (path.includes(text)) {
+                    const opt = document.createElement('option');
+                    opt.value = p.mainModulePath;
+                    opt.text = p.mainModulePath; // Or add window title if you want
+                    select.appendChild(opt);
+                    count++;
+                }
+            });
+
+            // Update counts
+            document.getElementById('filterCount').innerText = count;
+            document.getElementById('totalCount').innerText = allProcesses.length;
+        }
+
+        // --- 3. Data Loading & Aggregation ---
+        async function loadStats() {
+            const days = document.getElementById('daysInput').value;
+            const isAggregate = document.getElementById('aggregateCheck').checked;
+            const select = document.getElementById('processSelect');
+            const btn = document.getElementById('loadBtn');
+
+            // Determine targets
+            let targets = [];
+            if (isAggregate) {
+                // Aggregate ALL filtered processes in the list
+                targets = Array.from(select.options).map(o => o.value);
+            } else {
+                // Only selected one (or first one if multiple selected but aggregation off)
+                if (select.selectedIndex === -1) { alert("Please select a process."); return; }
+                targets = [select.options[select.selectedIndex].value];
             }
 
-            console.log(`Loading stats for ${path}, ${days} days.`);
-            
+            if (targets.length === 0) { alert("No processes selected/filtered."); return; }
+
+            btn.disabled = true;
+            btn.innerText = "Loading...";
+
             try {
-                const response = await fetch(`/api/processes/stats?path=${encodeURIComponent(path)}&days=${days}`);
-                const rawData = await response.json();
-                console.log("Stats Data:", rawData);
+                // Fetch all required data
+                const promises = targets.map(path =>
+                    fetch(`/api/processes/stats?path=${encodeURIComponent(path)}&days=${days}`)
+                        .then(r => r.json())
+                );
 
-                // Render CPU Chart
-                renderChart(rawData, '#cpuChart', 'cpuPercent', 'hour', 'CPU %');
+                const results = await Promise.all(promises);
 
-                // Render Memory Chart (Multiple lines: Avg vs Peak)
-                renderMultiChart(rawData, '#memChart', 
-                    [{ key: 'avgMem', label: 'Avg Mem' }, { key: 'peakMem', label: 'Peak Mem' }], 
+                // Aggregate or Single Logic
+                let finalData = [];
+
+                if (isAggregate) {
+                    // Client-side aggregation
+                    // Structure: Map<Hour, {cpu: [], avgMem: [], peakMem: []}>
+                    const hourMap = new Map();
+
+                    results.forEach(dataArray => {
+                        if (!dataArray) return;
+                        dataArray.forEach(d => {
+                            if (!hourMap.has(d.hour)) {
+                                hourMap.set(d.hour, { cpu: [], avgMem: [], peakMem: [] });
+                            }
+                            const entry = hourMap.get(d.hour);
+                            if(d.cpuPercent != null) entry.cpu.push(d.cpuPercent);
+                            if(d.avgMem != null) entry.avgMem.push(d.avgMem);
+                            if(d.peakMem != null) entry.peakMem.push(d.peakMem);
+                        });
+                    });
+
+                    // Average/Accumulate
+                    finalData = Array.from(hourMap.entries()).map(([hour, vals]) => {
+                        // Sum CPU? or Average? Usually CPU is summed (total load), Memory is summed.
+                        // Let's Sum for both in aggregate view.
+                        return {
+                            hour: hour,
+                            cpuPercent: vals.cpu.reduce((a, b) => a + b, 0),
+                            avgMem: vals.avgMem.reduce((a, b) => a + b, 0),
+                            peakMem: vals.peakMem.reduce((a, b) => a + b, 0)
+                        };
+                    }).sort((a,b) => a.hour.localeCompare(b.hour));
+
+                } else {
+                    // Just use the first result (Single process view)
+                    finalData = results[0] || [];
+                }
+
+                console.log("Final Data:", finalData);
+
+                // Render
+                renderChart(finalData, '#cpuChart', 'cpuPercent', 'hour', 'CPU %');
+                renderMultiChart(finalData, '#memChart',
+                    [{ key: 'avgMem', label: 'Avg Mem' }, { key: 'peakMem', label: 'Peak Mem' }],
                     'hour', 'Memory (MiB)');
 
             } catch (e) {
-                console.error("Error loading stats", e);
+                console.error(e);
+                alert("Error loading stats.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Load Stats";
             }
         }
 
+        // --- 4. Rendering (Same as before) ---
+
         function parseHour(hourStr) {
-            // Expecting format "yyyy-MM-dd HH"
+            // Handles "yyyy-MM-dd HH"
             return new Date(hourStr + ":00");
         }
 
@@ -131,7 +361,7 @@
 
             const margin = {top: 20, right: 80, bottom: 30, left: 50};
             const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-            const height = 450 - margin.top - margin.bottom;
+            const height = 400 - margin.top - margin.bottom;
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -151,19 +381,15 @@
             x.domain(d3.extent(parsedData, d => d.date));
             y.domain([0, d3.max(parsedData, d => d.value) * 1.1 || 100]);
 
-            // Grid/Axes setup
             g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
             g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
-            
+
             g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
             g.append("g").call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
 
-            // Line
             const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
 
             g.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
-            
-            // Dots
             g.selectAll(".dot").data(parsedData).enter().append("circle").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
         }
 
@@ -173,7 +399,7 @@
 
             const margin = {top: 20, right: 140, bottom: 30, left: 50};
             const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-            const height = 450 - margin.top - margin.bottom;
+            const height = 400 - margin.top - margin.bottom;
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -196,7 +422,6 @@
             x.domain(d3.extent(data, d => parseHour(d[timeKey])));
             y.domain([0, d3.max(allValues) * 1.1 || 100]);
 
-            // Grid/Axes
             g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
             g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
             g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
@@ -207,8 +432,7 @@
             parsedSeries.forEach((seriesData, i) => {
                 g.append("path").datum(seriesData).attr("class", "line").attr("stroke", colorScale(i)).attr("d", line);
                 g.selectAll(`.dot-${i}`).data(seriesData).enter().append("circle").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(i));
-                
-                // Legend
+
                 g.append("text").attr("x", width + 10).attr("y", i * 20 + 5).attr("fill", colorScale(i)).text(seriesConfig[i].label);
             });
         }
