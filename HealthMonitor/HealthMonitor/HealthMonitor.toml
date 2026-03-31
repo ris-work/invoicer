@@ -6,3 +6,6 @@ SleepTimeMsBetweenPointsPing = 30000 # Half a minute
 AutoVacuum = true
 AutoVacuumOnStartup = true
 Title = "Health Monitor (logging service), © Rishikeshan S/L, License: Open Software License, V3 (no later)."
+WebUI = true
+WebUIAddress = "localhost"
+WebUIPort = 8888

@@ -11,6 +11,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tomlyn;
 using Tomlyn.Model;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.ResponseCompression;
+
+
 
 void StartPing(string dest)
 {
@@ -63,6 +71,112 @@ void StartPing(string dest)
     }
 }
 
+void StartServer()
+{
+    var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(new WebApplicationOptions
+    {
+        ContentRootPath = Directory.GetCurrentDirectory(),
+        Args = Array.Empty<string>()
+    });
+
+
+    // Configure the server address
+    string url = $"http://{Config.WebUIAddress}:{Config.WebUIPort}";
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        // Handle localhost vs 0.0.0.0
+        if (Config.WebUIAddress == "localhost" || Config.WebUIAddress == "127.0.0.1")
+        {
+            options.ListenLocalhost(Config.WebUIPort);
+        }
+        else
+        {
+            options.Listen(System.Net.IPAddress.Parse(Config.WebUIAddress), Config.WebUIPort);
+        }
+    });
+
+    // Add Services
+    builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+    builder.Services.AddResponseCompression(options =>
+    {
+        options.EnableForHttps = true;
+        options.Providers.Add<BrotliCompressionProvider>();
+        options.Providers.Add<GzipCompressionProvider>();
+    });
+
+    var app = builder.Build();
+
+    // Configure HTTP Pipeline
+    
+    var StaticFilePath = Path.Combine(builder.Environment.ContentRootPath, "Pages", "static");
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(StaticFilePath), RequestPath = "/static" });
+    app.UseRouting();
+    app.UseResponseCompression();
+    app.UseStaticFiles(); // For d3.js in wwwroot/static
+    app.MapRazorPages();
+
+    // --- API Endpoints ---
+
+    // API: Get Ping Stats (Latency and Success Rate grouped by Decaminute)
+    app.MapGet("/api/pings", (int days) =>
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        using var ctx = new LogsContext();
+
+        // Replicating the logic from NetworkPingStatsPanel
+        var query = ctx.Pings
+            .Where(p => p.TimeNow.CompareTo(cutoff.ToString("o")) >= 0)
+            .ToList();
+
+        var grouped = query
+            .GroupBy(p => new { p.Dest, Decaminute = p.TimeNow.Substring(0, 18) })
+            .Select(g => new
+            {
+                g.Key.Dest,
+                g.Key.Decaminute,
+                LatencyAverage = g.Average(x => x.Latency),
+                SuccessRate = g.Average(x => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1.0 : 0.0) * 100
+            })
+            .OrderBy(x => x.Decaminute)
+            .ToList();
+
+        // Structure data for D3: Dictionary<Dest, List<Point>>
+        var result = grouped.GroupBy(x => x.Dest)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => new
+                {
+                    x.Decaminute,
+                    x.LatencyAverage,
+                    x.SuccessRate,
+                    // Helper for D3 time parsing
+                    TimeIso = DateTime.Parse(x.Decaminute + "0").ToString("o")
+                }).ToList()
+            );
+
+        return Results.Json(result);
+    });
+
+    // API: Get Process Stats (Optional, based on your schema)
+    app.MapGet("/api/processes", (int days) =>
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        using var ctx = new LogsContext();
+
+        // Returning raw process history for the last X days
+        var data = ctx.ProcessHistories
+            .Where(p => p.TimeNow.CompareTo(cutoff.ToString("o")) >= 0)
+            .OrderByDescending(p => p.TimeNow)
+            .Take(1000) // Limit to prevent browser crash for now
+            .ToList();
+
+        return Results.Json(data);
+    });
+
+    Console.WriteLine($"Web Server starting on {url}");
+    app.Run();
+}
+
 string ConfigFile = System.IO.File.ReadAllText("HealthMonitor.toml");
 List<string> destinations = new List<string>();
 var TM = Toml.ToModel(ConfigFile);
@@ -111,6 +225,18 @@ if (TM.ContainsKey("Title"))
     Config.Title = ((string)(TM["Title"]));
     Console.WriteLine($"Console.Title set to \"{Config.Title}\".");
 }
+if (TM.ContainsKey("WebUI"))
+{
+    Config.WebUI = ((bool)(TM["WebUI"]));
+}
+if (TM.ContainsKey("WebUIAddress"))
+{
+    Config.WebUIAddress = ((string)(TM["WebUIAddress"]));
+}
+if (TM.ContainsKey("WebUIPort"))
+{
+    Config.WebUIPort = (((int)((long)TM["WebUIPort"])));
+}
 Console.WriteLine(
     $"LogFile: {Config.LogFile}, RetentionDays: {RetentionDays}, \nSleepTimeMsBetweenPointsProc (time waited for next proc stats collection): {Config.SleepTimeMsBetweenPointsProc}ms, \nSleepTimeMsBetweenPointsPing (likewise for pings): {Config.SleepTimeMsBetweenPointsPing}ms."
 );
@@ -137,6 +263,10 @@ if (Config.AutoVacuumOnStartup)
     {
         Console.WriteLine($"Error while VACUUM/ANALYZE: {E.ToString()}");
     }
+}
+if (Config.WebUI)
+{
+    StartServer();
 }
 
 destinations = TA.Select(x => (string)x).ToList();
@@ -287,4 +417,7 @@ public static class Config
     public static bool AutoVacuum = true;
     public static string Title =
         "Health Monitor (logging service), © Rishikeshan S/L, License: Open Software License, V3 (no later).";
+    public static bool WebUI = false;
+    public static string WebUIAddress = "localhost";
+    public static int WebUIPort = 8888;
 }
