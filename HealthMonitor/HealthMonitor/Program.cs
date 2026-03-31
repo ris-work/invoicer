@@ -173,6 +173,54 @@ void StartServer()
         return Results.Json(data);
     });
 
+    // API: Get list of unique processes with their last known window titles
+    app.MapGet("/api/processes/list", () =>
+    {
+        using var ctx = new LogsContext();
+        // Assuming WindowTitlesMainModules is a view or table in your context based on your Eto code
+        // If not, fallback: ctx.ProcessHistories.GroupBy(x => x.ProcessName).Select(g => new { MainModulePath = g.Key, WindowName = "" })
+        try
+        {
+            return Results.Json(ctx.WindowTitlesMainModules.Select(x => new { x.MainModulePath, x.WindowName }).ToList());
+        }
+        catch
+        {
+            // Fallback if the view doesn't exist in this specific context version
+            return Results.Json(ctx.ProcessHistories.Select(x => new { MainModulePath = x.ProcessName, WindowName = x.MainWindowTitle }).Distinct().ToList());
+        }
+    });
+
+    // API: Get hourly stats for a specific process path
+    app.MapGet("/api/processes/stats", (string path, int days) =>
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        using var ctx = new LogsContext();
+
+        // Querying the hourly stats table
+        // Note: Assumes StatsHourlyMainModulePaths exists. 
+        // If you need to calculate this on the fly from ProcessHistories, that requires a more complex groupby query.
+        try
+        {
+            var data = ctx.StatsHourlyMainModulePaths
+                .Where(x => x.MainModulePath.ToLower() == path.ToLower() && x.Hour.CompareTo(cutoff.ToString("yyyy-MM-dd HH")) >= 0)
+                .OrderBy(x => x.Hour)
+                .Select(x => new
+                {
+                    x.Hour,
+                    CpuPercent = x.CpuPercent ?? 0,
+                    AvgMem = (x.AvgWorkingSet ?? 0) / (1024 * 1024), // Convert to MiB
+                    PeakMem = double.Parse(x.MaxWorkingSetForOneInstance) / (1024 * 1024) // Convert to MiB
+                })
+                .ToList();
+
+            return Results.Json(data);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Json(new { Error = ex.Message });
+        }
+    });
+
     Console.WriteLine($"Web Server starting on {url}");
     app.Run();
 }

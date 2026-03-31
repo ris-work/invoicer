@@ -1,36 +1,128 @@
-﻿@page "/Pages/Index"
-@*@functions {}*@
-
+﻿@page "/Index"
 <!DOCTYPE html>
 <html>
 <head>
     <title>Health Monitor</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
-        body { background-color: #1e1e1e; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; }
-        h1 { color: #ffcc00; }
-        .chart-container { background-color: #252526; border: 1px solid #3e3e42; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        .controls { margin-bottom: 20px; padding: 10px; background-color: #333; display: inline-block; border-radius: 5px; }
-        label { margin-right: 10px; }
-        input, button { background-color: #3c3c3c; color: white; border: 1px solid #555; padding: 5px; border-radius: 3px; }
-        button { cursor: pointer; }
-        button:hover { background-color: #505050; }
-        svg { background-color: black; width: 100%; height: 400px; }
-        .axis-label { fill: white; font-size: 12px; }
-        .legend { font-size: 12px; }
-        .line { fill: none; stroke-width: 2px; }
-        .grid line { stroke: #444; stroke-opacity: 0.7; shape-rendering: crispEdges; }
-        .grid path { stroke-width: 0; }
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        .chart-container {
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        /* Updated controls layout */
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #333;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        input, button {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+            /* Specific style for text inputs to be wider */
+            input[type="text"] {
+                width: 200px;
+            }
+
+        button {
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #505050;
+            }
+
+        svg {
+            background-color: black;
+            width: 100%;
+            height: 450px;
+        }
+        /* Slightly taller */
+        .axis-label {
+            fill: white;
+            font-size: 12px;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        .grid line {
+            stroke: #444;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+
+        .grid path {
+            stroke-width: 0;
+        }
     </style>
 </head>
 <body>
+    <!-- Add this Navigation Bar -->
+    <div class="nav-bar" style="background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <a href="/" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor</a>
+        <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats</a>
+    </div>
+    <!-- End Navigation Bar -->
 
     <h1>Health Monitor Dashboard</h1>
 
     <div class="controls">
-        <label>Retention (Days): <input type="number" id="daysInput" value="1" min="1" max="365"></label>
-        <button onclick="loadData()">Reload</button>
-        <button onclick="saveSvg('latencyChart')">Save Latency SVG</button>
-        <button onclick="saveSvg('successChart')">Save Success SVG</button>
+        <div>
+            <label>Retention (Days):</label>
+            <input type="number" id="daysInput" value="1" min="1" max="365" style="width: 60px;">
+        </div>
+
+        <!-- NEW: Filter Input -->
+        <div>
+            <label>Filter Destinations:</label>
+            <input type="text" id="filterInput" placeholder="e.g. 192.168 or 8.8.8.8">
+        </div>
+
+        <div>
+            <button onclick="loadData()">Reload Data</button>
+        </div>
+
+        <div>
+            <button onclick="saveSvg('latencyChart')">💾 Save Latency</button>
+            <button onclick="saveSvg('successChart')">💾 Save Success</button>
+        </div>
     </div>
 
     <h3>Latency (ms)</h3>
@@ -45,30 +137,58 @@
 
     <script src="/static/d3.js"></script>
     <script>
-        // Color generator to match Eto random shapes/colors visually
         const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-        
+        let cachedData = {}; // Cache data to avoid refetching when just filtering
+
         async function loadData() {
             const days = document.getElementById('daysInput').value;
+            console.log(`Fetching data for ${days} days...`);
+
             try {
                 const response = await fetch(`/api/pings?days=${days}`);
-                const rawData = await response.json();
-                
-                renderChart(rawData, '#latencyChart', 'LatencyAverage', 'TimeIso');
-                renderChart(rawData, '#successChart', 'SuccessRate', 'TimeIso');
+                cachedData = await response.json();
+                console.log("Raw Data Received:", cachedData);
+                applyFilterAndRender();
             } catch (e) {
                 console.error("Error loading data", e);
                 alert("Failed to load data from API.");
             }
         }
 
+        function applyFilterAndRender() {
+            const filterText = document.getElementById('filterInput').value.toLowerCase();
+            console.log(`Applying filter: "${filterText}"`);
+
+            const filteredData = {};
+            let hasData = false;
+
+            Object.keys(cachedData).forEach(dest => {
+                // Case-insensitive check
+                if (dest.toLowerCase().includes(filterText)) {
+                    filteredData[dest] = cachedData[dest];
+                    hasData = true;
+                }
+            });
+
+            if (!hasData && filterText !== "") {
+                console.log("No destinations matched filter.");
+            }
+
+            // Keys must match the JSON property names (camelCase from ASP.NET Core)
+            renderChart(filteredData, '#latencyChart', 'latencyAverage', 'timeIso');
+            renderChart(filteredData, '#successChart', 'successRate', 'timeIso');
+        }
+
         function renderChart(rawData, svgSelector, valueKey, timeKey) {
+            // console.log(`Rendering ${svgSelector} with key: ${valueKey}`);
+
             const svg = d3.select(svgSelector);
             svg.selectAll("*").remove();
 
-            const margin = {top: 20, right: 80, bottom: 30, left: 50};
+            // Adjusted margins: Increased right margin to 140 so legend text doesn't get cut off
+            const margin = {top: 20, right: 140, bottom: 30, left: 50};
             const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-            const height = 400 - margin.top - margin.bottom;
+            const height = 450 - margin.top - margin.bottom;
 
             const g = svg.append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -76,8 +196,9 @@
             const x = d3.scaleTime().range([0, width]);
             const y = d3.scaleLinear().range([height, 0]);
 
-            // Aggregate all points for domain calculation
             let allPoints = [];
+
+            // Flatten data for domain calculation
             Object.keys(rawData).forEach(dest => {
                 rawData[dest].forEach(d => {
                     allPoints.push({
@@ -89,12 +210,17 @@
             });
 
             if (allPoints.length === 0) {
-                g.append("text").attr("fill", "white").text("No data for selected range.");
+                g.append("text").attr("fill", "white").attr("x", 20).attr("y", 20).text("No data for selected range or filter.");
                 return;
             }
 
-            x.domain(d3.extent(allPoints, d => d.date));
-            y.domain([0, d3.max(allPoints, d => d.value) * 1.1 || 100]);
+            // Calculate domains
+            const xExtent = d3.extent(allPoints, d => d.date);
+            const yMax = d3.max(allPoints, d => d.value);
+
+            x.domain(xExtent);
+            // Add a small buffer to Y axis, handle cases where max is 0
+            y.domain([0, (yMax || 100) * 1.1]);
 
             // Grid
             g.append("g")
@@ -116,7 +242,7 @@
                 .call(d3.axisLeft(y))
                 .selectAll("text").attr("fill", "white");
 
-            // Lines
+            // Line Generator
             const line = d3.line()
                 .x(d => x(new Date(d[timeKey])))
                 .y(d => y(d[valueKey]))
@@ -125,15 +251,27 @@
             const destinations = Object.keys(rawData);
             destinations.forEach((dest, i) => {
                 const data = rawData[dest];
+
+                // Draw line
                 g.append("path")
                     .datum(data)
                     .attr("class", "line")
                     .attr("stroke", colorScale(i))
                     .attr("d", line);
 
-                // Legend
+                // Draw dots
+                g.selectAll(`.dot-${i}`)
+                    .data(data)
+                    .enter().append("circle")
+                    .attr("cx", d => x(new Date(d[timeKey])))
+                    .attr("cy", d => y(d[valueKey]))
+                    .attr("r", 3)
+                    .attr("fill", colorScale(i));
+
+                // Legend - Rendered at width + 10 (inside the right margin space)
                 g.append("text")
-                    .attr("transform", `translate(${width + 10},${i * 20})`)
+                    .attr("x", width + 10) // Position just right of the chart area
+                    .attr("y", i * 20 + 5) // Vertical spacing
                     .attr("fill", colorScale(i))
                     .attr("class", "legend")
                     .text(dest);
@@ -145,14 +283,13 @@
             const serializer = new XMLSerializer();
             let source = serializer.serializeToString(svg);
 
-            // Add namespace
             if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
                 source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
             }
-            
+
             const blob = new Blob([source], {type: "image/svg+xml;charset=utf-8"});
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement("a");
             a.href = url;
             a.download = `health_monitor_${svgId}_${new Date().toISOString()}.svg`;
@@ -160,6 +297,9 @@
             a.click();
             document.body.removeChild(a);
         }
+
+        // Event listener for the filter input box
+        document.getElementById('filterInput').addEventListener('input', applyFilterAndRender);
 
         // Initial load
         loadData();

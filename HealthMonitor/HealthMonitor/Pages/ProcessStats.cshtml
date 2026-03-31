@@ -1,0 +1,236 @@
+﻿@page "/ProcessStats"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Process Stats</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <style>
+        body { background-color: #1e1e1e; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; }
+        h1 { color: #ffcc00; }
+        
+        .nav-bar { background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+        .nav-bar a { color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold; }
+        .nav-bar a:hover { text-decoration: underline; }
+
+        .chart-container { background-color: #252526; border: 1px solid #3e3e42; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+        
+        .controls { margin-bottom: 20px; padding: 15px; background-color: #333; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; border-radius: 5px; }
+        label { margin-right: 5px; }
+        input, select, button { background-color: #3c3c3c; color: white; border: 1px solid #555; padding: 5px; border-radius: 3px; }
+        select { min-width: 300px; }
+        button { cursor: pointer; }
+        button:hover { background-color: #505050; }
+        
+        svg { background-color: black; width: 100%; height: 450px; }
+        .axis-label { fill: white; font-size: 12px; }
+        .legend { font-size: 12px; }
+        .line { fill: none; stroke-width: 2px; }
+        .grid line { stroke: #444; stroke-opacity: 0.7; shape-rendering: crispEdges; }
+        .grid path { stroke-width: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <a href="/">Ping Monitor</a>
+        <a href="/ProcessStats">Process Stats</a>
+    </div>
+
+    <h1>Process Statistics (Hourly)</h1>
+
+    <div class="controls">
+        <div>
+            <label>Process:</label>
+            <select id="processSelect">
+                <option value="">Select a process...</option>
+            </select>
+        </div>
+        <div>
+            <label>Retention (Days):</label>
+            <input type="number" id="daysInput" value="7" min="1" max="365" style="width: 60px;">
+        </div>
+        <div>
+            <button onclick="loadStats()">Load Stats</button>
+        </div>
+        <div>
+            <button onclick="saveSvg('cpuChart')">💾 Save CPU</button>
+            <button onclick="saveSvg('memChart')">💾 Save MEM</button>
+        </div>
+    </div>
+
+    <h3>CPU Usage (%)</h3>
+    <div class="chart-container">
+        <svg id="cpuChart"></svg>
+    </div>
+
+    <h3>Memory Usage (MiB)</h3>
+    <div class="chart-container">
+        <svg id="memChart"></svg>
+    </div>
+
+    <script src="/static/d3.js"></script>
+    <script>
+        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // Populate process list on load
+        async function init() {
+            try {
+                const response = await fetch('/api/processes/list');
+                const data = await response.json();
+                const select = document.getElementById('processSelect');
+                
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.mainModulePath;
+                    opt.text = p.mainModulePath; // You can add windowName if you want
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Failed to load process list", e);
+            }
+        }
+
+        async function loadStats() {
+            const path = document.getElementById('processSelect').value;
+            const days = document.getElementById('daysInput').value;
+
+            if (!path) {
+                alert("Please select a process.");
+                return;
+            }
+
+            console.log(`Loading stats for ${path}, ${days} days.`);
+            
+            try {
+                const response = await fetch(`/api/processes/stats?path=${encodeURIComponent(path)}&days=${days}`);
+                const rawData = await response.json();
+                console.log("Stats Data:", rawData);
+
+                // Render CPU Chart
+                renderChart(rawData, '#cpuChart', 'cpuPercent', 'hour', 'CPU %');
+
+                // Render Memory Chart (Multiple lines: Avg vs Peak)
+                renderMultiChart(rawData, '#memChart', 
+                    [{ key: 'avgMem', label: 'Avg Mem' }, { key: 'peakMem', label: 'Peak Mem' }], 
+                    'hour', 'Memory (MiB)');
+
+            } catch (e) {
+                console.error("Error loading stats", e);
+            }
+        }
+
+        function parseHour(hourStr) {
+            // Expecting format "yyyy-MM-dd HH"
+            return new Date(hourStr + ":00");
+        }
+
+        function renderChart(data, svgSelector, valueKey, timeKey, yLabel) {
+            const svg = d3.select(svgSelector);
+            svg.selectAll("*").remove();
+
+            const margin = {top: 20, right: 80, bottom: 30, left: 50};
+            const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = 450 - margin.top - margin.bottom;
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleTime().range([0, width]);
+            const y = d3.scaleLinear().range([height, 0]);
+
+            if (!data || data.length === 0) {
+                g.append("text").attr("fill", "white").attr("x", 20).attr("y", 20).text("No data available.");
+                return;
+            }
+
+            const parsedData = data.map(d => ({
+                date: parseHour(d[timeKey]),
+                value: d[valueKey]
+            }));
+
+            x.domain(d3.extent(parsedData, d => d.date));
+            y.domain([0, d3.max(parsedData, d => d.value) * 1.1 || 100]);
+
+            // Grid/Axes setup
+            g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
+            g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
+            
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
+            g.append("g").call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
+
+            // Line
+            const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
+
+            g.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
+            
+            // Dots
+            g.selectAll(".dot").data(parsedData).enter().append("circle").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
+        }
+
+        function renderMultiChart(data, svgSelector, seriesConfig, timeKey, yLabel) {
+            const svg = d3.select(svgSelector);
+            svg.selectAll("*").remove();
+
+            const margin = {top: 20, right: 140, bottom: 30, left: 50};
+            const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = 450 - margin.top - margin.bottom;
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleTime().range([0, width]);
+            const y = d3.scaleLinear().range([height, 0]);
+
+            if (!data || data.length === 0) {
+                g.append("text").attr("fill", "white").attr("x", 20).attr("y", 20).text("No data available.");
+                return;
+            }
+
+            let allValues = [];
+            const parsedSeries = seriesConfig.map((s, i) => {
+                return data.map(d => {
+                    allValues.push(d[s.key]);
+                    return { date: parseHour(d[timeKey]), value: d[s.key], label: s.label, colorIdx: i };
+                });
+            });
+
+            x.domain(d3.extent(data, d => parseHour(d[timeKey])));
+            y.domain([0, d3.max(allValues) * 1.1 || 100]);
+
+            // Grid/Axes
+            g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
+            g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
+            g.append("g").call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
+
+            const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
+
+            parsedSeries.forEach((seriesData, i) => {
+                g.append("path").datum(seriesData).attr("class", "line").attr("stroke", colorScale(i)).attr("d", line);
+                g.selectAll(`.dot-${i}`).data(seriesData).enter().append("circle").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(i));
+                
+                // Legend
+                g.append("text").attr("x", width + 10).attr("y", i * 20 + 5).attr("fill", colorScale(i)).text(seriesConfig[i].label);
+            });
+        }
+
+        function saveSvg(svgId) {
+            const svg = document.getElementById(svgId);
+            const serializer = new XMLSerializer();
+            let source = serializer.serializeToString(svg);
+            if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            const blob = new Blob([source], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${svgId}_${new Date().toISOString()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        init();
+    </script>
+</body>
+</html>
