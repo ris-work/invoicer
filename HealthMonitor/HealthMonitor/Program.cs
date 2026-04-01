@@ -412,7 +412,7 @@ if (Config.AutoVacuumOnStartup)
 }
 if (Config.WebUI)
 {
-    StartServer();
+    (new Thread(() => StartServer())).Start();
 }
 
 destinations = TA.Select(x => (string)x).ToList();
