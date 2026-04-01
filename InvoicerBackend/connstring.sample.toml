@@ -1,0 +1,3 @@
+ConnString = "Host=127.0.0.1;Database=newinv;Username=xxxx;Password=xxxx"
+Salt = "Hello"
+OpenRouterKey = "openrouterkey"
