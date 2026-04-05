@@ -470,21 +470,18 @@
             const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
 
             chartBody.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
-            chartBody.selectAll(".dot")
-                .data(parsedData)
-                .enter().append("circle")
-                .attr("class", "dot")
-                .attr("cx", d => x(d.date))
-                .attr("cy", d => y(d.value))
-                .attr("r", 3)
-                .attr("fill", colorScale(0));
+            chartBody.selectAll(".dot").data(parsedData).enter().append("circle")
+                .attr("class", "dot").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
+
+            // --- Interaction Logic ---
 
             const zoom = d3.zoom()
                 .scaleExtent([0.5, 20])
+                .filter(event => (!event.button || event.type === 'wheel') && event.type !== 'contextmenu')
                 .on("zoom", (event) => {
                     const { transform } = event;
                     const newX = transform.rescaleX(x);
-                    const newY = y; // X-Only Zoom
+                    const newY = y;
 
                     xAxisGroup.call(d3.axisBottom(newX).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M")));
                     yAxisGroup.call(d3.axisLeft(newY));
@@ -496,34 +493,33 @@
                     chartBody.selectAll(".dot").attr("cx", d => newX(d.date)).attr("cy", d => newY(d.value));
                 });
 
-            const catcher = svg.append("rect").attr("width", "100%").attr("height", "100%").attr("fill", "none").attr("pointer-events", "all").lower();
-            catcher.call(zoom);
+            svg.call(zoom);
 
-            const brush = d3.brush().on("end", (event) => {
-                if (!event.selection) return;
-                const [[x0, y0], [x1, y1]] = event.selection;
-                const t = d3.zoomTransform(catcher.node());
-                const currentX = t.rescaleX(x);
-                const x0d = currentX.invert(x0);
-                const x1d = currentX.invert(x1);
-
-                const xRangeOriginal = x(x1d) - x(x0d);
-                const k = dims.width / xRangeOriginal;
-                const tx = -x(x0d) * k;
-
-                catcher.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(tx, 0).scale(k));
-                g.select(".brush").call(brush.move, null);
-            });
-
-            const brushG = g.append("g").attr("class", "brush");
-            brushG.call(brush.filter(event => event.button === 1));
-            svg.on("mousedown", event => { if (event.button === 1) event.preventDefault(); });
-            svg.on("click", event => { if (event.button === 1) event.preventDefault(); });
-
-            catcher.on("contextmenu", (event) => {
+            svg.on("contextmenu", (event) => {
                 event.preventDefault();
-                catcher.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
             });
+
+            const brush = d3.brush()
+                .filter(event => event.button === 1)
+                .on("end", (event) => {
+                    if (!event.selection) return;
+                    const [[x0, y0], [x1, y1]] = event.selection;
+                    const t = d3.zoomTransform(svg.node());
+                    const currentX = t.rescaleX(x);
+                    const x0d = currentX.invert(x0);
+                    const x1d = currentX.invert(x1);
+
+                    const xRangeOriginal = x(x1d) - x(x0d);
+                    const k = dims.width / xRangeOriginal;
+                    const tx = -x(x0d) * k;
+
+                    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(tx, 0).scale(k));
+                    g.select(".brush").call(brush.move, null);
+                });
+
+            const brushG = g.append("g").attr("class", "brush").call(brush);
+            svg.on("mousedown.zoom", event => { if (event.button === 1) event.preventDefault(); });
 
             function draw() {
                 xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
@@ -538,7 +534,7 @@
                 x.range([0, dims.width]);
                 y.range([dims.height, 0]);
                 svg.select("defs rect").attr("width", dims.width).attr("height", dims.height);
-                catcher.call(zoom.transform, d3.zoomIdentity);
+                svg.call(zoom.transform, d3.zoomIdentity);
                 xAxisGroup.attr("transform", `translate(0,${dims.height})`);
                 xGridGroup.attr("transform", `translate(0,${dims.height})`);
                 chartBody.select(".line").attr("d", line);
@@ -596,15 +592,10 @@
                 .attr("clip-path", "url(#clip-" + svgSelector.replace('#', '') + ")");
 
             const legendGroup = g.append("g").attr("class", "legends");
-
             function updateLegends() {
                 legendGroup.selectAll("text").remove();
                 seriesConfig.forEach((s, i) => {
-                    legendGroup.append("text")
-                        .attr("x", dims.width + 10)
-                        .attr("y", i * 20 + 5)
-                        .attr("fill", colorScale(i))
-                        .text(s.label);
+                    legendGroup.append("text").attr("x", dims.width + 10).attr("y", i * 20 + 5).attr("fill", colorScale(i)).text(s.label);
                 });
             }
             updateLegends();
@@ -612,24 +603,16 @@
             const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
 
             parsedSeries.forEach((seriesData, i) => {
-                chartBody.append("path")
-                    .datum(seriesData)
-                    .attr("class", `line line-${i}`) // Unique class
-                    .attr("stroke", colorScale(i))
-                    .attr("d", line);
-
-                chartBody.selectAll(`.dot-${i}`)
-                    .data(seriesData)
-                    .enter().append("circle")
-                    .attr("class", `dot-${i}`) // Unique class
-                    .attr("cx", d => x(d.date))
-                    .attr("cy", d => y(d.value))
-                    .attr("r", 3)
-                    .attr("fill", colorScale(i));
+                chartBody.append("path").datum(seriesData).attr("class", `line line-${i}`).attr("stroke", colorScale(i)).attr("d", line);
+                chartBody.selectAll(`.dot-${i}`).data(seriesData).enter().append("circle")
+                    .attr("class", `dot-${i}`).attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(i));
             });
+
+            // --- Interaction Logic ---
 
             const zoom = d3.zoom()
                 .scaleExtent([0.5, 20])
+                .filter(event => (!event.button || event.type === 'wheel') && event.type !== 'contextmenu')
                 .on("zoom", (event) => {
                     const { transform } = event;
                     const newX = transform.rescaleX(x);
@@ -643,46 +626,45 @@
                     parsedSeries.forEach((seriesData, i) => {
                         const updatedLine = d3.line().x(d => newX(d.date)).y(d => newY(d.value)).curve(d3.curveMonotoneX);
                         chartBody.select(`.line-${i}`).attr("d", updatedLine);
-                        chartBody.selectAll(`.dot-${i}`)
-                            .attr("cx", d => newX(d.date))
-                            .attr("cy", d => newY(d.value));
+                        chartBody.selectAll(`.dot-${i}`).attr("cx", d => newX(d.date)).attr("cy", d => newY(d.value));
                     });
                 });
 
-            const catcher = svg.append("rect").attr("width", "100%").attr("height", "100%").attr("fill", "none").attr("pointer-events", "all").lower();
-            catcher.call(zoom);
+            svg.call(zoom);
 
-            const brush = d3.brush().on("end", (event) => {
-                if (!event.selection) return;
-                const [[x0, y0], [x1, y1]] = event.selection;
-                const t = d3.zoomTransform(catcher.node());
-                const currentX = t.rescaleX(x);
-                const x0d = currentX.invert(x0);
-                const x1d = currentX.invert(x1);
-
-                const xRangeOriginal = x(x1d) - x(x0d);
-                const k = dims.width / xRangeOriginal;
-                const tx = -x(x0d) * k;
-
-                catcher.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(tx, 0).scale(k));
-                g.select(".brush").call(brush.move, null);
-            });
-
-            const brushG = g.append("g").attr("class", "brush");
-            brushG.call(brush.filter(event => event.button === 1));
-            svg.on("mousedown", event => { if (event.button === 1) event.preventDefault(); });
-            svg.on("click", event => { if (event.button === 1) event.preventDefault(); });
-
-            catcher.on("contextmenu", (event) => {
+            svg.on("contextmenu", (event) => {
                 event.preventDefault();
-                catcher.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
             });
+
+            const brush = d3.brush()
+                .filter(event => event.button === 1)
+                .on("end", (event) => {
+                    if (!event.selection) return;
+                    const [[x0, y0], [x1, y1]] = event.selection;
+                    const t = d3.zoomTransform(svg.node());
+                    const currentX = t.rescaleX(x);
+                    const x0d = currentX.invert(x0);
+                    const x1d = currentX.invert(x1);
+
+                    const xRangeOriginal = x(x1d) - x(x0d);
+                    const k = dims.width / xRangeOriginal;
+                    const tx = -x(x0d) * k;
+
+                    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(tx, 0).scale(k));
+                    g.select(".brush").call(brush.move, null);
+                });
+
+            const brushG = g.append("g").attr("class", "brush").call(brush);
+            svg.on("mousedown.zoom", event => { if (event.button === 1) event.preventDefault(); });
 
             function draw() {
-                xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
-                yAxisGroup.call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
-                xGridGroup.call(d3.axisBottom(x).tickSize(-dims.height).tickFormat(""));
-                yGridGroup.call(d3.axisLeft(y).tickSize(-dims.width).tickFormat(""));
+            xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
+            yAxisGroup.call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
+            xGridGroup.call(d3.axisBottom(x).tickSize(-dims.height).tickFormat(""));
+
+            // FIX: Move tickSize INSIDE the call() parenthesis
+            yGridGroup.call(d3.axisLeft(y).tickSize(-dims.width).tickFormat(""));
             }
             draw();
 
@@ -691,17 +673,13 @@
                 x.range([0, dims.width]);
                 y.range([dims.height, 0]);
                 svg.select("defs rect").attr("width", dims.width).attr("height", dims.height);
-                catcher.call(zoom.transform, d3.zoomIdentity);
+                svg.call(zoom.transform, d3.zoomIdentity);
                 xAxisGroup.attr("transform", `translate(0,${dims.height})`);
                 xGridGroup.attr("transform", `translate(0,${dims.height})`);
-
                 parsedSeries.forEach((seriesData, i) => {
                     chartBody.select(`.line-${i}`).attr("d", line);
-                    chartBody.selectAll(`.dot-${i}`)
-                        .attr("cx", d => x(d.date))
-                        .attr("cy", d => y(d.value));
+                    chartBody.selectAll(`.dot-${i}`).attr("cx", d => x(d.date)).attr("cy", d => y(d.value));
                 });
-
                 updateLegends();
                 draw();
             });
