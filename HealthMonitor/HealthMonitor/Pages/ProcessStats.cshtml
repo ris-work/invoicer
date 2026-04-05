@@ -519,7 +519,7 @@
                 });
 
             const brushG = g.append("g").attr("class", "brush").call(brush);
-            svg.on("mousedown.zoom", event => { if (event.button === 1) event.preventDefault(); });
+            svg.on("mousedown.preventScroll", event => { if (event.button === 1) event.preventDefault(); });
 
             function draw() {
                 xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
@@ -656,7 +656,7 @@
                 });
 
             const brushG = g.append("g").attr("class", "brush").call(brush);
-            svg.on("mousedown.zoom", event => { if (event.button === 1) event.preventDefault(); });
+            svg.on("mousedown.preventScroll", event => { if (event.button === 1) event.preventDefault(); });
 
             function draw() {
             xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
