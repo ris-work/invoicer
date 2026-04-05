@@ -422,18 +422,23 @@
             return new Date(hourStr + ":00");
         }
 
-        function renderChart(data, svgSelector, valueKey, timeKey, yLabel) {
+                function renderChart(data, svgSelector, valueKey, timeKey, yLabel) {
             const svg = d3.select(svgSelector);
             svg.selectAll("*").remove();
 
             const margin = {top: 20, right: 80, bottom: 30, left: 50};
-            const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-            const height = 400 - margin.top - margin.bottom;
+
+            const getDimensions = () => ({
+                width: svg.node().getBoundingClientRect().width - margin.left - margin.right,
+                height: 400 - margin.top - margin.bottom
+            });
+
+            let dims = getDimensions();
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-            const x = d3.scaleTime().range([0, width]);
-            const y = d3.scaleLinear().range([height, 0]);
+            const x = d3.scaleTime().range([0, dims.width]);
+            const y = d3.scaleLinear().range([dims.height, 0]);
 
             if (!data || data.length === 0) {
                 g.append("text").attr("fill", "white").attr("x", 20).attr("y", 20).text("No data available.");
@@ -448,16 +453,116 @@
             x.domain(d3.extent(parsedData, d => d.date));
             y.domain([0, d3.max(parsedData, d => d.value) * 1.1 || 100]);
 
-            g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
-            g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
+            // Axes Groups
+            const xAxisGroup = g.append("g").attr("class", "x-axis").attr("transform", `translate(0,${dims.height})`);
+            const yAxisGroup = g.append("g").attr("class", "y-axis");
 
-            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
-            g.append("g").call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
+            // Grid Groups
+            const xGridGroup = g.append("g").attr("class", "grid x-grid").attr("transform", `translate(0,${dims.height})`);
+            const yGridGroup = g.append("g").attr("class", "grid y-grid");
 
+            // Clip Path
+            svg.append("defs").append("clipPath")
+                .attr("id", "clip-" + svgSelector.replace('#', ''))
+                .append("rect")
+                .attr("width", dims.width)
+                .attr("height", dims.height);
+
+            // Chart Content Group
+            const chartBody = g.append("g").attr("class", "chart-body")
+                .attr("clip-path", "url(#clip-" + svgSelector.replace('#', '') + ")");
+
+            // Line Generator
             const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
 
-            g.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
-            g.selectAll(".dot").data(parsedData).enter().append("circle").attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
+            // Initial Draw of content
+            chartBody.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
+            chartBody.selectAll(".dot").data(parsedData).enter().append("circle")
+                .attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
+
+            // Zoom Behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 20])
+                .on("zoom", (event) => {
+                    const { transform } = event;
+                    const newX = transform.rescaleX(x);
+                    const newY = transform.rescaleY(y);
+
+                    xAxisGroup.call(d3.axisBottom(newX).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M")));
+                    yAxisGroup.call(d3.axisLeft(newY));
+
+                    xGridGroup.call(d3.axisBottom(newX).tickSize(-dims.height).tickFormat(""));
+                    yGridGroup.call(d3.axisLeft(newY).tickSize(-dims.width).tickFormat(""));
+
+                    const updatedLine = d3.line().x(d => newX(d.date)).y(d => newY(d.value)).curve(d3.curveMonotoneX);
+                    chartBody.select(".line").attr("d", updatedLine);
+                    chartBody.selectAll(".dot").attr("cx", d => newX(d.date)).attr("cy", d => newY(d.value));
+                });
+
+            // Apply Zoom
+            svg.call(zoom);
+
+            // Right-click Reset
+            svg.on("contextmenu", (event) => {
+                event.preventDefault();
+                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+            });
+
+            // Middle-click Rectangle Zoom
+            const brush = d3.brush().on("end", (event) => {
+                if (!event.selection) return;
+                const [[x0, y0], [x1, y1]] = event.selection;
+                const x0d = x.invert(x0);
+                const x1d = x.invert(x1);
+
+                const xSpan = x(x1d) - x(x0d);
+                const scale = dims.width / xSpan;
+                const translateX = -x(x0d) * scale;
+
+                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(translateX, 0).scale(scale));
+                g.select(".brush").call(brush.move, null);
+            });
+
+            let middleButtonDown = false;
+                    // Middle-click Rectangle Zoom (using D3 brush filter)
+            const brushG = g.append("g").attr("class", "brush");
+
+            brushG.call(brush.filter(event => {
+            // Only trigger on middle mouse button (button === 1)
+                return event.button === 1;
+             }));
+
+            // Prevent browser autoscroll on middle click
+            svg.on("mousedown", event => { if (event.button === 1) event.preventDefault(); });
+            svg.on("click", event => { if (event.button === 1) event.preventDefault(); });
+
+            // Initial Draw
+            function draw() {
+                xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
+                yAxisGroup.call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
+                xGridGroup.call(d3.axisBottom(x).tickSize(-dims.height).tickFormat(""));
+                yGridGroup.call(d3.axisLeft(y).tickSize(-dims.width).tickFormat(""));
+            }
+            draw();
+
+            // Resize Handler
+            window.addEventListener('resize', () => {
+                dims = getDimensions();
+                x.range([0, dims.width]);
+                y.range([dims.height, 0]);
+
+                svg.select("defs rect").attr("width", dims.width).attr("height", dims.height);
+
+                svg.call(zoom.transform, d3.zoomIdentity); // Reset
+
+                xAxisGroup.attr("transform", `translate(0,${dims.height})`);
+                xGridGroup.attr("transform", `translate(0,${dims.height})`);
+
+                chartBody.select(".line").attr("d", line);
+                chartBody.selectAll(".dot").attr("cx", d => x(d.date)).attr("cy", d => y(d.value));
+
+                draw();
+            });
         }
 
         function renderMultiChart(data, svgSelector, seriesConfig, timeKey, yLabel) {
