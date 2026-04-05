@@ -475,10 +475,18 @@
             // Line Generator
             const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
 
-            // Initial Draw of content
+            // Initial Draw
             chartBody.append("path").datum(parsedData).attr("class", "line").attr("stroke", colorScale(0)).attr("d", line);
-            chartBody.selectAll(".dot").data(parsedData).enter().append("circle")
-                .attr("cx", d => x(d.date)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", colorScale(0));
+
+            // FIX: Added .attr("class", "dot") so they can be selected during zoom
+            chartBody.selectAll(".dot")
+                .data(parsedData)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => x(d.date))
+                .attr("cy", d => y(d.value))
+                .attr("r", 3)
+                .attr("fill", colorScale(0));
 
             // Zoom Behavior
             const zoom = d3.zoom()
@@ -496,7 +504,11 @@
 
                     const updatedLine = d3.line().x(d => newX(d.date)).y(d => newY(d.value)).curve(d3.curveMonotoneX);
                     chartBody.select(".line").attr("d", updatedLine);
-                    chartBody.selectAll(".dot").attr("cx", d => newX(d.date)).attr("cy", d => newY(d.value));
+
+                    // FIX: Selecting by class now works
+                    chartBody.selectAll(".dot")
+                        .attr("cx", d => newX(d.date))
+                        .attr("cy", d => newY(d.value));
                 });
 
             // Apply Zoom
@@ -523,20 +535,11 @@
                 g.select(".brush").call(brush.move, null);
             });
 
-            let middleButtonDown = false;
-                    // Middle-click Rectangle Zoom (using D3 brush filter)
             const brushG = g.append("g").attr("class", "brush");
-
-            brushG.call(brush.filter(event => {
-            // Only trigger on middle mouse button (button === 1)
-                return event.button === 1;
-             }));
-
-            // Prevent browser autoscroll on middle click
+            brushG.call(brush.filter(event => event.button === 1));
             svg.on("mousedown", event => { if (event.button === 1) event.preventDefault(); });
             svg.on("click", event => { if (event.button === 1) event.preventDefault(); });
 
-            // Initial Draw
             function draw() {
                 xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d %H:%M"))).selectAll("text").attr("fill", "white");
                 yAxisGroup.call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
@@ -552,8 +555,7 @@
                 y.range([dims.height, 0]);
 
                 svg.select("defs rect").attr("width", dims.width).attr("height", dims.height);
-
-                svg.call(zoom.transform, d3.zoomIdentity); // Reset
+                svg.call(zoom.transform, d3.zoomIdentity);
 
                 xAxisGroup.attr("transform", `translate(0,${dims.height})`);
                 xGridGroup.attr("transform", `translate(0,${dims.height})`);
