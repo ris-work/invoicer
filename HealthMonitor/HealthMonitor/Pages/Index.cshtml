@@ -242,14 +242,12 @@
             renderChart(filteredData, '#successChart', 'successRate', 'timeIso');
         }
 
-        function renderChart(rawData, svgSelector, valueKey, timeKey) {
+                function renderChart(rawData, svgSelector, valueKey, timeKey) {
             const svg = d3.select(svgSelector);
             svg.selectAll("*").remove();
 
-            // Adjusted margins
             const margin = {top: 20, right: 140, bottom: 30, left: 50};
 
-            // Helper to get dimensions
             const getDimensions = () => ({
                 width: svg.node().getBoundingClientRect().width - margin.left - margin.right,
                 height: 450 - margin.top - margin.bottom
@@ -299,22 +297,22 @@
 
             const yGridGroup = g.append("g").attr("class", "grid y-grid");
 
-            // Line Generator
-            const line = d3.line()
-                .x(d => x(new Date(d[timeKey])))
-                .y(d => y(d[valueKey]))
-                .curve(d3.curveMonotoneX);
-
-            // Chart Content Group (for clipping)
-            const chartBody = g.append("g").attr("class", "chart-body")
-                .attr("clip-path", "url(#clip-" + svgSelector.replace('#', '') + ")");
-
             // Clip Path
             svg.append("defs").append("clipPath")
                 .attr("id", "clip-" + svgSelector.replace('#', ''))
                 .append("rect")
                 .attr("width", dims.width)
                 .attr("height", dims.height);
+
+            // Chart Content Group (clipped)
+            const chartBody = g.append("g").attr("class", "chart-body")
+                .attr("clip-path", "url(#clip-" + svgSelector.replace('#', '') + ")");
+
+            // Line Generator
+            const line = d3.line()
+                .x(d => x(new Date(d[timeKey])))
+                .y(d => y(d[valueKey]))
+                .curve(d3.curveMonotoneX);
 
             // Draw Lines and Dots
             const destinations = Object.keys(rawData);
@@ -323,20 +321,21 @@
 
                 chartBody.append("path")
                     .datum(data)
-                    .attr("class", "line")
+                    .attr("class", `line line-${i}`) // Unique class
                     .attr("stroke", colorScale(i))
                     .attr("d", line);
 
                 chartBody.selectAll(`.dot-${i}`)
                     .data(data)
                     .enter().append("circle")
+                    .attr("class", `dot-${i}`) // Unique class
                     .attr("cx", d => x(new Date(d[timeKey])))
                     .attr("cy", d => y(d[valueKey]))
                     .attr("r", 3)
                     .attr("fill", colorScale(i));
             });
 
-            // Legends (drawn outside clip path)
+            // Legends
             const legendGroup = g.append("g").attr("class", "legends");
 
             function updateLegends() {
@@ -352,95 +351,81 @@
             }
             updateLegends();
 
-            // Zoom Behavior
+            // Zoom Behavior (X-Only)
             const zoom = d3.zoom()
                 .scaleExtent([0.5, 20])
                 .on("zoom", (event) => {
                     const { transform } = event;
                     const newX = transform.rescaleX(x);
-                    const newY = transform.rescaleY(y);
+                    const newY = y; // Force original Y scale
 
-                    // Update Axes
                     xAxisGroup.call(d3.axisBottom(newX).ticks(5).tickFormat(d3.timeFormat("%H:%M")));
                     yAxisGroup.call(d3.axisLeft(newY));
 
-                    // Update Grid
                     xGridGroup.call(d3.axisBottom(newX).tickSize(-dims.height).tickFormat(""));
                     yGridGroup.call(d3.axisLeft(newY).tickSize(-dims.width).tickFormat(""));
 
-                    // Update Lines
-                    const updatedLine = d3.line()
-                        .x(d => newX(new Date(d[timeKey])))
-                        .y(d => newY(d[valueKey]))
-                        .curve(d3.curveMonotoneX);
-
-                    chartBody.selectAll(".line").attr("d", updatedLine);
-
-                    // Update Dots
                     destinations.forEach((dest, i) => {
+                        const updatedLine = d3.line()
+                            .x(d => newX(new Date(d[timeKey])))
+                            .y(d => newY(d[valueKey]))
+                            .curve(d3.curveMonotoneX);
+
+                        chartBody.select(`.line-${i}`).attr("d", updatedLine);
                         chartBody.selectAll(`.dot-${i}`)
                             .attr("cx", d => newX(new Date(d[timeKey])))
                             .attr("cy", d => newY(d[valueKey]));
                     });
                 });
 
-            // Rectangle Selection (Middle Click)
-            const brush = d3.brush()
-                .on("end", (event) => {
-                    if (!event.selection) return;
-                    const [[x0, y0], [x1, y1]] = event.selection;
+            // Event Catcher (Prevents double-transform bug)
+            const catcher = svg.append("rect")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("fill", "none")
+                .attr("pointer-events", "all")
+                .lower();
 
-                    // Calculate new domain
-                    const x0d = x.invert(x0);
-                    const x1d = x.invert(x1);
-                    const y0d = y.invert(y1); // Invert Y
-                    const y1d = y.invert(y0);
+            catcher.call(zoom);
 
-                    // Apply zoom transform
-                    const scaleX = dims.width / (x(x1d) - x(x0d));
-                    const scaleY = dims.height / (y(y0d) - y(y1d));
+            // Middle-click Brush Zoom
+            const brush = d3.brush().on("end", (event) => {
+                if (!event.selection) return;
+                const [[x0, y0], [x1, y1]] = event.selection;
 
-                    const transform = d3.zoomIdentity
-                        .translate(-x(x0d) * scaleX, -y(y1d) * scaleY)
-                        .scale(scaleX); // Note: Rect zoom for both X and Y is complex in one transform, usually scale by X or use proportional
+                const t = d3.zoomTransform(catcher.node());
+                const currentX = t.rescaleX(x);
+                const x0d = currentX.invert(x0);
+                const x1d = currentX.invert(x1);
 
-                    // Simplified: Just zoom X for time series rect selection (D3 standard behavior usually)
-                    const xSpan = x(x1d) - x(x0d);
-                    const scale = dims.width / xSpan;
-                    const translateX = -x(x0d) * scale;
+                const xRangeOriginal = x(x1d) - x(x0d);
+                const k = dims.width / xRangeOriginal;
+                const tx = -x(x0d) * k;
+                const ty = 0; // Force no Y pan
 
-                    svg.transition().duration(300).call(
-                        zoom.transform,
-                        d3.zoomIdentity.translate(translateX, 0).scale(scale)
-                    );
+                console.log("Brush Zoom (X-Only): k=", k, "tx=", tx);
 
-                    g.select(".brush").call(brush.move, null);
-                });
+                catcher.transition().duration(300).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(tx, ty).scale(k)
+                );
 
-            // Apply behaviors
-            svg.call(zoom);
-
-            // Right-click Reset
-            svg.on("contextmenu", (event) => {
-                event.preventDefault();
-                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+                g.select(".brush").call(brush.move, null);
             });
 
-            // Middle-click Rectangle Zoom
-            let middleButtonDown = false;
-                    // Middle-click Rectangle Zoom (using D3 brush filter)
             const brushG = g.append("g").attr("class", "brush");
+            brushG.call(brush.filter(event => event.button === 1));
 
-            brushG.call(brush.filter(event => {
-                // Only trigger on middle mouse button (button === 1)
-                return event.button === 1;
-            }));
-
-            // Prevent browser autoscroll on middle click
+            // Prevent Browser Middle-Click Scroll
             svg.on("mousedown", event => { if (event.button === 1) event.preventDefault(); });
             svg.on("click", event => { if (event.button === 1) event.preventDefault(); });
 
-            // Initial Draw
+            // Right-click Reset
+            catcher.on("contextmenu", (event) => {
+                event.preventDefault();
+                catcher.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+            });
+
             function draw() {
                 xAxisGroup.call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%H:%M"))).selectAll("text").attr("fill", "white");
                 yAxisGroup.call(d3.axisLeft(y)).selectAll("text").attr("fill", "white");
@@ -456,15 +441,13 @@
                 y.range([dims.height, 0]);
 
                 svg.select("defs rect").attr("width", dims.width).attr("height", dims.height);
-
-                // Reset zoom and redraw
-                svg.call(zoom.transform, d3.zoomIdentity);
+                catcher.call(zoom.transform, d3.zoomIdentity);
 
                 xAxisGroup.attr("transform", `translate(0,${dims.height})`);
                 xGridGroup.attr("transform", `translate(0,${dims.height})`);
 
-                chartBody.selectAll(".line").attr("d", line);
                 destinations.forEach((dest, i) => {
+                    chartBody.select(`.line-${i}`).attr("d", line);
                     chartBody.selectAll(`.dot-${i}`)
                         .attr("cx", d => x(new Date(d[timeKey])))
                         .attr("cy", d => y(d[valueKey]));
