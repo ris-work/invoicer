@@ -372,7 +372,7 @@ public partial class NewinvContext : DbContext
                 .HasColumnName("name");
             entity.Property(e => e.Principal).HasColumnName("principal");
             entity.Property(e => e.ValidUntil)
-                .HasColumnType("time with time zone")
+                .HasDefaultValueSql("now()")
                 .HasColumnName("valid_until");
         });
 

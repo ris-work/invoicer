@@ -44,7 +44,7 @@ namespace InvoicerBackend
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
                         CertContents = Convert.ToBase64String(pfxBytes),
-                        ValidUntil = DateTimeOffset.Now.AddYears(5)
+                        ValidUntil = DateTime.UtcNow.AddYears(5)
                     });
                     await ctx.SaveChangesAsync();
 

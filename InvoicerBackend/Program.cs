@@ -187,7 +187,7 @@ app.Use(async (context, next) =>
 
         using (var ctx = new NewinvContext())
         {
-            var key = ctx.AllowedKeys.FirstOrDefault(k => k.FingerprintSha256 == fp && k.IsActive == true && k.ValidUntil > DateTime.Now);
+            var key = ctx.AllowedKeys.FirstOrDefault(k => k.FingerprintSha256 == fp && k.IsActive == true && k.ValidUntil > DateTimeOffset.UtcNow);
             if (key != null)
             {
                 IsPubKeyAuthenticated = true;
@@ -209,7 +209,8 @@ app.Use(async (context, next) =>
 
     // Store state in HttpContext.Items (simple dictionary)
     context.Items["IsPubKeyAuthenticated"] = IsPubKeyAuthenticated;
-    context.Items["ClientCertFingerprint"] = context.Connection.ClientCertificate;
+    if(clientCert != null)
+        context.Items["ClientCertFingerprint"] = clientCert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
     context.Items["Username"] = username;
 
     await next();

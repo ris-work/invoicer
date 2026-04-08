@@ -138,7 +138,7 @@ namespace InvoicerBackend
 
             app.MapPost(
                     "/LoginPubKey",
-                    (object L, HttpContext hctx) =>
+                    (HttpContext hctx) =>
                     {
                         using (var ctx = new NewinvContext())
                         {
@@ -209,8 +209,8 @@ namespace InvoicerBackend
                             }
                             else
                             {
-                                Console.WriteLine(L);
-                                return new LoginToken("", "", "", "User null");
+                                Console.WriteLine("PubKey Login");
+                                return new LoginToken("", "", "", "PubKey login: User null");
                             }
                         }
                     }
