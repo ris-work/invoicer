@@ -1,0 +1,240 @@
+﻿@page "/Pages/Certs"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Health Monitor - Certificates</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        .nav-bar {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+            .nav-bar a {
+                color: #add8e6;
+                text-decoration: none;
+                margin-right: 15px;
+                font-weight: bold;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        th {
+            color: #ffcc00;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        button {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+            button:hover {
+                background-color: #505050;
+            }
+
+            button.active-btn {
+                border-color: #4caf50;
+                color: #4caf50;
+            }
+
+            button.inactive-btn {
+                border-color: #f44336;
+                color: #f44336;
+            }
+
+        .status-active {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .fp-text {
+            font-size: 0.9em;
+            color: #888;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/Pages/DumpAuth">Auth Status</a>
+        <a href="/Certs" style="color: #ffcc00;">Certificates 🔐</a>
+    </div>
+
+    <h1>Client Certificate Management</h1>
+    <p>Manage allowed client certificates for mTLS access.</p>
+
+    <div style="margin-bottom: 20px;">
+        <button class="btn" onclick="generateCert('CertGen')">Generate & Store New Cert (Bound to Me)</button>
+        <button class="btn" onclick="generateCert('CertGenNoStore')">Generate Temporary Cert (No Store)</button>
+    </div>
+
+    <table id="certsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>SHA256 Fingerprint</th>
+                <th>Added Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="6" style="text-align:center; color:#888;">Checking Auth...</td></tr>
+        </tbody>
+    </table>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const requiredEndpoints = ["GetAllowedKeys", "ToggleAllowedKey", "CertGen", "CertGenNoStore"];
+
+        async function init() {
+            await checkPagePermissions(requiredEndpoints);
+            await loadCerts();
+        }
+
+        async function loadCerts() {
+            const token = await getCookie("auth-token");
+            const tbody = document.querySelector('#certsTable tbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Loading...</td></tr>';
+
+            try {
+                const res = await fetch('/GetAllowedKeys', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!res.ok) throw new Error("Failed to load");
+                const data = await res.json();
+                render(data);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        function render(data) {
+            const tbody = document.querySelector('#certsTable tbody');
+            tbody.innerHTML = '';
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No certificates found.</td></tr>`;
+                return;
+            }
+
+            data.forEach(key => {
+                const tr = document.createElement('tr');
+                const date = new Date(key.createdAt);
+                const isActive = key.isActive;
+
+                const statusHtml = isActive
+                    ? '<span class="status-active">ACTIVE</span>'
+                    : '<span class="status-inactive">INACTIVE</span>';
+
+                const btnLabel = isActive ? "Deactivate" : "Activate";
+                const btnClass = isActive ? "inactive-btn" : "active-btn";
+
+                tr.innerHTML = `
+                    <td>${key.id}</td>
+                    <td>${he(key.name)}</td>
+                    <td class="fp-text">${he(key.fingerprintSha256)}</td>
+                    <td>${date.toLocaleString()}</td>
+                    <td>${statusHtml}</td>
+                    <td>
+                        <button class="${btnClass}" onclick="toggle(${key.id})">${btnLabel}</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function toggle(id) {
+            const token = await getCookie("auth-token");
+            try {
+                const res = await fetch('/ToggleAllowedKey', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(id)
+                });
+                if (!res.ok) throw new Error("Toggle failed");
+                await loadCerts();
+            } catch (e) { alert(e.message); }
+        }
+
+        async function generateCert(endpoint) {
+            const token = await getCookie("auth-token");
+            try {
+                const res = await fetch('/' + endpoint, {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify("")
+                });
+
+                if (!res.ok) throw new Error("Generation failed");
+
+                const data = await res.json();
+
+                // Trigger Download
+                const byteCharacters = atob(data.base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/x-pkcs12' });
+
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = data.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Refresh list if we stored it
+                if (endpoint === 'CertGen') {
+                    setTimeout(() => loadCerts(), 500);
+                }
+
+            } catch (e) { alert("Error: " + e.message); }
+        }
+
+        init();
+    </script>
+</body>
+</html>

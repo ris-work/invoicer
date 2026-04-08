@@ -417,6 +417,7 @@ app.AddEndpointWithBearerAuth<Inventory, List<Inventory>>(
     "Refresh"
 );
 app.UseRouting();
+app.AddPubKeyEndpoints();
 //app.AddCatalogueDefaultImageEndpoints();
 app.AddCatalogueEditorHandlers();
 app.AddJournalEndpoints();

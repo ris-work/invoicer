@@ -1,0 +1,77 @@
+﻿@page "/Pages/LoginPubKey"
+
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login with Certificate</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container" style="text-align: center; padding-top: 50px;">
+        <h1>Certificate Login</h1>
+        <div class="card" style="max-width: 400px; margin: 0 auto;">
+            <p>Click below to authenticate using your Client Certificate.</p>
+            <p><small>If you have not installed a certificate, the server will reject this request.</small></p>
+
+            <button id="btnLogin" class="btn btn-primary" onclick="doLogin()">Login with Certificate</button>
+
+            <div id="status" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        async function doLogin() {
+            const btn = document.getElementById('btnLogin');
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            status.innerText = "Negotiating Certificate...";
+            status.style.color = "blue";
+
+            try {
+                // The browser will automatically prompt for cert selection if
+                // the server requires it. This fetch triggers that handshake.
+                const response = await fetch('/LoginPubKey', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    status.innerText = "Error: " + (data.error || "Unknown Error");
+                    status.style.color = "red";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Success - Format Token Object
+                const loginTokenObject = {
+                    TokenID: data.tokenID,
+                    Token: data.token,
+                    SecretToken: data.secretToken,
+                    Error: data.error
+                };
+
+                // Store Cookie
+                const base64Token = btoa(JSON.stringify(loginTokenObject));
+                document.cookie = `auth-token=${base64Token}; path=/`;
+
+                status.innerText = "Login Successful!";
+                status.style.color = "green";
+
+                setTimeout(() => { window.location.href = "/Pages/DumpAuth"; }, 1000);
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Network Error or Certificate Required.";
+                status.style.color = "red";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
