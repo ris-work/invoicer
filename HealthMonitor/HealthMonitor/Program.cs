@@ -137,7 +137,7 @@ void StartServer()
 
         Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions> httpsConfigure = listenOptions =>
         {
-            listenOptions.UseHttps(serverCert, (e) => {e.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate; });
+            listenOptions.UseHttps(serverCert, (e) => {e.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.DelayCertificate; });
             // Enable Client Certificate reception for mTLS endpoints
         };
 
@@ -472,7 +472,7 @@ void StartServer()
     app.MapGet("/certauth", async (HttpContext hctx) =>
     {
         var clientCert = hctx.Connection.ClientCertificate;
-        if (clientCert == null) return Results.Json(new { authenticated = false, error = "No certificate presented." });
+        if (clientCert == null) { var try1=  await hctx.Connection.GetClientCertificateAsync(); if(try1 == null) return Results.Json(new { authenticated = false, error = "No certificate presented." }, statusCode: 403); }
 
         string fp = clientCert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
         using var ctx = new LogsContext();

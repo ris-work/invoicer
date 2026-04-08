@@ -23,6 +23,9 @@
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.4" />
     </ItemGroup>
     <ItemGroup>
+        <None Update="connstring.sample.toml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="InvoicerBackend.http">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

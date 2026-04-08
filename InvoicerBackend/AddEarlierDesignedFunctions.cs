@@ -137,6 +137,88 @@ namespace InvoicerBackend
                 .WithOpenApi();
 
             app.MapPost(
+                    "/LoginPubKey",
+                    (object L, HttpContext hctx) =>
+                    {
+                        using (var ctx = new NewinvContext())
+                        {
+                            if ((bool)hctx.Items["IsPubKeyAuthenticated"] != false && (string)hctx.Items["ClientCertFingerprint"] != null)
+                            {
+                                var CertE = ctx.AllowedKeys.Where(e => e.FingerprintSha256 == (string)hctx.Items["ClientCertFingerprint"]).Single();
+                                var UserE = ctx
+                                    .Credentials.Where(e => e.Active && e.Username == (string)hctx.Items["Username"])
+                                    .SingleOrDefault();
+                                var UserA = ctx
+                                    .UserAuthorizations.Where(e => e.Userid == UserE.Userid)
+                                    .SingleOrDefault();
+                                var UserPC = ctx
+                                    .PermissionsListUsersCategories.Where(e =>
+                                        e.Userid == UserE.Userid
+                                    )
+                                    .SingleOrDefault();
+                                if (UserE != null)
+                                {
+                                    var Password = UserE.PasswordPbkdf2;
+                                    if (true) // We don't do that here, this is PubKey auth
+                                    {
+                                        Random rnd = new Random();
+                                        Byte[] bTid = new byte[8];
+                                        Byte[] bT = new byte[8];
+                                        Byte[] bTs = new byte[8];
+                                        rnd.NextBytes(bTid);
+                                        rnd.NextBytes(bT);
+                                        rnd.NextBytes(bTs);
+                                        var Tid = Convert.ToBase64String(bTid);
+                                        var T = Convert.ToBase64String(bT);
+                                        var Ts = Convert.ToBase64String(bTs);
+                                        if (UserA == null || UserPC == null || UserE == null)
+                                            Console.Error.WriteLine(
+                                                $"UserA:{UserA} UserPC:{UserPC} UserE:{UserE}"
+                                            );
+                                        ctx.Tokens.Add(
+                                            new Token()
+                                            {
+                                                Tokenid = Tid,
+                                                Tokensecret = Ts,
+                                                Tokenvalue = T,
+                                                Privileges = UserA.UserDefaultCap,
+                                                CategoriesBitmask = UserPC.Categories,
+                                                Userid = UserE.Userid,
+                                            }
+                                        );
+                                        ctx.SaveChanges();
+                                        return new LoginToken(Tid, T, Ts, "");
+                                    }
+                                    else
+                                    {
+                                        return new LoginToken(
+                                            "",
+                                            "",
+                                            "",
+                                            "Error: Wrong username, password or inactive user"
+                                        );
+                                    }
+                                }
+                                else
+                                    return new LoginToken(
+                                        "",
+                                        "",
+                                        "",
+                                        "Error: Wrong username, password or inactive user"
+                                    );
+                            }
+                            else
+                            {
+                                Console.WriteLine(L);
+                                return new LoginToken("", "", "", "User null");
+                            }
+                        }
+                    }
+                )
+                .WithName("LoginPubKey")
+                .WithOpenApi();
+
+            app.MapPost(
                     "/ElevatedLogin",
                     (LoginCredentials L) =>
                     {

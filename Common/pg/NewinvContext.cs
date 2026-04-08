@@ -27,6 +27,8 @@ public partial class NewinvContext : DbContext
 
     public virtual DbSet<AllTag> AllTags { get; set; }
 
+    public virtual DbSet<AllowedKey> AllowedKeys { get; set; }
+
     public virtual DbSet<ApiAuthorization> ApiAuthorizations { get; set; }
 
     public virtual DbSet<AuthorizedTerminal> AuthorizedTerminals { get; set; }
@@ -346,6 +348,32 @@ public partial class NewinvContext : DbContext
                 .ToView("all_tags");
 
             entity.Property(e => e.Tag).HasColumnName("tag");
+        });
+
+        modelBuilder.Entity<AllowedKey>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("allowed_keys_pkey");
+
+            entity.ToTable("allowed_keys");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CertContents)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("cert_contents");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.FingerprintSha256).HasColumnName("fingerprint_sha256");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.Name)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("name");
+            entity.Property(e => e.Principal).HasColumnName("principal");
+            entity.Property(e => e.ValidUntil)
+                .HasColumnType("time with time zone")
+                .HasColumnName("valid_until");
         });
 
         modelBuilder.Entity<ApiAuthorization>(entity =>

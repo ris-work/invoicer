@@ -17,6 +17,39 @@ Console.WriteLine("CWD: {0}", Directory.GetCurrentDirectory());
 Console.WriteLine("[common] CWD: {0}", Config.GetCWD());
 Config.Initialize();
 
+string? WebUIHttpsCertPath = null; ; // Path to .pfx file
+string? WebUIHttpsCertPassword = null; // Password for the .pfx
+int WebUIPort = 5062;
+int WebUIPortTLS = 5001;
+int WebUIPortMTLS = 5002;
+string WebUIAddr = "127.0.0.1";
+string WebUIAddrInsecure = "127.0.0.1";
+
+if (Config.modelDict.ContainsKey("WebUIAddressInsecure"))
+{
+    WebUIAddrInsecure = (((string)((string)Config.modelDict["WebUIAddressInsecure"])));
+}
+
+if (Config.modelDict.ContainsKey("WebUIAddress"))
+{
+    WebUIAddr = (((string)((string)Config.modelDict["WebUIAddress"])));
+}
+
+if (Config.modelDict.ContainsKey("WebUIPort"))
+{
+    WebUIPortTLS = (((int)((long)Config.modelDict["WebUIPort"])));
+}
+
+if (Config.modelDict.ContainsKey("WebUIPortTLS"))
+{
+    WebUIPortTLS = (((int)((long)Config.modelDict["WebUIPortTLS"])));
+}
+
+if (Config.modelDict.ContainsKey("WebUIPortMTLS"))
+{
+    WebUIPortMTLS = (((int)((long)Config.modelDict["WebUIPortMTLS"])));
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -30,6 +63,97 @@ builder.Services.AddResponseCompression(o =>
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    // Pre-calculate ports
+    int httpPort = WebUIPort;
+    int httpsPort = WebUIPortTLS; // Optional mTLS
+    int mtlsPort = WebUIPortMTLS; // Forced mTLS (Prompt)
+                                  // Always enabled. Uses custom cert if provided, otherwise generates self-signed.
+                                  //int httpsPort = Config.WebUIPort + 1;
+    Console.WriteLine($"Listening: Insecure: {WebUIAddrInsecure}:{WebUIPort} Secure: {WebUIAddr}:{WebUIPortTLS} MTLS: {WebUIAddr}:{WebUIPortMTLS}");
+    System.Security.Cryptography.X509Certificates.X509Certificate2 serverCert;
+
+    if (!string.IsNullOrEmpty(WebUIHttpsCertPath) && File.Exists(WebUIHttpsCertPath))
+    {
+        serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(WebUIHttpsCertPath, WebUIHttpsCertPassword);
+        Console.WriteLine($"[SSL] Loaded HTTPS certificate from: {WebUIHttpsCertPath}");
+    }
+    else
+    {
+        // Auto-generate self-signed cert
+        // DO NOT use 'using' here, or if you do, export the key.
+        // We use a temporary RSA key to create the cert, then export/import so the cert owns its own key.
+        using (var rsa = System.Security.Cryptography.RSA.Create(2048))
+        {
+            var req = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=HealthMonitorLocal", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+
+            // Key Usage
+            req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509KeyUsageExtension(System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature | System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.KeyEncipherment, false));
+
+            // Extended Key Usage (Server Authentication)
+            req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension(
+                new System.Security.Cryptography.OidCollection {
+                    new System.Security.Cryptography.Oid("1.3.6.1.5.5.7.3.1")
+                }, false));
+
+            // SAN (Correct way)
+            var sanBuilder = new System.Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder();
+            sanBuilder.AddDnsName("localhost");
+            sanBuilder.AddIpAddress(System.Net.IPAddress.Loopback); // Add 127.0.0.1 explicitly
+            req.CertificateExtensions.Add(sanBuilder.Build());
+
+            var tempCert = req.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(5));
+
+            // FIX: Export to PFX and re-import so the private key is persisted in the X509Certificate2 object
+            // and not tied to the 'rsa' variable which is about to be disposed.
+            serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(tempCert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx));
+        }
+        Console.WriteLine($"[SSL] Generated self-signed certificate for port {httpsPort}");
+    }
+
+    Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions> httpsConfigure = listenOptions =>
+    {
+        listenOptions.UseHttps(serverCert, (e) => { e.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.DelayCertificate; });
+        // Enable Client Certificate reception for mTLS endpoints
+    };
+
+    // Helper to get ListenOptions based on address type
+    Action<int, Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions>> listen = (port, configure) =>
+    {
+        if (WebUIAddr == "localhost" || WebUIAddr == "127.0.0.1")
+            options.ListenLocalhost(port, configure);
+        else
+            options.Listen(System.Net.IPAddress.Parse(WebUIAddr), port, configure);
+    };
+    Action<int, Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions>> listenInsecure = (port, configure) =>
+    {
+        if (WebUIAddrInsecure == "localhost" || WebUIAddrInsecure == "127.0.0.1")
+            options.ListenLocalhost(port, configure);
+        else
+            options.Listen(System.Net.IPAddress.Parse(WebUIAddrInsecure), port, configure);
+    };
+
+    // --- Listener 1: HTTP ---
+    listenInsecure(httpPort, opt => { /* No config needed */ });
+
+    // --- Listener 2: HTTPS (Optional Cert) ---
+    listen(httpsPort, opt => {
+        opt.UseHttps(serverCert, (o) => {
+            o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate;
+            o.ClientCertificateValidation = (cert, chain, policy) => true;
+        });
+    });
+
+    // --- Listener 3: HTTPS (Forced mTLS Prompt) ---
+    listen(mtlsPort, opt => {
+        opt.UseHttps(serverCert, (o) => {
+            o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
+            o.ClientCertificateValidation = (cert, chain, policy) => true;
+        });
+    });
 });
 //builder.Services.AddOpenApi(o => { o.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1; });
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
@@ -48,6 +172,49 @@ builder.Services.AddRazorPages();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    bool IsPubKeyAuthenticated = false;
+    string username = "Anonymous";
+
+    // --- PRIORITY 1: Client Certificate Authentication ---
+    var clientCert = context.Connection.ClientCertificate;
+    if (clientCert != null)
+    {
+        string fp = clientCert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        Console.WriteLine($"[Auth] Incoming Cert FP: {fp}");
+
+        using (var ctx = new NewinvContext())
+        {
+            var key = ctx.AllowedKeys.FirstOrDefault(k => k.FingerprintSha256 == fp && k.IsActive == true && k.ValidUntil > DateTime.Now);
+            if (key != null)
+            {
+                IsPubKeyAuthenticated = true;
+                username = key.Name;
+                Console.WriteLine($"[Auth] Cert Auth Success: {username} ({fp.Substring(0, 8)}...)");
+            }
+            else
+            {
+                // CRITICAL: If a cert is presented but is INVALID/INACTIVE, we stop immediately.
+                // We do NOT fallback to Anonymous or Basic Auth. 
+                Console.WriteLine($"[Auth] Cert Auth Failed: Inactive/Unknown FP {fp.Substring(0, 8)}...");
+
+                context.Response.StatusCode = 403; // Forbidden
+                await context.Response.WriteAsync("Certificate Invalid or Inactive.");
+                return; // Stop pipeline
+            }
+        }
+    }
+
+    // Store state in HttpContext.Items (simple dictionary)
+    context.Items["IsPubKeyAuthenticated"] = IsPubKeyAuthenticated;
+    context.Items["ClientCertFingerprint"] = context.Connection.ClientCertificate;
+    context.Items["Username"] = username;
+
+    await next();
+});
+
 // 1. Define the path to your 'static' folder
 var staticFilePath = Path.Combine(builder.Environment.ContentRootPath, "Pages","static");
 app.UseResponseCompression();
@@ -291,6 +458,8 @@ app.MapRazorPages();
 
 System.Console.WriteLine("Done setting up!");
 app.Run();
+
+
 
 internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {

@@ -1,3 +1,8 @@
 ConnString = "Host=127.0.0.1;Database=newinv;Username=xxxx;Password=xxxx"
 Salt = "Hello"
 OpenRouterKey = "openrouterkey"
+WebUIAddressInsecure="0.0.0.0"
+WebUIAddress="0.0.0.0"
+WebUIPort=5000
+WebUIPortTLS=5001
+WebUIPortMTLS=5002
