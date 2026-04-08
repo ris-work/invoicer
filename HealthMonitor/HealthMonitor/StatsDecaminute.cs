@@ -5,19 +5,19 @@ namespace HealthMonitor;
 
 public partial class StatsDecaminute
 {
-    public string Decaminute { get; set; }
+    public byte[]? Decaminute { get; set; }
 
-    public string ProcessName { get; set; }
+    public string? ProcessName { get; set; }
 
-    public long? AvgWorkingSet { get; set; }
+    public byte[]? AvgWorkingSet { get; set; }
 
-    public string MaxWorkingSetForOneInstance { get; set; }
+    public byte[]? MaxWorkingSetForOneInstance { get; set; }
 
-    public long? CpuDiff { get; set; }
+    public byte[]? CpuDiff { get; set; }
 
-    public double? CpuPercent { get; set; }
+    public byte[]? CpuPercent { get; set; }
 
-    public double? TimeDiff { get; set; }
+    public byte[]? TimeDiff { get; set; }
 
-    public double? ThreadCount { get; set; }
+    public byte[]? ThreadCount { get; set; }
 }

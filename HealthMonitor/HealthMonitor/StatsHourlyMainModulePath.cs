@@ -5,15 +5,15 @@ namespace HealthMonitor;
 
 public partial class StatsHourlyMainModulePath
 {
-    public string Hour { get; set; }
+    public string? Hour { get; set; }
 
-    public string MainModulePath { get; set; }
+    public string? MainModulePath { get; set; }
 
     public long? AvgWorkingSet { get; set; }
 
     public string MaxWorkingSetForOneInstance { get; set; }
 
-    public long? CpuDiff { get; set; }
+    public double? CpuDiff { get; set; }
 
     public double? CpuPercent { get; set; }
 

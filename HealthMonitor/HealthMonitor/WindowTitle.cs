@@ -5,7 +5,7 @@ namespace HealthMonitor;
 
 public partial class WindowTitle
 {
-    public string WindowName { get; set; }
+    public byte[]? WindowName { get; set; }
 
-    public string ProcessName { get; set; }
+    public string? ProcessName { get; set; }
 }

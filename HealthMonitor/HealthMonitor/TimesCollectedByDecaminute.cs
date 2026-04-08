@@ -5,7 +5,7 @@ namespace HealthMonitor;
 
 public partial class TimesCollectedByDecaminute
 {
-    public string TimeDecaminute { get; set; }
+    public byte[]? TimeDecaminute { get; set; }
 
-    public int? Count { get; set; }
+    public byte[]? Count { get; set; }
 }

@@ -5,5 +5,5 @@ namespace HealthMonitor;
 
 public partial class DistinctProcess
 {
-    public string ProcessName { get; set; }
+    public string? ProcessName { get; set; }
 }

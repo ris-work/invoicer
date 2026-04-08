@@ -17,6 +17,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.AspNetCore.Server.Kestrel.Transport;
+using System.Security.Cryptography.X509Certificates;
 
 
 
@@ -85,15 +89,79 @@ void StartServer()
     string url = $"http://{Config.WebUIAddress}:{Config.WebUIPort}";
     builder.WebHost.ConfigureKestrel(options =>
     {
-        // Handle localhost vs 0.0.0.0
-        if (Config.WebUIAddress == "localhost" || Config.WebUIAddress == "127.0.0.1")
+        // Pre-calculate ports
+        int httpPort = Config.WebUIPort;
+        int httpsPort = Config.WebUIPort + 1; // Optional mTLS
+        int mtlsPort = Config.WebUIPort + 2; // Forced mTLS (Prompt)
+        // Always enabled. Uses custom cert if provided, otherwise generates self-signed.
+        //int httpsPort = Config.WebUIPort + 1;
+        System.Security.Cryptography.X509Certificates.X509Certificate2 serverCert;
+
+        if (!string.IsNullOrEmpty(Config.WebUIHttpsCertPath) && File.Exists(Config.WebUIHttpsCertPath))
         {
-            options.ListenLocalhost(Config.WebUIPort);
+            serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(Config.WebUIHttpsCertPath, Config.WebUIHttpsCertPassword);
+            Console.WriteLine($"[SSL] Loaded HTTPS certificate from: {Config.WebUIHttpsCertPath}");
         }
         else
         {
-            options.Listen(System.Net.IPAddress.Parse(Config.WebUIAddress), Config.WebUIPort);
+            // Auto-generate self-signed cert
+            // DO NOT use 'using' here, or if you do, export the key.
+            // We use a temporary RSA key to create the cert, then export/import so the cert owns its own key.
+            using (var rsa = System.Security.Cryptography.RSA.Create(2048))
+            {
+                var req = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=HealthMonitorLocal", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+
+                // Key Usage
+                req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509KeyUsageExtension(System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature | System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.KeyEncipherment, false));
+
+                // Extended Key Usage (Server Authentication)
+                req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension(
+                    new System.Security.Cryptography.OidCollection {
+                    new System.Security.Cryptography.Oid("1.3.6.1.5.5.7.3.1")
+                    }, false));
+
+                // SAN (Correct way)
+                var sanBuilder = new System.Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder();
+                sanBuilder.AddDnsName("localhost");
+                sanBuilder.AddIpAddress(System.Net.IPAddress.Loopback); // Add 127.0.0.1 explicitly
+                req.CertificateExtensions.Add(sanBuilder.Build());
+
+                var tempCert = req.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(5));
+
+                // FIX: Export to PFX and re-import so the private key is persisted in the X509Certificate2 object
+                // and not tied to the 'rsa' variable which is about to be disposed.
+                serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(tempCert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx));
+            }
+            Console.WriteLine($"[SSL] Generated self-signed certificate for port {httpsPort}");
         }
+
+        Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions> httpsConfigure = listenOptions =>
+        {
+            listenOptions.UseHttps(serverCert, (e) => {e.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate; });
+            // Enable Client Certificate reception for mTLS endpoints
+        };
+
+        // Helper to get ListenOptions based on address type
+        Action<int, Action<Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions>> listen = (port, configure) =>
+        {
+            if (Config.WebUIAddress == "localhost" || Config.WebUIAddress == "127.0.0.1")
+                options.ListenLocalhost(port, configure);
+            else
+                options.Listen(System.Net.IPAddress.Parse(Config.WebUIAddress), port, configure);
+        };
+
+        // --- Listener 1: HTTP ---
+        listen(httpPort, opt => { /* No config needed */ });
+
+        // --- Listener 2: HTTPS (Optional Cert) ---
+        listen(httpsPort, opt => {
+            opt.UseHttps(serverCert, (o) => { o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate; });
+        });
+
+        // --- Listener 3: HTTPS (Forced mTLS Prompt) ---
+        listen(mtlsPort, opt => {
+            opt.UseHttps(serverCert, (o) => { o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate; });
+        });
     });
 
     // Add Services
@@ -130,6 +198,29 @@ void StartServer()
         string authHeader = context.Request.Headers["Authorization"];
         bool isAuthenticated = false;
         string username = "Anonymous";
+
+        // --- PRIORITY 1: Client Certificate Authentication ---
+        var clientCert = context.Connection.ClientCertificate;
+        if (clientCert != null)
+        {
+            string fp = clientCert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
+            Console.WriteLine($"[Auth] Incoming Cert FP: {fp}");
+
+            using (var ctx = new LogsContext())
+            {
+                var key = ctx.AllowedKeys.FirstOrDefault(k => k.Sha256Fingerprint == fp && k.IsActive == 1);
+                if (key != null)
+                {
+                    isAuthenticated = true;
+                    username = key.Name;
+                    Console.WriteLine($"[Auth] Cert Auth Success: {username} ({fp.Substring(0, 8)}...)");
+                }
+                else
+                {
+                    Console.WriteLine($"[Auth] Cert Auth Failed: Unknown fingerprint ({fp.Substring(0, 8)}...)");
+                }
+            }
+        }
 
         if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Basic "))
         {
@@ -315,6 +406,107 @@ void StartServer()
         }
     });
 
+
+    // ADD these endpoints inside StartServer (e.g., after app.MapRazorPages()):
+
+    // --- 4. Certificate Generation (Auth Required) ---
+    app.MapGet("/certgen", async (HttpContext hctx) =>
+    {
+        bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
+        if (!isAuth) return Results.Unauthorized();
+
+        string username = hctx.Items["Username"]?.ToString() ?? "user";
+        using var rsa = System.Security.Cryptography.RSA.Create(2048);
+        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest($"CN={username}", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+        req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509KeyUsageExtension(System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature, false));
+        req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension(
+            new System.Security.Cryptography.OidCollection { new System.Security.Cryptography.Oid("1.3.6.1.5.5.7.3.2") }, false));
+
+        var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(5));
+        string fp = cert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
+
+        // Store in DB
+        using (var ctx = new LogsContext())
+        {
+            ctx.AllowedKeys.Add(new AllowedKey { Name = username, Sha256Fingerprint = fp, AddedTime = DateTime.UtcNow.ToString("o"), IsActive = 1 });
+            ctx.SaveChanges();
+        }
+
+        Console.WriteLine($"[CertGen] Generated for {username}. SHA256 FP: {fp}");
+        return Results.File(cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx), "application/x-pkcs12", $"{username}.pfx");
+    });
+
+    // --- 5. Certificate Generation (No Store) ---
+    app.MapGet("/certgendontstore", async (HttpContext hctx) =>
+    {
+        bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
+        if (!isAuth) return Results.Unauthorized();
+
+        string username = hctx.Items["Username"]?.ToString() ?? "user";
+        using var rsa = System.Security.Cryptography.RSA.Create(2048);
+        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest($"CN={username}", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+        req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509KeyUsageExtension(System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature, false));
+        req.CertificateExtensions.Add(new System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension(
+            new System.Security.Cryptography.OidCollection { new System.Security.Cryptography.Oid("1.3.6.1.5.5.7.3.2") }, false));
+
+        var cert = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(5));
+        string fp = cert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
+
+        Console.WriteLine($"[CertGenNoStore] Generated for {username}. SHA256 FP: {fp}");
+        return Results.File(cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx), "application/x-pkcs12", $"{username}.pfx");
+    });
+
+    // --- 6. Certificate Authentication Endpoint ---
+    app.MapGet("/certauth", async (HttpContext hctx) =>
+    {
+        var clientCert = hctx.Connection.ClientCertificate;
+        if (clientCert == null) return Results.Json(new { authenticated = false, error = "No certificate presented." });
+
+        string fp = clientCert.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        using var ctx = new LogsContext();
+
+        var key = ctx.AllowedKeys.FirstOrDefault(k => k.Sha256Fingerprint == fp && k.IsActive == 1);
+        if (key != null)
+        {
+            hctx.Items["IsAuthenticated"] = true;
+            hctx.Items["Username"] = key.Name;
+            return Results.Json(new { authenticated = true, user = key.Name });
+        }
+        return Results.Json(new { authenticated = false, error = "Unknown certificate." });
+    });
+
+    // --- API: Certificate Management (Auth Mandatory) ---
+
+    // Get list of all allowed certificates
+    app.MapGet("/api/certs", (HttpContext hctx) =>
+    {
+        // Enforce Mandatory Auth
+        if (!hctx.Items.ContainsKey("IsAuthenticated") || !(bool)hctx.Items["IsAuthenticated"])
+            return Results.Unauthorized();
+
+        using var ctx = new LogsContext();
+        // Return list ordered by newest first
+        return Results.Json(ctx.AllowedKeys.OrderByDescending(k => k.AddedTime).ToList());
+    });
+
+    // Toggle certificate active status (Activate/Deactivate)
+    app.MapPost("/api/certs/toggle/{id}", (int id, HttpContext hctx) =>
+    {
+        // Enforce Mandatory Auth
+        if (!hctx.Items.ContainsKey("IsAuthenticated") || !(bool)hctx.Items["IsAuthenticated"])
+            return Results.Unauthorized();
+
+        using var ctx = new LogsContext();
+        var key = ctx.AllowedKeys.FirstOrDefault(k => k.Id == id);
+        if (key == null) return Results.NotFound(new { error = "Key not found" });
+
+        // Toggle 0 <-> 1
+        key.IsActive = (key.IsActive == 1) ? 0 : 1;
+        ctx.SaveChanges();
+
+        return Results.Json(new { success = true, id = key.Id, isActive = key.IsActive });
+    });
+
     Console.WriteLine($"Web Server starting on {url}");
     app.Run();
 }
@@ -413,6 +605,15 @@ if (Config.AutoVacuumOnStartup)
 if (Config.WebUI)
 {
     (new Thread(() => StartServer())).Start();
+}
+if (TM.ContainsKey("WebUIHttpsCertPath"))
+{
+    Config.WebUIHttpsCertPath = (string)TM["WebUIHttpsCertPath"];
+    Console.WriteLine($"Custom HTTPS Cert Path set to: {Config.WebUIHttpsCertPath}");
+}
+if (TM.ContainsKey("WebUIHttpsCertPassword"))
+{
+    Config.WebUIHttpsCertPassword = (string)TM["WebUIHttpsCertPassword"];
 }
 
 destinations = TA.Select(x => (string)x).ToList();
@@ -570,4 +771,6 @@ public static class Config
     public static string AuthType = "Basic"; // Options: "Basic", "Digest"
     public static string AuthUser = "admin";
     public static string AuthPass = "password";
+    public static string WebUIHttpsCertPath = ""; // Path to .pfx file
+    public static string WebUIHttpsCertPassword = ""; // Password for the .pfx
 }
