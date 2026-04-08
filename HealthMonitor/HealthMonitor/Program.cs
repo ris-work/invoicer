@@ -155,12 +155,18 @@ void StartServer()
 
         // --- Listener 2: HTTPS (Optional Cert) ---
         listen(httpsPort, opt => {
-            opt.UseHttps(serverCert, (o) => { o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate; });
+            opt.UseHttps(serverCert, (o) => { 
+                o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.AllowCertificate;
+                o.ClientCertificateValidation = (cert, chain, policy) => true; 
+            });
         });
 
         // --- Listener 3: HTTPS (Forced mTLS Prompt) ---
         listen(mtlsPort, opt => {
-            opt.UseHttps(serverCert, (o) => { o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate; });
+            opt.UseHttps(serverCert, (o) => { 
+                o.ClientCertificateMode = Microsoft.AspNetCore.Server.Kestrel.Https.ClientCertificateMode.RequireCertificate;
+                o.ClientCertificateValidation = (cert, chain, policy) => true;
+            });
         });
     });
 
@@ -217,7 +223,13 @@ void StartServer()
                 }
                 else
                 {
-                    Console.WriteLine($"[Auth] Cert Auth Failed: Unknown fingerprint ({fp.Substring(0, 8)}...)");
+                    // CRITICAL: If a cert is presented but is INVALID/INACTIVE, we stop immediately.
+                    // We do NOT fallback to Anonymous or Basic Auth. 
+                    Console.WriteLine($"[Auth] Cert Auth Failed: Inactive/Unknown FP {fp.Substring(0, 8)}...");
+
+                    context.Response.StatusCode = 403; // Forbidden
+                    await context.Response.WriteAsync("Certificate Invalid or Inactive.");
+                    return; // Stop pipeline
                 }
             }
         }
