@@ -11,7 +11,7 @@
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
             padding: 20px;
-            font-size: 14px;
+            /*font-size: 14px;*/
         }
 
         h1 {
@@ -149,6 +149,7 @@
     </style>
 </head>
 <body>
+
     <!-- Add this right after <body> tag -->
     <div id="authBar" style="background-color: #333; padding: 5px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #555;">
         <span id="authStatus">Checking auth...</span>
@@ -156,8 +157,15 @@
 
     <!-- Add this Navigation Bar -->
     <div class="nav-bar" style="background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <span>
+            @Environment.MachineName 🖥 &emsp; @TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss") ⏲ &emsp;
+            @((new System.IO.DriveInfo(System.IO.Directory.GetDirectoryRoot(System.AppContext.BaseDirectory)).AvailableFreeSpace / 1e9).ToString("F2")) GB (free) 💽
+        </span>
+        <br />
         <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor ⏱</a>
-        <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats 📊</a>
+        <a href="/ProcessStats" style="color: #ffcc00; font-weight: bold; text-decoration: none; margin-right: 15px;">Process Stats 📊</a>
+        
+        <a href="/Certs" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Certificates 🔐</a>
         <a href="/About" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">About 📜</a>
     </div>
 

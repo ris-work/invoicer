@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Health Monitor</title>
+    <title>Health Monitor: @Environment.MachineName</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
         body {
@@ -100,8 +100,13 @@
     </div>
     <!-- Add this Navigation Bar -->
     <div class="nav-bar" style="background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
-        <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor ⏱</a>
+        <span>@Environment.MachineName 🖥 &emsp; @TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss") ⏲ &emsp;
+            @((new System.IO.DriveInfo(System.IO.Directory.GetDirectoryRoot(System.AppContext.BaseDirectory)).AvailableFreeSpace / 1e9).ToString("F2")) GB (free) 💽
+        </span>
+        <br />
+        <a href="/Index" style="color: #ffcc00; font-weight: bold; text-decoration: none; margin-right: 15px;">Ping Monitor ⏱</a>
         <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats 📊</a>
+        <a href="/Certs" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Certificates 🔐</a>
         <a href="/About" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">About 📜</a>
     </div>
     <!-- End Navigation Bar -->
