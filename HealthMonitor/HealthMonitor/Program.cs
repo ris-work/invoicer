@@ -21,8 +21,13 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.AspNetCore.Server.Kestrel.Transport;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Hosting;
+using Microsoft.CodeAnalysis;
+using System.Runtime.InteropServices;
 
-
+//SQLitePCL.Batteries_V2.Init();
+/*if (!OperatingSystem.IsWindows()) SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
+else SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());*/
 
 void StartPing(string dest)
 {
@@ -66,10 +71,12 @@ void StartPing(string dest)
                 ctx.SaveChanges();
             }
         }
-        catch (Win32Exception E) { }
+        catch (Win32Exception E) {
+            if (Config.Verbose) Console.WriteLine(E.ToString());
+        }
         catch (System.Exception E)
         {
-            E.ToString();
+            if (Config.Verbose) Console.WriteLine(E.ToString());
         }
         Thread.Sleep(Config.SleepTimeMsBetweenPointsPing);
     }
@@ -525,7 +532,7 @@ void StartServer()
 
 string ConfigFile = System.IO.File.ReadAllText("HealthMonitor.toml");
 List<string> destinations = new List<string>();
-var TM = Toml.ToModel(ConfigFile);
+var TM = TomlSerializer.Deserialize<TomlTable>(ConfigFile);
 var TA = ((TomlArray)TM["destinations"]);
 int RetentionDays = 7;
 if (TM.ContainsKey("RetentionDays"))
@@ -574,6 +581,10 @@ if (TM.ContainsKey("Title"))
 if (TM.ContainsKey("WebUI"))
 {
     Config.WebUI = ((bool)(TM["WebUI"]));
+}
+if (TM.ContainsKey("Verbose"))
+{
+    Config.Verbose = ((bool)(TM["Verbose"]));
 }
 if (TM.ContainsKey("WebUIAddress"))
 {
@@ -693,10 +704,10 @@ foreach (var item in destinations)
                                 mmver = "";
                             try
                             {
-                                mmpath = item.MainModule.FileName;
-                                mmver = item.MainModule.FileVersionInfo.ToString();
+                                mmpath = item.MainModule?.FileName ?? item.ProcessName ;
+                                mmver = item.MainModule?.FileVersionInfo.ToString()?? "";
                             }
-                            catch (System.Exception E) { }
+                            catch (System.Exception E) { if(Config.Verbose) Console.WriteLine(E.ToString()); }
                             try
                             {
                                 vmuse = item.VirtualMemorySize64.ToString();
@@ -708,7 +719,7 @@ foreach (var item in destinations)
                                 prmemuse = item.PrivateMemorySize64.ToString();
                                 tc = item.Threads.Count;
                             }
-                            catch (Win32Exception) { }
+                            catch (Win32Exception e) { if (Config.Verbose) Console.WriteLine(e.ToString()); }
                             catch (System.Exception ex)
                             {
                                 Console.WriteLine(ex.ToString());
@@ -736,6 +747,7 @@ foreach (var item in destinations)
                         }
                         catch (Win32Exception E)
                         {
+                            if (Config.Verbose) Console.WriteLine(E.ToString());
                             //Console.WriteLine(E.ToString());
                         }
                         catch (System.Exception ex)
@@ -785,4 +797,5 @@ public static class Config
     public static string AuthPass = "password";
     public static string WebUIHttpsCertPath = ""; // Path to .pfx file
     public static string WebUIHttpsCertPassword = ""; // Password for the .pfx
+    public static bool Verbose = false;
 }
