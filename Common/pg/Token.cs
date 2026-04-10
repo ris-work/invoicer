@@ -20,4 +20,6 @@ public partial class Token
     public string Privileges { get; set; } = null!;
 
     public long CategoriesBitmask { get; set; }
+
+    public string Terminal { get; set; } = null!;
 }

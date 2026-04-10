@@ -371,6 +371,9 @@ public partial class NewinvContext : DbContext
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("name");
             entity.Property(e => e.Principal).HasColumnName("principal");
+            entity.Property(e => e.Terminal)
+                .HasDefaultValueSql("'0'::text")
+                .HasColumnName("terminal");
             entity.Property(e => e.ValidUntil)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("valid_until");
@@ -2058,6 +2061,9 @@ public partial class NewinvContext : DbContext
             entity.Property(e => e.Privileges)
                 .HasDefaultValueSql("''::text")
                 .HasColumnName("privileges");
+            entity.Property(e => e.Terminal)
+                .HasDefaultValueSql("''::text")
+                .HasColumnName("terminal");
             entity.Property(e => e.Tokensecret).HasColumnName("tokensecret");
             entity.Property(e => e.Tokenvalue).HasColumnName("tokenvalue");
             entity.Property(e => e.Userid).HasColumnName("userid");

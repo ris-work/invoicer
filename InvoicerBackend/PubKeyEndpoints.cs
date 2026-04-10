@@ -13,6 +13,14 @@ namespace InvoicerBackend
         public string Base64Data { get; set; } // PFX Data
         public string Fingerprint { get; set; }
     }
+
+    // DTO
+    public class AddManualKeyRequest
+    {
+        public string Fingerprint { get; set; }
+        public string Name { get; set; }
+    }
+
     public static class PubKeyEndpoints
     {
         public static WebApplication AddPubKeyEndpoints(this WebApplication app)
@@ -44,7 +52,8 @@ namespace InvoicerBackend
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
                         CertContents = Convert.ToBase64String(pfxBytes),
-                        ValidUntil = DateTime.UtcNow.AddYears(5)
+                        ValidUntil = DateTime.UtcNow.AddYears(5),
+                        Terminal = ctx.Tokens.Where(t => t.Tokenid == LoginInfo.TokenId).Single().Terminal
                     });
                     await ctx.SaveChangesAsync();
 
@@ -111,6 +120,56 @@ namespace InvoicerBackend
                     return key.IsActive;
                 },
                 "Refresh"
+            );
+
+            app.AddAsyncEndpointWithBearerAuth<AddManualKeyRequest, AllowedKey>(
+                "AddManualKey",
+                async (DataIn, LoginInfo) =>
+                {
+                    var req = (AddManualKeyRequest)DataIn;
+                    if (string.IsNullOrWhiteSpace(req.Fingerprint))
+                        throw new ArgumentException("Fingerprint is required.");
+
+                 // 1. Normalization: Trim, Remove Separators (colon, space, hyphen), UpperCase
+                    var cleanFp = req.Fingerprint.Trim()
+                                     .Replace(":", "")
+                                     .Replace(" ", "")
+                                     .Replace("-", "")
+                                     .ToUpperInvariant();
+
+                    // 2. Validation: SHA-256 must be exactly 64 Hex characters
+                    if (cleanFp.Length != 64)
+                        throw new ArgumentException($"Invalid fingerprint length. Expected 64 characters, got {cleanFp.Length}. Check formatting.");
+
+                    // 3. Validation: Ensure only Hex characters (0-9, A-F)
+                    if (!cleanFp.All(c => "0123456789ABCDEF".Contains(c)))
+                            throw new ArgumentException("Fingerprint contains invalid characters. Only 0-9 and A-F are allowed.");
+
+                    using var ctx = new NewinvContext();
+
+                    // 4. Uniqueness Check
+                    if (await ctx.AllowedKeys.AnyAsync(k => k.FingerprintSha256 == cleanFp))
+                            throw new ArgumentException("This fingerprint already exists.");
+
+                    // 5. Create Key
+                    var key = new AllowedKey
+                    {
+                        Principal = (long)LoginInfo.UserId,
+                        Name = string.IsNullOrWhiteSpace(req.Name) ? "Manual Key" : req.Name,
+                        FingerprintSha256 = cleanFp,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        ValidUntil = DateTime.UtcNow.AddYears(5),
+                        CertContents = "",
+                        Terminal = ctx.Tokens.Where(t => t.Tokenid == LoginInfo.TokenId).Single().Terminal
+                    };
+
+                    ctx.AllowedKeys.Add(key);
+                    await ctx.SaveChangesAsync();
+
+                    return key;
+                },
+            "Refresh"
             );
 
             return app;

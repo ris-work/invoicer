@@ -115,6 +115,7 @@
                 <th>Name</th>
                 <th>SHA256 Fingerprint</th>
                 <th>Added Time</th>
+                <th>Terminal</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
@@ -136,7 +137,7 @@
         async function loadCerts() {
             const token = await getCookie("auth-token");
             const tbody = document.querySelector('#certsTable tbody');
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Loading...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">Loading...</td></tr>';
 
             try {
                 const res = await fetch('/GetAllowedKeys', {
@@ -147,7 +148,7 @@
                 const data = await res.json();
                 render(data);
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error: ${e.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Error: ${e.message}</td></tr>`;
             }
         }
 
@@ -156,7 +157,7 @@
             tbody.innerHTML = '';
 
             if(!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No certificates found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">No certificates found.</td></tr>`;
                 return;
             }
 
@@ -164,6 +165,7 @@
                 const tr = document.createElement('tr');
                 const date = new Date(key.createdAt);
                 const isActive = key.isActive;
+                const terminal = key.terminal;
 
                 const statusHtml = isActive
                     ? '<span class="status-active">ACTIVE</span>'
@@ -177,6 +179,7 @@
                     <td>${he(key.name)}</td>
                     <td class="fp-text">${he(key.fingerprintSha256)}</td>
                     <td>${date.toLocaleString()}</td>
+                    <td>${terminal}</td>
                     <td>${statusHtml}</td>
                     <td>
                         <button class="${btnClass}" onclick="toggle(${key.id})">${btnLabel}</button>
