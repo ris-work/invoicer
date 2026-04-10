@@ -102,6 +102,7 @@ namespace InvoicerBackend
                                                 Privileges = UserA.UserDefaultCap,
                                                 CategoriesBitmask = UserPC.Categories,
                                                 Userid = UserE.Userid,
+                                                Terminal = L.Terminal
                                             }
                                         );
                                         ctx.SaveChanges();
