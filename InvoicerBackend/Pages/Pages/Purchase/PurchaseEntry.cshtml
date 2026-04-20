@@ -178,6 +178,8 @@
                     GrossMarkupPercentage: 20, SellingPrice: 0,
                     TotalUnits: 0, GrossTotal: 0, NetTotalPrice: 0, TotalAmountDue: 0, NetCostPerUnit: 0, NetTotalCost: 0
                 };
+                currentItem.ExpiryDate = document.getElementById('ExpiryDate').value || null;
+                currentItem.ManufacturingDate = document.getElementById('ManufacturingDate')?.value || null;
 
                 // Fetch Name
                 const ctxRes = await fetch('/GetPricingContext', {

@@ -1,0 +1,182 @@
+﻿@page "/Pages/Purchase/EnterPaymentAmount"
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Payment (Purchase)</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Enter Payment Amount</h2>
+        <div id="orderBalance" style="margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fff;">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="font-size: 1.2em;"><strong>Total:</strong> <span id="totalAmt">0.00</span></div>
+                <div style="font-size: 1.2em;">
+                    <strong>Remaining:</strong>
+                    <span id="remainingAmt" style="color: #d9534f; font-weight: bold;">0.00</span>
+                </div>
+            </div>
+        </div>
+        <div id="status">Loading...</div>
+
+        <div id="form" style="display:none;">
+            <div class="summary">
+                <p><strong>Account:</strong> <span id="dispAccName">N/A</span> (<span id="dispAccNo">0</span>)</p>
+                <p><strong>Type:</strong> <span id="dispType">CASH</span></p>
+            </div>
+
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="amount" step="0.01" class="form-control" placeholder="0.00">
+            </div>
+
+            <button class="btn btn-success" onclick="save()">Confirm Payment</button>
+            <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+        const typeQS = params.get('type') || 'CASH'; // CASH, BANK, CREDIT
+
+        async function init() {
+            const token = await getCookie("auth-token");
+            if (!token) { window.location.href = '/Pages/LoginWeb'; return; }
+
+            // 1. Calculate Summary
+            await loadOrderSummary();
+
+            // 2. Resolve Account
+            let accNo = 0;
+            let accName = "Unknown";
+
+            if (typeQS === 'CREDIT') {
+                // Credit Payment: Look up Supplier Account
+                const piiId = await getFlowKey("selectedPiiId");
+                if (!piiId) { alert("No Supplier selected."); return; }
+
+                const res = await fetch('/GetSupplierAccount', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(parseInt(piiId))
+                });
+                const data = await res.json();
+                if (data.accountNo === 0) { alert("No AP Account found for supplier."); return; }
+
+                accNo = data.accountNo;
+                accName = data.accountName + " (Credit)";
+            }
+            else {
+                // Cash/Bank: Look up Terminal Defaults
+                const resTerm = await fetch('/GetTerminalAccounts', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const termData = await resTerm.json();
+
+                if (typeQS === 'CASH') {
+                    accNo = termData.cashAccountNo;
+                    accName = termData.cashAccountName;
+                } else {
+                    accNo = termData.bankAccountNo;
+                    accName = termData.bankAccountName;
+                }
+            }
+
+            // 3. Render Form
+            document.getElementById('dispAccNo').textContent = accNo;
+            document.getElementById('dispAccName').textContent = accName;
+            document.getElementById('dispType').textContent = typeQS;
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        }
+
+        async function loadOrderSummary() {
+            const token = await getCookie("auth-token");
+
+            // 1. Load Data
+            const items = JSON.parse(await getFlowKey("purchaseItems") || "[]");
+            const expenses = JSON.parse(await getFlowKey("expenses") || "[]");
+            const payments = JSON.parse(await getFlowKey("payments") || "[]");
+
+            // 2. Calculate Totals
+            const totalItems = items.reduce((s, i) => s + (i.TotalAmountDue || 0), 0);
+            const totalExp = expenses.reduce((s, e) => s + (e.Amount || 0), 0);
+            const totalDue = totalItems + totalExp;
+            const totalPaid = payments.reduce((s, p) => s + (p.Amount || 0), 0);
+            const remaining = totalDue - totalPaid;
+
+            // 3. Update UI
+            document.getElementById('totalAmt').innerText = totalDue.toFixed(2);
+            document.getElementById('remainingAmt').innerText = remaining.toFixed(2);
+
+            // 4. AUTO-FILL LOGIC FOR CREDIT
+            if (typeQS === 'CREDIT') {
+                document.getElementById('amount').value = remaining > 0 ? remaining.toFixed(2) : "0.00";
+            }
+        }
+
+        async function save() {
+            const token = await getCookie("auth-token");
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            const accNo = parseInt(document.getElementById('dispAccNo').textContent);
+            const accName = document.getElementById('dispAccName').textContent;
+
+            if (!amount || amount <= 0) { alert("Invalid amount"); return; }
+
+            const newPayment = {
+                AccountNo: accNo,
+                AccountName: accName,
+                Amount: amount,
+                Type: typeQS
+            };
+
+            try {
+                // LOAD EXISTING
+                const rawData = await getFlowKeyRaw("payments");
+                const dataObj = rawData ? JSON.parse(rawData) : {value: "[]"};
+                let list = JSON.parse(dataObj.value || "[]");
+
+                list.push(newPayment);
+
+                await fetch('/SetFlowData', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
+                });
+
+                // REDIRECT TO PURCHASE REVIEW
+                window.location.href = '/Pages/Purchase/Review?flowId=' + flowId;
+
+            } catch (err) {
+                alert("Error saving payment: " + err.message);
+            }
+        }
+
+        function cancel() {
+            window.location.href = '/Pages/Purchase/Review?flowId=' + flowId;
+        }
+
+        async function getFlowKey(key) {
+            const val = await getFlowKeyRaw(key);
+            return val ? JSON.parse(val).value : null;
+        }
+
+        async function getFlowKeyRaw(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            if (!res.ok) return null;
+            return await res.text();
+        }
+
+        init();
+    </script>
+</body>
+</html>

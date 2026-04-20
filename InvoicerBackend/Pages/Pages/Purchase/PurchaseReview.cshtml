@@ -102,17 +102,29 @@
             const contentDiv = document.getElementById('content');
             let html = "";
 
+            if (!result.success) {
+                // Show error prominently and STOP.
+                contentDiv.innerHTML = `<div class="result-error-box"><h3>Validation Error</h3><p>${he(result.message)}</p><button class="btn btn-primary" onclick="location.href='/Pages/SearchAndSelect/PiiSelect?flowId=${flowId}'">Select Supplier</button></div>`;
+                return;
+            }
+
             if (!result.success && result.message) html += `<p class="warning">${he(result.message)}</p>`;
 
             // --- ITEMS ---
             html += `<div class="section-box"><h3>Items</h3><div class="item-list">`;
-            result.items.forEach((item, i) => {
-                const sih = (stockMap && stockMap[item.Itemcode]) ? stockMap[item.Itemcode].toFixed(2) : "0.00";
+            // Use optional chaining (?.) and fallbacks for safety
+            (result.items || []).forEach((item, i) => {
+                // FIX: Use camelCase to match JSON from C# backend
+                const sih = (stockMap && stockMap[item.itemcode]) ? stockMap[item.itemcode].toFixed(2) : "0.00";
+
                 html += `<div class="item-row">
-                    <div style="flex: 2;"><strong>${he(item.ProductName)}</strong><br><small>Code: ${item.Itemcode} | SIH: ${sih}</small></div>
-                    <div>Qty: ${item.TotalUnits.toFixed(2)}</div>
-                    <div>Cost: ${item.NetCostPerUnit.toFixed(2)}</div>
-                    <div>Total: ${item.TotalAmountDue.toFixed(2)}</div>
+                    <div style="flex: 2;">
+                        <strong>${he(item.productName || "Unknown")}</strong><br>
+                        <small>Code: ${item.itemcode} | SIH: ${sih}</small>
+                    </div>
+                    <div>Qty: ${(item.totalUnits || 0).toFixed(2)}</div>
+                    <div>Cost: ${(item.netCostPerUnit || 0).toFixed(2)}</div>
+                    <div>Total: ${(item.totalAmountDue || 0).toFixed(2)}</div>
                     <div>
                         <a href="/Pages/Purchase/Entry?flowId=${flowId}&editIndex=${i}" class="btn-sm btn-primary">Edit</a>
                         <span class="remove-btn" onclick="removeItem(${i})">✕</span>
@@ -126,8 +138,8 @@
                 <h3>Misc. Expenses (Shipping/Labour)</h3>
                 <div id="expenseList">`;
 
-            expenses.forEach((exp, i) => {
-                html += `<div class="expense-row">
+            (expenses || []).forEach((exp, i) => {
+                 html += `<div class="expense-row">
                     <input type="text" value="${he(exp.description)}" style="flex:3" onchange="updateExpense(${i}, 'description', this.value)">
                     <input type="number" value="${exp.amount}" step="0.01" style="flex:1" onchange="updateExpense(${i}, 'amount', parseFloat(this.value))">
                     <span class="remove-btn" onclick="removeExpense(${i})">✕</span>
@@ -160,13 +172,12 @@
             });
 
             html += `</div>
-                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="addPayment('CASH')">Add Cash Payment</button>
-                    <button class="btn btn-primary" onclick="addPayment('BANK')">Add Bank Payment</button>
-                    <button class="btn btn-warning" onclick="addCreditPayment()" ${currentSupplierId === 0 ? 'disabled title="No Supplier Selected"' : ''}>
-                        Auto-Add Credit (On Account)
-                    </button>
-                </div>
+            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="addPayment('CASH')">Add Cash</button>
+                <button class="btn btn-primary" onclick="addPayment('BANK')">Add Bank</button>
+                <button class="btn btn-warning" onclick="addCreditPayment()" ${currentSupplierId === 0 ? 'disabled' : ''}>
+                    Add Credit (On Account)
+                </button>
             </div>`;
 
             // --- TOTALS ---
@@ -234,63 +245,14 @@
         }
 
         async function addPayment(type) {
-            // Redirect to generic account selector, then amount entry
-            // For simplicity, we redirect to the Sales payment selector (works for generic accounts)
-            // We pass a flag to indicate it's for Purchase
-            window.location.href = `/Pages/Sales/SelectPaymentMethod?flowId=${flowId}&mode=purchase`;
+            // Redirect directly to the Amount Entry page for the specific type (CASH/BANK)
+            window.location.href = `/Pages/Purchase/EnterPaymentAmount?flowId=${flowId}&type=${type}`;
         }
 
         async function addCreditPayment() {
-            const token = await getCookie("auth-token");
-
-            // 1. Fetch Supplier Account
-            const res = await fetch('/GetSupplierAccount', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentSupplierId)
-            });
-            const acc = await res.json();
-
-            if (!acc || acc.accountNo === 0) {
-                alert("Could not find a Creditor Account for this supplier.");
-                return;
-            }
-
-            // 2. Calculate Balance
-            // We need current totals to know how much credit to apply
-            const itemsVal = await getFlowKey("purchaseItems");
-            const expensesVal = await getFlowKey("expenses");
-            const paymentsVal = await getFlowKey("payments");
-
-            // Simple client-side sum for UI reactivity (Backend will do final check)
-            const items = JSON.parse(itemsVal || "[]");
-            const expenses = JSON.parse(expensesVal || "[]");
-            const payments = JSON.parse(paymentsVal || "[]");
-
-            const totalItems = items.reduce((s, i) => s + i.TotalAmountDue, 0);
-            const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
-            const totalPaid = payments.reduce((s, p) => s + p.Amount, 0);
-            const balance = (totalItems + totalExp) - totalPaid;
-
-            if (balance <= 0) {
-                alert("Balance is already zero or negative.");
-                return;
-            }
-
-            // 3. Add Payment Entry
-            let list = payments;
-            list.push({
-                AccountNo: acc.accountNo,
-                AccountName: acc.accountName + " (Credit)",
-                Amount: balance,
-                Type: "ACCOUNT"
-            });
-
-            await fetch('/SetFlowData', {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ FlowId: flowId, Key: "payments", Value: JSON.stringify(list) })
-            });
-
-            run();
+            // Redirect to the Amount Entry page with type=CREDIT
+            // The payment page will handle the "Auto-Fill" logic for the balance
+            window.location.href = `/Pages/Purchase/EnterPaymentAmount?flowId=${flowId}&type=CREDIT`;
         }
 
         async function removePayment(index) {

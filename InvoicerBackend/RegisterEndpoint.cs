@@ -196,6 +196,7 @@ namespace InvoicerBackend
                             var AuthenticatedInner = JsonSerializer.Deserialize<T>(
                                 VerificationResultAndMessage.RequestBody, JSOptions
                             );
+                            System.Console.WriteLine("Past deserialization, running the DELEGATE...");
                             if (AuthenticatedInner != null)
                             {
                                 return (

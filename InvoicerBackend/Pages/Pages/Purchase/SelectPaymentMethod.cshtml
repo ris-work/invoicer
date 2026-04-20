@@ -1,0 +1,115 @@
+﻿@page "/Pages/Purchase/SelectPaymentMethod"
+@functions { }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Payment Method (Purchase)</title>
+    <link rel="stylesheet" href="/Pages/static/u.css">
+    <style>
+        .method-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .method-card {
+            border: 2px solid #eee;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+            .method-card:hover {
+                border-color: #007bff;
+                background: #f8f9fa;
+                transform: translateY(-2px);
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Select Payment Method</h2>
+        <div id="summary" class="summary" style="margin-bottom:20px;">
+            <p><strong>Total Due:</strong> <span id="totalDue">Loading...</span></p>
+            <p><strong>Remaining:</strong> <span id="remainingDue" style="color:#d9534f;">Loading...</span></p>
+        </div>
+
+        <div class="method-grid">
+            <!-- Cash -->
+            <div class="method-card" onclick="selectCash()">
+                <h3>💵 Cash</h3>
+                <p>Physical currency</p>
+            </div>
+
+            <!-- Bank / Card -->
+            <div class="method-card" onclick="selectBank()">
+                <h3>💳 Card / Bank</h3>
+                <p>Transfer or Cheque</p>
+            </div>
+
+            <!-- Account / Credit -->
+            <div class="method-card" onclick="selectCredit()">
+                <h3>📄 On Account</h3>
+                <p>Pay via Supplier Account</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/Pages/static/u.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const flowId = params.get('flowId');
+
+        async function init() {
+            const token = await getCookie("auth-token");
+
+            // Load Purchase Data
+            const items = JSON.parse(await getFlowKey("purchaseItems") || "[]");
+            const expenses = JSON.parse(await getFlowKey("expenses") || "[]");
+            const payments = JSON.parse(await getFlowKey("payments") || "[]");
+
+            // Calculate Totals (Client-side aggregation)
+            const totalItems = items.reduce((s, i) => s + (i.TotalAmountDue || 0), 0);
+            const totalExp = expenses.reduce((s, e) => s + (e.Amount || 0), 0);
+            const totalDue = totalItems + totalExp;
+            const totalPaid = payments.reduce((s, p) => s + (p.Amount || 0), 0);
+            const remaining = totalDue - totalPaid;
+
+            document.getElementById('totalDue').innerText = totalDue.toFixed(2);
+            document.getElementById('remainingDue').innerText = remaining.toFixed(2);
+        }
+
+        async function selectCash() {
+            window.location.href = '/Pages/Purchase/EnterPaymentAmount?flowId=' + flowId + '&type=CASH';
+        }
+
+        async function selectBank() {
+            window.location.href = '/Pages/Purchase/EnterPaymentAmount?flowId=' + flowId + '&type=BANK';
+        }
+
+        async function selectCredit() {
+            // Use existing SelectDebitAccount (Asset accounts) but for Purchase,
+            // "On Account" usually means we DEBIT the Creditor's AP account directly.
+            // We can reuse the Account Selector or just redirect to a dedicated page.
+            // For simplicity, redirect to EnterPaymentAmount with mode=CREDIT
+            window.location.href = '/Pages/Purchase/EnterPaymentAmount?flowId=' + flowId + '&type=CREDIT';
+        }
+
+        async function getFlowKey(key) {
+            const token = await getCookie("auth-token");
+            const res = await fetch('/GetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: key })
+            });
+            return (await res.json()).value;
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -78,7 +78,15 @@ namespace InvoicerBackend
 
                     try
                     {
-                        var data = JsonSerializer.Deserialize<SimulatePurchaseRequest>(Req.Payload);
+                        var JSOptions = new JsonSerializerOptions
+                        {
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                            PropertyNameCaseInsensitive = true
+                        };
+
+                        // Add this line to your existing options setup
+                        JSOptions.Converters.Add(new FlexibleDateTimeOffsetConverter());
+                        var data = JsonSerializer.Deserialize<SimulatePurchaseRequest>(Req.Payload, JSOptions);
                         var result = PurchaseProcessingService.ProcessPurchase(ctx, data.Header, data.Items, data.Expenses, data.Payments);
 
                         if (!result.Success) return new PostPurchaseResponse { Success = false, Message = result.Message };
