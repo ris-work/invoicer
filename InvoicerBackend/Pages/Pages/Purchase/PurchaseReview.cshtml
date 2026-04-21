@@ -57,6 +57,12 @@
             const paymentsVal = await getFlowKey("payments"); // NEW
             const expensesVal = await getFlowKey("expenses"); // NEW
             const piiVal = await getFlowKey("selectedPiiId");
+            const piiName = await getFlowKey("selectedPiiName"); // Fetch Name
+
+            if (piiVal) {
+                currentSupplierId = parseInt(piiVal);
+                currentSupplierName = piiName || "Unknown"; // Store Name
+            }
 
             if (!itemsVal) { contentDiv.innerHTML = `<p class="warning">No items found.</p>`; return; }
             const items = JSON.parse(itemsVal);
@@ -81,7 +87,8 @@
 
             // 4. Prepare Header
             let header = {
-                SupplierId: currentSupplierId, SupplierName: "Unknown",
+                SupplierId: currentSupplierId, 
+                SupplierName: currentSupplierName, // Use Name
                 CreatedAt: new Date().toISOString()
             };
 
@@ -290,8 +297,13 @@
             const token = await getCookie("auth-token");
             if(!confirm("Post this invoice? This will update inventory and accounts.")) return;
 
+            if (!currentSupplierName) {
+                currentSupplierName = await getFlowKey("selectedPiiName") || "Unknown";
+            }
+
+
             const payload = {
-                Header: { SupplierId: currentSupplierId, Remarks: "Purchase via Web UI" },
+                Header: { SupplierId: currentSupplierId, SupplierName: currentSupplierName, Remarks: "Purchase via Web UI" },
                 Items: JSON.parse(await getFlowKey("purchaseItems")),
                 Payments: JSON.parse(await getFlowKey("payments") || "[]"),
                 Expenses: JSON.parse(await getFlowKey("expenses") || "[]")
