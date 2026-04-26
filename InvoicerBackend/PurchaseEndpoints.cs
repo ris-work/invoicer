@@ -93,6 +93,8 @@ namespace InvoicerBackend
 
                         var invoice = data.Header;
                         invoice.IsPosted = true;
+                        invoice.InvoiceTime = DateTime.SpecifyKind(invoice.InvoiceTime, DateTimeKind.Utc);
+                        invoice.LastSavedAt = DateTime.SpecifyKind(invoice.LastSavedAt, DateTimeKind.Utc);
                         invoice.PostedAt = DateTime.UtcNow;
                         invoice.CreatedAt = DateTime.UtcNow;
                         invoice.TransportCharges = result.TotalExpenses; // NEW: Save expenses to header
@@ -119,8 +121,8 @@ namespace InvoicerBackend
                                 SellingPrice = item.SellingPrice,
                                 MarkedPrice = item.SellingPrice,
                                 Suppliercode = invoice.SupplierId,
-                                ExpDate = item.ExpiryDate?.DateTime,
-                                MfgDate = item.ManufacturingDate?.DateTime,
+                                ExpDate = item.ExpiryDate?.UtcDateTime,
+                                MfgDate = item.ManufacturingDate?.UtcDateTime,
                                 LastCountedAt = DateTime.UtcNow,
                                 BatchEnabled = true,
                                 MeasurementUnit = "EA", // Default or fetch from catalogue
