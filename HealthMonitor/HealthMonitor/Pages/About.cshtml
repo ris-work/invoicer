@@ -96,6 +96,7 @@
         }
         .preformatted {
             white-space: pre;
+            margin-bottom: 1em;
         }
         .preformatted:hover {
             filter: brightness(150%);
@@ -185,22 +186,18 @@
     <div>
         Is this program consuming too much RAM?
     </div><br />
-    <div class="preformatted">
-    PowerShell:
+    <div class="preformatted">PowerShell:
         $Env:DOTNET_TieredCompilation=0
         $Env:DOTNET_gcConcurrent=0
         $Env:DOTNET_ReadyToRun=0
         $Env:DOTNET_TieredPGO=0
-        $Env:DOTNET_USE_POLLING_FILE_WATCHER=1
-    </div><br />
-    <div class="preformatted">
-    Bourne-style:
+        $Env:DOTNET_USE_POLLING_FILE_WATCHER=1</div>
+    <div class="preformatted">Bourne-style:
         export DOTNET_TieredCompilation=0
         export DOTNET_gcConcurrent=0
         export DOTNET_ReadyToRun=0
         export DOTNET_TieredPGO=0
-        export DOTNET_USE_POLLING_FILE_WATCHER=1
-    </div><br />
+        export DOTNET_USE_POLLING_FILE_WATCHER=1</div><br />
     <br /><br />
     <details>
         <summary>Current env variables:</summary>
