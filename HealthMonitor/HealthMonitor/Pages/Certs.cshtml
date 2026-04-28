@@ -1,0 +1,229 @@
+﻿@page "/Certs"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Health Monitor - Certificates</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        .nav-bar {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+            .nav-bar a {
+                color: #add8e6;
+                text-decoration: none;
+                margin-right: 15px;
+                font-weight: bold;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        th {
+            color: #ffcc00;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        /* Button Styles */
+        button {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #505050;
+            }
+
+            button.active-btn {
+                border-color: #4caf50;
+                color: #4caf50;
+            }
+
+            button.inactive-btn {
+                border-color: #f44336;
+                color: #f44336;
+            }
+
+        /* Status Badges */
+        .status-active {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .fp-text {
+            font-size: 0.9em;
+            color: #888;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Bar -->
+    <div id="authBar" style="background-color: #333; padding: 5px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #555;">
+        <span id="authStatus">Checking auth...</span>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <span>
+            @Environment.MachineName 🖥 &emsp; @TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss") ⏲ &emsp;
+            @((new System.IO.DriveInfo(System.IO.Directory.GetDirectoryRoot(System.AppContext.BaseDirectory)).AvailableFreeSpace / 1e9).ToString("F2")) GB (free) 💽
+        </span>
+        <br />
+        <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor ⏱</a>
+        <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats 📊</a>
+        <a href="/Certs" style="color: #ffcc00; text-decoration: none; margin-right: 15px;">Certificates 🔐</a>
+        <a href="/About" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">About 📜</a>
+    </div>
+
+    <h1>Client Certificate Management</h1>
+    <p>Manage allowed client certificates for mTLS access.</p>
+
+    <div style="margin-bottom: 20px;">
+        <a href="/certgen" target="_blank" style="color: #add8e6;">[ Generate & Store New Cert ]</a> |
+        <a href="/certgendontstore" target="_blank" style="color: #add8e6;">[ Generate Temporary Cert (No Store) ]</a>
+    </div>
+
+    <table id="certsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>SHA256 Fingerprint</th>
+                <th>Added Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows injected by JS -->
+        </tbody>
+    </table>
+
+    <script>
+        // --- Auth Check Logic ---
+        async function checkAuth() {
+            try {
+                const resp = await fetch('/api/auth/status');
+                const data = await resp.json();
+                const bar = document.getElementById('authStatus');
+
+                if (data.authenticated) {
+                    bar.innerHTML = `<span style="color: #4caf50;">✔ Authenticated: ${data.user}</span>`;
+                    loadCerts(); // Only load data if authed
+                } else {
+                    bar.innerHTML = `<span style="color: #f44336;">⛔ Unauthorized. Please <a href="/Auth" style="color: #add8e6;">Login</a>.</span>`;
+                    // Optional: Redirect or just disable UI
+                    document.getElementById('certsTable').style.opacity = "0.5";
+                }
+            } catch (e) {
+                console.error("Auth check failed", e);
+                document.getElementById('authStatus').innerText = "Auth check failed.";
+            }
+        }
+        checkAuth();
+
+        // --- Load Certs ---
+        async function loadCerts() {
+            try {
+                const resp = await fetch('/api/certs');
+                if (!resp.ok) {
+                    if (resp.status === 401) alert("Unauthorized to view certs.");
+                    return;
+                }
+                const data = await resp.json();
+                const tbody = document.querySelector('#certsTable tbody');
+                tbody.innerHTML = ''; // Clear loading/old data
+
+                data.forEach(key => {
+                    const tr = document.createElement('tr');
+
+                    // Format date
+                    const date = new Date(key.addedTime);
+                    const dateStr = date.toLocaleString();
+
+                    // Status text/class
+                    const isActive = key.isActive === 1;
+                    const statusHtml = isActive
+                        ? '<span class="status-active">ACTIVE</span>'
+                        : '<span class="status-inactive">INACTIVE</span>';
+
+                    // Button text/class
+                    const btnLabel = isActive ? "Deactivate" : "Activate";
+                    const btnClass = isActive ? "inactive-btn" : "active-btn";
+
+                    tr.innerHTML = `
+                        <td>${key.id}</td>
+                        <td>${key.name}</td>
+                        <td class="fp-text">${key.sha256Fingerprint}</td>
+                        <td>${dateStr}</td>
+                        <td>${statusHtml}</td>
+                        <td>
+                            <button class="${btnClass}" onclick="toggleCert(${key.id})">${btnLabel}</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (e) {
+                console.error("Failed to load certs", e);
+                alert("Failed to load certificate list.");
+            }
+        }
+
+        // --- Toggle Cert ---
+        async function toggleCert(id) {
+            try {
+                const resp = await fetch(`/api/certs/toggle/${id}`, { method: 'POST' });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert("Error: " + (err.error || "Unknown error"));
+                    return;
+                }
+                // Reload table on success
+                loadCerts();
+            } catch (e) {
+                console.error("Toggle failed", e);
+            }
+        }
+    </script>
+</body>
+</html>

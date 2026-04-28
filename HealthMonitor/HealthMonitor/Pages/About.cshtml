@@ -1,0 +1,283 @@
+﻿@page "/About"
+
+
+
+<html>
+    <head>
+        <style>
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        .chart-container {
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        /* Updated controls layout */
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #333;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        input, button {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+            /* Specific style for text inputs to be wider */
+            input[type="text"] {
+                width: 200px;
+            }
+
+        button {
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #505050;
+            }
+
+        svg {
+            background-color: black;
+            width: 100%;
+            height: 450px;
+        }
+        /* Slightly taller */
+        .axis-label {
+            fill: white;
+            font-size: 12px;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        .grid line {
+            stroke: #444;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+
+        .grid path {
+            stroke-width: 0;
+        }
+        #notes:hover {
+            filter: brightness(150%);
+        }
+        .preformatted {
+            white-space: pre;
+        }
+        .preformatted:hover {
+            filter: brightness(150%);
+        }
+        .currentenv {
+            font-size: 50%;
+        }
+        </style>
+        <script>
+        async function checkAuth() {
+            try {
+            const resp = await fetch('/api/auth/status');
+            const data = await resp.json();
+            const bar = document.getElementById('authStatus');
+            const daysInput = document.getElementById('daysInput');
+
+            if (data.authenticated) {
+                bar.innerHTML = `<span style="color: #4caf50;">✔ Authenticated: ${data.user}</span>`;
+
+                // --- SET UI LIMIT FOR AUTHENTICATED USERS ---
+                if (daysInput) {
+                    daysInput.max = 365; // Allow full range
+                    daysInput.title = "Authenticated: Up to 365 days allowed.";
+                }
+                // --------------------------------------------
+            } else {
+                // --- SET UI LIMIT FOR ANONYMOUS USERS ---
+                if (daysInput) {
+                    daysInput.max = 7; // Restrict to 7
+                    daysInput.title = "Anonymous: Up to 7 days allowed. Login for more.";
+
+                    // Reset value if current value is too high
+                    if (parseInt(daysInput.value) > 7) {
+                        daysInput.value = 7;
+                    }
+                }
+                // ----------------------------------------
+
+                if ("@Config.AuthMode" === "None") {
+                     bar.innerHTML = `<span style="color: #888;">Auth Disabled</span>`;
+                } else {
+                     bar.innerHTML = `<span style="color: #ffcc00;">⚠ Anonymous</span> | <a href="/Auth" style="color: #add8e6;">Login</a>`;
+                }
+            }
+        } catch (e) {
+            console.error("Auth check failed", e);
+        }
+        }
+        checkAuth();
+         </script>
+    </head>
+    <body>
+    <div id="authBar" style="background-color: #333; padding: 5px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #555;">
+        <span id="authStatus">Checking auth...</span>
+    </div>
+    <!-- Add this Navigation Bar -->
+    <div class="nav-bar" style="background-color: #333; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <span>
+            @Environment.MachineName 🖥 &emsp; @TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss") ⏲ &emsp;
+            @((new System.IO.DriveInfo(System.IO.Directory.GetDirectoryRoot(System.AppContext.BaseDirectory)).AvailableFreeSpace / 1e9).ToString("F2")) GB (free) 💽
+        </span>
+        <br />
+        <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor ⏱</a>
+        <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats 📊</a>
+        
+        <a href="/Certs" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Certificates 🔐</a>
+        <a href="/About" style="color: #ffcc00; font-weight: bold; text-decoration: none; margin-right: 15px; ">About 📜</a>
+    </div>
+    <div style="font-weight: 700; max-width: 35em; text-align: justify" id="notes">
+        This software is under <a style="color: goldenrod" href="https://opensource.org/license/OSL-3.0">OSLv3</a> (no later versions) or (at your option) <a style="color:goldenrod" href="https://rsm92.fr/pfssl/pfssl-v1.0">PFSSLv1</a> (no later versions).<br /><br />
+        This software is dedicated to a friend <strong style="color:gold">Lumi</strong> <strong style="color: lightgreen">(From #vegan.general:pub.solar)</strong>. You will be and are missed, you left the Earth a kinder place than you found it at birth. <br /><br />
+
+        <hr />
+        Special thanks to: <br />
+        &emsp;&emsp;My wife, <br />
+        &emsp;&emsp;my family <br />
+        &emsp;&emsp;and my extended family <br />
+        for making this software possible.<br /><br />
+
+        Countless FOSS libraries are used in this,<br /> thank you for all of them;<br /> some named components:<br />
+        &emsp;&emsp;<span style="color: blueviolet">dotnet</span><br />
+        &emsp;&emsp;<span style="color: darkslategrey">sqlite3</span><br />
+        &emsp;&emsp;<span style="color: blueviolet">efcore</span><br />
+        &emsp;&emsp;<span style="color: aquamarine">tomlyn</span><br />
+
+    </div><br /><br />
+    <div>
+        Is this program consuming too much RAM?
+    </div><br />
+    <div class="preformatted">
+    PowerShell:
+        $Env:DOTNET_TieredCompilation=0
+        $Env:DOTNET_gcConcurrent=0
+        $Env:DOTNET_ReadyToRun=0
+        $Env:DOTNET_TieredPGO=0
+        $Env:DOTNET_USE_POLLING_FILE_WATCHER=1
+    </div><br />
+    <div class="preformatted">
+    Bourne-style:
+        export DOTNET_TieredCompilation=0
+        export DOTNET_gcConcurrent=0
+        export DOTNET_ReadyToRun=0
+        export DOTNET_TieredPGO=0
+        export DOTNET_USE_POLLING_FILE_WATCHER=1
+    </div><br />
+    <br /><br />
+    <details>
+        <summary>Current env variables:</summary>
+    <div class="preformatted currentenv">
+        @foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        {
+            @($"{entry.Key} = {entry.Value}") @Html.Raw("\n")
+        }
+    </div>
+    </details>
+    <details>
+        <summary>System & Version Info</summary>
+        <div class="preformatted">
+            @{
+                try
+                {
+                    var proc = System.Diagnostics.Process.GetCurrentProcess();
+                    var entryAsm = System.Reflection.Assembly.GetEntryAssembly();
+                    var mainPath = proc.MainModule?.FileName ?? "";
+
+                    var ver = entryAsm?.GetName().Version;
+                    var infoVer = "N/A";
+                    try
+                    {
+                        infoVer = ((System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(entryAsm, typeof(System.Reflection.AssemblyInformationalVersionAttribute)))?.InformationalVersion;
+                    }
+                    catch { /* Ignore attr fail */ }
+
+                    @($"Version:       {ver}") @Html.Raw("\n")
+                    @($"Info Version:  {infoVer}") @Html.Raw("\n")
+                    @($"Built/Mod:     {(string.IsNullOrEmpty(mainPath) ? "Unknown" : System.IO.File.GetLastWriteTime(mainPath).ToString("yyyy-MM-dd HH:mm"))}") @Html.Raw("\n")
+                    @($"Process Path:  {mainPath}") @Html.Raw("\n")
+                    @($"OS/Runtime:    {System.Runtime.InteropServices.RuntimeInformation.OSDescription} / {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}") @Html.Raw("\n")
+                    @($"Uptime:        {DateTime.Now - proc.StartTime}") @Html.Raw("\n")
+                    @($"Threads/Mem:   {proc.Threads.Count} / {proc.PrivateMemorySize64 / 1024 / 1024}MB")
+                }
+                catch (Exception ex)
+                {
+                    @($"Diagnostic Error: {ex.Message}")
+                }
+            }
+        </div>
+    </details>
+
+    <details>
+        <summary>Storage & Mounts</summary>
+        <div class="preformatted">
+            @{
+                try
+                {
+                    foreach (var d in System.IO.DriveInfo.GetDrives().Where(d => d.IsReady))
+                    {
+                        try
+                        {
+                            @($"{d.Name,-15} {d.DriveFormat,-6} Free: {d.AvailableFreeSpace / 1073741824,4}GB / {d.TotalSize / 1073741824,4}GB") @Html.Raw("\n")
+                        }
+                        catch
+                        {
+                            @($"{d.Name}: Access Denied\n")
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    @($"Drive Error: {ex.Message}")
+                }
+            }
+        </div>
+    </details>
+    <br />
+    <br />
+    <div>
+        Loading this page triggers a manual garbage collection at the end.
+    </div>
+    </body>
+</html>
+@{
+    GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+    GC.WaitForPendingFinalizers();
+}
