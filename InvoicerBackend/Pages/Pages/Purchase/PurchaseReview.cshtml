@@ -277,6 +277,10 @@
         }
 
         async function addItem() {
+            await fetch('/SetFlowData', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FlowId: flowId, Key: "FlowStepIndex", Value: "1" })
+            });
             window.location.href = '/Pages/SearchAndSelect/ItemSelect?flowId=' + flowId;
         }
 

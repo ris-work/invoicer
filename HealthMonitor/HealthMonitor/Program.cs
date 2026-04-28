@@ -204,6 +204,9 @@ void StartServer()
     Console.WriteLine($"[App] Starting from: {AppContext.BaseDirectory}");
 
 
+    GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+    GC.WaitForPendingFinalizers();
+
     // --- 1. Ad-Hoc Auth Middleware ---
     app.Use(async (context, next) =>
     {
@@ -322,8 +325,8 @@ void StartServer()
 
         // Replicating the logic from NetworkPingStatsPanel
         var query = ctx.Pings
-            .Where(p => p.TimeNow.CompareTo(cutoff.ToString("o")) >= 0)
-            .ToList();
+            .Where(p => p.TimeNow.CompareTo(cutoff.ToString("o")) >= 0).AsNoTracking();
+                                                                        //.ToList();
 
         var grouped = query
             .GroupBy(p => new { p.Dest, Decaminute = p.TimeNow.Substring(0, 18) })
@@ -334,8 +337,8 @@ void StartServer()
                 LatencyAverage = g.Average(x => x.Latency),
                 SuccessRate = g.Average(x => (x.WasItOkNotCorrupt == 1 || x.DidItSucceed == 1) ? 1.0 : 0.0) * 100
             })
-            .OrderBy(x => x.Decaminute)
-            .ToList();
+            .OrderBy(x => x.Decaminute);
+            //.ToList();
 
         // Structure data for D3: Dictionary<Dest, List<Point>>
         var result = grouped.GroupBy(x => x.Dest)
@@ -364,7 +367,7 @@ void StartServer()
         var data = ctx.ProcessHistories
             .Where(p => p.TimeNow.CompareTo(cutoff.ToString("o")) >= 0)
             .OrderByDescending(p => p.TimeNow)
-            .Take(1000) // Limit to prevent browser crash for now
+            .Take(1000).AsNoTracking() // Limit to prevent browser crash for now
             .ToList();
 
         return Results.Json(data);
@@ -378,12 +381,12 @@ void StartServer()
         // If not, fallback: ctx.ProcessHistories.GroupBy(x => x.ProcessName).Select(g => new { MainModulePath = g.Key, WindowName = "" })
         try
         {
-            return Results.Json(ctx.WindowTitlesMainModules.Select(x => new { x.MainModulePath, x.WindowName }).ToList());
+            return Results.Json(ctx.WindowTitlesMainModules.Select(x => new { x.MainModulePath, x.WindowName }).AsNoTracking().ToList());
         }
         catch
         {
             // Fallback if the view doesn't exist in this specific context version
-            return Results.Json(ctx.ProcessHistories.Select(x => new { MainModulePath = x.ProcessName, WindowName = x.MainWindowTitle }).Distinct().ToList());
+            return Results.Json(ctx.ProcessHistories.Select(x => new { MainModulePath = x.ProcessName, WindowName = x.MainWindowTitle }).Distinct().AsNoTracking().ToList());
         }
     });
 
@@ -415,6 +418,7 @@ void StartServer()
                     AvgMem = (x.AvgWorkingSet ?? 0) / (1024 * 1024), // Convert to MiB
                     PeakMem = double.Parse(x.MaxWorkingSetForOneInstance) / (1024 * 1024) // Convert to MiB
                 })
+                .AsNoTracking()
                 .ToList();
 
             return Results.Json(data);
@@ -765,6 +769,8 @@ foreach (var item in destinations)
 
             Thread.Sleep(Config.SleepTimeMsBetweenPointsProc);
         }
+        GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
     })
 ).Start();
 try

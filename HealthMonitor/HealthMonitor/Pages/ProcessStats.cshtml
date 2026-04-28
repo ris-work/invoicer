@@ -740,3 +740,7 @@
     </script>
 </body>
 </html>
+@{
+    GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+    GC.WaitForPendingFinalizers();
+}
