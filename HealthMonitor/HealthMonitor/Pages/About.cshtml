@@ -3,152 +3,152 @@
 
 
 <html>
-    <head>
-        <style>
+<head>
+    <style>
         body {
-            background-color: #1e1e1e;
-            color: #e0e0e0;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        font-family: 'Courier New', Courier, monospace;
+        margin: 0;
+        padding: 20px;
         }
 
         h1 {
-            color: #ffcc00;
+        color: #ffcc00;
         }
 
         .chart-container {
-            background-color: #252526;
-            border: 1px solid #3e3e42;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
+        background-color: #252526;
+        border: 1px solid #3e3e42;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
         }
 
         /* Updated controls layout */
         .controls {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #333;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            border-radius: 5px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #333;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        border-radius: 5px;
         }
 
         label {
-            margin-right: 5px;
+        margin-right: 5px;
         }
 
         input, button {
-            background-color: #3c3c3c;
-            color: white;
-            border: 1px solid #555;
-            padding: 5px;
-            border-radius: 3px;
+        background-color: #3c3c3c;
+        color: white;
+        border: 1px solid #555;
+        padding: 5px;
+        border-radius: 3px;
         }
 
-            /* Specific style for text inputs to be wider */
-            input[type="text"] {
-                width: 200px;
-            }
+        /* Specific style for text inputs to be wider */
+        input[type="text"] {
+        width: 200px;
+        }
 
         button {
-            cursor: pointer;
+        cursor: pointer;
         }
 
-            button:hover {
-                background-color: #505050;
-            }
+        button:hover {
+        background-color: #505050;
+        }
 
         svg {
-            background-color: black;
-            width: 100%;
-            height: 450px;
+        background-color: black;
+        width: 100%;
+        height: 450px;
         }
         /* Slightly taller */
         .axis-label {
-            fill: white;
-            font-size: 12px;
+        fill: white;
+        font-size: 12px;
         }
 
         .legend {
-            font-size: 12px;
+        font-size: 12px;
         }
 
         .line {
-            fill: none;
-            stroke-width: 2px;
+        fill: none;
+        stroke-width: 2px;
         }
 
         .grid line {
-            stroke: #444;
-            stroke-opacity: 0.7;
-            shape-rendering: crispEdges;
+        stroke: #444;
+        stroke-opacity: 0.7;
+        shape-rendering: crispEdges;
         }
 
         .grid path {
-            stroke-width: 0;
+        stroke-width: 0;
         }
         #notes:hover {
-            filter: brightness(150%);
+        filter: brightness(150%);
         }
         .preformatted {
-            white-space: pre;
-            margin-bottom: 1em;
+        white-space: pre;
+        margin-bottom: 1em;
         }
         .preformatted:hover {
-            filter: brightness(150%);
+        filter: brightness(150%);
         }
         .currentenv {
-            font-size: 50%;
+        font-size: 50%;
         }
-        </style>
-        <script>
+    </style>
+    <script>
         async function checkAuth() {
-            try {
-            const resp = await fetch('/api/auth/status');
-            const data = await resp.json();
-            const bar = document.getElementById('authStatus');
-            const daysInput = document.getElementById('daysInput');
+        try {
+        const resp = await fetch('/api/auth/status');
+        const data = await resp.json();
+        const bar = document.getElementById('authStatus');
+        const daysInput = document.getElementById('daysInput');
 
-            if (data.authenticated) {
-                bar.innerHTML = `<span style="color: #4caf50;">✔ Authenticated: ${data.user}</span>`;
+        if (data.authenticated) {
+        bar.innerHTML = `<span style="color: #4caf50;">✔ Authenticated: ${data.user}</span>`;
 
-                // --- SET UI LIMIT FOR AUTHENTICATED USERS ---
-                if (daysInput) {
-                    daysInput.max = 365; // Allow full range
-                    daysInput.title = "Authenticated: Up to 365 days allowed.";
-                }
-                // --------------------------------------------
-            } else {
-                // --- SET UI LIMIT FOR ANONYMOUS USERS ---
-                if (daysInput) {
-                    daysInput.max = 7; // Restrict to 7
-                    daysInput.title = "Anonymous: Up to 7 days allowed. Login for more.";
+        // --- SET UI LIMIT FOR AUTHENTICATED USERS ---
+        if (daysInput) {
+        daysInput.max = 365; // Allow full range
+        daysInput.title = "Authenticated: Up to 365 days allowed.";
+        }
+        // --------------------------------------------
+        } else {
+        // --- SET UI LIMIT FOR ANONYMOUS USERS ---
+        if (daysInput) {
+        daysInput.max = 7; // Restrict to 7
+        daysInput.title = "Anonymous: Up to 7 days allowed. Login for more.";
 
-                    // Reset value if current value is too high
-                    if (parseInt(daysInput.value) > 7) {
-                        daysInput.value = 7;
-                    }
-                }
-                // ----------------------------------------
+        // Reset value if current value is too high
+        if (parseInt(daysInput.value) > 7) {
+        daysInput.value = 7;
+        }
+        }
+        // ----------------------------------------
 
-                if ("@Config.AuthMode" === "None") {
-                     bar.innerHTML = `<span style="color: #888;">Auth Disabled</span>`;
-                } else {
-                     bar.innerHTML = `<span style="color: #ffcc00;">⚠ Anonymous</span> | <a href="/Auth" style="color: #add8e6;">Login</a>`;
-                }
-            }
+        if ("@Config.AuthMode" === "None") {
+        bar.innerHTML = `<span style="color: #888;">Auth Disabled</span>`;
+        } else {
+        bar.innerHTML = `<span style="color: #ffcc00;">⚠ Anonymous</span> | <a href="/Auth" style="color: #add8e6;">Login</a>`;
+        }
+        }
         } catch (e) {
-            console.error("Auth check failed", e);
+        console.error("Auth check failed", e);
         }
         }
         checkAuth();
-         </script>
-    </head>
-    <body>
+    </script>
+</head>
+<body>
     <div id="authBar" style="background-color: #333; padding: 5px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #555;">
         <span id="authStatus">Checking auth...</span>
     </div>
@@ -161,7 +161,7 @@
         <br />
         <a href="/Index" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Ping Monitor ⏱</a>
         <a href="/ProcessStats" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Process Stats 📊</a>
-        
+
         <a href="/Certs" style="color: #add8e6; text-decoration: none; margin-right: 15px; font-weight: bold;">Certificates 🔐</a>
         <a href="/About" style="color: #ffcc00; font-weight: bold; text-decoration: none; margin-right: 15px; ">About 📜</a>
     </div>
@@ -207,12 +207,12 @@
     <br /><br />
     <details>
         <summary>Current env variables:</summary>
-    <div class="preformatted currentenv">
-        @foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
-        {
-            @($"{entry.Key} = {entry.Value}") @Html.Raw("\n")
-        }
-    </div>
+        <div class="preformatted currentenv">
+            @foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+            {
+                @($"{entry.Key} = {entry.Value}") @Html.Raw("\n")
+            }
+        </div>
     </details>
     <details>
         <summary>System & Version Info</summary>
@@ -271,6 +271,79 @@
                     @($"Drive Error: {ex.Message}")
                 }
             }
+        </div>
+    </details>
+
+    <details>
+        <summary>IP Addresses</summary>
+        <div class="preformatted">
+        @{
+            try
+            {
+                var ips = new System.Collections.Generic.List<string>();
+                foreach (var intf in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (intf.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                    foreach (var addr in intf.GetIPProperties().UnicastAddresses)
+                    {
+                        if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork || addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            string ip = addr.Address.ToString();
+                            string prefix = "";
+                            try { prefix = $"/{addr.PrefixLength}"; } catch { }
+                            ips.Add($"{ip}{prefix}");
+                        }
+                    }
+                }
+                    // Sort: GUA -> Private(192.168) -> Private(Other) -> Bluetooth -> LinkLocal -> Multicast -> Loopback
+                var sortedIps = ips.OrderBy(ip =>
+                {
+                    // 1. Loopback & Bluetooth (Push to end)
+                    if (ip.StartsWith("192.168.56.")) return 50; // Bluetooth/Host-only
+                    if (ip.StartsWith("127.") || ip == "::1") return 100; // Loopback
+
+                    try
+                        {
+                        var addr = System.Net.IPAddress.Parse(ip.Split('/')[0]);
+                        var bytes = addr.GetAddressBytes();
+
+                        // IPv6 Logic
+                        if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            if (bytes[0] >= 0x20 && bytes[0] <= 0x3F) return 0; // GUA
+                            if (bytes[0] == 0xFC || bytes[0] == 0xFD) return 2; // ULA (Private Other)
+                            if (bytes[0] == 0xFE && (bytes[1] & 0xC0) == 0x80) return 40; // Link-Local
+                            if (bytes[0] == 0xFF) return 60; // Multicast
+                            return 5; // Other
+                         }
+
+                            // IPv4 Logic
+                         if (bytes[0] == 192 && bytes[1] == 168) return 1; // Private Preferred (Home LAN)
+
+                         if (bytes[0] == 10) return 2;                    // Private Other
+                         if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return 2; // Private Other
+
+                         if (bytes[0] == 169 && bytes[1] == 254) return 40; // Link-Local
+                         if (bytes[0] >= 224 && bytes[0] <= 239) return 60; // Multicast
+
+                         return 0; // GUA / Public
+                 }
+                catch { return 99; }
+                }).ThenBy(ip => ip).ToList(); // Secondary sort by string for logical ordering within groups
+                foreach (var i in sortedIps)
+                {
+                    try
+                    {
+                        @($"{i}") @Html.Raw("\n")
+                    }
+                    catch
+                    {
+                            
+                    }
+                }
+            }
+            catch (Exception E) { }
+        }
         </div>
     </details>
     <br />
