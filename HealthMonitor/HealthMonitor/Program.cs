@@ -1,33 +1,35 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using HealthMonitor;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.AspNetCore.Server.Kestrel.Transport;
+using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using System.Buffers;
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using HealthMonitor;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tomlyn;
 using Tomlyn.Model;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Https;
-using Microsoft.AspNetCore.Server.Kestrel.Transport;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.Extensions.Hosting;
-using Microsoft.CodeAnalysis;
-using System.Runtime.InteropServices;
 
 //SQLitePCL.Batteries_V2.Init();
 /*if (!OperatingSystem.IsWindows()) SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
 else SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());*/
+bool CustomPingPlatformNotSupported = false;
 
 void StartPing(string dest)
 {
@@ -51,23 +53,57 @@ void StartPing(string dest)
                 var pingSender = new System.Net.NetworkInformation.Ping();
                 string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb";
                 byte[] buffer = Encoding.ASCII.GetBytes(data);
-                PingReply reply = pingSender.Send(dest, 4000, buffer);
-                Console.WriteLine(
-                    "{0} {1} {2}",
-                    dest,
-                    reply.RoundtripTime,
-                    reply.Buffer.SequenceEqual(buffer)
-                );
-                ctx.Pings.Add(
-                    new HealthMonitor.Ping
+                try
+                {
+                    if (!CustomPingPlatformNotSupported)
                     {
-                        WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0,
-                        DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0,
-                        Dest = dest,
-                        Latency = (int)reply.RoundtripTime,
-                        TimeNow = DateTime.UtcNow.ToString("o"),
+                        PingReply reply = pingSender.Send(dest, 4000, buffer);
+                        Console.WriteLine(
+                        "{0} {1} {2}",
+                        dest,
+                        reply.RoundtripTime,
+                        reply.Buffer.SequenceEqual(buffer)
+                        );
+                        ctx.Pings.Add(
+                            new HealthMonitor.Ping
+                            {
+                                WasItOkNotCorrupt = reply.Buffer.SequenceEqual(buffer) ? 1 : 0,
+                                DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0,
+                                Dest = dest,
+                                Latency = (int)reply.RoundtripTime,
+                                TimeNow = DateTime.UtcNow.ToString("o"),
+                            }
+                        );
                     }
-                );
+                    else
+                    {
+                        PingReply reply = pingSender.Send(dest, 4000);
+                        Console.WriteLine(
+                        "{0} {1} {2} WITHOUT-PRIVILEGE",
+                        dest,
+                        reply.RoundtripTime,
+                        reply.Buffer.SequenceEqual(buffer)
+                        );
+                        ctx.Pings.Add(
+                            new HealthMonitor.Ping
+                            {
+                                WasItOkNotCorrupt = 1,
+                                DidItSucceed = reply.Status == IPStatus.Success ? 1 : 0,
+                                Dest = dest,
+                                Latency = (int)reply.RoundtripTime,
+                                TimeNow = DateTime.UtcNow.ToString("o"),
+                            }
+                        );
+                    }
+                }
+                catch (System.Exception ex) when (ex is PlatformNotSupportedException ||
+                               (ex is PingException && ex.InnerException is System.Net.Sockets.SocketException))
+                {
+                    // Set the flag so we don't waste time trying this on subsequent calls
+                    CustomPingPlatformNotSupported = true;
+                    Console.WriteLine("Custom ping not supported (Permission/Platform restriction). Falling back.");
+                }
+                
                 ctx.SaveChanges();
             }
         }
@@ -208,7 +244,7 @@ void StartServer()
     GC.WaitForPendingFinalizers();
 
     // --- 1. Ad-Hoc Auth Middleware ---
-    app.Use(async (context, next) =>
+    app.Use(static async (context, next) =>
     {
         // Parse Authorization Header manually
         string authHeader = context.Request.Headers["Authorization"];
@@ -433,7 +469,7 @@ void StartServer()
     // ADD these endpoints inside StartServer (e.g., after app.MapRazorPages()):
 
     // --- 4. Certificate Generation (Auth Required) ---
-    app.MapGet("/certgen", async (HttpContext hctx) =>
+    app.MapGet("/certgen", static async (HttpContext hctx) =>
     {
         bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
         if (!isAuth) return Results.Unauthorized();
@@ -460,7 +496,7 @@ void StartServer()
     });
 
     // --- 5. Certificate Generation (No Store) ---
-    app.MapGet("/certgendontstore", async (HttpContext hctx) =>
+    app.MapGet("/certgendontstore", static async (HttpContext hctx) =>
     {
         bool isAuth = hctx.Items.ContainsKey("IsAuthenticated") && (bool)hctx.Items["IsAuthenticated"];
         if (!isAuth) return Results.Unauthorized();
@@ -480,7 +516,7 @@ void StartServer()
     });
 
     // --- 6. Certificate Authentication Endpoint ---
-    app.MapGet("/certauth", async (HttpContext hctx) =>
+    app.MapGet("/certauth", static async (HttpContext hctx) =>
     {
         var clientCert = hctx.Connection.ClientCertificate;
         if (clientCert == null) { var try1=  await hctx.Connection.GetClientCertificateAsync(); if(try1 == null) return Results.Json(new { authenticated = false, error = "No certificate presented." }, statusCode: 403); }
@@ -528,6 +564,18 @@ void StartServer()
         ctx.SaveChanges();
 
         return Results.Json(new { success = true, id = key.Id, isActive = key.IsActive });
+    });
+    app.Use(async (context, next) =>
+    {
+        context.Response.OnCompleted(static async () =>
+        {
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true); // Platform-agnostic full cleanup
+            GC.WaitForPendingFinalizers(); // Ensure finalizers run before next line
+            GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true); // Reclaim finalized memory
+            //return Task.CompletedTask;
+        });
+
+        await next(context);
     });
 
     Console.WriteLine($"Web Server starting on {url}");
@@ -642,6 +690,71 @@ if (TM.ContainsKey("WebUIHttpsCertPassword"))
 {
     Config.WebUIHttpsCertPassword = (string)TM["WebUIHttpsCertPassword"];
 }
+
+// Query the runtime engine flag directly
+bool hasSwitch = AppContext.TryGetSwitch("System.Runtime.CompilerServices.RuntimeAsync", out bool isEngineActive);
+bool isFeatureActive = hasSwitch && isEngineActive;
+
+Console.WriteLine($"RuntimeAsyncEnabled: {isFeatureActive}");
+
+await VerifyAsyncEngine();
+
+async Task VerifyAsyncEngine()
+{
+    await Task.Yield();
+
+    var nestedTypes = MethodBase.GetCurrentMethod()?.DeclaringType?
+        .GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public);
+
+    if (nestedTypes == null || nestedTypes.Length == 0)
+    {
+        // === BRANCH A: Runtime Async V2 Active ===
+        Console.WriteLine("Runtime Async V2 Active. Total Heap Type Count: 0");
+    }
+    else
+    {
+        // === BRANCH B: Standard Async Active (Fallback) ===
+        Console.WriteLine("Standard Async Active. Heap Types Emitted:");
+        foreach (var type in nestedTypes)
+        {
+            Console.WriteLine($" -> Name: {type.Name} | Target: {type.FullName}");
+        }
+    }
+}
+
+// Ensure isolation from top-level Main wrapper variables
+[MethodImpl(MethodImplOptions.NoInlining)]
+async Task VerifyEngineInlineAsync()
+{
+    await Task.Yield();
+
+    // Reflect exclusively on the generated method metadata
+    var method = MethodBase.GetCurrentMethod();
+    var nestedTypes = method?.DeclaringType?.GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public);
+
+    bool hasStateMachine = false;
+    if (nestedTypes != null)
+    {
+        foreach (var type in nestedTypes)
+        {
+            // Checks if the compiler dropped a local state machine type for this method
+            if (type.Name.Contains(method.Name) && type.Name.Contains("d__"))
+            {
+                hasStateMachine = true;
+                Console.WriteLine($"Standard Async Fallback Active. Emitted: {type.Name}");
+                break;
+            }
+        }
+    }
+
+    if (!hasStateMachine)
+    {
+        // === SUCCESS BRANCH ===
+        Console.WriteLine("Runtime Async V2 Active. Zero async heap structures emitted.");
+    }
+}
+await VerifyEngineInlineAsync();
+
 
 destinations = TA.Select(x => (string)x).ToList();
 

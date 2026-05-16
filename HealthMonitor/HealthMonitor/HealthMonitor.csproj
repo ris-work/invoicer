@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk.Razor" />
     <PropertyGroup>
+		<Features>runtime-async=on</Features>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+		<LangVersion>preview</LangVersion>
         <!--<PublishAot>true</PublishAot>-->
         <!--<PublishTrimmed>true</PublishTrimmed>-->
         <!--<PublishSingleFile>true</PublishSingleFile>-->
@@ -28,6 +30,14 @@
 		<IncludeRazorContent>true</IncludeRazorContent>
 		<MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
 		<DebugType>embedded</DebugType>
+		<EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+		<EventSourceSupport>false</EventSourceSupport>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+		<MetricsSupport>false</MetricsSupport>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<UseSizeOptimizedLinq>true</UseSizeOptimizedLinq>
     </PropertyGroup>
     <ItemGroup>
         <Content Include="log_2.ico" />
