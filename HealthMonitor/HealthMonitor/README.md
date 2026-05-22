@@ -1,6 +1,10 @@
 ## What's this?
 This is HealthMonitor, an open-source system health monitoring tool. It monitors (configurable) the system's network status and processes' resource usage (CPU/RAM) and stores them as an SQLite file. The tables are deliberately unindexed because this is write-heavy. For the GUI visualizer, see [Health Monitor Log Viewer](../HealthMonitorLogViewer). This tool has been very useful in detecting the causes of the network faults, including high latency spikes which led to 1000+ms latency in a LAN which should have been max. 1ms. This monitors the destination reachability by using ICMP echo request(s)/reply(-ies).
 
+<img src="https://vz.al/repos/invnew/raw/02a41a7e88a3c53077d9d60eed4ed61ff86ce00887e6e4ee7dc87ef9cce61da7?m=image/png" alt="Latency/Ping" />  
+<img src="https://vz.al/repos/invnew/raw/26b62baffd22473f83f4d2506e5c15bf1851a44540b4bd43f1efa4d771f66fac?m=image/png" alt="Process Monitor" />  
+<img src="https://vz.al/repos/invnew/raw/580bf2a7e9642026e8aef7eef8978bee9c1db5e2581bb95f315cb4d25b1cb782?m=image/png" alt="About" />
+
 ## How do I use it?
 You have to first copy the `new.logs.sqlite3.rvhealthmonitorlogfile` to your desired destination and tune it accordingly in `HealthMonitor.toml`. They are SQLite3 database files with prebuilt tables and views (unindexed). Destinations are also configurable along with the console title. It should ideally be as the `Administrator` in Microsoft Windows (R) as it also tries to access some private information about the processes which are being monitored. It will still work without administrator privileges but some things might not be monitored (like CPU time).
 
